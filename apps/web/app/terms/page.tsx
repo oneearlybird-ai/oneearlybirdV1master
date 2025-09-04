@@ -1,44 +1,37 @@
 export default function TermsPage() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
-      <section className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight">Terms of Service</h1>
+      <div className="mx-auto max-w-3xl">
+        <h1 className="text-4xl font-semibold tracking-tight">Terms of Service</h1>
         <p className="mt-4 text-white/70">
-          By using EarlyBird services, you agree to the following terms.
+          Please read these Terms of Service carefully before using EarlyBird.
         </p>
 
-        <div className="mt-8 space-y-6 text-white/70">
+        <div className="mt-12 space-y-8">
           <div>
-            <h2 className="text-xl font-medium text-white">Use of Service</h2>
-            <p>
-              You are granted a limited, non-transferable license to use EarlyBird for business
-              telephony automation in compliance with applicable law.
+            <h2 className="text-xl font-medium">Acceptance of Terms</h2>
+            <p className="mt-2 text-white/70">
+              By accessing or using EarlyBird, you agree to be bound by these Terms.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-medium text-white">Accounts & Access</h2>
-            <p>
-              You are responsible for safeguarding login credentials and activity under your account.
+            <h2 className="text-xl font-medium">Use of Service</h2>
+            <p className="mt-2 text-white/70">
+              You agree to use EarlyBird in compliance with all applicable laws and
+              not for any unlawful purpose.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-medium text-white">Limitations</h2>
-            <p>
-              EarlyBird is provided “as is”. We are not liable for outages, indirect damages,
-              or losses arising from use.
-            </p>
-          </div>
-
-          <div>
-            <h2 className="text-xl font-medium text-white">Termination</h2>
-            <p>
-              Accounts may be suspended or terminated for violation of these terms or abuse of service.
+            <h2 className="text-xl font-medium">Limitation of Liability</h2>
+            <p className="mt-2 text-white/70">
+              EarlyBird shall not be held liable for any damages resulting from the
+              use or inability to use the service.
             </p>
           </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
