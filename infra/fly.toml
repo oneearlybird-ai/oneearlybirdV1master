@@ -1,0 +1,16 @@
+app = "earlybird-api-demo"
+primary_region = "iad"
+
+[build]
+  dockerfile = "infra/Dockerfile.api"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+
+[env]
+  NODE_ENV = "production"
+  DEMO_MODE = "true"

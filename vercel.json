@@ -1,0 +1,11 @@
+{
+  "buildCommand": "corepack enable && pnpm i && pnpm -C apps/web build",
+  "installCommand": "corepack enable && pnpm i",
+  "framework": "nextjs",
+  "git": {
+    "deployDefaults": {
+      "target": "production"
+    }
+  },
+  "rootDirectory": "apps/web"
+}
