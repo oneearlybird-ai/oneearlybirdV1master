@@ -1,31 +1,8 @@
-import fs from 'fs';
-import path from 'path';
-
-export const dynamic = 'force-static';
-
-const DOCS_DIR = path.join(process.cwd(), 'docs', 'public');
-
-function safeList(dir: string) {
-  try {
-    if (!fs.existsSync(dir)) return [];
-    return fs.readdirSync(dir).filter(f => f.endsWith('.md'));
-  } catch {
-    return [];
-  }
-}
-
-export default function DocsPage() {
-  const files = safeList(DOCS_DIR);
+export default function Docs() {
   return (
-    <main className="max-w-3xl mx-auto py-12">
-      <h1 className="text-3xl font-semibold mb-6">Docs</h1>
-      {files.length === 0 ? (
-        <p className="text-neutral-600">No docs yet. Add markdown files to <code>apps/web/docs/public</code>.</p>
-      ) : (
-        <ul className="list-disc pl-6 space-y-2">
-          {files.map(f => <li key={f}>{f}</li>)}
-        </ul>
-      )}
+    <main className="mx-auto max-w-3xl px-6 py-24">
+      <h1 className="text-3xl font-semibold tracking-tight">Docs</h1>
+      <p className="mt-4 text-white/70">API & product docs are coming soon.</p>
     </main>
   );
 }
