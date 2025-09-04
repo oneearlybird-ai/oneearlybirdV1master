@@ -1,4 +1,25 @@
-import Link from "next/link";
+export const dynamic = 'force-dynamic';
+
+export default function Home() {
+  return (
+    <main className="min-h-dvh bg-neutral-950 text-white">
+      <section className="mx-auto max-w-6xl px-6 py-24">
+        <p className="text-sm uppercase tracking-widest text-white/50">EarlyBird</p>
+        <h1 className="mt-3 text-4xl sm:text-5xl font-semibold tracking-tight">
+          AI voice receptionist for your business
+        </h1>
+        <p className="mt-5 max-w-2xl text-white/70">
+          Automate inbound calls: scheduling, routing, FAQs, and lead qualification.
+          Transcripts, analytics, and billing built-in.
+        </p>
+        <div className="mt-8 flex gap-3">
+          <a href="/signup" className="rounded-lg bg-white text-black px-5 py-3 font-medium">Get started</a>
+          <a href="/pricing" className="rounded-lg border border-white/20 px-5 py-3 font-medium">View pricing</a>
+        </div>
+      </section>
+    </main>
+  );
+}import Link from "next/link";
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
