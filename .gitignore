@@ -1,0 +1,9 @@
+.next/
+node_modules/
+.vercel/
+*.sqlite
+*.zip
+*.tar
+*.tar.gz
+*.mp4
+*.wav
