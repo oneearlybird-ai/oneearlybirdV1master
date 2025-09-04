@@ -1,8 +1,28 @@
 export default function Signup() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-24">
-      <h1 className="text-3xl font-semibold tracking-tight">Create your account</h1>
-      <p className="mt-4 text-white/70">Coming soon — email-based signup with OAuth.</p>
+      <h1 className="text-3xl font-semibold tracking-tight">Create your EarlyBird account</h1>
+      <form className="mt-8 space-y-4">
+        <input
+          type="email"
+          placeholder="Email address"
+          className="w-full rounded-md border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/40"
+        />
+        <input
+          type="password"
+          placeholder="Password"
+          className="w-full rounded-md border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-white/40"
+        />
+        <button
+          type="submit"
+          className="w-full rounded-md bg-white px-4 py-3 font-medium text-black hover:bg-white/90"
+        >
+          Sign up
+        </button>
+      </form>
+      <p className="mt-6 text-sm text-white/60">
+        Already have an account? <a href="/login" className="text-white hover:underline">Log in</a>
+      </p>
     </main>
   );
 }
