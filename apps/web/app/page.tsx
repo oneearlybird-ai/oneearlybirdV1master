@@ -1,5 +1,7 @@
 import Link from "next/link";
 
+export const dynamic = 'force-dynamic';
+
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
     <section id={id} className="mx-auto max-w-6xl px-6 py-16 md:py-24">
@@ -13,7 +15,7 @@ function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
       <div className="text-3xl font-semibold">{value}</div>
-      <div className="mt-2 text-white/70">{label}</div>
+      <div className="mt-2 text-sm text-white/70">{label}</div>
     </div>
   );
 }
@@ -21,17 +23,18 @@ function Stat({ label, value }: { label: string; value: string }) {
 export default function Home() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-white">
-      {/* Sticky Nav */}
+      {/* Nav */}
       <div className="sticky top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
         <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
           <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-            <span className="inline-block h-6 w-6 rounded bg-white" />
+            <span className="inline-block h-6 w-6 rounded bg-white"></span>
             EarlyBird
           </Link>
           <div className="hidden md:flex items-center gap-6 text-sm">
             <Link href="#how" className="text-white/80 hover:text-white">How it works</Link>
             <Link href="#integrations" className="text-white/80 hover:text-white">Integrations</Link>
             <Link href="/pricing" className="text-white/80 hover:text-white">Pricing</Link>
+            <Link href="/roi" className="text-white/80 hover:text-white">ROI</Link>
             <Link href="/docs" className="text-white/80 hover:text-white">Docs</Link>
           </div>
           <div className="flex items-center gap-3">
@@ -58,6 +61,7 @@ export default function Home() {
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black">Start free</Link>
           <Link href="/pricing" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white">See pricing</Link>
+          <Link href="/roi" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white">View ROI</Link>
         </div>
 
         {/* Stats */}
@@ -95,11 +99,11 @@ export default function Home() {
           </div>
           <div className="rounded-2xl border border-white/10 p-6">
             <h3 className="font-medium">Scheduling automation</h3>
-            <p className="mt-2 text-sm text-white/70">Reads availability, books/reschedules/cancels, sends confirmations &amp; reminders.</p>
+            <p className="mt-2 text-sm text-white/70">Reads availability, books/reschedules/cancels, sends confirmations & reminders.</p>
           </div>
           <div className="rounded-2xl border border-white/10 p-6">
             <h3 className="font-medium">Owner visibility</h3>
-            <p className="mt-2 text-sm text-white/70">Dashboard with transcripts, recordings, outcomes, and cost/min margins.</p>
+            <p className="mt-2 text-sm text-white/70">Transcripts, recordings, outcomes, and clean billing.</p>
           </div>
         </div>
       </Section>
@@ -112,12 +116,12 @@ export default function Home() {
             <p className="mt-2 text-sm text-white/70">Point Twilio/Plivo/Vonage to EarlyBird. We handle PSTN/SIP and routing.</p>
           </li>
           <li className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="font-medium">Set rules &amp; knowledge</div>
+            <div className="font-medium">Set rules & knowledge</div>
             <p className="mt-2 text-sm text-white/70">Import FAQs, business hours, locations, provider mapping, and guardrails.</p>
           </li>
           <li className="rounded-2xl border border-white/10 bg-white/5 p-6">
             <div className="font-medium">Go live</div>
-            <p className="mt-2 text-sm text-white/70">EarlyBird answers calls, books appointments, and routes to humans when needed.</p>
+            <p className="mt-2 text-sm text-white/70">Answer calls, book appointments, and route to humans when needed.</p>
           </li>
         </ol>
       </Section>
@@ -138,7 +142,7 @@ export default function Home() {
           <div className="flex gap-6 text-sm">
             <Link href="/privacy" className="text-white/70 hover:text-white">Privacy</Link>
             <Link href="/terms" className="text-white/70 hover:text-white">Terms</Link>
-            <Link href="/docs" className="text-white/70 hover:text-white">Docs</Link>
+            <Link href="/roi" className="text-white/70 hover:text-white">ROI</Link>
             <Link href="/support" className="text-white/70 hover:text-white">Support</Link>
           </div>
         </div>
