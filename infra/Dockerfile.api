@@ -1,9 +1,0 @@
-FROM node:20-alpine AS runner
-WORKDIR /app
-COPY package.json pnpm-lock.yaml* pnpm-workspace.yaml ./
-COPY apps/api/package.json ./apps/api/package.json
-RUN corepack enable && pnpm i --frozen-lockfile
-
-COPY apps/api ./apps/api
-EXPOSE 4000
-CMD ["pnpm","-C","apps/api","dev"]

@@ -1,13 +1,16 @@
 {
-  "name": "earlybird-starter",
+  "name": "earlybird-monorepo",
   "private": true,
-  "packageManager": "pnpm@9",
+  "version": "1.0.1",
+  "packageManager": "pnpm@10.14.0",
   "scripts": {
-    "dev": "concurrently \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
     "build": "pnpm -C apps/api build && pnpm -C apps/web build",
-    "lint": "echo 'lint ok'"
+    "dev": "concurrently -n api,web -c yellow,cyan \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
+    "lint": "echo \"(add eslint config)\"",
+    "format": "prettier -w ."
   },
   "devDependencies": {
-    "concurrently": "^9.0.0"
+    "concurrently": "9.2.1",
+    "prettier": "3.3.3"
   }
 }
