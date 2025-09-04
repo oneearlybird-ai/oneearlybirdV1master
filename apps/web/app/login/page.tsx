@@ -1,33 +1,25 @@
-export const dynamic = 'force-dynamic';
-
-export default function Login() {
+export default function LoginPage() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-white">
-      <div className="mx-auto max-w-md px-6 py-16 md:py-24">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Log in</h1>
-        <p className="mt-2 text-white/70">
-          Demo-only form. Authentication will be wired up in a later batch.
-        </p>
-
-        <form className="mt-8 space-y-6" action="#" method="post">
+      <section className="mx-auto max-w-md px-6 py-20">
+        <h1 className="text-3xl font-semibold tracking-tight">Log in</h1>
+        <form className="mt-8 space-y-4">
           <div>
-            <label className="text-sm text-white/70">Email</label>
+            <label className="block text-sm text-white/70">Email</label>
             <input
               type="email"
+              className="mt-1 w-full rounded-md bg-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               required
-              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
             />
           </div>
-
           <div>
-            <label className="text-sm text-white/70">Password</label>
+            <label className="block text-sm text-white/70">Password</label>
             <input
               type="password"
+              className="mt-1 w-full rounded-md bg-white/10 px-3 py-2 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               required
-              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
             />
           </div>
-
           <button
             type="submit"
             className="w-full rounded-md bg-white text-black py-2 font-medium hover:bg-white/90"
@@ -35,14 +27,10 @@ export default function Login() {
             Log in
           </button>
         </form>
-
         <p className="mt-6 text-sm text-white/60">
-          New here?{" "}
-          <a href="/signup" className="underline hover:text-white">
-            Create an account
-          </a>
+          Don’t have an account? <a href="/signup" className="underline">Sign up</a>
         </p>
-      </div>
+      </section>
     </main>
   );
 }
