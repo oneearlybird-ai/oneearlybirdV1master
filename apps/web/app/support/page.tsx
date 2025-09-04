@@ -1,40 +1,59 @@
-export default function SupportPage() {
+export const dynamic = 'force-dynamic';
+
+export default function Support() {
   return (
-    <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-4xl font-semibold tracking-tight">Support</h1>
+    <main className="min-h-dvh bg-neutral-950 text-white">
+      <div className="mx-auto max-w-3xl px-6 py-16">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
+          Support
+        </h1>
         <p className="mt-4 text-white/70">
-          Need help with EarlyBird? Reach out and we’ll get you back on track.
+          Need a hand? Tell us what’s going on and we’ll get back within one business day.
         </p>
 
-        <div className="mt-12 space-y-8">
+        <form className="mt-10 grid gap-6">
           <div>
-            <h2 className="text-xl font-medium">Email Support</h2>
-            <p className="mt-2 text-white/70">
-              Send us your questions at{" "}
-              <a href="mailto:support@earlybird.ai" className="underline hover:text-white">
-                support@earlybird.ai
-              </a>
-            </p>
+            <label className="text-sm text-white/70">Your email</label>
+            <input
+              type="email"
+              required
+              placeholder="you@company.com"
+              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
+            />
           </div>
 
           <div>
-            <h2 className="text-xl font-medium">Documentation</h2>
-            <p className="mt-2 text-white/70">
-              Visit our <a href="/docs" className="underline hover:text-white">Docs</a> for setup guides and FAQs.
-            </p>
+            <label className="text-sm text-white/70">Subject</label>
+            <input
+              type="text"
+              required
+              placeholder="Brief summary"
+              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
+            />
           </div>
 
           <div>
-            <h2 className="text-xl font-medium">System Status</h2>
-            <p className="mt-2 text-white/70">
-              Check real-time uptime and incident reports at{" "}
-              <a href="https://status.earlybird.ai" className="underline hover:text-white" target="_blank">
-                status.earlybird.ai
-              </a>
-            </p>
+            <label className="text-sm text-white/70">Details</label>
+            <textarea
+              rows={6}
+              required
+              placeholder="Describe the issue or question…"
+              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
+            />
           </div>
-        </div>
+
+          <button
+            type="button"
+            className="rounded-md bg-white px-5 py-3 font-medium text-black hover:bg-white/90"
+            onClick={() => alert('Thanks! In production this will send your ticket.')}
+          >
+            Submit
+          </button>
+        </form>
+
+        <p className="mt-8 text-sm text-white/60">
+          Or email us directly: <a href="mailto:support@earlybird.ai" className="underline">support@earlybird.ai</a>
+        </p>
       </div>
     </main>
   );
