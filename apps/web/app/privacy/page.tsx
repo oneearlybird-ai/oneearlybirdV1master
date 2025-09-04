@@ -1,38 +1,42 @@
 export default function PrivacyPage() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
-      <section className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight">Privacy Policy</h1>
+      <div className="mx-auto max-w-3xl">
+        <h1 className="text-4xl font-semibold tracking-tight">Privacy Policy</h1>
         <p className="mt-4 text-white/70">
-          At EarlyBird, we value your privacy. This page outlines how we handle your data.
+          Your privacy is important to us. This policy explains how EarlyBird collects,
+          uses, and protects your data.
         </p>
 
-        <div className="mt-8 space-y-6 text-white/70">
+        <div className="mt-12 space-y-8">
           <div>
-            <h2 className="text-xl font-medium text-white">Information We Collect</h2>
-            <p>
-              We collect account details, usage data, and communication records for service delivery.
+            <h2 className="text-xl font-medium">Information We Collect</h2>
+            <p className="mt-2 text-white/70">
+              We collect basic account details, call transcripts, and usage analytics
+              to provide and improve our services.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-medium text-white">How We Use Information</h2>
-            <p>
-              Data is used to provide AI receptionist services, improve reliability, and comply with legal requirements.
+            <h2 className="text-xl font-medium">How We Use Data</h2>
+            <p className="mt-2 text-white/70">
+              Data is used to operate the EarlyBird platform, provide customer support,
+              and deliver insights into performance.
             </p>
           </div>
 
           <div>
-            <h2 className="text-xl font-medium text-white">Your Rights</h2>
-            <p>
-              You can request data export, correction, or deletion anytime by contacting{" "}
+            <h2 className="text-xl font-medium">Your Rights</h2>
+            <p className="mt-2 text-white/70">
+              You may request access, corrections, or deletion of your data at any time
+              by contacting{" "}
               <a href="mailto:privacy@earlybird.ai" className="underline hover:text-white">
                 privacy@earlybird.ai
               </a>.
             </p>
           </div>
         </div>
-      </section>
+      </div>
     </main>
   );
 }
