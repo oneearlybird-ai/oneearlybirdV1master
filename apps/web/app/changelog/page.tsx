@@ -1,26 +1,31 @@
-
 import fs from 'fs';
 import path from 'path';
-import matter from 'gray-matter';
-import Markdown from 'react-markdown';
 
-export default async function ChangelogPage() {
-  const dir = path.join(process.cwd(), 'docs/public/changelog');
-  const files = fs.readdirSync(dir).filter(f=>f.endsWith('.md')).sort().reverse();
-  const entries = files.map(fn => {
-    const src = fs.readFileSync(path.join(dir, fn), 'utf8');
-    const { data, content } = matter(src);
-    return { title: data.title ?? fn, body: content };
-  });
+export const dynamic = 'force-static';
+
+const CHANGELOG_DIR = path.join(process.cwd(), 'docs', 'public', 'changelog');
+
+function safeList(dir: string) {
+  try {
+    if (!fs.existsSync(dir)) return [];
+    return fs.readdirSync(dir).filter(f => f.endsWith('.md'));
+  } catch {
+    return [];
+  }
+}
+
+export default function ChangelogPage() {
+  const files = safeList(CHANGELOG_DIR);
   return (
-    <div className="prose max-w-3xl mx-auto p-6">
-      <h1>Changelog</h1>
-      {entries.map((e,i)=>(
-        <section key={i} className="mt-8">
-          <h2>{e.title}</h2>
-          <Markdown>{e.body}</Markdown>
-        </section>
-      ))}
-    </div>
+    <main className="max-w-3xl mx-auto py-12">
+      <h1 className="text-3xl font-semibold mb-6">Changelog</h1>
+      {files.length === 0 ? (
+        <p className="text-neutral-600">No changelog entries yet. Add markdown files to <code>apps/web/docs/public/changelog</code>.</p>
+      ) : (
+        <ul className="list-disc pl-6 space-y-2">
+          {files.map(f => <li key={f}>{f}</li>)}
+        </ul>
+      )}
+    </main>
   );
 }
