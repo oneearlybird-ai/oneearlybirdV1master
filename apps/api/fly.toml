@@ -1,0 +1,26 @@
+
+app = "earlybird-api"
+primary_region = "iad"
+
+[build]
+  dockerfile = "Dockerfile"
+
+[env]
+  NODE_ENV = "production"
+  PORT = "4000"
+
+[http_service]
+  internal_port = 4000
+  force_https = true
+  auto_stop_machines = true
+  auto_start_machines = true
+  processes = ["app"]
+
+[checks]
+  [checks.health]
+    port = 4000
+    type = "http"
+    interval = "10s"
+    timeout = "2s"
+    method = "get"
+    path = "/health"

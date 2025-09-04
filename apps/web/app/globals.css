@@ -1,0 +1,20 @@
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root{
+  --ink:#0B1220;
+  --accent:#0B5FFF;
+  --muted:#4A5568;
+  --line:#E2E8F0;
+  --surface:#FFFFFF;
+}
+@media (prefers-color-scheme: dark){
+  :root{
+    --ink:#E6E8EF;
+    --surface:#0B1220;
+    --line:#20293C;
+  }
+}
+body{color:var(--ink); background:var(--surface);}
