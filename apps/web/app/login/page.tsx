@@ -1,36 +1,30 @@
-export default function LoginPage() {
+export const dynamic = 'force-dynamic';
+
+export default function Login() {
   return (
-    <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
-      <div className="mx-auto max-w-md">
-        <h1 className="text-3xl font-semibold tracking-tight">Log in</h1>
+    <main className="min-h-dvh bg-neutral-950 text-white">
+      <div className="mx-auto max-w-md px-6 py-16 md:py-24">
+        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Log in</h1>
         <p className="mt-2 text-white/70">
-          Welcome back! Please log in to continue.
+          Demo-only form. Authentication will be wired up in a later batch.
         </p>
 
-        <form className="mt-8 space-y-6">
+        <form className="mt-8 space-y-6" action="#" method="post">
           <div>
-            <label htmlFor="email" className="block text-sm font-medium">
-              Email
-            </label>
+            <label className="text-sm text-white/70">Email</label>
             <input
               type="email"
-              id="email"
-              name="email"
               required
-              className="mt-1 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
+              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
             />
           </div>
 
           <div>
-            <label htmlFor="password" className="block text-sm font-medium">
-              Password
-            </label>
+            <label className="text-sm text-white/70">Password</label>
             <input
               type="password"
-              id="password"
-              name="password"
               required
-              className="mt-1 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
+              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white"
             />
           </div>
 
@@ -43,9 +37,9 @@ export default function LoginPage() {
         </form>
 
         <p className="mt-6 text-sm text-white/60">
-          Don’t have an account?{" "}
+          New here?{" "}
           <a href="/signup" className="underline hover:text-white">
-            Sign up
+            Create an account
           </a>
         </p>
       </div>
