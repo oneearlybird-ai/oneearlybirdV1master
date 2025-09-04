@@ -1,49 +1,36 @@
-export const metadata = {
-  title: "Docs — EarlyBird",
-  description: "How EarlyBird works and how to get set up.",
-};
+export const dynamic = 'force-static';
 
-function Section({ title, children }: { title: string; children: React.ReactNode }) {
+export default function Docs() {
   return (
-    <section className="mx-auto max-w-3xl px-6 py-8">
-      <h2 className="text-xl md:text-2xl font-semibold tracking-tight">{title}</h2>
-      <div className="prose prose-invert mt-4 text-white/80">
-        {children}
-      </div>
-    </section>
-  );
-}
-
-export default function DocsPage() {
-  return (
-    <main className="min-h-dvh bg-neutral-950 text-white">
-      <header className="mx-auto max-w-6xl px-6 pt-12 pb-4">
-        <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Documentation</h1>
-        <p className="mt-3 max-w-2xl text-white/70">
-          Learn how to connect your number, set rules & knowledge, and go live with EarlyBird.
+    <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
+      <section className="mx-auto max-w-3xl">
+        <h1 className="text-3xl font-semibold tracking-tight">Developer Docs</h1>
+        <p className="mt-4 text-white/70">
+          API references and integration guides for EarlyBird.
         </p>
-      </header>
 
-      <Section title="1) Connect your number">
-        <ul>
-          <li>Point Twilio/Plivo/Vonage webhooks to EarlyBird.</li>
-          <li>We handle SIP/PSTN, routing, and failover targets.</li>
-        </ul>
-      </Section>
+        <h2 className="mt-10 text-xl font-medium">Getting Started</h2>
+        <p className="mt-3 text-white/80">
+          Install the EarlyBird client, set up authentication, and begin routing calls through our API.
+        </p>
 
-      <Section title="2) Rules & knowledge">
-        <ul>
-          <li>Business hours, locations, provider mapping.</li>
-          <li>FAQs, escalation paths, and transfer policies.</li>
-        </ul>
-      </Section>
+        <h2 className="mt-10 text-xl font-medium">Authentication</h2>
+        <p className="mt-3 text-white/80">
+          All API requests require an API key. You can create and manage keys in the dashboard.
+        </p>
 
-      <Section title="3) Go live">
-        <ul>
-          <li>Answer calls, book appointments, route to humans when needed.</li>
-          <li>Owners see transcripts, recordings, analytics, and billing.</li>
+        <h2 className="mt-10 text-xl font-medium">Endpoints</h2>
+        <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
+          <li><code>POST /api/v1/calls</code> — create and route a new call</li>
+          <li><code>GET /api/v1/calls/:id</code> — fetch call status and transcript</li>
+          <li><code>POST /api/v1/customers</code> — create or update a customer profile</li>
         </ul>
-      </Section>
+
+        <h2 className="mt-10 text-xl font-medium">More</h2>
+        <p className="mt-3 text-white/70">
+          Visit our GitHub or contact support@earlybird.ai for advanced use cases and SDKs.
+        </p>
+      </section>
     </main>
   );
 }
