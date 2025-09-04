@@ -1,58 +1,71 @@
-export default function ROIPage() {
+import Link from "next/link";
+
+export const dynamic = 'force-static';
+
+export default function ROI() {
   return (
-    <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
-      <div className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight">ROI Calculator</h1>
-        <p className="mt-3 text-white/70">
-          A quick back-of-the-napkin view of savings from answering every call,
-          booking faster, and deflecting routine questions.
+    <main className="min-h-dvh bg-neutral-950 text-white">
+      <section className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+        <h1 className="text-4xl md:text-5xl font-semibold tracking-tight">
+          ROI Calculator
+        </h1>
+        <p className="mt-4 max-w-2xl text-white/70">
+          Estimate savings from deflecting routine calls and booking more appointments.
+          This static preview shows assumptions; the interactive version will ship later.
         </p>
 
-        <div className="mt-10 grid gap-4 sm:grid-cols-3">
+        {/* Assumptions grid (static) */}
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="text-3xl font-semibold">99.9%</div>
-            <div className="mt-1 text-white/70">answer rate</div>
+            <div className="text-sm text-white/60">Avg calls / month</div>
+            <div className="mt-2 text-3xl font-semibold">1,200</div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="text-3xl font-semibold">~35s</div>
-            <div className="mt-1 text-white/70">to book</div>
+            <div className="text-sm text-white/60">Self-serve deflection</div>
+            <div className="mt-2 text-3xl font-semibold">70%</div>
           </div>
           <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="text-3xl font-semibold">60–85%</div>
-            <div className="mt-1 text-white/70">self-serve deflection</div>
+            <div className="text-sm text-white/60">Bookings uplift</div>
+            <div className="mt-2 text-3xl font-semibold">+18%</div>
           </div>
         </div>
 
-        <form className="mt-10 grid gap-6">
-          <div>
-            <label className="text-sm text-white/70">Monthly inbound calls</label>
-            <input type="number" placeholder="e.g. 1200"
-              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white" />
+        {/* Result card (static) */}
+        <div className="mt-10 grid gap-4 md:grid-cols-3">
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-white/60">Staff time saved</div>
+            <div className="mt-2 text-3xl font-semibold">~85 hrs/mo</div>
           </div>
-          <div>
-            <label className="text-sm text-white/70">Close rate from answered calls</label>
-            <input type="number" placeholder="e.g. 25"
-              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white" />
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-white/60">Bookings added</div>
+            <div className="mt-2 text-3xl font-semibold">~90/mo</div>
           </div>
-          <div>
-            <label className="text-sm text-white/70">Avg. revenue per booking ($)</label>
-            <input type="number" placeholder="e.g. 90"
-              className="mt-2 w-full rounded-md border border-white/20 bg-neutral-900 px-3 py-2 text-white" />
+          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="text-sm text-white/60">Est. net ROI</div>
+            <div className="mt-2 text-3xl font-semibold">$8.4k+/mo</div>
           </div>
+        </div>
 
-          <button
-            type="button"
-            className="rounded-md bg-white px-5 py-3 font-medium text-black hover:bg-white/90"
-            onClick={() => alert('This is a static demo. The interactive calculator will wire up later.')}
+        {/* CTA as a regular link — no onClick */}
+        <div className="mt-10 flex gap-3">
+          <Link
+            href="/pricing"
+            className="rounded-xl bg-white px-5 py-3 font-medium text-black"
           >
-            Calculate
-          </button>
-        </form>
+            See Pricing
+          </Link>
+          <Link
+            href="/support"
+            className="rounded-xl border border-white/20 px-5 py-3 font-medium text-white/80 hover:text-white"
+          >
+            Talk to Sales
+          </Link>
+        </div>
 
-        <p className="mt-8 text-sm text-white/60">
-          Numbers above are illustrative and depend on your industry and call mix.
+        <p className="mt-6 text-sm text-white/60">
+          Detailed, interactive inputs (AHT, conversion, staffing costs) will be enabled in the client version.
         </p>
-      </div>
+      </section>
     </main>
   );
 }
