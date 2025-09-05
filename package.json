@@ -2,9 +2,9 @@
   "name": "earlybird-monorepo",
   "private": true,
   "version": "1.0.1",
-  "packageManager": "pnpm@10.14.0",
+  "packageManager": "npm@10",
   "scripts": {
-    "build": "pnpm -C apps/api build && pnpm -C apps/web build",
+    "build": "npm --prefix apps/web run build",
     "dev": "concurrently -n api,web -c yellow,cyan \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
     "lint": "echo \"(add eslint config)\"",
     "format": "prettier -w .",
