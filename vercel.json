@@ -1,5 +1,0 @@
-{
-  "redirects": [
-    { "source": "/:path*", "destination": "https://oneearlybird.ai/:path*", "permanent": true }
-  ]
-}
