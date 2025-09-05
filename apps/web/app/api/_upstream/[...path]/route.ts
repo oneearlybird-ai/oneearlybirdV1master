@@ -1,5 +1,3 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 import { NextResponse } from 'next/server';
 
 const UPSTREAM = process.env.API_UPSTREAM?.replace(/\/+$/, '');
@@ -30,6 +28,7 @@ async function handle(req: Request, ctx: { params: { path: string[] } }) {
   };
 
   const resp = await fetch(target, init);
+
   const forwardedHeaders = new Headers(resp.headers);
   forwardedHeaders.delete('set-cookie');
 
