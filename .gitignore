@@ -10,3 +10,4 @@ node_modules/
 .vercel
 .env*.local
 .env.local
+apps/web/.env.local

@@ -1,39 +1,61 @@
 'use client';
-import React, { useEffect, useState } from 'react';
-import { apiFetch } from '../../lib/http';
+
+import { useEffect, useState } from 'react';
+
+type Check = { name: string; url: string; ok: boolean; status: number; body?: any; error?: string };
 
 export default function StatusPage() {
-  const [state, setState] = useState<{ ok: boolean; ms?: number; error?: string }>({
-    ok: false,
-  });
+  const [checks, setChecks] = useState<Check[]>([]);
+  const targets = [
+    { name: 'Ping (vercel)', url: '/api/ping' },
+    { name: 'Upstream health (proxy)', url: '/api/upstream/health' },
+  ];
 
   useEffect(() => {
-    const t0 = performance.now();
-    apiFetch<{ ok: boolean }>('/health')
-      .then((r) => setState({ ok: !!r.ok, ms: Math.round(performance.now() - t0) }))
-      .catch((e) => setState({ ok: false, error: e?.message || 'error' }));
+    let cancelled = false;
+    (async () => {
+      const results: Check[] = [];
+      for (const t of targets) {
+        try {
+          const res = await fetch(t.url, { cache: 'no-store' });
+          const ct = res.headers.get('content-type') || '';
+          const body = ct.includes('application/json') ? await res.json().catch(() => ({})) : await res.text();
+          results.push({ name: t.name, url: t.url, ok: res.ok, status: res.status, body });
+        } catch (e: any) {
+          results.push({ name: t.name, url: t.url, ok: false, status: 0, error: e?.message || String(e) });
+        }
+      }
+      if (!cancelled) setChecks(results);
+    })();
+    return () => { cancelled = true; };
   }, []);
 
   return (
-    <main className="mx-auto max-w-xl px-6 py-24">
-      <h1 className="text-2xl font-semibold tracking-tight">System Status</h1>
-      <div className="mt-6 rounded-2xl border border-white/10 p-6">
-        <div className="flex items-center gap-3">
-          <span
-            className={`inline-block h-3 w-3 rounded-full ${
-              state.ok ? 'bg-green-500' : state.error ? 'bg-red-500' : 'bg-yellow-500'
-            }`}
-          />
-          <span className="text-white/80">
-            API {state.ok ? 'OK' : state.error ? 'ERROR' : 'Checking…'}
-            {typeof state.ms === 'number' ? ` (${state.ms} ms)` : ''}
-            {state.error ? ` – ${state.error}` : ''}
-          </span>
+    <main className="min-h-dvh bg-neutral-950 text-white">
+      <section className="mx-auto max-w-3xl px-6 py-16">
+        <h1 className="text-3xl font-semibold tracking-tight">System Status</h1>
+        <p className="mt-2 text-white/70">Client-side checks for API reachability.</p>
+        <div className="mt-6 space-y-4">
+          {checks.map((c, i) => (
+            <div key={i} className="rounded-xl border border-white/10 p-4 bg-white/5">
+              <div className="flex items-center justify-between">
+                <div className="font-medium">{c.name}</div>
+                <span className={`text-sm ${c.ok ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {c.ok ? 'OK' : 'FAIL'}
+                </span>
+              </div>
+              <div className="mt-2 text-sm text-white/70">URL: <code>{c.url}</code></div>
+              <div className="mt-1 text-sm text-white/70">Status: {c.status}</div>
+              {c.body ? (
+                <pre className="mt-3 overflow-auto rounded-lg bg-black/50 p-3 text-xs">{JSON.stringify(c.body, null, 2)}</pre>
+              ) : null}
+              {c.error ? (
+                <div className="mt-3 text-xs text-red-400">Error: {c.error}</div>
+              ) : null}
+            </div>
+          ))}
         </div>
-      </div>
-      <p className="mt-4 text-white/60 text-sm">
-        This page calls <code>/api/upstream/health</code> via the proxy.
-      </p>
+      </section>
     </main>
   );
 }
