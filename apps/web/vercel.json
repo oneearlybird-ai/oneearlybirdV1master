@@ -2,13 +2,19 @@
   "redirects": [
     {
       "source": "/:path*",
+      "has": [{ "type": "host", "value": "oneearlybird.com" }],
+      "destination": "https://oneearlybird.ai/:path*",
+      "permanent": true
+    },
     {
       "source": "/:path*",
       "has": [{ "type": "host", "value": "www.oneearlybird.com" }],
       "destination": "https://oneearlybird.ai/:path*",
       "permanent": true
     },
-      "has": [{ "type": "host", "value": "oneearlybird.com" }],
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.oneearlybird.ai" }],
       "destination": "https://oneearlybird.ai/:path*",
       "permanent": true
     }
