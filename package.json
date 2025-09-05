@@ -7,7 +7,8 @@
     "build": "pnpm -C apps/api build && pnpm -C apps/web build",
     "dev": "concurrently -n api,web -c yellow,cyan \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
     "lint": "echo \"(add eslint config)\"",
-    "format": "prettier -w ."
+    "format": "prettier -w .",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
     "concurrently": "9.2.1",
