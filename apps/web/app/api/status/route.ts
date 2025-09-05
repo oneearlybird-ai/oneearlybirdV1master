@@ -1,15 +1,13 @@
 import { NextResponse } from 'next/server';
 
-export const dynamic = 'force-dynamic';
-
 const UPSTREAM = process.env.API_UPSTREAM?.replace(/\/+$/, '');
 
 export async function GET(req: Request) {
-  const checks: Array<{ name: string; url: string; ok: boolean; status: number; error?: string }> = [];
+  const checks: any[] = [];
 
   if (!UPSTREAM) {
     return NextResponse.json(
-      { ok: false, error: 'API_UPSTREAM not configured', checks: [] },
+      { ok: false, error: 'API_UPSTREAM not configured' },
       { status: 503 },
     );
   }
