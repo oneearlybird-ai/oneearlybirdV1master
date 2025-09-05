@@ -2,6 +2,12 @@
   "redirects": [
     {
       "source": "/:path*",
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.oneearlybird.com" }],
+      "destination": "https://oneearlybird.ai/:path*",
+      "permanent": true
+    },
       "has": [{ "type": "host", "value": "oneearlybird.com" }],
       "destination": "https://oneearlybird.ai/:path*",
       "permanent": true
