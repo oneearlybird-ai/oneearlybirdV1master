@@ -1,45 +1,45 @@
 import { NextResponse, type NextRequest } from 'next/server';
 
-// Apply basic security headers to all HTML/document requests.
-// Static assets are left alone for perf/CDN compatibility.
+// Security headers applied to all routes (edge)
 export function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  // Only add to document navigations or SSR HTML
-  const accept = req.headers.get('accept') || '';
-  const isHTML = accept.includes('text/html') || accept.includes('*/*');
+  // Content-Security-Policy in Report-Only first to avoid breakage; we will enforce after verification.
+  // Adjust endpoints / domains as needed if you add analytics, fonts, etc.
+  const csp = [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "form-action 'self'",
+    "frame-ancestors 'none'",
+    "object-src 'none'",
+    "img-src 'self' data: blob:",
+    "script-src 'self' 'strict-dynamic' 'unsafe-inline'",
+    "style-src 'self' 'unsafe-inline'",
+    "connect-src 'self' https://earlybird-api.fly.dev https://*.vercel.app",
+    "font-src 'self' data:",
+    "upgrade-insecure-requests"
+  ].join('; ');
 
-  if (isHTML) {
-    res.headers.set('x-content-type-options', 'nosniff');
-    res.headers.set('x-frame-options', 'SAMEORIGIN');
-    res.headers.set('referrer-policy', 'strict-origin-when-cross-origin');
-    res.headers.set('permissions-policy', [
-      "camera=()",
-      "microphone=()",
-      "geolocation=()",
-      "interest-cohort=()",
-    ].join(', '));
-
-    // A minimal CSP that still allows Next.js app-router, inline next-data, and same-origin assets.
-    // We can tighten this further once we inventory third-party scripts.
-    const csp = [
-      "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
-      "style-src 'self' 'unsafe-inline'",
-      "img-src 'self' data: blob:",
-      "font-src 'self' data:",
-      "connect-src 'self' https:",
-      "frame-ancestors 'self'",
-      "base-uri 'self'",
-      "form-action 'self'",
-    ].join('; ');
-    res.headers.set('content-security-policy', csp);
-  }
+  res.headers.set('Content-Security-Policy-Report-Only', csp);
+  res.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+  res.headers.set('X-Content-Type-Options', 'nosniff');
+  res.headers.set('X-Frame-Options', 'DENY');
+  res.headers.set('X-DNS-Prefetch-Control', 'off');
+  res.headers.set('Permissions-Policy', [
+    'accelerometer=()',
+    'autoplay=()',
+    'camera=()',
+    'display-capture=()',
+    'fullscreen=()',
+    'geolocation=()',
+    'gyroscope=()',
+    'microphone=()',
+    'payment=()',
+    'usb=()'
+  ].join(', '));
 
   return res;
 }
 
-export const config = {
-  // Run on all routes; Next will skip static asset files automatically.
-  matcher: ['/((?!_next|.*\\..*).*)'],
-};
+// Exclude static assets and Next internals if desired; leaving broad for now.
+// export const config = { matcher: '/:path*' };
