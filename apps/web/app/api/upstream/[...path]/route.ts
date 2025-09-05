@@ -1,12 +1,10 @@
 import { NextResponse } from 'next/server';
-
 const UPSTREAM = process.env.API_UPSTREAM?.replace(/\/+$/, '');
 
 async function handle(req: Request, ctx: { params: { path?: string[] } }) {
   if (!UPSTREAM) {
     return NextResponse.json({ ok: false, error: 'API_UPSTREAM not configured' }, { status: 503 });
   }
-
   const url = new URL(req.url);
   const subpath = (ctx.params.path ?? []).join('/');
   const target = `${UPSTREAM}/${subpath}${url.search}`;
