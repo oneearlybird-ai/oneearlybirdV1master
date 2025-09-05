@@ -1,26 +1,35 @@
+# fly.toml app configuration file generated for earlybird-api on 2025-09-04T20:24:10-04:00
+#
+# See https://fly.io/docs/reference/configuration/ for information about how to use this file.
+#
 
-app = "earlybird-api"
-primary_region = "iad"
+app = 'earlybird-api'
+primary_region = 'iad'
 
 [build]
-  dockerfile = "Dockerfile"
+  dockerfile = 'Dockerfile'
 
 [env]
-  NODE_ENV = "production"
-  PORT = "4000"
+  NODE_ENV = 'production'
+  PORT = '4000'
 
 [http_service]
   internal_port = 4000
   force_https = true
-  auto_stop_machines = true
+  auto_stop_machines = 'stop'
   auto_start_machines = true
-  processes = ["app"]
+  processes = ['app']
 
 [checks]
   [checks.health]
     port = 4000
-    type = "http"
-    interval = "10s"
-    timeout = "2s"
-    method = "get"
-    path = "/health"
+    type = 'http'
+    interval = '10s'
+    timeout = '2s'
+    method = 'get'
+    path = '/health'
+
+[[vm]]
+  memory = '1gb'
+  cpu_kind = 'shared'
+  cpus = 1
