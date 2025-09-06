@@ -1,20 +1,15 @@
+import { NextResponse } from "next/server";
+import { appendAudit, makeAuditEvent } from "@/lib/audit";
+
 export const runtime = "edge";
-import { appendAudit } from "@/lib/audit";
 
-export async function POST(req: Request) {
-  const reqId = (req.headers.get("x-request-id") || "").toString();
-  const now = Date.now();
-  const res = await appendAudit({
-    requestId: reqId || "unknown",
-    action: "audit.test",
-    status: 200,
-    actor: undefined,
-    meta: { ts: now, note: "edge audit test" },
-    at: now,
-  });
+export async function POST() {
+  const now = new Date().toISOString();
+  const ev = makeAuditEvent("audit.test", { note: "edge audit test" });
+  ev.actor = undefined;
+  ev.details = { ...(ev.details || {}), ts: now, status: 200 };
+  ev.at = now;
 
-  return new Response(JSON.stringify({ ok: true, sink: res.mode, signature: res.signature }), {
-    status: 200,
-    headers: { "content-type": "application/json" },
-  });
+  const res = await appendAudit(ev);
+  return NextResponse.json({ ok: true, sinkOk: res.ok, status: res.status ?? 0 });
 }
