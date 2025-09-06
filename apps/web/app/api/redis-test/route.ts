@@ -14,7 +14,7 @@ export async function GET() {
 
   if (isUnset(url) || isUnset(token)) {
     return NextResponse.json({ ok: false, error: "not configured" }, { status: 404 });
-  }
+    }
 
   const { Redis } = await import("@upstash/redis");
   const redis = new Redis({ url: String(url), token: String(token) });
