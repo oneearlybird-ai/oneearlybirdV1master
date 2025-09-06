@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { assertStripeMetadataPHIZero } from "../../../lib/stripeGuard";
+import { assertStripeMetadataPHIZero } from "@/lib/stripeGuard";
 export const runtime = "edge";
 export async function POST(req: NextRequest) {
   try {
