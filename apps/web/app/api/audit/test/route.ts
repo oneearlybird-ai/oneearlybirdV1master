@@ -8,7 +8,7 @@ export async function POST(req: Request) {
     requestId: reqId || "unknown",
     action: "audit.test",
     status: 200,
-    actor: null,
+    actor: undefined,
     meta: { ts: now, note: "edge audit test" },
     at: now,
   });
