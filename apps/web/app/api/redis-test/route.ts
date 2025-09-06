@@ -1,15 +1,20 @@
+import { NextResponse } from "next/server";
+
 export const runtime = "edge";
 
 export async function GET() {
-  if (process.env.NODE_ENV === "production") {
-    return new Response("Not Found", { status: 404 });
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+  // In public zone builds, Upstash is optional. If not configured, hide the route.
+  if (!url || !token) {
+    return NextResponse.json({ ok: false, error: "not configured" }, { status: 404 });
   }
-  try {
-    const { Redis } = await import("@upstash/redis");
-    const redis = Redis.fromEnv();
-    await redis.ping();
-    return new Response("OK", { status: 200 });
-  } catch {
-    return new Response("Upstash error", { status: 500 });
-  }
+
+  // Lazy import to avoid build-time warnings
+  const { Redis } = await import("@upstash/redis");
+  const redis = new Redis({ url, token });
+
+  const pong = await redis.ping();
+  return NextResponse.json({ ok: true, pong });
 }
