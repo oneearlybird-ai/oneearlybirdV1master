@@ -19,3 +19,5 @@ apps/.DS_Store
 apps/api/.DS_Store
 apps/web/.DS_Store
 .audit/
+infra/terraform/**/.terraform/
+infra/terraform/**/.terraform.lock.hcl
