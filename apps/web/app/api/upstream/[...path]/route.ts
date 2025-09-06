@@ -21,7 +21,7 @@ async function handle(req: NextRequest, method: string, params: { path?: string[
   const init: RequestInit = { method, headers: fwdHeaders, cache: "no-store" };
   if (method !== "GET" && method !== "HEAD") {
     init.body = req.body as any;
-    init.duplex = "half" as any;
+
   }
 
   const upstream = await fetch(url, init);
