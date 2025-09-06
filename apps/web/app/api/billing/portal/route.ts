@@ -29,18 +29,16 @@ export async function POST(req: NextRequest) {
   const stripe = new Stripe(secret, { apiVersion: "2024-06-20" as Stripe.LatestApiVersion });
 
   try {
-    // Pre-verify to catch account/mode mismatch with clear error
     await stripe.customers.retrieve(customerId);
-
     const session = await stripe.billingPortal.sessions.create({
       customer: customerId,
       return_url: `${returnUrl}/dashboard/billing`,
     });
-
     return NextResponse.json({ ok: true, url: session.url });
-  } catch (e: any) {
-    const code = e?.code || e?.type || "stripe_error";
-    const status = typeof e?.statusCode === "number" ? e.statusCode : 400;
+  } catch (e: unknown) {
+    const err = e as { code?: string; type?: string; statusCode?: number; message?: string };
+    const code = err?.code || err?.type || "stripe_error";
+    const status = typeof err?.statusCode === "number" ? err.statusCode : 400;
     return NextResponse.json(
       { ok: false, error: "stripe_error", code, hint: "check test key, account/mode, and cus_ exists in same account" },
       { status }
