@@ -15,5 +15,8 @@
     "concurrently": "9.2.1",
     "prettier": "3.3.3",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "@upstash/redis": "^1.35.3"
   }
 }
