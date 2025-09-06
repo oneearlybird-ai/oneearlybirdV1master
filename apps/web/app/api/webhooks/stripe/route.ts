@@ -1,7 +1,19 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { assertStripeMetadataPHIZero } from "@/lib/stripeGuard";
+
 export const runtime = "nodejs";
+
+function extractMetadata(obj: unknown): Record<string, unknown> {
+  if (!obj || typeof obj !== "object") return {};
+  // Stripe objects place metadata at top-level as a map
+  // We avoid casting to a wide union; do a guarded lookup.
+  const maybe = obj as { metadata?: unknown };
+  if (maybe && typeof maybe.metadata === "object" && maybe.metadata !== null) {
+    return maybe.metadata as Record<string, unknown>;
+  }
+  return {};
+}
 
 export async function POST(req: NextRequest): Promise<Response> {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
@@ -10,7 +22,10 @@ export async function POST(req: NextRequest): Promise<Response> {
   const sig = req.headers.get("stripe-signature");
   if (!sig) return NextResponse.json({ ok: false, error: "missing signature" }, { status: 400 });
 
-  const stripe = new Stripe(process.env.STRIPE_API_KEY || "sk_test_placeholder", { apiVersion: "2024-06-20" as Stripe.LatestApiVersion });
+  const stripe = new Stripe(process.env.STRIPE_API_KEY || "sk_test_placeholder", {
+    apiVersion: "2024-06-20" as Stripe.LatestApiVersion,
+  });
+
   const raw = await req.text();
 
   let event: Stripe.Event;
@@ -20,9 +35,12 @@ export async function POST(req: NextRequest): Promise<Response> {
     return NextResponse.json({ ok: false, error: "invalid signature" }, { status: 400 });
   }
 
-  const obj = (event.data?.object ?? {}) as Record<string, unknown>;
-  const meta = (obj as { metadata?: Record<string, unknown> }).metadata ?? {};
-  try { assertStripeMetadataPHIZero(meta); } catch { return NextResponse.json({ ok: false, error: "phi metadata blocked" }, { status: 400 }); }
+  const meta = extractMetadata(event.data?.object as unknown);
+  try {
+    assertStripeMetadataPHIZero(meta);
+  } catch {
+    return NextResponse.json({ ok: false, error: "phi metadata blocked" }, { status: 400 });
+  }
 
   return NextResponse.json({ ok: true, id: event.id, type: event.type });
 }
