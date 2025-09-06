@@ -1,137 +1,143 @@
-import { Redis } from "@upstash/redis";
+import { Redis } from '@upstash/redis';
 
-type WindowOpts = {
-  windowMs: number; // e.g., 60_000
-  limit: number;    // e.g., 60
-  prefix?: string;  // key namespace
+// ---------- Types ----------
+export type WindowOpts = {
+  windowSeconds?: number;   // sliding window length
+  max?: number;             // allowed requests within window
+  blockForSeconds?: number; // optional hard block when exceeded
+  strategy?: 'sliding' | 'fixed';
 };
 
-type CheckResult = {
-  allowed: boolean;
-  remaining: number;
+type Preset = 'strict' | 'lenient';
+
+export type RateLimitResult = {
+  limited: boolean;
   limit: number;
-  reset: number; // epoch seconds when window resets
-  headers: Record<string, string>;
+  remaining: number;
+  reset: number; // unix seconds
 };
 
-/**
- * Lazily create a single Upstash client for the process.
- * Uses REST URL + TOKEN provided by Vercel env.
- * Returns undefined if env not configured or constructor fails, so we can fall back.
- */
-let redisSingleton: Redis | undefined;
-function getRedis(): Redis | undefined {
-  if (redisSingleton) return redisSingleton;
-  const url = process.env.UPSTASH_REDIS_REST_URL;
-  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-  if (!url || !token) return undefined;
-  try {
-    redisSingleton = new Redis({ url, token });
-    return redisSingleton;
-  } catch {
-    return undefined;
-  }
+// ---------- Env / Redis ----------
+const REST_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REST_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+let redis: Redis | null = null;
+if (REST_URL && REST_TOKEN) {
+  redis = new Redis({ url: REST_URL, token: REST_TOKEN });
 }
 
-/**
- * In-memory fallback fixed-window buckets (per server instance).
- * Acceptable as a safety net; not distributed.
- */
-const memBuckets = new Map<string, { count: number; resetAtMs: number }>();
+// Fallback in-memory limiter for local/dev and build-time safety.
+// NOTE: process memory only — not for multi-instance prod.
+const memory = new Map<string, { count: number; reset: number }>();
 
-async function checkWithRedis(key: string, o: WindowOpts): Promise<{ count: number; resetMs: number }> {
-  const r = getRedis();
-  if (!r) throw new Error("redis-not-configured");
-
-  const now = Date.now();
-  const windowStart = Math.floor(now / o.windowMs) * o.windowMs; // align windows
-  const resetAtMs = windowStart + o.windowMs;
-  const namespacedKey = `${o.prefix ?? "rl"}:${key}:${windowStart}`;
-
-  // INCR and set TTL atomically enough for our use (REST is single op each)
-  const count = (await r.incr(namespacedKey)) as number;
-  if (count === 1) {
-    // first hit in window, set expiry slightly beyond window end to tolerate latency
-    const ttlSec = Math.ceil((o.windowMs + 1000) / 1000);
-    await r.expire(namespacedKey, ttlSec);
+// ---------- Presets & Normalize ----------
+function presetToOpts(preset: Preset): Required<WindowOpts> {
+  if (preset === 'strict') {
+    return { windowSeconds: 60, max: 60, blockForSeconds: 300, strategy: 'sliding' };
   }
-  return { count, resetMs: resetAtMs - now };
+  // lenient default
+  return { windowSeconds: 60, max: 120, blockForSeconds: 60, strategy: 'sliding' };
 }
 
-function checkWithMemory(key: string, o: WindowOpts): { count: number; resetMs: number } {
-  const now = Date.now();
-  const bucket = memBuckets.get(key);
-  if (!bucket || now >= bucket.resetAtMs) {
-    const resetAtMs = now + o.windowMs;
-    memBuckets.set(key, { count: 1, resetAtMs });
-    return { count: 1, resetMs: resetAtMs - now };
-  }
-  bucket.count += 1;
-  return { count: bucket.count, resetMs: bucket.resetAtMs - now };
-}
-
-/**
- * Public: checkRateLimit
- * - Returns allow/deny + standardized headers (safe for exposure)
- */
-export async function checkRateLimit(key: string, o: WindowOpts): Promise<CheckResult> {
-  const nowMs = Date.now();
-  let count = 0;
-  let resetMs = o.windowMs;
-
-  try {
-    const t = await checkWithRedis(key, o);
-    count = t.count;
-    resetMs = t.resetMs;
-  } catch {
-    const t = checkWithMemory(key, o);
-    count = t.count;
-    resetMs = t.resetMs;
-  }
-
-  const allowed = count <= o.limit;
-  const remaining = Math.max(0, o.limit - count);
-  const reset = Math.floor((nowMs + resetMs) / 1000);
-
+function normalizeOpts(opts?: WindowOpts | Preset): Required<WindowOpts> {
+  if (!opts) return presetToOpts('lenient');
+  if (typeof opts === 'string') return presetToOpts(opts);
   return {
-    allowed,
-    remaining,
-    limit: o.limit,
-    reset,
-    headers: rateLimitHeaders({ limit: o.limit, remaining, reset }),
+    windowSeconds: opts.windowSeconds ?? 60,
+    max: opts.max ?? 120,
+    blockForSeconds: opts.blockForSeconds ?? 60,
+    strategy: opts.strategy ?? 'sliding',
   };
 }
 
-/**
- * Public: rateLimitHeaders
- * - Only standard, non-sensitive headers.
- */
+// ---------- Public helpers ----------
 export function rateLimitHeaders(d: { limit: number; remaining: number; reset: number }): Record<string, string> {
   const h: Record<string, string> = {
-    "x-ratelimit-limit": String(d.limit),
-    "x-ratelimit-remaining": String(d.remaining),
-    "x-ratelimit-reset": String(d.reset),
+    'x-ratelimit-limit': String(d.limit),
+    'x-ratelimit-remaining': String(d.remaining),
+    'x-ratelimit-reset': String(d.reset),
   };
   if (d.remaining <= 0) {
     const now = Math.floor(Date.now() / 1000);
     const retry = Math.max(0, d.reset - now);
-    h["retry-after"] = String(retry);
+    h['retry-after'] = String(retry);
   }
   return h;
 }
 
-/**
- * Public: clientIdFromHeaders
- * - Derives a coarse, semi-stable identifier from IP + UA.
- * - Safe to expose; do not include secrets.
- */
 export function clientIdFromHeaders(h: Headers) {
-  const xf = h.get("x-forwarded-for") || "";
-  const ip =
-    xf.split(",")[0].trim() ||
-    h.get("x-real-ip") ||
-    h.get("cf-connecting-ip") ||
-    "anon";
-  const ua = h.get("user-agent") || "ua";
+  const xf = h.get('x-forwarded-for') || '';
+  const ip = xf.split(',')[0].trim() || h.get('x-real-ip') || h.get('cf-connecting-ip') || 'anon';
+  const ua = h.get('user-agent') || 'ua';
   return `${ip}:${ua.slice(0, 64)}`;
+}
+
+// ---------- Core limiter ----------
+export async function checkRateLimit(key: string, opts?: WindowOpts | Preset): Promise<RateLimitResult> {
+  const cfg = normalizeOpts(opts);
+  const nowMs = Date.now();
+  const nowSec = Math.floor(nowMs / 1000);
+
+  // Hard block key (when exceeded) — independent of counters
+  const blockKey = `rl:block:${key}`;
+
+  if (redis) {
+    // Check hard block
+    const blockedTtl = await redis.ttl(blockKey);
+    if (blockedTtl && blockedTtl > 0) {
+      return {
+        limited: true,
+        limit: cfg.max,
+        remaining: 0,
+        reset: nowSec + blockedTtl,
+      };
+    }
+
+    const windowKey = `rl:win:${cfg.strategy}:${cfg.windowSeconds}:${key}`;
+    // Use a simple fixed window counter. Sliding can be emulated, but fixed is predictable.
+    // INCR and set EXPIRE atomically with Lua for stronger guarantees; here keep it simple.
+    const count = await redis.incr(windowKey);
+    if (count === 1) {
+      await redis.expire(windowKey, cfg.windowSeconds);
+    }
+    const ttl = (await redis.ttl(windowKey)) ?? cfg.windowSeconds;
+    const remaining = Math.max(0, cfg.max - count);
+    const limited = count > cfg.max;
+
+    if (limited && cfg.blockForSeconds > 0) {
+      // Set block; client will be limited until block TTL passes
+      await redis.set(blockKey, '1', { ex: cfg.blockForSeconds });
+      return {
+        limited: true,
+        limit: cfg.max,
+        remaining: 0,
+        reset: nowSec + cfg.blockForSeconds,
+      };
+    }
+
+    return {
+      limited,
+      limit: cfg.max,
+      remaining,
+      reset: nowSec + (ttl > 0 ? ttl : cfg.windowSeconds),
+    };
+  }
+
+  // In-memory fallback (dev only)
+  const memKey = `mem:${cfg.windowSeconds}:${key}`;
+  const rec = memory.get(memKey);
+  if (!rec || rec.reset <= nowSec) {
+    memory.set(memKey, { count: 1, reset: nowSec + cfg.windowSeconds });
+    return { limited: false, limit: cfg.max, remaining: cfg.max - 1, reset: nowSec + cfg.windowSeconds };
+  } else {
+    rec.count += 1;
+    const limited = rec.count > cfg.max;
+    if (limited && cfg.blockForSeconds > 0) {
+      // emulate block by extending reset
+      rec.reset = nowSec + cfg.blockForSeconds;
+      rec.count = cfg.max + 1;
+      return { limited: true, limit: cfg.max, remaining: 0, reset: rec.reset };
+    }
+    return { limited, limit: cfg.max, remaining: Math.max(0, cfg.max - rec.count), reset: rec.reset };
+  }
 }
