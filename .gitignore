@@ -13,3 +13,4 @@ node_modules/
 apps/web/.env.local
 .env.local
 .env.development.local
+.env.local.bak
