@@ -5,34 +5,43 @@ import { guardUpstream } from "@/lib/ratelimit";
 const UPSTREAM = (process.env.API_UPSTREAM || "").replace(/\/+$/, "");
 const PING_PATH = process.env.API_UPSTREAM_PING_PATH || "/health";
 
-async function handle(req: NextRequest, method: string, params: { path?: string[] }) {
-  const guard = await guardUpstream(req);
-  if (!guard.ok) {
-    return new NextResponse(JSON.stringify({ error: "Too Many Requests" }), { status: 429, headers: guard.headers });
-  }
+export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
+  return proxy(req, params);
+}
+export async function POST(req: NextRequest, { params }: { params: { path: string[] } }) { return proxy(req, params); }
+export async function PUT(req: NextRequest, { params }: { params: { path: string[] } }) { return proxy(req, params); }
+export async function PATCH(req: NextRequest, { params }: { params: { path: string[] } }) { return proxy(req, params); }
+export async function DELETE(req: NextRequest, { params }: { params: { path: string[] } }) { return proxy(req, params); }
 
-  const segs = params?.path?.length ? `/${params.path.join("/")}` : PING_PATH;
-  const mapped = segs === "/ping" ? "/health" : segs;
-  const url = `${UPSTREAM}${mapped}`;
+async function proxy(req: NextRequest, { path }: { path: string[] }) {
+  if (!UPSTREAM) return NextResponse.json({ ok: false, error: "unconfigured" }, { status: 500 });
 
-  const fwdHeaders = new Headers(req.headers);
-  fwdHeaders.delete("cookie");
-  const host = req.headers.get("host");
-  if (host) fwdHeaders.set("x-forwarded-host", host);
+  const { ok: allowed, headers } = await guardUpstream(req);
+  if (!allowed) return new NextResponse("Too Many Requests", { status: 429, headers });
 
-  const init: RequestInit = { method, headers: fwdHeaders, cache: "no-store" };
+  const pathname = "/" + (path?.join("/") || "");
+  const url = new URL(UPSTREAM + pathname);
+  url.search = new URL(req.url).search;
+
+  const method = req.method.toUpperCase();
+  const init: RequestInit = {
+    method,
+    headers: stripHopByHop(req.headers),
+    cache: "no-store",
+    redirect: "manual",
+  };
   if (method !== "GET" && method !== "HEAD") {
-    init.body = req.body as any;
+    // @ts-expect-error body is a ReadableStream<Uint8Array> in Edge; that's OK for fetch()
+    init.body = req.body;
   }
-
-  const upstream = await fetch(url, init);
-  const outHeaders = new Headers(upstream.headers);
-  guard.headers.forEach((v, k) => outHeaders.set(k, v));
-  return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
+  const upstream = await fetch(url.toString(), init);
+  const respHeaders = new Headers(upstream.headers);
+  respHeaders.delete("transfer-encoding");
+  return new NextResponse(upstream.body, { status: upstream.status, headers: respHeaders });
 }
 
-export async function GET(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "GET", ctx.params); }
-export async function POST(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "POST", ctx.params); }
-export async function PUT(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "PUT", ctx.params); }
-export async function PATCH(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "PATCH", ctx.params); }
-export async function DELETE(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "DELETE", ctx.params); }
+function stripHopByHop(h: Headers): Headers {
+  const out = new Headers(h);
+  ["connection","keep-alive","proxy-authenticate","proxy-authorization","te","trailer","transfer-encoding","upgrade"].forEach(k=>out.delete(k));
+  return out;
+}
