@@ -1,35 +1,55 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
+
+type Ctx = { params: { path?: string[] } };
 
 const UPSTREAM = process.env.API_UPSTREAM?.replace(/\/+$/, '');
 
-export async function GET(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function POST(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function PUT(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function PATCH(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function DELETE(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
+function joinPath(p?: string[] | string): string {
+  if (!p) return '';
+  if (Array.isArray(p)) return p.join('/');
+  return String(p);
 }
 
-async function handle(req: Request, ctx: { params: { path: string[] } }) {
+// Small JSON helper
+function json(body: unknown, status = 200, extra?: HeadersInit) {
+  return new NextResponse(JSON.stringify(body), {
+    status,
+    headers: {
+      'content-type': 'application/json; charset=utf-8',
+      'cache-control': 'no-store',
+      ...extra,
+    },
+  });
+}
+
+async function handle(req: NextRequest, ctx: Ctx) {
+  const joinedPath = joinPath(ctx.params?.path);
+
+  // Local healthcheck that doesn't depend on upstream:
+  if (joinedPath === 'ping') {
+    return json(
+      {
+        ok: true,
+        route: '/api/upstream/ping',
+        upstream: UPSTREAM ?? null,
+        ts: new Date().toISOString(),
+      },
+      200,
+      { 'x-upstream-proxy': 'earlybird' },
+    );
+  }
+
   if (!UPSTREAM) {
-    return NextResponse.json(
+    return json(
       { ok: false, error: 'API_UPSTREAM not configured' },
-      { status: 503 },
+      503,
     );
   }
 
   const url = new URL(req.url);
-  const path = ctx.params.path?.join('/') ?? '';
-  const target = `${UPSTREAM}/${path}${url.search}`;
+  const target = `${UPSTREAM}/${joinedPath}${url.search || ''}`;
 
+  // Clone headers and strip/annotate a few
   const headers = new Headers(req.headers);
   headers.delete('host');
   headers.set('x-forwarded-by', 'earlybird-vercel-proxy');
@@ -38,10 +58,12 @@ async function handle(req: Request, ctx: { params: { path: string[] } }) {
     method: req.method,
     headers,
     body: ['GET', 'HEAD'].includes(req.method) ? undefined : await req.arrayBuffer(),
+    redirect: 'manual',
   };
 
   const resp = await fetch(target, init);
 
+  // Forward response back (without leaking upstream cookies)
   const forwardedHeaders = new Headers(resp.headers);
   forwardedHeaders.delete('set-cookie');
 
@@ -51,3 +73,11 @@ async function handle(req: Request, ctx: { params: { path: string[] } }) {
     headers: forwardedHeaders,
   });
 }
+
+// Explicit method exports
+export async function GET(req: NextRequest, ctx: Ctx)    { return handle(req, ctx); }
+export async function POST(req: NextRequest, ctx: Ctx)   { return handle(req, ctx); }
+export async function PUT(req: NextRequest, ctx: Ctx)    { return handle(req, ctx); }
+export async function PATCH(req: NextRequest, ctx: Ctx)  { return handle(req, ctx); }
+export async function DELETE(req: NextRequest, ctx: Ctx) { return handle(req, ctx); }
+export async function OPTIONS() { return json({ ok: true }); }
