@@ -1,4 +1,6 @@
+export const runtime = "edge";
 import { NextResponse } from 'next/server';
+import { guardUpstream } from "@/lib/ratelimit";
 
 const UPSTREAM = process.env.API_UPSTREAM?.replace(/\/+$/, '');
 const PING_PATH = process.env.API_UPSTREAM_PING_PATH || '/health';
