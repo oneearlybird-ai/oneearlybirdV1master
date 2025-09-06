@@ -1,5 +1,5 @@
 import { NextResponse, NextRequest } from 'next/server';
-import { checkRateLimit, rateLimitHeaders, clientIdFromHeaders } from '@/lib/rate-limit';
+import { checkRateLimit, rateLimitHeaders, clientIdFromHeaders } from '../../../../lib/rate-limit';
 
 export const dynamic = 'force-dynamic';
 
