@@ -9,6 +9,7 @@
   },
   "dependencies": {
     "@tailwindcss/typography": "0.5.13",
+    "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
     "gray-matter": "4.0.3",
     "next": "^14.2.32",
