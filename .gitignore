@@ -21,3 +21,12 @@ apps/web/.DS_Store
 .audit/
 infra/terraform/**/.terraform/
 infra/terraform/**/.terraform.lock.hcl
+# --- Security & hygiene ---
+.env
+.env.*        # never commit any env variants
+.vercel       # Vercel project/secret tokens
+node_modules/
+*.tsbuildinfo
+*.log
+.DS_Store
+Thumbs.db
