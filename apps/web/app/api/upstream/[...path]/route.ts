@@ -11,17 +11,18 @@ async function handle(req: NextRequest, method: string, params: { path?: string[
     return new NextResponse(JSON.stringify({ error: "Too Many Requests" }), { status: 429, headers: guard.headers });
   }
 
-  const pathSegs = params?.path && params.path.length ? `/${params.path.join("/")}` : PING_PATH;
-  const url = `${UPSTREAM}${pathSegs}`;
+  const segs = params?.path?.length ? `/${params.path.join("/")}` : PING_PATH;
+  const mapped = segs === "/ping" ? "/health" : segs;
+  const url = `${UPSTREAM}${mapped}`;
 
   const fwdHeaders = new Headers(req.headers);
   fwdHeaders.delete("cookie");
-  if (req.headers.get("host")) fwdHeaders.set("x-forwarded-host", req.headers.get("host")!);
+  const host = req.headers.get("host");
+  if (host) fwdHeaders.set("x-forwarded-host", host);
 
   const init: RequestInit = { method, headers: fwdHeaders, cache: "no-store" };
   if (method !== "GET" && method !== "HEAD") {
     init.body = req.body as any;
-
   }
 
   const upstream = await fetch(url, init);
@@ -30,18 +31,8 @@ async function handle(req: NextRequest, method: string, params: { path?: string[
   return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
 }
 
-export async function GET(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return handle(req, "GET", ctx.params);
-}
-export async function POST(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return handle(req, "POST", ctx.params);
-}
-export async function PUT(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return handle(req, "PUT", ctx.params);
-}
-export async function PATCH(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return handle(req, "PATCH", ctx.params);
-}
-export async function DELETE(req: NextRequest, ctx: { params: { path: string[] } }) {
-  return handle(req, "DELETE", ctx.params);
-}
+export async function GET(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "GET", ctx.params); }
+export async function POST(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "POST", ctx.params); }
+export async function PUT(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "PUT", ctx.params); }
+export async function PATCH(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "PATCH", ctx.params); }
+export async function DELETE(req: NextRequest, ctx: { params: { path: string[] } }) { return handle(req, "DELETE", ctx.params); }
