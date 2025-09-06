@@ -19,7 +19,6 @@ export async function guardUpstream(req: NextRequest) {
   const path = new URL(req.url).pathname;
   const ua = (req.headers.get("user-agent") || "-").slice(0, 64);
   const key = `${ip}:${path}:${ua}`;
-
   const r = await upstreamRatelimit.limit(key);
   const h = new Headers({
     "X-RateLimit-Limit": String(r.limit),

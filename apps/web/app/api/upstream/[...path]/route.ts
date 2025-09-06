@@ -1,54 +1,47 @@
 export const runtime = "edge";
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from "next/server";
 import { guardUpstream } from "@/lib/ratelimit";
 
-const UPSTREAM = process.env.API_UPSTREAM?.replace(/\/+$/, '');
-const PING_PATH = process.env.API_UPSTREAM_PING_PATH || '/health';
+const UPSTREAM = (process.env.API_UPSTREAM || "").replace(/\/+$/, "");
+const PING_PATH = process.env.API_UPSTREAM_PING_PATH || "/health";
 
-export async function GET(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function POST(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function PUT(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function PATCH(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-export async function DELETE(req: Request, ctx: { params: { path: string[] } }) {
-  return handle(req, ctx);
-}
-
-async function handle(req: Request, ctx: { params: { path: string[] } }) {
-  if (!UPSTREAM) {
-    return NextResponse.json({ ok: false, error: 'API_UPSTREAM not configured' }, { status: 503 });
+async function handle(req: NextRequest, method: string, params: { path?: string[] }) {
+  const guard = await guardUpstream(req);
+  if (!guard.ok) {
+    return new NextResponse(JSON.stringify({ error: "Too Many Requests" }), { status: 429, headers: guard.headers });
   }
 
-  const url = new URL(req.url);
-  const inPath = ctx.params.path?.join('/') ?? '';
-  const upstreamPath = inPath === 'ping' ? PING_PATH.replace(/^\/+/, '') : inPath;
+  const pathSegs = params?.path && params.path.length ? `/${params.path.join("/")}` : PING_PATH;
+  const url = `${UPSTREAM}${pathSegs}`;
 
-  const target = `${UPSTREAM}/${upstreamPath}${url.search}`;
+  const fwdHeaders = new Headers(req.headers);
+  fwdHeaders.delete("cookie");
+  if (req.headers.get("host")) fwdHeaders.set("x-forwarded-host", req.headers.get("host")!);
 
-  const headers = new Headers(req.headers);
-  headers.delete('host');
-  headers.set('x-forwarded-by', 'earlybird-vercel-proxy');
+  const init: RequestInit = { method, headers: fwdHeaders, cache: "no-store" };
+  if (method !== "GET" && method !== "HEAD") {
+    init.body = req.body as any;
+    init.duplex = "half" as any;
+  }
 
-  const init: RequestInit = {
-    method: req.method,
-    headers,
-    body: ['GET', 'HEAD', 'OPTIONS'].includes(req.method) ? undefined : await req.arrayBuffer(),
-  };
+  const upstream = await fetch(url, init);
+  const outHeaders = new Headers(upstream.headers);
+  guard.headers.forEach((v, k) => outHeaders.set(k, v));
+  return new NextResponse(upstream.body, { status: upstream.status, headers: outHeaders });
+}
 
-  const resp = await fetch(target, init);
-  const forwardedHeaders = new Headers(resp.headers);
-  forwardedHeaders.delete('set-cookie');
-
-  return new NextResponse(resp.body, {
-    status: resp.status,
-    statusText: resp.statusText,
-    headers: forwardedHeaders,
-  });
+export async function GET(req: NextRequest, ctx: { params: { path: string[] } }) {
+  return handle(req, "GET", ctx.params);
+}
+export async function POST(req: NextRequest, ctx: { params: { path: string[] } }) {
+  return handle(req, "POST", ctx.params);
+}
+export async function PUT(req: NextRequest, ctx: { params: { path: string[] } }) {
+  return handle(req, "PUT", ctx.params);
+}
+export async function PATCH(req: NextRequest, ctx: { params: { path: string[] } }) {
+  return handle(req, "PATCH", ctx.params);
+}
+export async function DELETE(req: NextRequest, ctx: { params: { path: string[] } }) {
+  return handle(req, "DELETE", ctx.params);
 }
