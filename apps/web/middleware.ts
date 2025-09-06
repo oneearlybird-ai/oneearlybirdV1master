@@ -1,52 +1,24 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
 
-const EXEMPT_S2S = /^\/api\/webhooks\/(stripe|twilio|ses|mailgun|sendgrid)(?:\/|$)/i;
-const CSRF_HEADER = "x-eb-csrf";
-const CSRF_COOKIE = "eb_csrf";
-
-function setSecurityHeaders(res: NextResponse) {
-  res.headers.set("Strict-Transport-Security","max-age=31536000; includeSubDomains; preload");
-  res.headers.set("X-Frame-Options","DENY");
-  res.headers.set("Referrer-Policy","no-referrer");
-  res.headers.set("X-Content-Type-Options","nosniff");
-  res.headers.set("Permissions-Policy","geolocation=(), microphone=(), camera=()");
-  return res;
-}
+const BYPASS = [/^\/api\/webhooks\/.*/i, /^\/api\/billing\/portal$/i];
 
 export function middleware(req: NextRequest) {
-  const { pathname, origin } = req.nextUrl;
-  const res = NextResponse.next();
+  const { pathname } = new URL(req.url);
 
-  // Always attach a request id
-  res.headers.set("x-request-id", crypto.randomUUID());
+  for (const re of BYPASS) if (re.test(pathname)) return NextResponse.next();
 
-  // Exempt server-to-server webhooks from CSRF/origin checks
-  if (EXEMPT_S2S.test(pathname)) {
-    return setSecurityHeaders(res);
-  }
-
-  // Only enforce CSRF on state-changing methods
-  const method = req.method.toUpperCase();
-  const needsCSRF = method !== "GET" && method !== "HEAD" && method !== "OPTIONS";
-
-  if (needsCSRF) {
-    const reqOrigin = req.headers.get("origin") || "";
-    if (reqOrigin !== origin) {
-      return new NextResponse("Forbidden (origin)", { status: 403 });
-    }
-    const cookieCsrf = req.cookies.get(CSRF_COOKIE)?.value;
-    const headerCsrf = req.headers.get(CSRF_HEADER) || "";
-    if (!cookieCsrf || !headerCsrf || cookieCsrf !== headerCsrf) {
-      return new NextResponse("Forbidden (csrf)", { status: 403 });
+  if (req.method !== "GET" && req.method !== "HEAD" && pathname.startsWith("/api/")) {
+    const csrfHeader = req.headers.get("x-eb-csrf") || "";
+    const csrfCookie = req.cookies.get("eb_csrf")?.value || "";
+    if (!csrfHeader || !csrfCookie || csrfHeader !== csrfCookie) {
+      return new NextResponse(JSON.stringify({ ok: false, error: "forbidden" }), {
+        status: 403,
+        headers: { "content-type": "application/json" },
+      });
     }
   }
-
-  return setSecurityHeaders(res);
+  return NextResponse.next();
 }
 
-export const config = {
-  matcher: [
-    // Apply to all paths except Next internals and static assets
-    "/((?!_next/|favicon.ico|.*\\.(?:png|jpg|svg|css|js|ico|txt|map)$).*)"
-  ],
-};
+export const config = { matcher: ["/api/:path*"] };

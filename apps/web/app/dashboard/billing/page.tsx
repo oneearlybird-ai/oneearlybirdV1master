@@ -2,7 +2,7 @@
 import { useState } from "react";
 
 function getCookie(name: string): string | null {
-  const m = document.cookie.match(new RegExp("(^| )" + name.replace(/[-[\]{}()*+?.,\\^$|#\s]/g, "\\$&") + "=([^;]+)"));
+  const m = document.cookie.match(new RegExp("(^| )" + name.replace(/[-[\]{}()*+?.,\\^$|#\\s]/g, "\\$&") + "=([^;]+)"));
   return m ? decodeURIComponent(m[2]) : null;
 }
 
@@ -19,7 +19,10 @@ export default function BillingPage() {
         method: "POST",
         headers: { "content-type": "application/json", "x-eb-csrf": csrf },
       });
-      const data = await res.json();
+
+      const ct = res.headers.get("content-type") || "";
+      const data = ct.includes("application/json") ? await res.json() : { ok: false, error: await res.text() };
+
       if (!res.ok) {
         setErr(data?.error || "unavailable");
       } else if (data?.url) {
