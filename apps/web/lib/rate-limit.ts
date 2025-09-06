@@ -1,12 +1,12 @@
-/**
- * Robust, Edge-safe rate limiting with Redis (Upstash) primary + in-memory fallback.
- * Windowed fixed bucket: limit N requests per "windowSec" per client key.
- * Returns headers you can forward to help clients self-throttle.
- */
-
 import { Redis } from "@upstash/redis";
 
-type Result = {
+type WindowOpts = {
+  windowMs: number; // e.g., 60_000
+  limit: number;    // e.g., 60
+  prefix?: string;  // key namespace
+};
+
+type CheckResult = {
   allowed: boolean;
   remaining: number;
   limit: number;
@@ -14,126 +14,124 @@ type Result = {
   headers: Record<string, string>;
 };
 
-type Opts = {
-  windowSec: number;
-  limit: number;
-  now?: number;          // ms
-  keyPrefix?: string;    // namespace
-};
-
-const DEFAULTS: Opts = {
-  windowSec: 60,
-  limit: 60,
-  keyPrefix: "rl",
-};
-
-const url = process.env.UPSTASH_REDIS_REST_URL;
-const token = process.env.UPSTASH_REDIS_REST_TOKEN;
-
-let redis: Redis | null = null;
-if (url && token) {
+/**
+ * Lazily create a single Upstash client for the process.
+ * Uses REST URL + TOKEN provided by Vercel env.
+ * Returns undefined if env not configured or constructor fails, so we can fall back.
+ */
+let redisSingleton: Redis | undefined;
+function getRedis(): Redis | undefined {
+  if (redisSingleton) return redisSingleton;
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  if (!url || !token) return undefined;
   try {
-    redis = new Redis({ url, token });
+    redisSingleton = new Redis({ url, token });
+    return redisSingleton;
   } catch {
-    redis = null;
+    return undefined;
   }
-}
-
-// ——— In-memory fallback (per-region) ———
-type MemEntry = { count: number; resetMs: number };
-const memStore = new Map<string, MemEntry>();
-
-function memTake(key: string, opts: Opts, nowMs: number) {
-  const windowMs = opts.windowSec * 1000;
-  const entry = memStore.get(key);
-  if (!entry || nowMs >= entry.resetMs) {
-    const resetMs = nowMs + windowMs;
-    memStore.set(key, { count: 1, resetMs });
-    return { count: 1, resetMs };
-  } else {
-    entry.count += 1;
-    return { count: entry.count, resetMs: entry.resetMs };
-  }
-}
-
-// ——— Redis fixed-window counter ———
-// Key shape: {prefix}:{bucket}:{clientKey}, bucket = Math.floor(now/windowSec)
-async function redisTake(
-  r: Redis,
-  key: string,
-  opts: Opts,
-  nowMs: number
-): Promise<{ count: number; resetMs: number }> {
-  const windowSec = opts.windowSec;
-  const bucket = Math.floor(nowMs / 1000 / windowSec);
-  const base = `${opts.keyPrefix || DEFAULTS.keyPrefix}:${windowSec}`;
-  const redisKey = `${base}:${bucket}:${key}`;
-
-  // INCR and set expiry if first hit
-  const count = await r.incr(redisKey);
-  if (count === 1) {
-    await r.expire(redisKey, windowSec);
-  }
-
-  const bucketEndSec = (bucket + 1) * windowSec;
-  const resetMs = bucketEndSec * 1000;
-  return { count, resetMs };
 }
 
 /**
- * take:
- * - key: stable client identifier (e.g., ip:ua)
- * - opts: windowSec + limit
+ * In-memory fallback fixed-window buckets (per server instance).
+ * Acceptable as a safety net; not distributed.
  */
-export async function take(key: string, opts?: Partial<Opts>): Promise<Result> {
-  const o: Opts = { ...DEFAULTS, ...(opts || {}) };
-  const nowMs = Math.floor(o.now ?? Date.now());
+const memBuckets = new Map<string, { count: number; resetAtMs: number }>();
 
-  let count: number;
-  let resetMs: number;
+async function checkWithRedis(key: string, o: WindowOpts): Promise<{ count: number; resetMs: number }> {
+  const r = getRedis();
+  if (!r) throw new Error("redis-not-configured");
 
-  if (redis) {
-    try {
-      const t = await redisTake(redis, key, o, nowMs);
-      count = t.count;
-      resetMs = t.resetMs;
-    } catch {
-      const t = memTake(key, o, nowMs);
-      count = t.count;
-      resetMs = t.resetMs;
-    }
-  } else {
-    const t = memTake(key, o, nowMs);
+  const now = Date.now();
+  const windowStart = Math.floor(now / o.windowMs) * o.windowMs; // align windows
+  const resetAtMs = windowStart + o.windowMs;
+  const namespacedKey = `${o.prefix ?? "rl"}:${key}:${windowStart}`;
+
+  // INCR and set TTL atomically enough for our use (REST is single op each)
+  const count = (await r.incr(namespacedKey)) as number;
+  if (count === 1) {
+    // first hit in window, set expiry slightly beyond window end to tolerate latency
+    const ttlSec = Math.ceil((o.windowMs + 1000) / 1000);
+    await r.expire(namespacedKey, ttlSec);
+  }
+  return { count, resetMs: resetAtMs - now };
+}
+
+function checkWithMemory(key: string, o: WindowOpts): { count: number; resetMs: number } {
+  const now = Date.now();
+  const bucket = memBuckets.get(key);
+  if (!bucket || now >= bucket.resetAtMs) {
+    const resetAtMs = now + o.windowMs;
+    memBuckets.set(key, { count: 1, resetAtMs });
+    return { count: 1, resetMs: resetAtMs - now };
+  }
+  bucket.count += 1;
+  return { count: bucket.count, resetMs: bucket.resetAtMs - now };
+}
+
+/**
+ * Public: checkRateLimit
+ * - Returns allow/deny + standardized headers (safe for exposure)
+ */
+export async function checkRateLimit(key: string, o: WindowOpts): Promise<CheckResult> {
+  const nowMs = Date.now();
+  let count = 0;
+  let resetMs = o.windowMs;
+
+  try {
+    const t = await checkWithRedis(key, o);
+    count = t.count;
+    resetMs = t.resetMs;
+  } catch {
+    const t = checkWithMemory(key, o);
     count = t.count;
     resetMs = t.resetMs;
   }
 
   const allowed = count <= o.limit;
   const remaining = Math.max(0, o.limit - count);
-  const reset = Math.floor(resetMs / 1000);
+  const reset = Math.floor((nowMs + resetMs) / 1000);
 
-  const headers: Record<string, string> = {
-    "x-ratelimit-limit": String(o.limit),
-    "x-ratelimit-remaining": String(remaining),
-    "x-ratelimit-reset": String(reset),
+  return {
+    allowed,
+    remaining,
+    limit: o.limit,
+    reset,
+    headers: rateLimitHeaders({ limit: o.limit, remaining, reset }),
   };
-  if (!allowed) {
-    headers["retry-after"] = String(Math.max(0, Math.ceil((resetMs - nowMs) / 1000)));
-  }
-
-  return { allowed, remaining, limit: o.limit, reset, headers };
 }
 
 /**
- * clientIdFromHeaders: derive a semi-stable key from request headers
- * Use with care; for production you may prefer an authenticated user id.
+ * Public: rateLimitHeaders
+ * - Only standard, non-sensitive headers.
+ */
+export function rateLimitHeaders(d: { limit: number; remaining: number; reset: number }): Record<string, string> {
+  const h: Record<string, string> = {
+    "x-ratelimit-limit": String(d.limit),
+    "x-ratelimit-remaining": String(d.remaining),
+    "x-ratelimit-reset": String(d.reset),
+  };
+  if (d.remaining <= 0) {
+    const now = Math.floor(Date.now() / 1000);
+    const retry = Math.max(0, d.reset - now);
+    h["retry-after"] = String(retry);
+  }
+  return h;
+}
+
+/**
+ * Public: clientIdFromHeaders
+ * - Derives a coarse, semi-stable identifier from IP + UA.
+ * - Safe to expose; do not include secrets.
  */
 export function clientIdFromHeaders(h: Headers) {
   const xf = h.get("x-forwarded-for") || "";
-  const ip = xf.split(",")[0].trim() ||
-             h.get("x-real-ip") ||
-             h.get("cf-connecting-ip") ||
-             "anon";
+  const ip =
+    xf.split(",")[0].trim() ||
+    h.get("x-real-ip") ||
+    h.get("cf-connecting-ip") ||
+    "anon";
   const ua = h.get("user-agent") || "ua";
-  return `${ip}:${ua.slice(0,64)}`;
+  return `${ip}:${ua.slice(0, 64)}`;
 }
