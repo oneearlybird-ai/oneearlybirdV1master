@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { guardUpstream } from "@/lib/ratelimit";
 
 const UPSTREAM = (process.env.API_UPSTREAM || "").replace(/\/+$/, "");
-const PING_PATH = process.env.API_UPSTREAM_PING_PATH || "/health";
+const _PING_PATH = process.env.API_UPSTREAM_PING_PATH || "/health";
 
 export async function GET(req: NextRequest, { params }: { params: { path: string[] } }) {
   return proxy(req, params);
