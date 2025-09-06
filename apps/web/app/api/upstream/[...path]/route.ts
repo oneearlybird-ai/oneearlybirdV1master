@@ -63,7 +63,7 @@ async function handle(req: NextRequest, ctx: Ctx) {
 
   // Rate limit
   const cid = clientIdFromHeaders(req.headers);
-  const rl = await checkRateLimit(`upstream:${cid}`);
+  const rl = await checkRateLimit(`upstream:${cid}`, "strict");
   const rlHeaders = rateLimitHeaders(rl);
   if (rl.limited) {
     return json({ ok: false, error: 'Too Many Requests' }, { status: 429, headers: { ...cors, ...rlHeaders } });
