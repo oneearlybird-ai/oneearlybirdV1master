@@ -31,7 +31,6 @@ async function proxy(req: NextRequest, { path }: { path: string[] }) {
     redirect: "manual",
   };
   if (method !== "GET" && method !== "HEAD") {
-    // @ts-expect-error body is a ReadableStream<Uint8Array> in Edge; that's OK for fetch()
     init.body = req.body;
   }
   const upstream = await fetch(url.toString(), init);
