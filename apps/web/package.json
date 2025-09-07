@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "typecheck": "tsc -p tsconfig.json --noEmit || next build --no-lint"
+    "typecheck": "tsc -p tsconfig.json --noEmit || next build --no-lint",
+    "headers:check": "node scripts/check-headers.js"
   },
   "dependencies": {
     "@tailwindcss/typography": "0.5.13",
