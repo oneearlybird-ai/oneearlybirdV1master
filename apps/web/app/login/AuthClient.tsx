@@ -44,7 +44,7 @@ export default function AuthClient({
 
   const GoogleBtn = ({ label }: { label: string }) => (
     <button
-      onClick={() => signIn("google", { callbackUrl: "/dashboard/billing" })}
+      onClick={() => signIn("google", {callbackUrl: "/dashboard/billing",prompt: "select_account"})}
       className="w-full h-11 rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] font-medium flex items-center justify-center gap-2 hover:bg-white/90 hover:shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4]"
       aria-label={label}
       type="button"
