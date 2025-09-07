@@ -9,7 +9,7 @@ export function middleware(req: NextRequest) {
 
   res.headers.set(
     "Content-Security-Policy",
-    `default-src 'self'; script-src 'self' 'nonce-${nonce}'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';`
+    `default-src 'self'; script-src 'self' 'nonce-<DYNAMIC>'; style-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';`
   );
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("X-Frame-Options", "DENY");
