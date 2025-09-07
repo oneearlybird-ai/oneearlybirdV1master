@@ -19,20 +19,22 @@ export default function LoginPage() {
     if (res.ok && res.url) window.location.href = res.url;
   }
 
-  const inputStyle: React.CSSProperties = {
+  const inputBase = {
     width: "100%",
     padding: 10,
     borderRadius: 8,
     border: "1px solid #ddd",
-    marginBottom: 12,
-    background: "#fff",
+    marginBottom: 12
+  } as React.CSSProperties;
+
+  const inputWithColor = {
+    ...inputBase,
     color: "#111",
-    caretColor: "#111",
-    outline: "none",
-  };
+    caretColor: "#111"
+  } as React.CSSProperties;
 
   return (
-    <main style={{ maxWidth: 420, margin: "6rem auto", padding: 24, border: "1px solid #eee", borderRadius: 12, background: "#fff" }}>
+    <main style={{ maxWidth: 420, margin: "6rem auto", padding: 24, border: "1px solid #eee", borderRadius: 12 }}>
       <h2 style={{ marginBottom: 12 }}>Sign in</h2>
       <p style={{ fontSize: 12, opacity: 0.7, marginBottom: 16 }}>
         Demo login. Use any valid email and password <b>demo</b>. No PHI collected.
@@ -45,7 +47,7 @@ export default function LoginPage() {
           required
           type="email"
           placeholder="you@example.com"
-          style={inputStyle}
+          style={inputWithColor}
         />
         <label style={{ display: "block", fontSize: 12, marginBottom: 6 }}>Password</label>
         <input
@@ -54,7 +56,7 @@ export default function LoginPage() {
           required
           type="password"
           placeholder="demo"
-          style={{ ...inputStyle, marginBottom: 16 }}
+          style={{ ...inputWithColor, marginBottom: 16 }}
         />
         <button
           disabled={loading}
