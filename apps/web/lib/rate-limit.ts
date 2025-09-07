@@ -13,6 +13,17 @@ type Options = {
   prefix?: string;
 };
 
+type HeaderGetter = { get(name: string): string | null };
+type MaybeRequestLike = { ip?: string; headers?: HeaderGetter };
+
+function extractClientId(arg: unknown): string {
+  if (typeof arg === "string" && arg.trim().length > 0) return arg;
+  const r = arg as MaybeRequestLike | undefined;
+  const headerVal = r?.headers?.get("x-forwarded-for") ?? null;
+  const fromHeader = headerVal ? headerVal.split(",")[0]?.trim() : undefined;
+  return r?.ip || fromHeader || "anon";
+}
+
 export function createRateLimiter(opts: Options = {}) {
   const tokensPerWindow = opts.tokensPerWindow ?? 60;
   const windowSeconds = opts.windowSeconds ?? 60;
@@ -27,8 +38,7 @@ export function createRateLimiter(opts: Options = {}) {
 
       const used = (await redis.incr(key)) as unknown as number;
       if (used === 1) {
-        // Our tiny Upstash REST wrapper expects a TTL number, not an options object.
-        await redis.set(key, String(used), windowSeconds);
+        await redis.set(key, String(used), { ex: windowSeconds } as { ex: number });
       }
 
       const remaining = Math.max(0, tokensPerWindow - used);
@@ -40,21 +50,11 @@ export function createRateLimiter(opts: Options = {}) {
   };
 }
 
-/**
- * Upstream guard used by /api/upstream.
- * Returns route-friendly shape: { ok, headers }.
- */
 export async function guardUpstream(arg: unknown): Promise<{ ok: boolean; headers: Headers }> {
   const limiter = createRateLimiter({ tokensPerWindow: 60, windowSeconds: 60, prefix: "rate:upstream" });
+  const id = extractClientId(arg);
+  const res = await limiter.limit(id);
 
-  const id =
-    typeof arg === "string"
-      ? arg
-      : ((arg as any)?.ip ??
-         (arg as any)?.headers?.get?.("x-forwarded-for")?.split(",")[0]?.trim() ??
-         "anon");
-
-  const res = await limiter.limit(String(id));
   const headers = new Headers();
   headers.set("X-RateLimit-Limit", String(res.limit));
   headers.set("X-RateLimit-Remaining", String(res.remaining));
