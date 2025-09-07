@@ -20,18 +20,18 @@ export default async function UsagePage() {
     <section>
       <h2>Usage</h2>
       <p>This surface shows non-PHI usage summaries. Detailed PHI metrics will live in the protected zone.</p>
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(180px,1fr))", gap: 16 }}>
-        <div style={{ padding: 12, border: "1px solid #eee", borderRadius: 8 }}>
-          <div style={{ fontSize: 12, opacity: 0.7 }}>Calls</div>
-          <div style={{ fontSize: 24, fontWeight: 600 }}>{calls}</div>
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
+        <div className="p-3 border border-gray-200 rounded">
+          <div className="text-xs opacity-70">Calls</div>
+          <div className="text-2xl font-semibold">{calls}</div>
         </div>
-        <div style={{ padding: 12, border: "1px solid #eee", borderRadius: 8 }}>
-          <div style={{ fontSize: 12, opacity: 0.7 }}>Minutes</div>
-          <div style={{ fontSize: 24, fontWeight: 600 }}>{minutes}</div>
+        <div className="p-3 border border-gray-200 rounded">
+          <div className="text-xs opacity-70">Minutes</div>
+          <div className="text-2xl font-semibold">{minutes}</div>
         </div>
-        <div style={{ padding: 12, border: "1px solid #eee", borderRadius: 8 }}>
-          <div style={{ fontSize: 12, opacity: 0.7 }}>Qualified Leads</div>
-          <div style={{ fontSize: 24, fontWeight: 600 }}>{qualified}</div>
+        <div className="p-3 border border-gray-200 rounded">
+          <div className="text-xs opacity-70">Qualified Leads</div>
+          <div className="text-2xl font-semibold">{qualified}</div>
         </div>
       </div>
     </section>
