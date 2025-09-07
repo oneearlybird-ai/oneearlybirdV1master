@@ -24,11 +24,7 @@ export default function LoginPage() {
     padding: 10,
     borderRadius: 8,
     border: "1px solid #ddd",
-    marginBottom: 12
-  } as React.CSSProperties;
-
-  const inputWithColor = {
-    ...inputBase,
+    marginBottom: 12,
     color: "#111",
     caretColor: "#111"
   } as React.CSSProperties;
@@ -37,35 +33,22 @@ export default function LoginPage() {
     <main style={{ maxWidth: 420, margin: "6rem auto", padding: 24, border: "1px solid #eee", borderRadius: 12 }}>
       <h2 style={{ marginBottom: 12 }}>Sign in</h2>
       <p style={{ fontSize: 12, opacity: 0.7, marginBottom: 16 }}>
-        Demo login. Use any valid email and password <b>demo</b>. No PHI collected.
+        Demo login. Use any valid email and password <b>demo</b>, or Google if enabled.
       </p>
       <form onSubmit={onSubmit}>
         <label style={{ display: "block", fontSize: 12, marginBottom: 6 }}>Email</label>
-        <input
-          value={email}
-          onChange={e=>setEmail(e.target.value)}
-          required
-          type="email"
-          placeholder="you@example.com"
-          style={inputWithColor}
-        />
+        <input value={email} onChange={e=>setEmail(e.target.value)} required type="email" placeholder="you@example.com" style={inputBase}/>
         <label style={{ display: "block", fontSize: 12, marginBottom: 6 }}>Password</label>
-        <input
-          value={password}
-          onChange={e=>setPassword(e.target.value)}
-          required
-          type="password"
-          placeholder="demo"
-          style={{ ...inputWithColor, marginBottom: 16 }}
-        />
-        <button
-          disabled={loading}
-          type="submit"
-          style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", cursor: loading ? "wait" : "pointer" }}
-        >
+        <input value={password} onChange={e=>setPassword(e.target.value)} required type="password" placeholder="demo" style={{ ...inputBase, marginBottom: 16 }}/>
+        <button disabled={loading} type="submit" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", cursor: loading ? "wait" : "pointer" }}>
           {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
+      <div style={{ marginTop: 16 }}>
+        <button onClick={() => signIn("google", { callbackUrl: "/dashboard/billing" })} style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd" }}>
+          Sign in with Google
+        </button>
+      </div>
       {err && <p style={{ color: "#b00", marginTop: 8, fontSize: 12 }}>Error: {err}</p>}
     </main>
   );
