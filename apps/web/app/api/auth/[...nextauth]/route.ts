@@ -1,47 +1,43 @@
 import NextAuth, { NextAuthOptions, type Session, type User } from "next-auth";
-import Credentials from "next-auth/providers/credentials";
-import Google from "next-auth/providers/google";
+import CredentialsProvider from "next-auth/providers/credentials";
+import GoogleProvider from "next-auth/providers/google";
 import type { JWT } from "next-auth/jwt";
 
 export const runtime = "nodejs";
 
 type TokenWithEmail = JWT & { userEmail?: string };
 
-const providers = [
-  Credentials({
-    name: "Email + Password",
-    credentials: {
-      email: { label: "Email", type: "text" },
-      password: { label: "Password", type: "password" }
-    },
-    async authorize(credentials): Promise<User | null> {
-      const email = (credentials?.email || "").trim();
-      const password = credentials?.password || "";
-      const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-      if (!looksEmail) return null;
-      if (password !== "demo") return null; // demo-only; replace later
-      const name = email.split("@")[0];
-      return { id: email, email, name } as User;
-    }
-  })
-];
-
-// Conditionally enable Google if envs exist (prevents runtime errors)
-if (process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET) {
-  providers.push(
-    Google({
-      clientId: process.env.GOOGLE_CLIENT_ID,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-      // keep profile minimal; email is sufficient for account binding
-      allowDangerousEmailAccountLinking: false
-    })
-  );
-}
+const googleEnabled = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
 
 const authOptions: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: 60 * 60 * 8 },
   secret: process.env.NEXTAUTH_SECRET,
-  providers,
+  providers: [
+    CredentialsProvider({
+      name: "Email + Password",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        password: { label: "Password", type: "password" }
+      },
+      async authorize(credentials): Promise<User | null> {
+        const email = (credentials?.email || "").trim();
+        const password = credentials?.password || "";
+        const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        if (!looksEmail) return null;
+        if (password !== "demo") return null; // demo-only; replace later
+        const name = email.split("@")[0];
+        return { id: email, email, name } as User;
+      }
+    }),
+    ...(googleEnabled
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID as string,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
+          })
+        ]
+      : [])
+  ],
   pages: { signIn: "/login" },
   callbacks: {
     async jwt({ token, user }): Promise<TokenWithEmail> {
