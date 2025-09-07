@@ -1,6 +1,6 @@
 import NextAuth, { NextAuthOptions, type Session, type User } from "next-auth";
 import CredentialsProvider from "next-auth/providers/credentials";
-import GoogleProvider from "next-auth/providers/google";
+import GoogleProvider, { type GoogleProfile } from "next-auth/providers/google";
 import type { JWT } from "next-auth/jwt";
 
 export const runtime = "nodejs";
@@ -21,6 +21,12 @@ function emailDomainOk(email: string) {
   return domainAllow.includes(dom);
 }
 
+function isGoogleProfile(p: unknown): p is GoogleProfile {
+  if (!p || typeof p !== "object") return false;
+  const v = (p as { email_verified?: unknown }).email_verified;
+  return typeof v === "boolean";
+}
+
 const providers = [
   CredentialsProvider({
     name: "Email + Password",
@@ -34,11 +40,15 @@ const providers = [
       return { id: email, email, name: email.split("@")[0] } as User;
     }
   }),
-  ...(googleEnabled ? [GoogleProvider({
-    clientId: process.env.GOOGLE_CLIENT_ID as string,
-    clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-    authorization: { params: { prompt: "consent", access_type: "offline", scope: "openid email profile" } }
-  })] : [])
+  ...(googleEnabled
+    ? [
+        GoogleProvider({
+          clientId: process.env.GOOGLE_CLIENT_ID as string,
+          clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+          authorization: { params: { prompt: "consent", access_type: "offline", scope: "openid email profile" } }
+        })
+      ]
+    : [])
 ];
 
 const authOptions: NextAuthOptions = {
@@ -50,8 +60,8 @@ const authOptions: NextAuthOptions = {
     async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         const email = (user?.email || "").trim();
-        const verified = (profile as any)?.email_verified === true;
-        if (!email || !verified) return false;
+        if (!email) return false;
+        if (!isGoogleProfile(profile) || !profile.email_verified) return false;
         if (!emailDomainOk(email)) return false;
       }
       return true;
