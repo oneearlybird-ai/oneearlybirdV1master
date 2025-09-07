@@ -1,68 +1,46 @@
-import { getRedis } from '@/lib/redis';
-import type { NextRequest } from 'next/server';
-import { Redis } from '@upstash/redis';
-import { Ratelimit } from '@upstash/ratelimit';
+/**
+ * Minimal fixed-window rate limiter using Upstash REST via getRedis().
+ * PUBLIC zone only; never touch PHI paths.
+ * Swap-ready: vendor can be changed behind this file.
+ */
+import { getRedis } from "./redis";
 
-interface RateLimitResult {
+export type RateLimitResult = {
   success: boolean;
   limit: number;
   remaining: number;
-  reset: number;
-}
+  reset: number; // epoch ms when window resets
+};
 
-/**
- * Sliding-window limiter using INCR and conditional EXPIRE.
- * - Fully typed (no `any`)
- * - Public zone only; do not use for PHI/protected zone
- */
-export async function rateLimit(
-  identifier: string,
-  limit = 10,
-  windowSeconds = 60,
-): Promise<RateLimitResult> {
-  const redis = getRedis() as unknown as { incr(key: string): Promise<number>; expire(key: string, seconds: number): Promise<number> };
-  const key = `rate-limit:${identifier}`;
+type Options = {
+  tokensPerWindow?: number;
+  windowSeconds?: number;
+  prefix?: string;
+};
 
-  const count = await redis.incr(key);
-  if (count === 1) {
-    // Key created: set TTL once per window
-    await redis.expire(key, windowSeconds);
-  }
+export function createRateLimiter(opts: Options = {}) {
+  const tokensPerWindow = opts.tokensPerWindow ?? 60;
+  const windowSeconds = opts.windowSeconds ?? 60;
+  const prefix = opts.prefix ?? "rate";
 
-  const remaining = Math.max(0, limit - count);
-  const reset = Math.floor(Date.now() / 1000) + windowSeconds;
+  const redis = getRedis();
 
   return {
-    success: count <= limit,
-    limit,
-    remaining,
-    reset,
+    async limit(identifier: string): Promise<RateLimitResult> {
+      const now = Date.now();
+      const window = Math.floor(now / (windowSeconds * 1000));
+      const key = `${prefix}:${identifier}:${window}`;
+
+      const used = (await redis.incr(key)) as unknown as number;
+      if (used === 1) {
+        await redis.set(key, String(used), windowSeconds);
+      }
+
+      const remaining = Math.max(0, tokensPerWindow - used);
+      const success = used <= tokensPerWindow;
+      const reset = (window + 1) * windowSeconds * 1000;
+
+      return { success, limit: tokensPerWindow, remaining, reset };
+    },
   };
-}
-
-/**
- * Edge-safe upstream guard using Upstash Ratelimit.
- * Public zone only (not for PHI/protected zone).
- */
-const LIMIT_PER_MIN = parseInt(process.env.RATE_LIMIT_PER_MINUTE ?? '60', 10);
-const upstreamRedis = Redis.fromEnv();
-export const upstreamRatelimit = new Ratelimit({
-  redis: upstreamRedis,
-  limiter: Ratelimit.slidingWindow(LIMIT_PER_MIN, '1 m'),
-  analytics: true,
-  prefix: 'rl:upstream',
-});
-
-export async function guardUpstream(req: NextRequest) {
-  const ip = req.ip ?? req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-  const path = new URL(req.url).pathname;
-  const ua = (req.headers.get('user-agent') || '-').slice(0, 64);
-  const key = `${ip}:${path}:${ua}`;
-  const r = await upstreamRatelimit.limit(key);
-  const h = new Headers({
-    'X-RateLimit-Limit': String(r.limit),
-    'X-RateLimit-Remaining': String(r.remaining),
-    'X-RateLimit-Reset': String(r.reset),
-  });
-  return { ok: r.success, headers: h };
 }
