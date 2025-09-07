@@ -8,38 +8,54 @@ export const runtime = "nodejs";
 type TokenWithEmail = JWT & { userEmail?: string };
 
 const googleEnabled = !!(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET);
+const domainAllow = (process.env.GOOGLE_ALLOWED_DOMAINS || "")
+  .split(",")
+  .map(s => s.trim().toLowerCase())
+  .filter(Boolean);
+
+function emailDomainOk(email: string) {
+  if (domainAllow.length === 0) return true;
+  const at = email.lastIndexOf("@");
+  if (at < 0) return false;
+  const dom = email.slice(at + 1).toLowerCase();
+  return domainAllow.includes(dom);
+}
+
+const providers = [
+  CredentialsProvider({
+    name: "Email + Password",
+    credentials: { email: { label: "Email", type: "text" }, password: { label: "Password", type: "password" } },
+    async authorize(credentials): Promise<User | null> {
+      const email = (credentials?.email || "").trim();
+      const password = credentials?.password || "";
+      const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+      if (!looksEmail) return null;
+      if (password !== "demo") return null;
+      return { id: email, email, name: email.split("@")[0] } as User;
+    }
+  }),
+  ...(googleEnabled ? [GoogleProvider({
+    clientId: process.env.GOOGLE_CLIENT_ID as string,
+    clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
+    authorization: { params: { prompt: "consent", access_type: "offline", scope: "openid email profile" } }
+  })] : [])
+];
 
 const authOptions: NextAuthOptions = {
   session: { strategy: "jwt", maxAge: 60 * 60 * 8 },
   secret: process.env.NEXTAUTH_SECRET,
-  providers: [
-    CredentialsProvider({
-      name: "Email + Password",
-      credentials: {
-        email: { label: "Email", type: "text" },
-        password: { label: "Password", type: "password" }
-      },
-      async authorize(credentials): Promise<User | null> {
-        const email = (credentials?.email || "").trim();
-        const password = credentials?.password || "";
-        const looksEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-        if (!looksEmail) return null;
-        if (password !== "demo") return null; // demo-only; replace later
-        const name = email.split("@")[0];
-        return { id: email, email, name } as User;
-      }
-    }),
-    ...(googleEnabled
-      ? [
-          GoogleProvider({
-            clientId: process.env.GOOGLE_CLIENT_ID as string,
-            clientSecret: process.env.GOOGLE_CLIENT_SECRET as string
-          })
-        ]
-      : [])
-  ],
+  providers,
   pages: { signIn: "/login" },
   callbacks: {
+    async signIn({ user, account, profile }) {
+      if (account?.provider === "google") {
+        const email = (user?.email || "").trim();
+        const verified = (profile as any)?.email_verified === true;
+        if (!email || !verified) return false;
+        if (!emailDomainOk(email)) return false;
+      }
+      return true;
+    },
     async jwt({ token, user }): Promise<TokenWithEmail> {
       const t = token as TokenWithEmail;
       if (user?.email) t.userEmail = user.email;
