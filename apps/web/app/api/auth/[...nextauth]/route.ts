@@ -45,7 +45,7 @@ const providers = [
         GoogleProvider({
           clientId: process.env.GOOGLE_CLIENT_ID as string,
           clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-          authorization: { params: { prompt: "consent", access_type: "offline", scope: "openid email profile" } }
+          authorization: { params: { prompt: "select_account", access_type: "offline", scope: "openid email profile" } }
         })
       ]
     : [])
