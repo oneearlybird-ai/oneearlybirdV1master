@@ -1,4 +1,4 @@
-
+"use client";
 function OfficialGoogleIcon(props: { className?: string; width?: number; height?: number }) {
   const { className, width = 18, height = 18 } = props;
   return (
@@ -10,7 +10,6 @@ function OfficialGoogleIcon(props: { className?: string; width?: number; height?
     </svg>
   );
 }
-"use client";
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
