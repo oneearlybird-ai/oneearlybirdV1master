@@ -20,12 +20,16 @@ https.get(url, (res) => {
     if (!headers[h]) { ok = false; findings.push(`MISSING: ${h}`); }
   }
 
-  // Sanity expectations
-  if (!/preload/i.test(headers['strict-transport-security']||'')) {
-    ok = false; findings.push('HSTS missing "preload"');
+  const csp = headers['content-security-policy'] || '';
+  const hsts = headers['strict-transport-security'] || '';
+
+  // Expect dynamic nonce token "'nonce-...'" inside the CSP header
+  if (!/'nonce-[^']+'/.test(csp)) {
+    ok = false; findings.push("CSP missing dynamic 'nonce-' token");
   }
-  if (!/nonce=/i.test(headers['content-security-policy']||'')) {
-    ok = false; findings.push('CSP missing dynamic nonce');
+  // Expect preload in HSTS
+  if (!/preload/i.test(hsts)) {
+    ok = false; findings.push('HSTS missing "preload"');
   }
   // X-Powered-By must be absent
   if ('x-powered-by' in headers) {
