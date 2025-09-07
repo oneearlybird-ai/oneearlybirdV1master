@@ -10,9 +10,9 @@ export default function StatusPage() {
     return () => { active = false; };
   }, []);
   return (
-    <main style={{ padding: 24 }}>
+    <main className="p-6">
       <h2>Status</h2>
-      <pre style={{ background: "#f7f7f7", padding: 12, borderRadius: 8 }}>{JSON.stringify(data, null, 2)}</pre>
+      <pre className="bg-gray-100 p-3 rounded">{JSON.stringify(data, null, 2)}</pre>
     </main>
   );
 }
