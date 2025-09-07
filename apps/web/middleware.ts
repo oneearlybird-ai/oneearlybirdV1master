@@ -35,7 +35,9 @@ export function middleware(req: NextRequest) {
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
 
-  return res;
+  
+  res.headers.set("Permissions-Policy","geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()");
+return res;
 }
 
 export const config = {
