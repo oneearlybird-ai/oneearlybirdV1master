@@ -1,33 +1,10 @@
 "use client";
-function OfficialGoogleIcon(props: { className?: string; width?: number; height?: number }) {
-  const { className, width = 18, height = 18 } = props;
-  return (
-    <svg width={width} height={height} viewBox="0 0 533.5 544.3" aria-hidden="true" className={className}>
-      <path fill="#4285F4" d="M533.5 278.4c0-18.6-1.5-37.5-4.7-55.5H272.1v105.1h146.9c-6.2 33.7-25.3 62.2-54 81.3l87.3 67.8c51.1-47.2 81.2-116.7 81.2-198.7z"/>
-      <path fill="#34A853" d="M272.1 544.3c73.4 0 135-24.1 180-65.4l-87.3-67.8c-24.2 16.3-55.1 26-92.8 26-71.3 0-131.8-48.1-153.5-112.6l-90.4 69.7C66.4 480.6 162.2 544.3 272.1 544.3z"/>
-      <path fill="#FBBC05" d="M118.6 324.6c-4.3-12.9-6.7-26.6-6.7-40.6s2.4-27.7 6.7-40.6l-90.4-69.7C9.5 216.9 0 245.7 0 284s9.5 67.1 28.2 97.4l90.4-69.7z"/>
-      <path fill="#EA4335" d="M272.1 107.7c39.9 0 76.1 13.7 104.4 40.6l78.3-78.3C410.9 24.7 355.8 0 272.1 0 162.2 0 66.4 63.7 28.2 186.6l90.4 69.7C140.3 155.8 200.7 107.7 272.1 107.7z"/>
-    </svg>
-  );
-}
 import { useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
+import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 
 type Providers = Record<string, { id: string; name: string }>;
-
-function GoogleIcon(props: { className?: string; width?: number; height?: number }) {
-  const { className, width = 18, height = 18 } = props;
-  return (
-    <svg width={width} height={height} viewBox="0 0 48 48" aria-hidden="true" className={className}>
-      <path fill="#EA4335" d="M24 9.5c3.64 0 6.9 1.25 9.47 3.71l7.1-7.1C36.66 2.14 30.83 0 24 0 14.62 0 6.4 5.38 2.53 13.2l8.9 6.9C13.3 14.64 18.2 9.5 24 9.5z"/>
-      <path fill="#4285F4" d="M46.5 24c0-1.64-.15-3.21-.44-4.71H24v9.01h12.68c-.55 2.97-2.24 5.48-4.76 7.17l7.29 5.66C43.95 36.89 46.5 30.9 46.5 24z"/>
-      <path fill="#FBBC05" d="M11.43 28.1c-.57-1.7-.9-3.5-.9-5.35s.33-3.64.9-5.34l-8.9-6.9C.9 13.74 0 18.74s.9 9.99 2.53 13.24l8.9-6.88z"/>
-      <path fill="#34A853" d="M24 47.5c6.3 0 11.6-2.08 15.46-5.66l-7.29-5.66c-2.02 1.37-4.62 2.18-8.17 2.18-5.8 0-10.7-5.14-12.57-10.6l-8.9 6.88C6.4 42.62 14.62 47.5 24 47.5z"/>
-      <path fill="none" d="M0 0h48v48H0z"/>
-    </svg>
-  );
-}
 
 export default function AuthClient({
   providers,
