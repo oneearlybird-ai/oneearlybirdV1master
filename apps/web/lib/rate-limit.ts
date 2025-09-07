@@ -35,3 +35,5 @@ export async function rateLimit(
     reset,
   };
 }
+
+export { guardUpstream } from "./ratelimit";

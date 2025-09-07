@@ -1,6 +1,6 @@
 export const runtime = "edge";
 import { NextRequest, NextResponse } from "next/server";
-import { guardUpstream } from "@/lib/ratelimit";
+import { guardUpstream } from "@/lib/rate-limit";
 
 const UPSTREAM = (process.env.API_UPSTREAM || "").replace(/\/+$/, "");
 
