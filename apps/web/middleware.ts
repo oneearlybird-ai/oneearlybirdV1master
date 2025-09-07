@@ -38,7 +38,10 @@ export function middleware(req: NextRequest) {
   
   res.headers.set("Permissions-Policy","geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()");
 
-  res.headers.set("Cross-Origin-Opener-Policy","same-origin");
+  
+  try { res.headers.delete("X-Powered-By"); } catch {}
+  try { res.headers.delete("Server"); } catch {}
+res.headers.set("Cross-Origin-Opener-Policy","same-origin");
   res.headers.set("Cross-Origin-Embedder-Policy","require-corp");
 return res;
 }
