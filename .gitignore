@@ -43,3 +43,9 @@ apps/**/.env.*
 packages/**/.env
 packages/**/.env.*
 .vercel/.env*
+
+# Secrets
+.env*
+.vercel/
+.next/
+apps/web/.env*
