@@ -47,3 +47,9 @@ packages/**/.env.*
 # local-only reports
 env_audit_report.txt
 *.bak
+
+# Backup files (broadened)
+*.bak*
+*.orig
+*.rej
+*~
