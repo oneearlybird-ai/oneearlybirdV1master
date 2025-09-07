@@ -19,18 +19,48 @@ export default function LoginPage() {
     if (res.ok && res.url) window.location.href = res.url;
   }
 
+  const inputStyle: React.CSSProperties = {
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+    border: "1px solid #ddd",
+    marginBottom: 12,
+    background: "#fff",
+    color: "#111",
+    caretColor: "#111",
+    outline: "none",
+  };
+
   return (
-    <main style={{ maxWidth: 420, margin: "6rem auto", padding: 24, border: "1px solid #eee", borderRadius: 12 }}>
+    <main style={{ maxWidth: 420, margin: "6rem auto", padding: 24, border: "1px solid #eee", borderRadius: 12, background: "#fff" }}>
       <h2 style={{ marginBottom: 12 }}>Sign in</h2>
       <p style={{ fontSize: 12, opacity: 0.7, marginBottom: 16 }}>
         Demo login. Use any valid email and password <b>demo</b>. No PHI collected.
       </p>
       <form onSubmit={onSubmit}>
         <label style={{ display: "block", fontSize: 12, marginBottom: 6 }}>Email</label>
-        <input value={email} onChange={e=>setEmail(e.target.value)} required type="email" placeholder="you@example.com" style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd", marginBottom: 12 }}/>
+        <input
+          value={email}
+          onChange={e=>setEmail(e.target.value)}
+          required
+          type="email"
+          placeholder="you@example.com"
+          style={inputStyle}
+        />
         <label style={{ display: "block", fontSize: 12, marginBottom: 6 }}>Password</label>
-        <input value={password} onChange={e=>setPassword(e.target.value)} required type="password" placeholder="demo" style={{ width: "100%", padding: 10, borderRadius: 8, border: "1px solid #ddd", marginBottom: 16 }}/>
-        <button disabled={loading} type="submit" style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", cursor: loading ? "wait" : "pointer" }}>
+        <input
+          value={password}
+          onChange={e=>setPassword(e.target.value)}
+          required
+          type="password"
+          placeholder="demo"
+          style={{ ...inputStyle, marginBottom: 16 }}
+        />
+        <button
+          disabled={loading}
+          type="submit"
+          style={{ width: "100%", padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", cursor: loading ? "wait" : "pointer" }}
+        >
           {loading ? "Signing in…" : "Sign in"}
         </button>
       </form>
