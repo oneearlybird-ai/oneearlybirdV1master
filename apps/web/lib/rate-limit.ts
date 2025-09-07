@@ -1,4 +1,4 @@
-import { getRedis } from './redis';
+import { getRedis } from '@/lib/redis';
 
 interface RateLimitResult {
   success: boolean;
