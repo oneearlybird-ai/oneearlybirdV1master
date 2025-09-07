@@ -22,7 +22,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   const sig = req.headers.get("stripe-signature");
   if (!sig) return NextResponse.json({ ok: false, error: "missing signature" }, { status: 400 });
 
-  const stripe = new Stripe(process.env.STRIPE_API_KEY || "sk_test_placeholder", {
+  const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
     apiVersion: "2024-06-20" as Stripe.LatestApiVersion,
   });
 
