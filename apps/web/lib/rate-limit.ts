@@ -27,8 +27,8 @@ export function createRateLimiter(opts: Options = {}) {
 
       const used = (await redis.incr(key)) as unknown as number;
       if (used === 1) {
-        // Upstash-style signature expects options, not a bare TTL number.
-        await redis.set(key, String(used), { ex: windowSeconds } as any);
+        // Our tiny Upstash REST wrapper expects a TTL number, not an options object.
+        await redis.set(key, String(used), windowSeconds);
       }
 
       const remaining = Math.max(0, tokensPerWindow - used);
@@ -41,17 +41,29 @@ export function createRateLimiter(opts: Options = {}) {
 }
 
 /**
- * Minimal upstream guard used by /api/upstream.
- * Accepts a string identifier, or an object (e.g. NextRequest) from which we derive an IP-ish key.
- * Returns the same shape as RateLimitResult for callers to decide response behavior.
+ * Upstream guard used by /api/upstream.
+ * Returns route-friendly shape: { ok, headers }.
  */
-export async function guardUpstream(arg: unknown): Promise<RateLimitResult> {
+export async function guardUpstream(arg: unknown): Promise<{ ok: boolean; headers: Headers }> {
   const limiter = createRateLimiter({ tokensPerWindow: 60, windowSeconds: 60, prefix: "rate:upstream" });
+
   const id =
     typeof arg === "string"
       ? arg
       : ((arg as any)?.ip ??
          (arg as any)?.headers?.get?.("x-forwarded-for")?.split(",")[0]?.trim() ??
          "anon");
-  return limiter.limit(String(id));
+
+  const res = await limiter.limit(String(id));
+  const headers = new Headers();
+  headers.set("X-RateLimit-Limit", String(res.limit));
+  headers.set("X-RateLimit-Remaining", String(res.remaining));
+  headers.set("X-RateLimit-Reset", String(Math.ceil(res.reset / 1000)));
+
+  if (!res.success) {
+    const retryAfter = Math.max(0, Math.ceil((res.reset - Date.now()) / 1000));
+    headers.set("Retry-After", String(retryAfter));
+  }
+
+  return { ok: res.success, headers };
 }
