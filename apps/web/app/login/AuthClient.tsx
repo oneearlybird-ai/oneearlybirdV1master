@@ -54,6 +54,18 @@ export default function AuthClient({
     if (res.ok && res.url) window.location.href = res.url;
   }
 
+  const GoogleBtn = ({ label }: { label: string }) => (
+    <button
+      onClick={() => signIn("google", { callbackUrl: "/dashboard/billing" })}
+      className="w-full h-11 rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] font-medium flex items-center justify-center gap-2 hover:bg-white/90 hover:shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4]"
+      aria-label={label}
+      type="button"
+    >
+      <GoogleIcon />
+      <span>{label}</span>
+    </button>
+  );
+
   return (
     <main className="min-h-dvh bg-neutral-950 text-white">
       <section className="mx-auto max-w-lg px-6 py-16 md:py-24">
@@ -116,14 +128,7 @@ export default function AuthClient({
 
             {googleEnabled && (
               <div className="mt-4">
-                <button
-                  onClick={() => signIn("google", { callbackUrl: "/dashboard/billing" })}
-                  className="w-full h-11 rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] font-medium flex items-center justify-center gap-2 hover:bg-white/95"
-                  aria-label="Sign in with Google"
-                >
-                  <GoogleIcon />
-                  <span>Sign in with Google</span>
-                </button>
+                <GoogleBtn label="Continue with Google" />
               </div>
             )}
 
@@ -173,6 +178,12 @@ export default function AuthClient({
                 Create account (coming soon)
               </button>
             </form>
+
+            {googleEnabled && (
+              <div className="mt-4">
+                <GoogleBtn label="Continue with Google" />
+              </div>
+            )}
           </div>
         )}
       </section>
