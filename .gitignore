@@ -49,3 +49,12 @@ packages/**/.env.*
 .vercel/
 .next/
 apps/web/.env*
+
+# Secrets
+.env*
+apps/web/.env*
+# Local build
+.next/
+apps/web/.next/
+# Vercel local metadata
+.vercel/
