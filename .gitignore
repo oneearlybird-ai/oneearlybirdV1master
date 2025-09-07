@@ -46,3 +46,4 @@ packages/**/.env.*
 
 # local-only reports
 env_audit_report.txt
+*.bak
