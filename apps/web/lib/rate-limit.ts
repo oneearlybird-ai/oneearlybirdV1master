@@ -36,7 +36,8 @@ export function createRateLimiter(opts: Options = {}) {
       const window = Math.floor(now / (windowSeconds * 1000));
       const key = `${prefix}:${identifier}:${window}`;
 
-      const used = (await redis.incr(key)) as unknown as number;
+      const usedRaw = await redis.incr(key);
+  const used = typeof usedRaw === 'number' ? usedRaw : Number(usedRaw);
       if (used === 1) {
         await redis.set(key, String(used), { ex: windowSeconds } as { ex: number });
       }
