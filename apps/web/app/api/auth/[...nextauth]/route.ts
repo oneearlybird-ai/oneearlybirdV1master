@@ -43,10 +43,16 @@ const providers = [
   ...(googleEnabled
     ? [
         GoogleProvider({
-          clientId: process.env.GOOGLE_CLIENT_ID as string,
-          clientSecret: process.env.GOOGLE_CLIENT_SECRET as string,
-          authorization: { params: { prompt: "select_account", access_type: "offline", scope: "openid email profile" } }
-        })
+  clientId: process.env.GOOGLE_CLIENT_ID!,
+  clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+  authorization: {
+    params: {
+      prompt: "select_account",
+      access_type: "offline",
+      response_type: "code"
+    }
+  }
+})
       ]
     : [])
 ];
