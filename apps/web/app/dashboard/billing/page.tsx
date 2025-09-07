@@ -38,7 +38,7 @@ export default function BillingPage() {
   }
 
   return (
-    <section style={{ maxWidth: 960, margin: "0 auto", padding: 24 }}>
+    <section className="max-w-[960px] mx-auto p-6">
       <h2>Billing</h2>
       <p>Manage plan and invoices here. No PHI is ever sent to Stripe metadata.</p>
       <ul>
@@ -48,12 +48,12 @@ export default function BillingPage() {
       <button
         onClick={openPortal}
         disabled={loading}
-        style={{ padding: "10px 14px", borderRadius: 8, border: "1px solid #ddd", cursor: loading ? "wait" : "pointer", marginTop: 12 }}
+        className={`px-:math:displaypx:math:display-:math:displaypx:math:display-lg border border-gray-300 mt-3 `}
       >
         {loading ? "Opening…" : "Manage Billing in Stripe"}
       </button>
-      {err && <p style={{ color: "#b00", marginTop: 8, fontSize: 12 }}>Error: {err}</p>}
-      <p style={{ fontSize: 12, opacity: 0.7, marginTop: 8 }}>
+      {err && <p className="text-red-700 mt-2 text-xs">Error: {err}</p>}
+      <p className="text-xs opacity-70 mt-2">
         Server-to-server portal session (no PHI). Swap to protected vendors later for HIPAA.
       </p>
     </section>
