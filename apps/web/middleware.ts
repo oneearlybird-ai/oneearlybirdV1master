@@ -2,12 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const BYPASS = [/^\/api\/webhooks\/.*/i, /^\/api\/billing\/portal$/i];
+const BYPASS = [/^\/api\/webhooks\/.*/i, /^\/api\/billing\/portal$/i, /^\/api\/auth\/.*/i];
 
 export async function middleware(req: NextRequest) {
   const { pathname } = new URL(req.url);
 
-  // Auth guard for dashboard (public zone, PHI-zero)
   if (pathname.startsWith("/dashboard")) {
     const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
     if (!token) {
@@ -17,7 +16,6 @@ export async function middleware(req: NextRequest) {
     }
   }
 
-  // API CSRF guard, with explicit exemptions
   if (pathname.startsWith("/api/")) {
     for (const re of BYPASS) if (re.test(pathname)) return NextResponse.next();
 
