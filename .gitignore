@@ -43,3 +43,6 @@ apps/**/.env.*
 packages/**/.env
 packages/**/.env.*
 .vercel/.env*
+
+# local-only reports
+env_audit_report.txt
