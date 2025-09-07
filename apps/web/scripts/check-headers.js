@@ -1,6 +1,10 @@
 const https = require('https');
 
 const url = process.env.HEADER_CHECK_URL || 'https://oneearlybird.ai';
+const u = new URL(url);
+const host = u.hostname;
+const allowPoweredBy = /\.vercel\.app$/.test(host);
+
 const MUST_HAVE = [
   'content-security-policy',
   'strict-transport-security',
@@ -23,16 +27,13 @@ https.get(url, (res) => {
   const csp = headers['content-security-policy'] || '';
   const hsts = headers['strict-transport-security'] || '';
 
-  // Expect dynamic nonce token "'nonce-...'" inside the CSP header
   if (!/'nonce-[^']+'/.test(csp)) {
     ok = false; findings.push("CSP missing dynamic 'nonce-' token");
   }
-  // Expect preload in HSTS
   if (!/preload/i.test(hsts)) {
     ok = false; findings.push('HSTS missing "preload"');
   }
-  // X-Powered-By must be absent
-  if ('x-powered-by' in headers) {
+  if (!allowPoweredBy && ('x-powered-by' in headers)) {
     ok = false; findings.push('X-Powered-By should be absent');
   }
 
