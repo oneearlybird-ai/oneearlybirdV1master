@@ -1,21 +1,40 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
+function safeNonce(): string {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    // Fallback if randomUUID not available
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  } catch {
+    return `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  }
+}
+
 export function middleware(req: NextRequest) {
   const res = NextResponse.next();
 
-  // Generate a random nonce for inline scripts
-  const nonce = Buffer.from(crypto.randomUUID()).toString("base64");
+  let nonce = "fallback";
+  try {
+    nonce = safeNonce();
+  } catch {
+    // keep fallback; do not throw in middleware
+  }
 
+  // Strict, Edge-safe CSP (no Buffer usage; true dynamic nonce)
   res.headers.set(
     "Content-Security-Policy",
-    `default-src 'self'; script-src 'self' 'nonce-<DYNAMIC>'; style-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';`
+    `default-src 'self'; script-src 'self' 'nonce-${nonce}'; style-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';`
   );
+
+  // Security headers
   res.headers.set("X-Content-Type-Options", "nosniff");
   res.headers.set("X-Frame-Options", "DENY");
-  res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
   res.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   res.headers.set("X-XSS-Protection", "1; mode=block");
+  res.headers.set("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload");
 
   return res;
 }
