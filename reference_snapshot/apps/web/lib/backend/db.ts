@@ -12,7 +12,11 @@ function requireDsn(): string {
 export function pgPool(): Pool {
   const dsn = requireDsn();
   if (!g.__eb_pg || g.__eb_dsn !== dsn) {
-    try { g.__eb_pg?.end().catch(() => {}); } catch {}
+    try {
+      g.__eb_pg?.end().catch(() => { /* noop */ });
+    } catch (e) {
+      void e;
+    }
     const needsSSL = !/localhost|127\.0\.0\.1/.test(dsn);
     g.__eb_pg = new Pool({
       connectionString: dsn,
