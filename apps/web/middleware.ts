@@ -14,6 +14,10 @@ function safeNonce(): string {
 }
 
 export function middleware(req: NextRequest) {
+  { const p = req.nextUrl.pathname; if (p === "/api/billing/portal" && req.method === "POST") { const has = req.cookies.get("__Secure-next-auth.session-token") || req.cookies.get("next-auth.session-token"); if (!has) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); } } }
+
+  { const p = req.nextUrl.pathname; if (p === "/api/billing/portal" && req.method === "POST") { const has = req.cookies.get("__Secure-next-auth.session-token") || req.cookies.get("next-auth.session-token"); if (!has) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); } } }
+
   const res = NextResponse.next();
 
   let nonce = "fallback";
