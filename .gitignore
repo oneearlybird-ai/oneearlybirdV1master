@@ -57,3 +57,10 @@ logs/
 vendor/
 schema/
 scripts/*.log
+
+# local artifacts
+reports/
+logs/
+audit/*.txt
+audit/*status_*.txt
+.env*

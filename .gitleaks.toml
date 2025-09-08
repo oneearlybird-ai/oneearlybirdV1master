@@ -1,0 +1,21 @@
+title = "oneearlybird platinum secrets policy"
+[extend]
+# (Keep default rules; we only tune scope/ignores below)
+
+[allowlist]
+description = "global allowlist"
+paths = [
+  # build/vendor outputs
+  '''^.*\/node_modules\/.*$''',
+  '''^.*\/\.next\/.*$''',
+  '''^.*\/dist\/.*$''',
+  '''^.*\/build\/.*$''',
+  # tests/fixtures/docs if added later
+  '''^docs\/.*$''',
+  '''^fixtures?\/.*$'''
+]
+regexes = [
+  # allow non-secret placeholders
+  '''(?i)(YOUR_|EXAMPLE_|DUMMY_|PLACEHOLDER_)[A-Z0-9_]+'''
+]
+
