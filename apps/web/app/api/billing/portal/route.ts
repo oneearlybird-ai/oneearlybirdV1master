@@ -7,6 +7,9 @@ function looksLikeStripeKey(v: string) { return /^sk_(test|live)_[A-Za-z0-9]+$/.
 function looksLikeCustomer(v: string) { return /^cus_[A-Za-z0-9]+$/.test(v); }
 
 export async function POST(req: NextRequest) {
+  const cookie = req.headers.get("cookie") || "";
+  const hasSession = /(^|;\s*)(__Secure-next-auth\.session-token|next-auth\.session-token)=/.test(cookie);
+  if (!hasSession) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
   const secret = (process.env.STRIPE_API_KEY || "").trim();
   const returnUrl = (
     process.env.NEXT_PUBLIC_BASE_URL ||
