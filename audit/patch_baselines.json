@@ -1,0 +1,32 @@
+[
+  {
+    "path": "apps/web/app/api/auth/[...nextauth]/route.ts",
+    "chars": 2933,
+    "lines": 91,
+    "sha256": "447e941ebc5c3aeb48950e9a8fc8af7022e5b048792a5d11a533230bb8c47b4a"
+  },
+  {
+    "path": "apps/web/app/api/billing/portal/route.ts",
+    "chars": 2146,
+    "lines": 51,
+    "sha256": "a71f0d2ebe79a189378fd330e1c4bd5f7587608e2168ebb8e439de9141a8331e"
+  },
+  {
+    "path": "apps/web/app/api/webhooks/stripe/route.ts",
+    "chars": 1641,
+    "lines": 47,
+    "sha256": "6b15b0724aa46054849769a6adae4dbf85757ec990f2dbced1c4c82c0ddf1862"
+  },
+  {
+    "path": "apps/web/middleware.ts",
+    "chars": 2366,
+    "lines": 56,
+    "sha256": "d25520982e04c1d341b3c36c6ce40348f43aea22c4c42924f36b8eb909736126"
+  },
+  {
+    "path": "apps/web/app/robots.txt/route.ts",
+    "chars": 465,
+    "lines": 14,
+    "sha256": "60edc28829450979df24d32a55c139cd69e5bf74611b08116a3fae088407eb52"
+  }
+]

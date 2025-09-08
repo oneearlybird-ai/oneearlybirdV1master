@@ -1,10 +1,6 @@
 export const runtime = 'nodejs';
 
-// DB-less health: returns 200 so the site is stable while we rewire storage
+// DB-less, stable health (keeps site up even if DB is not wired)
 export async function GET() {
-  return Response.json({
-    ok: true,
-    time: new Date().toISOString(),
-    db: "disabled" // temporarily
-  });
+  return Response.json({ ok: true, time: new Date().toISOString(), db: "disabled" });
 }

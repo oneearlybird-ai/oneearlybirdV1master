@@ -1,0 +1,39 @@
+{
+  "globs": [
+    "apps/web/**/*.ts",
+    "apps/web/**/*.tsx",
+    "apps/web/**/*.json",
+    "apps/web/**/*.yaml",
+    "apps/web/**/*.yml"
+  ],
+  "exclude": ["**/.vercel/**", 
+    "**/node_modules/**",
+    "**/.next/**",
+    "dist/**",
+    "build/**",
+    "docs/**",
+    "prompts/**",
+    "**/*.d.ts"
+  ],
+  "fix": false,
+  "denyRegexes": [
+    "^(Assistant|User|System):\\s",
+    "\\bAs an AI\\b",
+    "\\bI(?:'|’)m sorry\\b",
+    "\\bHere is the code\\b",
+    "\\bBelow is\\b",
+    "```"
+  ],
+  "maxBlankRun": 3,
+  "maxCommentRatio": 0.4,
+  "regionGuard": { "enabled": true, "start": "BEGIN GENERATED", "end": "END GENERATED", "refRoot": "reference_snapshot" },
+  "referenceMetrics": null,
+  "schemaValidation": [],
+  "jsParse": { "enabled": true, "fileExtensions": [".js", ".mjs", ".ts", ".tsx"] },
+  "externalChecks": {
+    "typecheck": ["npm", ["run", "typecheck"]],
+    "build": ["npm", ["run", "build"]],
+    "lint": ["npm", ["run", "lint"]],
+    "test": ["npm", ["test", "--", "--passWithNoTests"]]
+  }
+}
