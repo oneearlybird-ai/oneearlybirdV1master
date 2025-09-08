@@ -53,3 +53,7 @@ env_audit_report.txt
 *.orig
 *.rej
 *~
+logs/
+vendor/
+schema/
+scripts/*.log
