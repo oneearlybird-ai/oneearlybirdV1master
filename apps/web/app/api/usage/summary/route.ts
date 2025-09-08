@@ -1,35 +1,30 @@
-import { pgPool } from '@/lib/backend/db';
-import type { NextRequest } from 'next/server';
-
 export const runtime = 'nodejs';
+import { neon } from '@neondatabase/serverless';
 
-export async function GET(req: NextRequest) {
-  const url = new URL(req.url);
-  const orgId = url.searchParams.get('orgId');
-  const hasOrg = !!orgId && /^[0-9a-fA-F-]{8}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{4}-[0-9a-fA-F-]{12}$/.test(orgId!);
+const DSN = String(process.env.DATABASE_URL || '');
+const sql = neon(DSN);
 
+/**
+ * GET /api/usage/summary  (app=@earlybird/web)
+ * - Uses Neon serverless (OK for Vercel functions)
+ * - Send header x-debug-db: 1 → logs masked host & short error
+ */
+export async function GET(req: Request) {
+  const dbg = req.headers.get('x-debug-db') === '1';
   try {
-    const dsn = process.env.DATABASE_URL || '';
-    if (!dsn) throw new Error('db_unavailable');
-
-    const pool = pgPool();
-    const { rows } = await pool.query(
-      `SELECT kind, COALESCE(SUM(qty),0)::bigint AS total
-       FROM usage_events
-       WHERE ($1::uuid IS NULL OR org_id = $1::uuid)
-       GROUP BY kind
-       ORDER BY kind`,
-      [hasOrg ? orgId : null]
-    );
-
-    const totals: Record<string, number> = {};
-    for (const r of rows) totals[r.kind] = Number(r.total);
-
-    return Response.json({ ok: true, orgId: hasOrg ? orgId : null, totals, updatedAt: new Date().toISOString() });
-  } catch (_e) {
-    return Response.json(
-      { ok: false, error: 'db_unavailable', totals: {}, updatedAt: new Date().toISOString() },
-      { status: 503 }
-    );
+    if (!DSN) {
+      if (dbg) console.log('[db] missing DATABASE_URL');
+      return Response.json({ ok:false, error:'missing_DATABASE_URL' }, { status:500 });
+    }
+    if (dbg) { try { console.log('[db] host=%s', new URL(DSN).host); } catch {} }
+    const rows = await sql`select now() as now`;
+    return Response.json({ ok:true, time: rows[0].now });
+  } catch (e: any) {
+    if (dbg) {
+      const code = e?.code ? String(e.code) : '';
+      const msg  = e?.message ? String(e.message).slice(0,180) : 'unknown';
+      console.log('[db] connect err code=%s msg=%s', code, msg);
+    }
+    return Response.json({ ok:false, error:'db_unavailable' }, { status:503 });
   }
 }
