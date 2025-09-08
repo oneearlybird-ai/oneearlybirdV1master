@@ -14,6 +14,7 @@
     "@types/jsonwebtoken": "^9.0.10",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
+    "@vercel/postgres": "^0.8.0",
     "gray-matter": "4.0.3",
     "jsonwebtoken": "^9.0.2",
     "next": "^14.2.32",

@@ -1,11 +1,6 @@
 export const runtime = 'nodejs';
 import { sql } from '@vercel/postgres';
 
-/**
- * Serverless-safe health check using Vercel Postgres client.
- * It auto-reads POSTGRES_URL (pooled) on Vercel and works with Neon-backed projects.
- * For one-shot masked diagnostics, send header x-debug-db: 1.
- */
 export async function GET(req: Request) {
   const dbg = req.headers.get('x-debug-db') === '1';
   try {
