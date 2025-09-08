@@ -26,7 +26,7 @@ export async function GET(req: NextRequest) {
     for (const r of rows) totals[r.kind] = Number(r.total);
 
     return Response.json({ ok: true, orgId: hasOrg ? orgId : null, totals, updatedAt: new Date().toISOString() });
-  } catch (e) {
+  } catch (_e) {
     return Response.json(
       { ok: false, error: 'db_unavailable', totals: {}, updatedAt: new Date().toISOString() },
       { status: 503 }
