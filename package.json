@@ -13,7 +13,8 @@
     "ah:gate:fix": "node scripts/anti_hallucination_gate.mjs --config anti_hallucination.config.json --fix",
     "test": "echo \"(no tests)\"",
     "db:status": "node scripts/db_migrate.mjs status",
-    "db:migrate": "node scripts/db_migrate.mjs up"
+    "db:migrate": "node scripts/db_migrate.mjs up",
+    "headers:check": "node scripts/headers_check.mjs"
   },
   "devDependencies": {
     "@babel/parser": "^7.28.4",
