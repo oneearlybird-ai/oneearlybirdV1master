@@ -7,7 +7,7 @@ type PutResult = { etag?: string; key: string };
 
 function cfg() {
   const region = process.env.S3_REGION || process.env.AWS_REGION || '';
-  const bucket = process.env.S3_BUCKET || '';
+  const bucket = process.env.S3_BUCKET || process.env.AWS_S3_BUCKET || '';
   const accessKeyId = process.env.S3_ACCESS_KEY_ID || process.env.AWS_ACCESS_KEY_ID || '';
   const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY || process.env.AWS_SECRET_ACCESS_KEY || '';
   const exp = Number(process.env.S3_PRESIGN_EXP_SECONDS || '600');
@@ -30,4 +30,3 @@ export async function getSignedUrlRead({ key, expiresSec }: { key: string; expir
   const cmd = new GetObjectCommand({ Bucket: bucket, Key: key });
   return await getSignedUrl(client, cmd, { expiresIn: Number(expiresSec ?? exp) });
 }
-
