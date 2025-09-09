@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { getDownloadUrl, getUploadUrl } from '../../../../lib/server/s3'
+import { getDownloadUrl, getUploadUrl } from '../../../../lib/storage/s3'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
