@@ -7,7 +7,7 @@ export default function DevControls() {
   const call = async (path: string, init?: RequestInit) => {
     setOut(`→ ${init?.method || 'GET'} ${path}`);
     try {
-      const res = await fetch(path, { method: init?.method || 'GET', headers: { 'content-type': 'application/json' }, body: init?.body as any, cache: 'no-store' });
+      const res = await fetch(path, { method: init?.method || 'GET', headers: { 'content-type': 'application/json' }, body: init?.body as BodyInit | null | undefined, cache: 'no-store' });
       const ct = res.headers.get('content-type') || '';
       const text = ct.includes('application/json') ? JSON.stringify(await res.json(), null, 2) : await res.text();
       setOut(`← ${res.status}\n${text.slice(0, 4000)}`);
