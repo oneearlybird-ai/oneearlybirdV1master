@@ -1,22 +1,33 @@
-import { NextRequest, NextResponse } from "next/server";
-import { getRedis } from "@/lib/redis";
+export const runtime = 'nodejs';
+export const dynamic = 'force-dynamic';
 
-export async function GET(req: NextRequest) {
-  const ip = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "unknown";
-  const windowSeconds = 60;
-  const limit = 5;
-  const bucket = Math.floor(Date.now() / (windowSeconds * 1000));
-  const key = `rl:test:${ip}:${bucket}`;
-
-  const redis = getRedis();
-  const usedRaw = await redis.incr(key);
-  const used = typeof usedRaw === "number" ? usedRaw : Number(usedRaw);
-  if (used === 1) {
-    await redis.expire(key, windowSeconds);
+async function handle() {
+  const url = process.env.UPSTASH_REDIS_REST_URL;
+  const token = process.env.UPSTASH_REDIS_REST_TOKEN;
+  const headers = { 'content-type': 'application/json' } as const;
+  if (!url || !token) {
+    return new Response(JSON.stringify({ ok: true, state: 'disabled' }), { status: 200, headers });
   }
-
-  if (used > limit) {
-    return NextResponse.json({ ok: false, used, limit }, { status: 429 });
+  const key = 'ratelimit:smoke';
+  const resp = await fetch(`${url}/pipeline`, {
+    method: 'POST',
+    headers: { authorization: `Bearer ${token}`, 'content-type': 'application/json' },
+    body: JSON.stringify([["INCR", key], ["EXPIRE", key, 60]]),
+    cache: 'no-store',
+  });
+  const raw = (await resp.json().catch(() => null)) as unknown;
+  let count = 0;
+  if (Array.isArray(raw)) {
+    const first = (raw as Array<Record<string, unknown>>)[0];
+    const r = first?.result;
+    count = typeof r === 'number' ? r : Number(r ?? 0);
   }
-  return NextResponse.json({ ok: true, used, limit }, { status: 200 });
+  if (Number.isFinite(count) && count > 1) {
+    return new Response(JSON.stringify({ ok: false, limited: true, count }), { status: 429, headers });
+  }
+  return new Response(JSON.stringify({ ok: true, limited: false, count }), { status: 200, headers });
 }
+
+export async function GET() { return handle(); }
+export async function POST() { return handle(); }
+
