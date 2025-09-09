@@ -1,46 +1,58 @@
-import twilio from 'twilio';
-
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-function targetUrl(req: Request) {
+type TwilioModule = {
+  validateRequest: (
+    token: string,
+    signature: string,
+    url: string,
+    params: Record<string, string>
+  ) => boolean;
+  validateRequestWithBody: (
+    token: string,
+    signature: string,
+    url: string,
+    body: string
+  ) => boolean;
+};
+
+function externalUrl(req: Request): string {
   const site = process.env.NEXT_PUBLIC_SITE_URL || '';
   const u = new URL(req.url);
-  const qp = u.search; // includes leading '?' or ''
-  if (site) return `${site.replace(/\/$/, '')}/api/voice/incoming${qp}`;
-  // Fallback to request host/proto if site not configured
-  const proto = (req.headers.get('x-forwarded-proto') || u.protocol.replace(':','')).toLowerCase();
-  const host = req.headers.get('host')!;
-  return `${proto}://${host}${u.pathname}${u.search}`;
-}
-
-async function readFormParams(req: Request) {
-  const ct = req.headers.get('content-type') || '';
-  if (ct.includes('application/x-www-form-urlencoded')) {
-    const fd = await req.formData();
-    const obj: Record<string,string> = {};
-    for (const [k,v] of fd.entries()) obj[k] = String(v);
-    return obj;
+  if (site) {
+    const s = new URL(site);
+    u.protocol = s.protocol;
+    u.host = s.host;
+  } else {
+    u.protocol = 'https:';
   }
-  return {};
+  return u.toString();
 }
 
 export async function POST(req: Request) {
-  const authToken = process.env.TWILIO_AUTH_TOKEN || '';
-  const signature = req.headers.get('x-twilio-signature') || req.headers.get('X-Twilio-Signature') || '';
-  const url = targetUrl(req);
-  const params = await readFormParams(req);
-
-  if (!authToken || !signature || !twilio.validateRequest(authToken, signature, url, params)) {
-    return new Response('Forbidden', { status: 403 });
+  const authToken = process.env.TWILIO_AUTH_TOKEN;
+  const mediaUrl = process.env.MEDIA_WSS_URL;
+  if (!authToken || !mediaUrl) {
+    return new Response('Twilio not configured', { status: 503 });
   }
+  const sig = req.headers.get('x-twilio-signature') ?? '';
+  const fullUrl = externalUrl(req);
+  const raw = await req.text();
+  const contentType = req.headers.get('content-type') || '';
 
-  const base = process.env.MEDIA_WSS_URL || '';
-  if (!base) return new Response('Service Unavailable', { status: 503 });
-  const streamUrl = `${base.replace(/\/$/, '')}/rtm/voice`;
+  const mod: any = await import('twilio');
+  const tw = (mod?.default ?? mod) as TwilioModule;
+  let valid = false;
+  if (contentType.includes('application/json')) {
+    valid = tw.validateRequestWithBody(authToken, sig, fullUrl, raw);
+  } else {
+    const params = Object.fromEntries(new URLSearchParams(raw)) as Record<string, string>;
+    valid = tw.validateRequest(authToken, sig, fullUrl, params);
+  }
+  if (!valid) return new Response('Forbidden', { status: 403 });
 
-  const vr = new twilio.twiml.VoiceResponse();
-  const connect = vr.connect();
-  connect.stream({ url: streamUrl });
-  return new Response(vr.toString(), { status: 200, headers: { 'Content-Type': 'text/xml' } });
+  const xml =
+    `<?xml version="1.0" encoding="UTF-8"?>` +
+    `<Response><Connect><Stream url="${mediaUrl}"/></Connect></Response>`;
+  return new Response(xml, { status: 200, headers: { 'Content-Type': 'application/xml' } });
 }
