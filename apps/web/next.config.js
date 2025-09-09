@@ -1,13 +1,7 @@
 /** @type {import('next').NextConfig} */
-module.exports = {
-  reactStrictMode: true,
+const nextConfig = {
   poweredByHeader: false,
-  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
-          { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
-          { key: 'X-XSS-Protection', value: '0' },
-          { key: 'Strict-Transport-Security', value: 'max-age=63072000; includeSubDomains; preload' }
-        ],
-      },
-    ];
-  },
+  eslint: { ignoreDuringBuilds: false },
+  typescript: { ignoreBuildErrors: false },
 };
+module.exports = nextConfig;
