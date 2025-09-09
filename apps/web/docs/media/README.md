@@ -1,47 +1,20 @@
-# Media Orchestrator — Twilio Media Streams Handoff (Protected Zone)
+# Media Streams (Twilio) — Handshake Notes & Next Steps
 
-## Purpose
-How web (Next.js on Vercel) hands off live call audio to an external Media WebSocket server with strict security/latency.
+Status:
+- Webhook: /api/voice/incoming returns TwiML <Connect><Stream url="wss://media.oneearlybird.ai/rtm/voice"/>.
+- Twilio attempts WebSocket to MEDIA_WSS_URL and logs Error 31920 (handshake): server did not return HTTP 101.
 
-## Flow
-- Twilio → POST /api/voice/incoming (runtime='nodejs', dynamic='force-dynamic').
-- Validate X-Twilio-Signature (official SDK) against full URL; invalid/unsigned ⇒ 403.
-- On success, return TwiML:
+What 31920 means (Twilio):
+- “Server returned an HTTP code different from 101 to the connection request.” Causes: server not speaking WS; path not WS-enabled. (Twilio docs)
 
-  ```xml
-  <Response><Connect><Stream url="${MEDIA_WSS_URL}/rtm/voice"/></Connect></Response>
-  ```
+Acceptance for media.oneearlybird.ai:
+- Public TLS (wss://) with valid cert; port 443.
+- Path “/rtm/voice” performs WebSocket upgrade (HTTP 101) and keeps connection open.
+- Supports Twilio Media Streams framing; responds to ping/pong; safe closure.
+- No PHI logs; redact tokens; follow HIPAA Protected Zone rules.
 
-- Twilio connects directly to the media server at `wss://<media-host>/rtm/voice`.
-- No long‑lived WebSocket media on Vercel; web only issues TwiML.
-
-## External Media WS (must be separate host)
-- Deploy on Fly.io/Railway/AWS/GCP/etc. (not Vercel).
-- TLS: WSS over TLS 1.2+ with public CA cert.
-- Path: `/rtm/voice` (configurable server-side; TwiML points here).
-- Protocol: Implement Twilio Media Streams JSON envelope + base64 PCM frames.
-- Control: handle `start`/`media`/`mark`/`stop`, respond to ping/pong, close cleanly.
-- Latency: target ≤ 500–700 ms mouth‑to‑ear (Twilio <200 ms; ASR <150 ms; policy/LLM <150 ms; TTS <150 ms).
-- Security: No PHI to non‑BAA vendors; Protected Zone; redact logs; short‑TTL creds.
-
-## Configuration
-- Env vars:
-  - `MEDIA_WSS_URL` (e.g., `wss://media.example.com`).
-  - `NEXT_PUBLIC_SITE_URL` (canonical origin for Twilio signature validation).
-  - Twilio: `TWILIO_ACCOUNT_SID`, `TWILIO_AUTH_TOKEN`, optional `TWILIO_TWIML_APP_SID`.
-- Networking:
-  - Open TCP 443 on media host; allow Twilio egress IPs if firewalled.
-  - Prefer HTTP/1.1 WS upgrades; do not rely on H2 websockets.
-- Observability:
-  - Minimal metrics; redact tokens/call SIDs; never log PHI.
-
-## Acceptance Criteria
-- POST /api/voice/incoming unsigned ⇒ 403; signed path ready when `TWILIO_AUTH_TOKEN` present.
-- TwiML returns `<Connect><Stream url="${MEDIA_WSS_URL}/rtm/voice"/>`.
-- No long‑lived media WS on Vercel; media WS runs only on external host.
-- Site headers baseline: CSP with per‑request nonce; HSTS preload; Permissions‑Policy deny list; COOP same‑origin; COEP require‑corp; `X‑XSS‑Protection: 0`; no `x-powered-by`.
-- This README is present at `apps/web/docs/media/README.md`.
-
-## Notes
-- If `TWILIO_AUTH_TOKEN` is not set, skip live-signature tests; the code path remains ready.
-- Keep TwiML minimal; orchestration logic (ASR→policy→LLM→TTS) lives on the media host.
+Operational plan:
+1) Host: Fly.io / Railway / EC2 (not Vercel; long-lived sockets).
+2) Minimal WS service: accept connection, log call SID metadata only, reply to ping/pong, then close on test.
+3) Configure DNS: CNAME media.oneearlybird.ai -> provider; TLS cert issued.
+4) Once online, set MEDIA_WSS_URL to the deployed WSS endpoint and re-test a live call.
