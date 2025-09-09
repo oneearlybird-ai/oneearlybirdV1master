@@ -57,4 +57,3 @@ You are Codex operating in **Autopilot** under EarlyBird **Workflow v1.7** and t
 - The human may type `zz` at any time. On `zz`, **stop immediately**, summarize current state, and await further instruction.
 
 *End of Autopilot Master Prompt.*
-
