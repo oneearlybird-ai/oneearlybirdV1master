@@ -1,13 +1,7 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        has: [{ type: 'host', value: 'preview.oneearlybird.ai' }],
-        headers: [{ key: 'X-Robots-Tag', value: 'noindex, nofollow, noarchive' }],
-      },
-    ];
-  },
+/** SVP-081 hard reset: no redirects, no middleware assumptions */
+const config = {
+  poweredByHeader: false,
+  reactStrictMode: true,
+  experimental: { typedRoutes: true }
 };
-export default nextConfig;
+export default config;
