@@ -12,8 +12,11 @@ export async function GET(req: Request) {
     const sql = neon(dsn);
     const rows = await sql`select now() as now`;
     return Response.json({ ok: true, time: rows[0].now, db: 'ok' });
-  } catch (e: any) {
-    if (dbg) console.log('[db] neon err=%s', String(e?.message || 'unknown').slice(0,180));
+  } catch (e: unknown) {
+    if (dbg) {
+      const msg = e instanceof Error ? e.message : String(e);
+      console.log('[db] neon err=%s', msg.slice(0,180));
+    }
     return Response.json({ ok: true, time: new Date().toISOString(), db: 'error' });
   }
 }
