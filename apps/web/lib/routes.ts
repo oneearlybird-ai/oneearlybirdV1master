@@ -1,0 +1,26 @@
+export type Route = { path: string; method: string };
+export const ROUTES: Route[] = [
+  { path: "/api/status", method: "GET" },
+  { path: "/api/routes/manifest", method: "GET" },
+  { path: "/api/voice/incoming", method: "POST" },
+  { path: "/api/voice/transfer", method: "POST" },
+  { path: "/api/voice/dial", method: "POST" },
+  { path: "/api/voice/recording", method: "POST" },
+  { path: "/api/voice/status", method: "POST" },
+  { path: "/api/transcript/finalize", method: "POST" },
+  { path: "/api/tools/book_meeting", method: "POST" },
+  { path: "/api/tools/transfer_to_owner", method: "POST" },
+  { path: "/api/tools/create_lead", method: "POST" },
+  { path: "/api/tools/hours_check", method: "POST" },
+  { path: "/api/kb/search", method: "POST" },
+  { path: "/api/kb/doc", method: "POST" },
+  { path: "/api/usage/summary", method: "GET" },
+  { path: "/api/stripe/webhook", method: "POST" },
+  { path: "/api/billing/portal", method: "POST" },
+  { path: "/api/stripe/usage", method: "GET" },
+  { path: "/api/integrations/oauth/start", method: "GET" },
+  { path: "/api/numbers/buy", method: "POST" },
+  { path: "/api/numbers/webhook", method: "POST" },
+  { path: "/api/agent/tool", method: "POST" },
+  { path: "/api/ratelimit-test", method: "GET" }
+];
