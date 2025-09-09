@@ -5,6 +5,7 @@ const config = {
     return [{
       source: '/:path*',
       headers: [
+        { key: 'X-XSS-Protection', value: '0' },
         { key: 'Permissions-Policy', value: 'geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()' },
         { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
         { key: 'Cross-Origin-Embedder-Policy', value: 'require-corp' },
