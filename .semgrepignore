@@ -2,4 +2,7 @@
 logs/**
 *.out
 *.log
-
+node_modules/**
+apps/**/node_modules/**
+.next/**
+apps/**/.next/**

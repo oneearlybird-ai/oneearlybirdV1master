@@ -17,12 +17,12 @@ function extractMetadata(obj: unknown): Record<string, unknown> {
 
 export async function POST(req: NextRequest): Promise<Response> {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) return NextResponse.json({ ok: false, error: "unconfigured" }, { status: 400 });
+  if (!secret) return NextResponse.json({ ok: false, error: "unconfigured" }, { status: 500 });
 
   const sig = req.headers.get("stripe-signature");
-  if (!sig) return NextResponse.json({ ok: false, error: "missing signature" }, { status: 400 });
+  if (!sig) return NextResponse.json({ ok: false, error: "missing signature" }, { status: 403 });
 
-  const stripe = new Stripe(process.env.STRIPE_API_KEY!, {
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
     apiVersion: "2024-06-20" as Stripe.LatestApiVersion,
   });
 
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest): Promise<Response> {
   try {
     event = stripe.webhooks.constructEvent(raw, sig, secret);
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid signature" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "invalid signature" }, { status: 403 });
   }
 
   const meta = extractMetadata(event.data?.object as unknown);
