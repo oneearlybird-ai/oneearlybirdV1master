@@ -9,10 +9,10 @@ export async function POST(req: Request) {
     const secret = process.env.STRIPE_WEBHOOK_SECRET || '';
     if (!secret) return bad(500, 'misconfigured');
     const body = await req.text(); // RAW body only
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-06-20' as Stripe.LatestApiVersion });
     let event: Stripe.Event;
     try { event = stripe.webhooks.constructEvent(body, sig, secret); }
-    catch { return bad(400, 'invalid signature'); }
+    catch { return bad(403, 'invalid signature'); }
     switch (event.type) {
       case 'invoice.payment_succeeded':
       case 'customer.subscription.created':
