@@ -1,0 +1,2 @@
+# Uses Semgrep's recommended CI ruleset implicitly via --config p/ci
+# Add project-specific rules here if needed.

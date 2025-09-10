@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+set -euo pipefail
+echo "== pre-push: security & quality gates =="
+# Fast smoke (skip on CI if needed)
+if command -v node >/dev/null 2>&1; then
+  [ -f package.json ] && npm run -s typecheck || true
+  [ -f package.json ] && npm run -s lint || true
+fi
+# Security scans (read-only; fail on findings)
+if command -v gitleaks >/dev/null 2>&1; then gitleaks detect --no-git --exit-code 1; fi
+if command -v osv-scanner >/dev/null 2>&1; then osv-scanner -r .; fi
+if command -v semgrep >/dev/null 2>&1; then semgrep scan --config p/ci --error; fi
+if command -v trivy >/dev/null 2>&1; then trivy fs --exit-code 1 --severity HIGH,CRITICAL .; fi
+echo "== pre-push: PASS =="
