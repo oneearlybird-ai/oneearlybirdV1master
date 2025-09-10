@@ -28,7 +28,11 @@ function redactSecrets(s){
   }catch{ return s; }
 }
 
-const _safeWrite = (w, data) => { try{ w.write(redactSecrets(data)); }catch{ /* noop */ } };
+// Always redact secrets from any stdout/stderr writes
+const _origStdoutWrite = process.stdout.write.bind(process.stdout);
+process.stdout.write = (chunk, ...rest) => _origStdoutWrite(redactSecrets(chunk), ...rest);
+const _origStderrWrite = process.stderr.write.bind(process.stderr);
+process.stderr.write = (chunk, ...rest) => _origStderrWrite(redactSecrets(chunk), ...rest);
 
 function countCommentLines(filePath, s){
   const ext = path.extname(filePath).toLowerCase();
@@ -56,14 +60,7 @@ function spawnOrFail(file, args, opts = {}){
   if (res.status !== 0) hfail(`Command failed: ${file} ${argv.join(' ')}`);
 }
 
-function runSafe(file, args = [], opts = {}){
-  if (typeof file !== 'string' || (file.includes('/') && file.startsWith('.'))){
-    throw new Error('Refusing to run non-whitelisted command');
-  }
-  const res = spawnSync(file, Array.isArray(args)?args:[], { stdio:'inherit', shell:false, ...opts });
-  if (res.error) throw res.error;
-  return res.status ?? 0;
-}
+
 
 const args = process.argv.slice(2);
 if (args.includes('--help') || args.length===0){
