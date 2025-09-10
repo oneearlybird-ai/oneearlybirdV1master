@@ -18,3 +18,47 @@ apps/web/.vercel/.env.*
 *.bak
 *_audit*.txt
 env_audit_report.txt
+
+# macOS
+**/.DS_Store
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Node / package managers
+.pnpm-store/
+.yarn/
+node_modules/
+**/node_modules/
+
+# Build artifacts / coverage
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Next.js
+.next/
+**/.next/
+out/
+
+# Vercel / Railway local folders
+.vercel/
+**/.vercel/
+
+# Turbo / task runners
+.turbo/
+
+# Terraform
+.terraform/
+**/.terraform/
+*.terraform.lock.hcl
+
+# Archives
+*.zip
+*.tar
+*.tar.gz
