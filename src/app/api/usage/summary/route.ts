@@ -17,7 +17,7 @@ export async function GET(req: Request) {
       return Response.json({ ok: false, error: 'missing_DATABASE_URL' }, { status: 500 });
     }
     if (dbg) {
-      try { console.log('[db] host=%s', new URL(DSN).host); } catch {}
+      try { console.log('[db] host=%s', new URL(DSN).host); } catch {/* intentional no-op for health summary */}
     }
 
     const rows = await sql`select now() as now`;

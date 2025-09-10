@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       const url = await getDownloadUrl({ Key: key })
       return NextResponse.json({ method: 'GET', url }, { status: 200 })
     }
-  } catch (e) {
+  } catch (_e) {
     return NextResponse.json({ error: 'presign failed' }, { status: 500 })
   }
 }
