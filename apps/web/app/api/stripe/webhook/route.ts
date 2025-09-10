@@ -16,7 +16,7 @@ export async function POST(req: Request) {
     if (!secret) return bad(500, 'misconfigured');
 
     const body = await req.text(); // RAW body only
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2023-10-16' });
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '');
 
     let event: Stripe.Event;
     try {
@@ -31,7 +31,6 @@ export async function POST(req: Request) {
       case 'customer.subscription.created':
       case 'customer.subscription.updated':
       case 'customer.subscription.deleted':
-      case 'usage_record.summary.created':
       default:
         break;
     }
