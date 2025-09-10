@@ -64,3 +64,10 @@ logs/
 audit/*.txt
 audit/*status_*.txt
 .env*
+# EARLYBIRD-SEC-IGNORE-START
+.env*
+.vercel/*.env*
+apps/web/.env*
+apps/web/app/api/webhooks/stripe/route.ts.bak
+env_audit_report.txt
+# EARLYBIRD-SEC-IGNORE-END
