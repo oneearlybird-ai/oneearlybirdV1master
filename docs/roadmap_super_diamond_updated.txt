@@ -1,0 +1,101 @@
+🚀 EarlyBird V1 Master — Roadmap (Super Diamond • Updated)
+
+Overall build: ~72–75%
+
+Security (≈85%)
+- ✅ HSTS preload, CSP with nonce, X-Content-Type-Options, Referrer-Policy
+- ✅ Anti-hallucination CI (denyRegex, redaction, schema checks), secrets scanning
+- ✅ Safer spawn (shell:false), log redaction for URIs
+- ❌ Permissions-Policy (deny-by-default) — PENDING
+- ❌ COOP/COEP — PENDING
+- ❌ Suppress X-Powered-By — PENDING
+- ❌ DNSSEC/SPF/DKIM/DMARC — PENDING
+
+APIs & Integrations (≈65%)
+- ✅ Auth scaffold (Google OAuth split WIP)
+- ✅ Stripe webhook (raw-body + sig verify) • unsigned → 4xx
+- ✅ Redis limiter (/api/ratelimit-test 200→429→200)
+- ❌ Normalize Stripe envs (SECRET vs API KEY) — PENDING
+- ❌ Subscriptions + metered usage flow — PENDING
+- ❌ PHI vendor wiring (ASR/TTS/LLM/storage) — PENDING
+
+Database (≈80%)
+- ✅ Neon Postgres (pooled/unpooled DSNs) wired in Vercel
+- ✅ Health/summary always 200 with db/cache/version fields
+- ❌ PHI-safe audit logging — PENDING
+
+Media/Telephony (≈50%)
+- ✅ WS Media Orchestrator scaffold (apps/media), backpressure, ping/pong, no PHI logs
+- ✅ Railway deploy helper script present
+- ❌ Deployed WS with public TLS domain — PENDING
+- ❌ Twilio Media Streams handshake (kill 31920) — PENDING
+- ❌ ASR(TBD Deepgram/Google), TTS(ElevenLabs/MS/Google), barge-in — PENDING
+
+Routing & Frontend (≈75%)
+- ✅ Public routes live; canonical domain fixed
+- ✅ /api/routes/manifest, /api/usage/summary, /api/status → 200
+- ❌ Protected zone (PHI) routing — PENDING
+- ❌ Login/signup flicker + tab unification — PENDING
+
+Infra & CI/CD (≈80%)
+- ✅ Vercel prod/preview live; previews promoted safely
+- ✅ Pre-push: ESLint, Semgrep, Trivy, Gitleaks (noise reduced via .semgrepignore)
+- ❌ Monitoring/observability dashboards — PENDING
+
+End-to-End Voice Flow — Percentages by Stage
+Caller (PSTN/WebRTC)
+  ├─ PSTN (Twilio Programmable Voice: Streams + SIP) — ~70%
+  └─ WebRTC Click-to-Call — ~50%
+
+Bootstrap
+  └─ /api/voice/incoming → <Connect><Stream> or WebRTC upgrade — 100%
+
+Media Orchestrator (wss://…/rtm/voice)
+  ├─ Ingress chunking + VAD — ~50%
+  ├─ Streaming ASR (Deepgram/Google) — 0%
+  ├─ Micro-Policy model (3–8B distilled) — 0%
+  ├─ Response LLM (realtime/function-calling) — ~20%
+  ├─ Streaming TTS (11Labs/MS/Google) — 0%
+  ├─ Latency masking/backchannels — 0%
+  └─ Barge-in mute/resume — 0%
+
+Business Logic & Integrations
+  ├─ Calendars (Google/M365/Calendly) — ~20% (Google split WIP)
+  ├─ CRM (HubSpot/Salesforce/…) — 0%
+  ├─ Knowledge Base (pgvector/Postgres or Pinecone) — ~30%
+  ├─ Address/Time/Geo (GMaps) — 0%
+  └─ Transfer/Handoff (policy + warm transfer) — 0%
+
+Transfer to Owner/Team
+  └─ /api/voice/transfer → /api/voice/dial (<Dial>) — 0%
+
+Call Completion
+  ├─ /api/voice/status — 0%
+  ├─ /api/voice/recording → S3 (+CloudFront) — 0%
+  └─ /api/transcript/finalize (diarize/redact/store) — 100%
+
+Post-Call Fanout (≤1 s)
+  ├─ Stripe Usage Records (minutes/tokens) — ~30%
+  ├─ Outbound webhook (HMAC) → CRM/helpdesk — 0%
+  └─ Dashboard live→finalized record — ~40%
+
+Targets
+- Mouth-to-ear ≤ 500–700 ms
+- ASR partials < 150 ms
+- Policy < 30 ms
+- First-token < 120 ms
+- TTS start < 150 ms
+
+Next Patches (strict SVP)
+1) Media deploy (Railway/Fly), confirm Twilio Streams handshake (kill 31920)
+2) Header hardening: Permissions-Policy, COOP/COEP, hide X-Powered-By
+3) Stripe usage metering endpoint → DB → Stripe usage records
+4) Minimal ASR streaming (Deepgram/Google) to get partials flowing
+5) Protected zone routing + PHI audit logs
+6) Monitoring/observability dashboard and alerts
+
+Guardrails & Gates (always)
+- Probe → SVP(≤2 files/≤120 LOC) → Gates(typecheck/build/manifest/headers/endpoint smokes) → Verdicts → Confidence ≥97% or zz
+- No PHI in logs; redact secrets; do not overwrite CSP/nonce
+- Stripe: unsigned → 4xx; signed → 2xx fast path
+

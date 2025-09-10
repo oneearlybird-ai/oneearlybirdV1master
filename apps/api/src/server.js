@@ -13,7 +13,7 @@ app.addHook('onSend', async (_req, reply, payload) => {
   reply.header('Cross-Origin-Embedder-Policy', 'require-corp');
   reply.header('X-Content-Type-Options', 'nosniff');
   reply.header('Referrer-Policy', 'strict-origin-when-cross-origin');
-  try { reply.raw.removeHeader('Server'); } catch {}
+  try { reply.raw.removeHeader('Server'); } catch { void 0; }
   return payload;
 });
 
