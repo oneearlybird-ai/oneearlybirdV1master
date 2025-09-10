@@ -7,7 +7,7 @@
 import fs from 'fs';
 import path from 'path';
 import crypto from 'crypto';
-import { spawnSync } from 'child_process';
+import { spawnSync } from 'node:child_process';
 
 let babelParser = null;
 let Ajv = null;
@@ -20,6 +20,15 @@ const toLF = (s) => s.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
 const stripTrailingWS = (s) => s.split('\n').map(l => l.replace(/[ \t]+$/g, '')).join('\n');
 function norm(s){ let out=toLF(s); out=stripTrailingWS(out); if(!out.endsWith('\n')) out+='\n'; return out; }
 function lines(s){ return s.split('\n'); }
+
+function redactSecrets(s){
+  if(!s) return s;
+  try{
+    return String(s).replace(/([a-z]+:\/\/)\S+:\S+@/gi, '$1****:****@');
+  }catch{ return s; }
+}
+
+const _safeWrite = (w, data) => { try{ w.write(redactSecrets(data)); }catch{ /* noop */ } };
 
 function countCommentLines(filePath, s){
   const ext = path.extname(filePath).toLowerCase();
@@ -41,9 +50,19 @@ function hfail(msg){ console.log('❌', msg); process.exitCode=1; }
 function ok(msg){ console.log('✅', msg); }
 function loadJSONMaybe(p){ try{ return JSON.parse(read(p)); }catch{ return null; } }
 
-function spawnOrFail(cmd, args, opts = {}){
-  const res = spawnSync(cmd, args, { stdio:'inherit', shell: process.platform==='win32', ...opts });
-  if (res.status !== 0) hfail(`Command failed: ${cmd} ${args.join(' ')}`);
+function spawnOrFail(file, args, opts = {}){
+  const argv = Array.isArray(args) ? args : [];
+  const res = spawnSync(file, argv, { stdio:'inherit', shell:false, ...opts });
+  if (res.status !== 0) hfail(`Command failed: ${file} ${argv.join(' ')}`);
+}
+
+function runSafe(file, args = [], opts = {}){
+  if (typeof file !== 'string' || (file.includes('/') && file.startsWith('.'))){
+    throw new Error('Refusing to run non-whitelisted command');
+  }
+  const res = spawnSync(file, Array.isArray(args)?args:[], { stdio:'inherit', shell:false, ...opts });
+  if (res.error) throw res.error;
+  return res.status ?? 0;
 }
 
 const args = process.argv.slice(2);

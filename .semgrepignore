@@ -1,0 +1,5 @@
+# Exclude generated logs and artifacts from SAST
+logs/**
+*.out
+*.log
+
