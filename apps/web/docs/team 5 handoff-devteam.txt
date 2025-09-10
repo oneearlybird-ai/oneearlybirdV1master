@@ -1,0 +1,81 @@
+TEAM 5 HANDOFF — EarlyBird (Diamond Team → Team 5)
+Date: 2025-09-09 • Prod: https://oneearlybird.ai • Repo: apps/web/*
+North Star: AI assistant SaaS, HIPAA-by-design. Non-negotiables: auditing, security, anti-hallucination, enterprise quality.
+
+WORKFLOW v1.7 (MANDATORY)
+• pp peer-check after EVERY run; propose fix or proceed in SAME message. • qq tidy. • zz pause until PASS. 
+• SVP: ≤2 files or ≤120 LOC; 1 batch per message; always start with cd; include git add/commit/push (and deploy if needed).
+• Anti-Drift line at top of each action: “Does intent match request? Yes/No. Reason: …”
+• Gates: Typecheck → Build → Routes/manifest → Header smoke → Endpoint smokes. Confidence ≥97% or zz.
+
+SECURITY BASELINE (single source = middleware)
+• HSTS (preload), CSP w/ per-request nonce (no unsafe-inline/eval), Permissions-Policy deny list, COOP same-origin, COEP require-corp/credentialless, X-XSS-Protection: 0, X-Content-Type-Options: nosniff, no x-powered-by.
+• PHI: Public vs Protected zones; BAA vendors only; immutable PHI audit logs; RBAC; short-TTL tokens; signed URL for PHI transfers.
+• Secrets only in env; no fallbacks/hardcoding; rotate on exposure. Serverless DB uses pooled DSN (-pooler).
+
+CURRENT STATUS (evidence-based)
+• Storage (Rumble S3-compatible) — PASS
+  Env: AWS_REGION=us-east-2, S3_ENDPOINT=https://object.us-east-2.rumble.cloud, AWS_S3_BUCKET=<name>, S3_FORCE_PATH_STYLE=true, S3_SIGNED_URL_EXPIRES=900, AWS_ACCESS_KEY_ID/SECRET_ACCESS_KEY, SMOKE_KEY.
+  Presign route locked by x-smoke-key; key template enforced: {env}/tenants/{tenantId}/{type}/{yyyy}/{mm}/{dd}/{objectId}.{ext}; env must match Vercel env.
+  Smoke: unauth 403 → auth 200 presign → PUT 200 OK on Rumble endpoint.
+• Twilio Ingress — PARTIAL
+  Number points to POST /api/voice/incoming; returns TwiML <Connect><Stream url="${MEDIA_WSS_URL}"/>. Debug showed 31920 WS handshake error (expected until media server at wss://media.oneearlybird.ai is live).
+• Stripe Billing — PARTIAL
+  Keys present; webhook configured to /api/stripe/webhook with signing secret; RAW body verification to be smoked with Stripe CLI.
+• Redis Rate-Limit — TODO
+  /api/ratelimit-test present; must show 200 then 429.
+• Headers Posture — PREVIOUSLY VERIFIED
+  HSTS preload, CSP nonce, Permissions-Policy deny, COOP/COEP, X-XSS-Protection:0, nosniff, no x-powered-by. Re-smoke on arrival.
+
+ROUTES MATRIX (present/verified)
+| Path                         | M. | Present | Verified | Notes
+| /api/status                  | GET | Y | PARTIAL | Health JSON; enrich version/db/cache.
+| /api/routes/manifest         | GET | Y/? | TODO | Return canonical registry JSON.
+| /api/ratelimit-test          | GET | Y | TODO | Expect 200→429.
+| /api/usage/summary           | GET | Y | PARTIAL | 200 always; clear lint/types.
+| /api/voice/incoming          | POST| Y | PARTIAL | TwiML <Connect><Stream>; unsigned 403; media WS pending.
+| /api/stripe/webhook          | POST| Y | TODO | RAW body + constructEvent; unsigned/invalid 400/403.
+| /api/storage/presign         | POST| Y | PASS | x-smoke-key; enforced key template.
+| /api/voice/{transfer|dial|recording|status} | POST | Y | TODO | Stubs; no smoke.
+| /api/tools/{book_meeting|transfer_to_owner|create_lead|hours_check} | POST | Y | TODO | Stubs; JSON validate; 501/202.
+| /api/kb/{search|doc}         | POST| Y | TODO | Stubs.
+| /api/stripe/usage            | GET | Y | TODO | Wiring pending.
+| /api/integrations/oauth/start| GET | Y | TODO | Wiring pending.
+| /api/numbers/{buy|webhook}   | *  | Y | TODO | Signature verify on webhook.
+| /api/agent/tool              | POST| Y | TODO | Deny-first policy.
+
+INTEGRATIONS MATRIX
+| Area   | Vendor/Lib     | Present | Verified | Notes
+| S3     | Rumble S3      | Yes     | PASS     | Presign PUT works; avoid PHI in keys.
+| DB     | Neon Postgres  | Yes     | PARTIAL  | Pooled DSN for serverless; health via usage.
+| Cache  | Upstash Redis  | Yes     | TODO     | Rate-limit smoke.
+| Billing| Stripe         | Yes     | PARTIAL  | Webhook configured; RAW body verify pending.
+| Teleph.| Twilio         | Yes     | PARTIAL  | Ingress OK; media server pending.
+| LLM    | OpenAI         | Planned | —        | Wire when needed.
+| ASR/TTS| TBD            | Planned | —        | Choose during media wiring.
+
+WHAT TEAM 4 DELIVERED
+• Anti-Drift discipline adopted. • S3 presign/upload E2E PASS. • Twilio ingress wired; media WS pending. 
+• Stripe keys/webhook configured (no secrets in docs). • Header posture maintained. 
+
+OPEN ITEMS (prioritized)
+P0 Media server: provision wss://media.oneearlybird.ai (Fly/Railway); TLS; Twilio Streams handler; ping/pong; redact logs.
+P0 Redis: prove 200→429; fix env/route if not. 
+P1 Stripe: RAW body + constructEvent verification via Stripe CLI. 
+P1 Routes manifest: central registry + GET /api/routes/manifest.
+P2 Tools/KB stubs: Node runtime, JSON validation, 501/202, no PHI logs.
+P2 Usage/Status polish: lint/type clean; enrich health.
+P3 Docs: commit yy snapshot; mm checklist.
+
+ARRIVAL QUICK-CHECK (prod)
+curl -sSI https://oneearlybird.ai | tr -d '\r' | sed -n '1,120p'
+curl -s -o /dev/null -w "%{http_code}\n" -X POST https://oneearlybird.ai/api/storage/presign -H 'content-type: application/json' -d '{}'
+SMOKE_KEY='<redacted>'; KEY="production/tenants/smoke/audio/$(date -u +%Y)/$(date -u +%m)/$(date -u +%d)/smoke_$(date -u +%H%M%S).txt"
+URL=$(curl -s -X POST https://oneearlybird.ai/api/storage/presign -H "x-smoke-key: $SMOKE_KEY" -H 'content-type: application/json' -d "{\"op\":\"upload\",\"key\":\"$KEY\",\"contentType\":\"text/plain\"}" | node -e 'let s="";process.stdin.on("data",d=>s+=d);process.stdin.on("end",()=>{try{const j=JSON.parse(s);console.log(j.url||"") }catch{}})')
+test -n "$URL" && echo ok > /tmp/eb.txt && curl -i -X PUT -H "content-type: text/plain" --upload-file /tmp/eb.txt "$URL" | sed -n '1,4p'
+curl -s -o /dev/null -w "%{http_code}\n" https://oneearlybird.ai/api/ratelimit-test; curl -s -o /dev/null -w "%{http_code}\n" https://oneearlybird.ai/api/ratelimit-test
+
+RISKS
+Media server not live → 31920 on calls until WS host up. Keep headers in middleware only. Keep bucket lowercase; short TTL; no PHI in keys. Stripe webhook must read RAW body first.
+
+— END —
