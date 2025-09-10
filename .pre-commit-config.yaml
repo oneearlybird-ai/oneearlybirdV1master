@@ -1,0 +1,47 @@
+repos:
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        name: detect-secrets (baseline required)
+        args: ["--baseline", ".secrets.baseline"]
+
+  - repo: https://github.com/semgrep/semgrep
+    rev: v1.83.0
+    hooks:
+      - id: semgrep
+        name: semgrep (security packs)
+        args:
+          [
+            "--error",
+            "--timeout=0",
+            "--config=p/security-audit",
+            "--config=p/secrets",
+            "--config=p/owasp-top-ten",
+            "--config=p/cwe-top-25",
+            "--exclude","node_modules","--exclude",".next","--exclude",".vercel","--exclude","dist","--exclude","build","--exclude",".git",
+          ]
+
+  - repo: https://github.com/gitleaks/gitleaks
+    rev: v8.18.4
+    hooks:
+      - id: gitleaks
+        name: gitleaks (redacted)
+        args: ["detect","--redact","--verbose","--source","."]
+
+  - repo: local
+    hooks:
+      - id: eslint
+        name: eslint (staged JS/TS)
+        entry: npx --no eslint
+        language: system
+        types_or: [javascript, jsx, ts, tsx]
+        pass_filenames: true
+        args: ["--max-warnings=0"]
+      - id: tsc
+        name: tsc typecheck (project)
+        entry: npx --no tsc -p .
+        language: system
+        files: "\\.(ts|tsx)$"
+        pass_filenames: false
+
