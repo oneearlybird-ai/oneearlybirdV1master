@@ -16,6 +16,8 @@ jobs:
           cache: 'npm'
       - name: Install
         run: npm ci
+      - name: Install web deps (monorepo)
+        run: npm ci --prefix apps/web
       - name: Install Dev Deps (gate)
         run: npm i -D @babel/parser ajv yaml glob minimatch eslint @eslint/js typescript-eslint globals
       - name: Anti-Hallucination Gate
