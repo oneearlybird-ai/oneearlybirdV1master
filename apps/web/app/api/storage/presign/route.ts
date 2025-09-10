@@ -10,6 +10,22 @@ function denied(reason = 'forbidden') {
   return NextResponse.json({ error: reason }, { status: 403 })
 }
 
+function expectedEnv() {
+  const ve = (process.env.VERCEL_ENV || '').toLowerCase()
+  if (ve === 'production' || ve === 'preview' || ve === 'development') return ve
+  return 'preview'
+}
+
+function parseKey(key: string) {
+  const re = /^([a-z0-9-]+)\/tenants\/([A-Za-z0-9_-]{1,64})\/([A-Za-z0-9_-]{1,32})\/(\d{4})\/(\d{2})\/(\d{2})\/([A-Za-z0-9_-]{1,128})\.([A-Za-z0-9]{1,8})$/
+  const m = key.match(re)
+  if (!m) return null
+  const [_, env, tenantId, type, yyyy, mm, dd, objectId, ext] = m
+  const y = Number(yyyy), mo = Number(mm), d = Number(dd)
+  if (!(mo >= 1 && mo <= 12) || !(d >= 1 && d <= 31)) return null
+  return { env, tenantId, type, yyyy: y, mm: mo, dd: d, objectId, ext }
+}
+
 export async function POST(req: NextRequest) {
   if (!process.env.SMOKE_KEY) return denied('smoke key not configured')
   if (req.headers.get('x-smoke-key') !== process.env.SMOKE_KEY) return denied()
@@ -24,6 +40,10 @@ export async function POST(req: NextRequest) {
   if (!key || !/^[A-Za-z0-9/_\-.]+$/.test(key) || key.includes('..')) {
     return NextResponse.json({ error: 'invalid key' }, { status: 400 })
   }
+  const parsed = parseKey(key)
+  if (!parsed) return NextResponse.json({ error: 'invalid key shape' }, { status: 400 })
+  const envOk = parsed.env === expectedEnv() || (expectedEnv() === 'development' && parsed.env === 'preview')
+  if (!envOk) return NextResponse.json({ error: 'env mismatch' }, { status: 400 })
   if (op !== 'upload' && op !== 'download') {
     return NextResponse.json({ error: 'invalid op' }, { status: 400 })
   }
@@ -40,4 +60,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'presign failed' }, { status: 500 })
   }
 }
-
