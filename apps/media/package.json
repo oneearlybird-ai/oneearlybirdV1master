@@ -1,0 +1,15 @@
+{
+  "name": "@earlybird/media",
+  "private": true,
+  "type": "module",
+  "version": "0.0.1",
+  "engines": { "node": ">=18" },
+  "dependencies": {
+    "tsx": "^4.16.0",
+    "ws": "^8.17.1"
+  },
+  "scripts": {
+    "start": "tsx apps/media/server.ts"
+  }
+}
+
