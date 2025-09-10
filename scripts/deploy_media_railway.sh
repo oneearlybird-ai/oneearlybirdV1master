@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+# Version-agnostic Railway deploy for apps/media
 set -euo pipefail
 app="${RAILWAY_APP_NAME:-earlybird-media}"
 port="${PORT:-8080}"
@@ -9,17 +10,34 @@ if ! command -v railway >/dev/null 2>&1; then
   export PATH="$HOME/.railway/bin:$PATH"
 fi
 
-railway whoami >/dev/null 2>&1 || railway login
+railway whoami >/dev/null 2>&1 || {
+  if [ -n "${RAILWAY_TOKEN:-}" ]; then
+    railway login --browserless --token "$RAILWAY_TOKEN"
+  else
+    railway login
+  fi
+}
 
-railway up --service "$app" || railway init -n "$app"
-railway variables set PORT="$port" WS_PATH="$path"
-railway npm i
-railway run npm run start & sleep 2; kill $! 2>/dev/null || true
+pushd apps/media >/dev/null
 
-railway deploy --service "$app" --detach
+# Link this folder to the service (idempotent across CLI variants)
+railway link || true
+
+# Ensure project/service exist; if not, init (non-interactive if possible)
+railway init -n "$app" || true
+
+# Set runtime variables (PORT/WS_PATH) without relying on service flags
+railway variables set PORT="$port" WS_PATH="$path" || true
+
+# Sanity: ensure start script exists
+npm pkg get scripts.start >/dev/null 2>&1 || { echo "Missing scripts.start"; exit 1; }
+
+# Deploy using version-agnostic command
+railway up || railway deploy || true
+
+popd >/dev/null
 
 echo "----"
-echo "Deployed media service:"
-railway status --service "$app" || true
-echo "If a domain is shown (e.g., https://*.up.railway.app), WS path is: wss://<domain>${path}"
-
+echo "If a domain is shown in the Railway dashboard (e.g., https://*.up.railway.app):"
+echo "  Health: curl -s https://<domain>/ | jq ."
+echo "  WS:     npx wscat -c wss://<domain>${path}"
