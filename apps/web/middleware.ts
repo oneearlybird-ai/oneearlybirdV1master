@@ -23,6 +23,8 @@ export function middleware(_req: NextRequest) {
   res.headers.set('Permissions-Policy','geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()');
   res.headers.set('Cross-Origin-Opener-Policy','same-origin');
   res.headers.set('Cross-Origin-Embedder-Policy','require-corp');
+  res.headers.set('X-Content-Type-Options','nosniff');
+  res.headers.set('Referrer-Policy','strict-origin-when-cross-origin');
   res.headers.set('X-XSS-Protection','0');
   return res;
 }
