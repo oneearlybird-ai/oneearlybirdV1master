@@ -1,0 +1,33 @@
+timestamp:20250908-030024
+repo:oneearlybirdV1master
+
+=== Gates (local) ===
+- Typecheck: PASS
+- Build: PASS
+- Anti-Hallucination Gate: PASS
+- Baseline parity (critical files): PASS
+- Lint gate in CI: DISABLED (❌ until ESLint v9 migration)
+
+=== DNS posture ===
+DMARC: v=DMARC1; p=none; sp=none; adkim=s; aspf=s; pct=100
+SPF: v=spf1 -all
+DNSSEC (DS): MISSING ❌
+
+=== CI presence ===
+ci.yml: PRESENT ✅
+secrets.yml: PRESENT ✅
+.gitleaks.toml: PRESENT ✅
+
+=== Preview deindexing ===
+robots.txt content-type: text/plain; charset=utf-8
+robots.txt head: User-agent: *
+Disallow: /
+
+=== Summary verdicts ===
+Core build/typecheck/A.H. Gate: ✅
+Critical-file parity: ✅
+Secrets scan job present: ✅ (runs in CI)
+Lint (ESLint v9) migration: ❌ pending
+DNSSEC: ❌ (unsupported on Vercel NS)
+DKIM: ❌ pending (DMARC=monitoring)
+sha256:8085a79e76d0df358a50d4164a5a8546d346cfa6aa0eb31fe786565d5d1a70f2

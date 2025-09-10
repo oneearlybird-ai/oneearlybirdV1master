@@ -1,0 +1,5 @@
+apps/web/app/api/auth/[...nextauth]/route.ts
+apps/web/app/api/billing/portal/route.ts
+apps/web/app/api/webhooks/stripe/route.ts
+apps/web/middleware.ts
+apps/web/app/robots.txt/route.ts

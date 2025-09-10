@@ -1,0 +1,4 @@
+DSN_SCHEME=
+DSN_HOST=invalid
+CONNECT=ERR
+PGMSG=missing DSN

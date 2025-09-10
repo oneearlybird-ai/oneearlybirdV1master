@@ -1,0 +1,4 @@
+DSN_SCHEME="\n\n"
+DSN_HOST=invalid
+CONNECT=ERR
+PGMSG=getaddrinfo ENOTFOUND base

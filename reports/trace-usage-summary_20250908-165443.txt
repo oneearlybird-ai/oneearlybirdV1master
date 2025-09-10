@@ -1,0 +1,11 @@
+== ROUTE CANDIDATES ==
+
+== PAGES API FALLBACK ==
+
+== BODY SIGNATURE MATCH (db_unavailable / totals / updatedAt) ==
+
+== PG/POOL CLIENTS (centralized db) ==
+
+== NEON SERVERLESS ALREADY USED? ==
+
+== EXPORT HANDLERS AROUND MATCHES ==

@@ -1,0 +1,5 @@
+== 1) Repo layout (top 3 levels) ==
+== 2) TODO / placeholder scan ==
+== 3) Commented-out code hotspots ==
+== 4) Secrets scan (verified only; filenames/lines only) ==
+== 5) Env var surface (names only) ==

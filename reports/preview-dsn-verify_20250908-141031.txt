@@ -1,0 +1,4 @@
+DSN_SCHEME="cd"$HOME/Desktop/oneearlybirdV1master"mkdir-plogsreportsTS=$(date+%Y%m%d-%H%M%S)LOGO="logs/svp037_$TS.out"LOGE="logs/svp037_$TS.err"RPT="reports/preview-dsn-verify_$TS.txt"exec>>(tee-a"$LOGO")2>>(tee-a"$LOGE">&2)set+HSAN=$(CLIP="$(pbpaste)"node<<'JS'constraw=process.env.CLIP||'';lets=raw.replace(/\r/g,'').replace(/[""]/g,'"').replace(/['']/g,"'").trim();if((s.startsWith('"')&&s.endsWith('"'))||(s.startsWith("'")&&s.endsWith("'"))||(s.startsWith('`')&&s.endsWith('`')))s=s.slice(1,-1);s=s.replace(/\s+/g,'');if(s.startsWith('postgres
+DSN_HOST=invalid
+CONNECT=ERR
+PGMSG=getaddrinfo ENOTFOUND base

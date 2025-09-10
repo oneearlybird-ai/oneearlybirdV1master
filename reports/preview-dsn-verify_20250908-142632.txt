@@ -1,0 +1,4 @@
+DSN_SCHEME="cd"$HOME/Desktop/oneearlybirdV1master"mkdir-plogsreportsTS=$(date+%Y%m%d-%H%M%S)LOGO="logs/svp038k_$TS.out"LOGE="logs/svp038k_$TS.err"RPT="reports/preview-dsn-verify_$TS.txt"exec>>(tee-a"$LOGO")2>>(tee-a"$LOGE">&2)set+H#[1]ReadDSNfromclipboardandsanitize
+DSN_HOST=invalid
+CONNECT=ERR
+PGMSG=getaddrinfo ENOTFOUND base

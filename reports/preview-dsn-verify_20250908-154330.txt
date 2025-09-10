@@ -1,0 +1,5 @@
+DSN_SCHEME="postgresql
+DSN_HOST=invalid
+CONNECT=ERR
+PGCODE=ENOTFOUND
+PGMSG=getaddrinfo ENOTFOUND base

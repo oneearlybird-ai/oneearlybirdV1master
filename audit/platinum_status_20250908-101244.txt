@@ -1,0 +1,26 @@
+timestamp:20250908-101244
+repo:oneearlybirdV1master
+
+=== Gates (local) ===
+- Typecheck: PASS
+- Build: PASS
+- Lint: PASS
+- Anti-Hallucination Gate: PASS
+- Baseline parity (critical files): PASS
+
+=== CI presence ===
+ci.yml: PRESENT ✅
+secrets.yml: PRESENT ✅
+.gitleaks.toml: PRESENT ✅
+
+=== DNS posture ===
+DMARC: v=DMARC1; p=none; sp=none; adkim=s; aspf=s; pct=100
+SPF: v=spf1 -all
+DNSSEC (DS): MISSING ❌
+
+=== Preview deindexing ===
+X-Robots-Tag (/): N/A
+robots.txt content-type: text/plain; charset=utf-8
+robots.txt head: User-agent: *
+Disallow: /
+sha256:616c0be7765164eb4cb9d0b1bf2bfe1d74a66806c0b19301cb37e589c3c1f8f1

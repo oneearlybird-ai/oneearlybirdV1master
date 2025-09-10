@@ -1,0 +1,63 @@
+CURRENT_BRANCH=main
+LOCAL_SHA=b0293d3
+--- STATUS (short) ---
+## main...origin/main
+?? .github/workflows/secrets.yml
+?? .gitleaks.toml
+?? anti_hallucination.config.json
+?? audit/
+?? eslint.config.mjs
+?? reports/
+?? scripts/
+?? vercel.json
+--- DIFF (name-status) ---
+--- UNTRACKED ---
+UNTRACKED .github/workflows/secrets.yml
+UNTRACKED .gitleaks.toml
+UNTRACKED anti_hallucination.config.json
+UNTRACKED audit/patch_baselines.json
+UNTRACKED audit/patch_guard_README.txt
+UNTRACKED audit/patch_targets.txt
+UNTRACKED audit/platinum_status_20250908-030024.txt
+UNTRACKED audit/platinum_status_20250908-101244.txt
+UNTRACKED audit/security_snapshot_20250908-014038.txt
+UNTRACKED eslint.config.mjs
+UNTRACKED reports/git-audit_20250908-151853.txt
+UNTRACKED reports/git-audit_20250908-160248.txt
+UNTRACKED reports/preview-db-diag_20250908-132125.txt
+UNTRACKED reports/preview-db-diag_20250908-142112.txt
+UNTRACKED reports/preview-dsn-verify_20250908-133447.txt
+UNTRACKED reports/preview-dsn-verify_20250908-134854.txt
+UNTRACKED reports/preview-dsn-verify_20250908-135000.txt
+UNTRACKED reports/preview-dsn-verify_20250908-135051.txt
+UNTRACKED reports/preview-dsn-verify_20250908-135220.txt
+UNTRACKED reports/preview-dsn-verify_20250908-135920.txt
+UNTRACKED reports/preview-dsn-verify_20250908-141031.txt
+UNTRACKED reports/preview-dsn-verify_20250908-141122.txt
+UNTRACKED reports/preview-dsn-verify_20250908-141638.txt
+UNTRACKED reports/preview-dsn-verify_20250908-141728.txt
+UNTRACKED reports/preview-dsn-verify_20250908-141958.txt
+UNTRACKED reports/preview-dsn-verify_20250908-142632.txt
+UNTRACKED reports/preview-dsn-verify_20250908-143218.txt
+UNTRACKED reports/preview-dsn-verify_20250908-150739.txt
+UNTRACKED reports/preview-dsn-verify_20250908-151131.txt
+UNTRACKED reports/preview-dsn-verify_20250908-151556.txt
+UNTRACKED reports/preview-dsn-verify_20250908-152213.txt
+UNTRACKED reports/preview-dsn-verify_20250908-152929.txt
+UNTRACKED reports/preview-dsn-verify_20250908-153710.txt
+UNTRACKED reports/preview-dsn-verify_20250908-154029.txt
+UNTRACKED reports/preview-dsn-verify_20250908-154330.txt
+UNTRACKED reports/preview-dsn-verify_20250908-154708.txt
+UNTRACKED reports/preview-dsn-verify_fallback.txt
+UNTRACKED scripts/anti_hallucination_gate.mjs
+UNTRACKED scripts/check_patch_baselines.mjs
+UNTRACKED scripts/db_migrate.mjs
+UNTRACKED scripts/patch_guard.mjs
+UNTRACKED vercel.json
+--- MIGRATION TOUCHES ---
+--- LAST 5 COMMITS ---
+b0293d3 (HEAD -> main, origin/main, origin/HEAD) SVP-032b: satisfy eslint(no-empty) in pgPool; gate→deploy→alias
+195119a SVP-032: pgPool keyed by DSN; prevent stale/empty pool; preview 503→200
+e02e13a SVP-027a: fix ESLint unused catch var (_e); refresh snapshot
+93cbcdb SVP-027: harden /api/usage/summary (503 fail-safe); tighten .gitignore
+d6496c8 SVP-026a: add GitHub CI workflow (no secrets)

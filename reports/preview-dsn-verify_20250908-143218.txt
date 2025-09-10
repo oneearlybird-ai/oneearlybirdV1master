@@ -1,0 +1,4 @@
+DSN_SCHEME="cd"$HOME/Desktop/oneearlybirdV1master"mkdir-plogsreportsTS=$(date+%Y%m%d-%H%M%S)LOGO="logs/svp040_$TS.out";LOGE="logs/svp040_$TS.err";RPT="reports/preview-dsn-verify_$TS.txt"exec>>(tee-a"$LOGO")2>>(tee-a"$LOGE">&2)set+H#[1]Enumerate&removeALLdb-relatedenvkeysacrosspreview/dev/prod(includingleftovera_*),idempotentvercelenvls--json2>/dev/null|node-e'lets="";process.stdin.on("data",d=>s+=d).on("end",()=>{consti=Math.min(...["[","{"].map(c=>{constj=s.indexOf(c);returnj<0?1e9
+DSN_HOST=invalid
+CONNECT=ERR
+PGMSG=getaddrinfo ENOTFOUND base

@@ -1,0 +1,6 @@
+=== Preview DB Diag ====
+Time=2025-09-08T17:21:26.500Z
+DSN_HOST=invalid
+CONNECT=ERR
+PGCODE=ENOTFOUND
+PGMSG=getaddrinfo ENOTFOUND base

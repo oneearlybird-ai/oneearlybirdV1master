@@ -1,0 +1,58 @@
+snapshot:20250908-014038
+prod:https://oneearlybird.ai
+preview:https://preview.oneearlybird.ai
+=== HEADERS / (prod) ===
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-d8a30c43-86eb-4881-abd7-1850bf510f40'; style-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';
+cross-origin-embedder-policy: require-corp
+cross-origin-opener-policy: same-origin
+permissions-policy: geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+=== HEADERS /login (prod) ===
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-27d8a5be-6fa6-4f55-8c76-01ab0f83e0e5'; style-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';
+cross-origin-embedder-policy: require-corp
+cross-origin-opener-policy: same-origin
+permissions-policy: geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+=== PROVIDERS (prod) ===
+{"credentials":{"id":"credentials","name":"Email + Password","type":"credentials","signinUrl":"https://oneearlybird.ai/api/auth/signin/credentials","callbackUrl":"https://oneearlybird.ai/api/auth/callback/credentials"},"google":{"id":"google","name":"Google","type":"oauth","signinUrl":"https://oneearlybird.ai/api/auth/signin/google","callbackUrl":"https://oneearlybird.ai/api/auth/callback/google"}}=== SMOKE POST /api/webhooks/stripe (prod) ===
+status:400
+=== SMOKE POST /api/billing/portal (prod) ===
+status:401
+=== HEADERS / (preview) ===
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-dd7a48eb-e8b2-442e-96e7-f46ffed1ae52'; style-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';
+cross-origin-embedder-policy: require-corp
+cross-origin-opener-policy: same-origin
+permissions-policy: geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+=== HEADERS /login (preview) ===
+content-security-policy: default-src 'self'; script-src 'self' 'nonce-47b6cb88-c242-484c-b9ef-866902592ae2'; style-src 'self'; object-src 'none'; base-uri 'self'; frame-ancestors 'none';
+cross-origin-embedder-policy: require-corp
+cross-origin-opener-policy: same-origin
+permissions-policy: geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()
+referrer-policy: strict-origin-when-cross-origin
+strict-transport-security: max-age=31536000; includeSubDomains; preload
+x-content-type-options: nosniff
+x-frame-options: DENY
+=== PROVIDERS (preview) ===
+{"credentials":{"id":"credentials","name":"Email + Password","type":"credentials","signinUrl":"https://preview.oneearlybird.ai/api/auth/signin/credentials","callbackUrl":"https://preview.oneearlybird.ai/api/auth/callback/credentials"},"google":{"id":"google","name":"Google","type":"oauth","signinUrl":"https://preview.oneearlybird.ai/api/auth/signin/google","callbackUrl":"https://preview.oneearlybird.ai/api/auth/callback/google"}}=== SMOKE POST /api/webhooks/stripe (preview) ===
+status:400
+=== SMOKE POST /api/billing/portal (preview) ===
+status:401
+=== DNS TXT _dmarc ===
+v=DMARC1; p=none; sp=none; adkim=s; aspf=s; pct=100
+=== DNS TXT @ (SPF) ===
+v=spf1 -all
+=== DNS CAA ===
+0 issue "letsencrypt.org"
+=== DNS DS (DNSSEC) ===
+=== DNS CNAME preview ===
+cname.vercel-dns.com.
