@@ -1,0 +1,39 @@
+rules:
+  - id: react-inline-style-attr
+    message: "Inline style attribute blocked; use CSS classes + CSP nonce"
+    severity: ERROR
+    languages: [javascript, typescript, typescript-react, javascript-react]
+    pattern: |
+      <... style={{ ... }} ... />
+  - id: react-dangerouslysetinnerhtml
+    message: "dangerouslySetInnerHTML requires strict sanitization"
+    severity: ERROR
+    languages: [typescript-react, javascript-react]
+    patterns:
+      - pattern: |
+          <... dangerouslySetInnerHTML={{ __html: $X }} ... />
+      - metavariable-regex:
+          metavariable: $X
+          regex: .*
+  - id: js-eval-dynamic-code
+    message: "Avoid dynamic code (eval/new Function); use safe alternatives"
+    severity: ERROR
+    languages: [javascript, typescript]
+    pattern-either:
+      - pattern: eval($X)
+      - pattern: new Function($ARGS)
+  - id: llm-output-without-schema-validate
+    message: "LLM output must be validated against an explicit schema before use"
+    severity: WARNING
+    languages: [javascript, typescript]
+    patterns:
+      - pattern: |
+          const $resp = await $LLM(...);
+          ...;
+          $SINK($resp)
+      - metavariable-regex:
+          metavariable: $LLM
+          regex: (openai|anthropic|vertex|groq|llm|model)
+      - metavariable-regex:
+          metavariable: $SINK
+          regex: (fetch|axios|db|exec|spawn|render|writeFile)
