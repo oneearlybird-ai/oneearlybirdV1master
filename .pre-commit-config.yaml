@@ -45,3 +45,9 @@ repos:
         files: "\\.(ts|tsx)$"
         pass_filenames: false
 
+      - id: prepush-security
+        name: pre-push heavy security scan (semgrep+trivy)
+        entry: bash scripts/prepush_security.sh
+        language: system
+        pass_filenames: false
+        stages: [pre-push]
