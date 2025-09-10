@@ -1,73 +1,20 @@
-.next/
-node_modules/
-.vercel/
-*.sqlite
-*.zip
-*.tar
-*.tar.gz
-*.mp4
-*.wav
-.vercel
-.env*.local
+# Local environment files (never commit secrets)
+.env
 .env.local
+.env.preview
+.env.production
+.env.production.local
+.env.vercel
+
+apps/web/.env
 apps/web/.env.local
-.env.local
-.env.development.local
-.env.local.bak
-.DS_Store
-apps/.DS_Store
-apps/api/.DS_Store
-apps/web/.DS_Store
-.audit/
-infra/terraform/**/.terraform/
-infra/terraform/**/.terraform.lock.hcl
-# --- Security & hygiene ---
-.env
-.env.*        # never commit any env variants
-.vercel       # Vercel project/secret tokens
-node_modules/
-*.tsbuildinfo
-*.log
-.DS_Store
-Thumbs.db
+apps/web/.env.preview
+apps/web/.env.production
+apps/web/.env.production.local
+apps/web/.env.vercel
+apps/web/.vercel/.env.*
 
-# Secrets & env (strict)
-.env
-.env.*
-*.env
-*.pem
-*.key
-*.crt
-apps/**/.env
-apps/**/.env.*
-packages/**/.env
-packages/**/.env.*
-.vercel/.env*
-
-# local-only reports
-env_audit_report.txt
+# Backup/audit artifacts (do not track)
 *.bak
-
-# Backup files (broadened)
-*.bak*
-*.orig
-*.rej
-*~
-logs/
-vendor/
-schema/
-scripts/*.log
-
-# local artifacts
-reports/
-logs/
-audit/*.txt
-audit/*status_*.txt
-.env*
-# EARLYBIRD-SEC-IGNORE-START
-.env*
-.vercel/*.env*
-apps/web/.env*
-apps/web/app/api/webhooks/stripe/route.ts.bak
+*_audit*.txt
 env_audit_report.txt
-# EARLYBIRD-SEC-IGNORE-END

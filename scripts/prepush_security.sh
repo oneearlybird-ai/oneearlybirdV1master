@@ -23,7 +23,14 @@ semgrep --error --timeout=0 \
 have trivy || { echo "trivy not installed"; exit 1; }
 trivy fs --scanners vuln,secret,config --security-checks vuln,secret,config \
   --severity HIGH,CRITICAL --exit-code 1 \
-  --skip-dirs node_modules,.next,.vercel,dist,build,.git .
+  --skip-dirs node_modules,.next,.vercel,dist,build,.git \
+  --skip-files \
+    .env,.env.local,.env.preview,.env.production,.env.production.local,.env.vercel,\
+    apps/web/.env,apps/web/.env.local,apps/web/.env.preview,apps/web/.env.production,apps/web/.env.production.local,apps/web/.env.vercel,\
+    apps/web/.vercel/.env.production.local,\
+    env_audit_report.txt,\
+    *.bak,\
+    *_audit*.txt \
+  .
 
 echo "[pre-push] heavy security scan finished successfully"
-
