@@ -7,14 +7,10 @@
     "node": ">=18"
   },
   "dependencies": {
-    "tsx": "^4.16.0",
     "ws": "^8.17.1"
   },
   "scripts": {
-    "build": "echo 'no build step for media'",
-    "start": "node --loader tsx server.ts"
-  },
-  "devDependencies": {
-    "tsx": "^4.19.1"
+    "build": "echo 'no build step'",
+    "start": "node server.mjs"
   }
 }
