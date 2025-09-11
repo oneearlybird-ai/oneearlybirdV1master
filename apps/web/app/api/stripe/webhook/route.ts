@@ -1,25 +1,58 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
 import Stripe from 'stripe';
-function bad(status: number, msg: string) { return new Response(msg, { status }); }
+
+export const runtime = 'nodejs';           // ensure Node runtime (no edge)
+export const dynamic = 'force-dynamic';    // always execute (no static cache)
+
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
+  apiVersion: '2024-06-20',
+});
+
+function bad(status: number, msg: string) {
+  return new Response(msg, { status });
+}
+
 export async function POST(req: Request) {
+  // 1) Read RAW body for signature verification
+  let raw = '';
   try {
-    const sig = req.headers.get('stripe-signature') || '';
-    if (!sig) return bad(403, 'missing signature');
-    const secret = process.env.STRIPE_WEBHOOK_SECRET || '';
-    if (!secret) return bad(500, 'misconfigured');
-    const body = await req.text(); // RAW body only
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', { apiVersion: '2024-06-20' as Stripe.LatestApiVersion });
-    let event: Stripe.Event;
-    try { event = stripe.webhooks.constructEvent(body, sig, secret); }
-    catch { return bad(403, 'invalid signature'); }
-    switch (event.type) {
-      case 'invoice.payment_succeeded':
-      case 'customer.subscription.created':
-      case 'customer.subscription.updated':
-      case 'customer.subscription.deleted':
-      default: break;
-    }
-    return new Response('ok', { status: 200 });
-  } catch { return bad(500, 'error'); }
+    raw = await req.text();
+  } catch {
+    return bad(400, 'raw body required');
+  }
+
+  // 2) Verify Stripe signature
+  const sig = req.headers.get('stripe-signature');
+  const secret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!sig || !secret) return bad(400, 'missing signature or secret');
+
+  let event: Stripe.Event;
+  try {
+    event = stripe.webhooks.constructEvent(raw, sig, secret);
+  } catch {
+    return bad(400, 'invalid signature');
+  }
+
+  // 3) Minimal PHI-safe handling (no sensitive logs)
+  // Fast-path acknowledge, then fanout can be added later (usage, CRM, etc).
+  switch (event.type) {
+    case 'invoice.payment_succeeded':
+    case 'customer.subscription.created':
+    case 'customer.subscription.updated':
+    case 'customer.subscription.deleted':
+    case 'checkout.session.completed':
+      // TODO(phase 8/10): enqueue internal job; no PII in logs.
+      break;
+    default:
+      // Accept unknown types (idempotent)
+      break;
+  }
+  return new Response('ok', { status: 200 });
+}
+
+// 4) Unsigned GET/HEAD should not reveal details; allow health smoke.
+export async function GET() {
+  return new Response(JSON.stringify({ ok: true, service: 'stripe-webhook' }), {
+    status: 200,
+    headers: { 'content-type': 'application/json' },
+  });
 }
