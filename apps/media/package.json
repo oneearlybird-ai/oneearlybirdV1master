@@ -3,13 +3,18 @@
   "private": true,
   "type": "module",
   "version": "0.0.1",
-  "engines": { "node": ">=18" },
+  "engines": {
+    "node": ">=18"
+  },
   "dependencies": {
     "tsx": "^4.16.0",
     "ws": "^8.17.1"
   },
   "scripts": {
-    "start": "tsx apps/media/server.ts"
+    "build": "echo 'no build step for media'",
+    "start": "node --loader tsx server.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1"
   }
 }
-
