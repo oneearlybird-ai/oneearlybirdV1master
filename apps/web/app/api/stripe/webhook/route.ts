@@ -12,7 +12,7 @@ function bad(status: number, msg: string) {
 }
 
 export async function POST(req: Request) {
-  // 1) Read RAW body for signature verification
+  // 1) RAW body (required for Stripe signature verification)
   let raw = '';
   try {
     raw = await req.text();
@@ -32,24 +32,23 @@ export async function POST(req: Request) {
     return bad(400, 'invalid signature');
   }
 
-  // 3) Minimal PHI-safe handling (no sensitive logs)
-  // Fast-path acknowledge, then fanout can be added later (usage, CRM, etc).
+  // 3) Minimal PHI-safe handling (fast-path ack; no sensitive logs)
   switch (event.type) {
     case 'invoice.payment_succeeded':
     case 'customer.subscription.created':
     case 'customer.subscription.updated':
     case 'customer.subscription.deleted':
     case 'checkout.session.completed':
-      // TODO(phase 8/10): enqueue internal job; no PII in logs.
+      // TODO: enqueue internal job (usage/CRM). Keep logs PHI-free.
       break;
     default:
-      // Accept unknown types (idempotent)
+      // Accept unknown types idempotently
       break;
   }
   return new Response('ok', { status: 200 });
 }
 
-// 4) Unsigned GET/HEAD should not reveal details; allow health smoke.
+// 4) Unsigned GET health (no details; OK for smoke)
 export async function GET() {
   return new Response(JSON.stringify({ ok: true, service: 'stripe-webhook' }), {
     status: 200,
