@@ -1,5 +1,5 @@
 // apps/web/app/api/voice/status/route.ts
-// Twilio Status Callback — official validator; fail-closed 403; CSP-safe
+// Twilio Status Callback — official signature validator; fail-closed 403; CSP-safe
 import twilio from 'twilio';
 
 export const runtime = 'nodejs';
@@ -12,34 +12,33 @@ function paramsFromURLEncoded(text: string): Record<string, string> {
   return out;
 }
 
+function absoluteUrlFrom(req: Request): string {
+  const u = new URL(req.url);
+  const proto = (req.headers.get('x-forwarded-proto') ?? u.protocol.replace(':',''));
+  const host  = (req.headers.get('x-forwarded-host')  ?? req.headers.get('host') ?? u.host);
+  return `${proto}://${host}${u.pathname}`;
+}
+
 export async function GET() {
-  // health check for Twilio console / ops
   return new Response('ok', { status: 200 });
 }
 
 export async function POST(req: Request) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const signature = req.headers.get('x-twilio-signature') || '';
-  if (!authToken || !signature) {
-    return new Response('forbidden', { status: 403 });
-  }
+  if (!authToken || !signature) return new Response('forbidden', { status: 403 });
 
-  const contentType = req.headers.get('content-type') || '';
-  if (!contentType.includes('application/x-www-form-urlencoded')) {
-    // Twilio status callbacks are form-encoded; reject unexpected content types
+  const ct = req.headers.get('content-type') || '';
+  if (!ct.includes('application/x-www-form-urlencoded')) {
     return new Response('forbidden', { status: 403 });
   }
 
   const bodyText = await req.text();
   const params = paramsFromURLEncoded(bodyText);
+  const url = absoluteUrlFrom(req);
 
-  // Absolute URL Twilio hit
-  const url = req.url;
   const valid = twilio.validateRequest(authToken, signature, url, params);
-  if (!valid) {
-    return new Response('forbidden', { status: 403 });
-  }
+  if (!valid) return new Response('forbidden', { status: 403 });
 
-  // Acknowledge quickly (no PHI/PII in response or logs)
   return new Response('ok', { status: 200 });
 }
