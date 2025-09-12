@@ -36,6 +36,7 @@ export async function POST(req: NextRequest) {
   }
   // Minimal response to avoid latency; add overrides later if needed.
   const res = {};
+  const out = new Response(JSON.stringify(res), {
     status: 200,
     headers: {
       "content-type": "application/json; charset=utf-8",

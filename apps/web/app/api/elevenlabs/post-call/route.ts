@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
     type = body?.type ?? "unknown";
     conversation_id = body?.data?.conversation_id;
     agent_id = body?.data?.agent_id;
-  } catch (e) { /* ignore parse errors */ }
+  } catch (_e) { /* ignore parse errors */ }
 
   console.info("[elevenlabs:post-call]", {
     ok: true,
