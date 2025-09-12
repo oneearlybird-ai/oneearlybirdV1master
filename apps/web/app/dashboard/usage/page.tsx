@@ -18,19 +18,19 @@ export default async function UsagePage() {
 
   return (
     <section>
-      <h2>Usage</h2>
-      <p>This surface shows non-PHI usage summaries. Detailed PHI metrics will live in the protected zone.</p>
-      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(180px,1fr))]">
-        <div className="p-3 border border-gray-200 rounded">
-          <div className="text-xs opacity-70">Calls</div>
+      <h2 className="text-xl font-semibold tracking-tight mb-4">Usage</h2>
+      <p className="text-white/70 mb-4">Non-PHI usage summaries. Detailed PHI metrics will live in the protected zone.</p>
+      <div className="grid gap-4 grid-cols-[repeat(auto-fit,minmax(200px,1fr))]">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="text-xs text-white/60">Calls</div>
           <div className="text-2xl font-semibold">{calls}</div>
         </div>
-        <div className="p-3 border border-gray-200 rounded">
-          <div className="text-xs opacity-70">Minutes</div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="text-xs text-white/60">Minutes</div>
           <div className="text-2xl font-semibold">{minutes}</div>
         </div>
-        <div className="p-3 border border-gray-200 rounded">
-          <div className="text-xs opacity-70">Qualified Leads</div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="text-xs text-white/60">Qualified Leads</div>
           <div className="text-2xl font-semibold">{qualified}</div>
         </div>
       </div>
