@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -15,9 +16,15 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {/* Header */}
         <header className="sticky top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
           <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-            <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight">
-              <span className="inline-block h-6 w-6 rounded bg-white"></span>
-              EarlyBird
+            <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="EarlyBird home">
+              <Image
+                src="/logo-lockup-supercrisp-clean.png"
+                alt="EarlyBird"
+                width={112}
+                height={34}
+                className="h-6 w-auto"
+                priority
+              />
             </Link>
             <div className="hidden md:flex items-center gap-6 text-sm">
               <Link href="#how" className="text-white/80 hover:text-white">How it works</Link>
