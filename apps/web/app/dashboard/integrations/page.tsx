@@ -11,12 +11,16 @@ function ConnectBtn({ provider }: { provider: string }) {
     setBusy(true);
     try {
       const res = await fetch(`/api/integrations/oauth/start?provider=${encodeURIComponent(provider)}`, { method: 'POST', cache: 'no-store' });
-      if (!res.ok) {
-        const msg = (await res.json().catch(() => ({} as any)))?.message || res.statusText || 'unavailable';
+      const data = await res.json().catch(() => ({} as any));
+      if (res.status === 501) {
+        setErr('Coming soon');
+      } else if (!res.ok) {
+        const msg = data?.message || res.statusText || 'unavailable';
         setErr(String(msg));
+      } else if (data?.url) {
+        window.location.href = data.url as string;
       } else {
-        // Placeholder: backend will redirect or return URL later.
-        alert('Starting OAuth for ' + provider + ' (scaffold)');
+        setErr('No redirect URL');
       }
     } catch {
       setErr('network');
