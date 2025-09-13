@@ -10,7 +10,8 @@ export async function POST(req: NextRequest) {
   const cookie = req.headers.get("cookie") || "";
   const hasSession = /(^|;\s*)(__Secure-next-auth\.session-token|next-auth\.session-token)=/.test(cookie);
   if (!hasSession) { return NextResponse.json({ error: "Unauthorized" }, { status: 401 }); }
-  const secret = (process.env.STRIPE_API_KEY || "").trim();
+  // Normalize to STRIPE_SECRET_KEY; fall back to STRIPE_API_KEY for backward compatibility
+  const secret = (process.env.STRIPE_SECRET_KEY || process.env.STRIPE_API_KEY || "").trim();
   const returnUrl = (
     process.env.NEXT_PUBLIC_BASE_URL ||
     (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "")

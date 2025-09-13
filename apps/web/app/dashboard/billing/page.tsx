@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function getCookie(name: string): string | null {
   const m = document.cookie.match(new RegExp("(^| )" + name.replace(/[-[\]{}()*+?.,\\^$|#\\s]/g, "\\$&") + "=([^;]+)"));
@@ -9,6 +9,33 @@ function getCookie(name: string): string | null {
 export default function BillingPage() {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [plan, setPlan] = useState<{ name?: string | null; price?: string | null; interval?: string | null } | null>(null);
+  const [upcoming, setUpcoming] = useState<{ amount?: string; date?: string } | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/stripe/usage', { cache: 'no-store' });
+        const data = await res.json();
+        if (!res.ok || !data?.ok) return;
+        const p = data.plan || {};
+        const nick = p.product_name || p.price_nickname || null;
+        const unit = typeof p.unit_amount === 'number' ? (p.unit_amount / 100).toFixed(2) : null;
+        if (!cancelled) setPlan({ name: nick, price: unit, interval: p.interval || null });
+        const u = data.upcoming || null;
+        if (u && typeof u.amount_due === 'number') {
+          const amt = (u.amount_due / 100).toFixed(2);
+          const ts = (u.next_payment_attempt || 0) * 1000;
+          const date = ts ? new Date(ts).toLocaleDateString() : '';
+          if (!cancelled) setUpcoming({ amount: amt, date });
+        }
+      } catch {
+        // silent; usage block is optional
+      }
+    })();
+    return () => { cancelled = true };
+  }, []);
 
   async function openPortal() {
     setErr(null);
@@ -39,16 +66,31 @@ export default function BillingPage() {
 
   return (
     <section className="max-w-[960px] mx-auto p-6">
-      <h2>Billing</h2>
-      <p>Manage plan and invoices here. No PHI is ever sent to Stripe metadata.</p>
-      <ul>
-        <li>Current Plan: Starter</li>
-        <li>Next Invoice: PHI-zero details only</li>
-      </ul>
+      {(plan || upcoming) && (
+        <div className="mb-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="text-sm text-white/80 grid gap-4 md:grid-cols-2">
+            <div>
+              <div className="font-medium">Current plan</div>
+              <div className="text-white/70">
+                {plan?.name ? plan.name : '—'}
+                {plan?.price ? (
+                  <span> · ${plan.price}{plan?.interval ? `/${plan.interval}` : ''}</span>
+                ) : null}
+              </div>
+            </div>
+            <div>
+              <div className="font-medium">Upcoming invoice</div>
+              <div className="text-white/70">{upcoming?.amount ? `$${upcoming.amount}` : '—'}{upcoming?.date ? ` on ${upcoming.date}` : ''}</div>
+            </div>
+          </div>
+        </div>
+      )}
+      <h2 className="text-xl font-semibold tracking-tight mb-2">Billing</h2>
+      <p className="text-white/70">Manage plan and invoices here. No PHI is ever sent to Stripe metadata.</p>
       <button
         onClick={openPortal}
         disabled={loading}
-        className={`px-:math:displaypx:math:display-:math:displaypx:math:display-lg border border-gray-300 mt-3 `}
+        className="mt-3 rounded-xl border border-white/20 bg-white/5 px-4 py-2 text-sm hover:bg-white/10 disabled:opacity-50"
       >
         {loading ? "Opening…" : "Manage Billing in Stripe"}
       </button>
