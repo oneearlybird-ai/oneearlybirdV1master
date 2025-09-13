@@ -15,7 +15,7 @@ const fetch2xx = async (u) => {
   const requireEq = (name, expect) => { const v=get(name)||''; if (v.trim() !== expect) fails.push(`${name}: expected "${expect}", got "${v}"`); };
   const requireOneOf = (name, opts=[]) => { const v=get(name)||''; if (!opts.some(o=>v.toLowerCase().includes(o.toLowerCase()))) fails.push(`${name}: none of [${opts.join(', ')}]`); };
   const requireAbsent = (name) => { if (H.has(name.toLowerCase())) fails.push(`${name}: should be absent`); };
-  const csp = get('content-security-policy')||''; if (!csp) fails.push('Content-Security-Policy: missing'); if (csp.includes("'unsafe-inline'")) fails.push("CSP: must not include 'unsafe-inline'"); if (!/nonce-/.test(csp)) fails.push('CSP: missing nonce-*');
+  const csp = get('content-security-policy')||''; if (!csp) fails.push('Content-Security-Policy: missing'); if (csp.includes("'unsafe-inline'")) fails.push("CSP: must not include 'unsafe-inline'"); if (!/nonce-/.test(csp)) fails.push('CSP: missing nonce-*'); if (!/frame-ancestors\s+'none'/i.test(csp)) fails.push("CSP: frame-ancestors 'none' missing");
   requireIncl('strict-transport-security', ['max-age=', 'includesubdomains', 'preload']);
   requireIncl('permissions-policy', ['geolocation=()', 'camera=()', 'microphone=()']);
   requireEq('x-xss-protection', '0');

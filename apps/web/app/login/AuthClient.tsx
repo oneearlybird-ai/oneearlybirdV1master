@@ -55,7 +55,7 @@ export default function AuthClient({
   );
 
   return (
-    <main className="min-h-dvh bg-neutral-950 text-white">
+    <div className="bg-neutral-950 text-white">
       <section className="mx-auto max-w-lg px-6 py-16 md:py-24">
         <div className="flex gap-1 rounded-2xl border border-white/15 bg-white/5 p-1">
           <button
@@ -175,6 +175,6 @@ export default function AuthClient({
           </div>
         )}
       </section>
-    </main>
+    </div>
   );
 }
