@@ -49,13 +49,14 @@ export async function POST(req: NextRequest) {
 
   // Minimal, PHI-safe parse (no transcript/audio echoed)
   let type = "unknown";
-  let conversation_id: string | undefined;
-  let agent_id: string | undefined;
+  // Unused for now; retained for future fanout. Prefix with '_' to satisfy lint.
+  let _conversation_id: string | undefined;
+  let _agent_id: string | undefined;
   try {
     const body = JSON.parse(raw);
     type = body?.type ?? "unknown";
-    conversation_id = body?.data?.conversation_id;
-    agent_id = body?.data?.agent_id;
+    _conversation_id = body?.data?.conversation_id;
+    _agent_id = body?.data?.agent_id;
   } catch (_e) { /* ignore parse errors */ }
 
   console.info("[elevenlabs:post-call]", {
