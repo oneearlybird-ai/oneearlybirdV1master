@@ -4,3 +4,20 @@
 
 /* Smooth fonts */
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+
+/* Hero word fade-in (preview joke + production headline staging) */
+@keyframes ebFade {
+  from { opacity: 0; transform: translateY(6px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.eb-fade-word { opacity: 0; animation: ebFade 0.75s ease forwards; }
+.eb-delay-1000 { animation-delay: 1s; }
+.eb-delay-2500 { animation-delay: 2.5s; }
+.eb-delay-4000 { animation-delay: 4s; }
+.eb-delay-7500 { animation-delay: 7.5s; }
+.eb-delay-9000 { animation-delay: 9s; }
+
+@media (prefers-reduced-motion: reduce) {
+  .eb-fade-word { animation-duration: 1ms; transform: none; }
+}
