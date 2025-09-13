@@ -46,9 +46,25 @@ coverage/
 **/.next/
 out/
 
-# Vercel / Railway local folders
+# Vercel local folders
 .vercel/
 **/.vercel/
+
+# Ignore local environment files (keep only examples tracked)
+.env
+.env.local
+.env.preview
+.env.production
+.env.production.local
+.env.vercel
+apps/web/.env
+apps/web/.env.local
+apps/web/.env.preview
+apps/web/.env.production
+apps/web/.env.production.local
+apps/web/.env.vercel
+!*.example
+!*.local.example
 
 # Turbo / task runners
 .turbo/

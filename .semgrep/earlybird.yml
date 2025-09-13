@@ -1,0 +1,34 @@
+rules:
+  - id: no-inline-script-tags
+    message: "Inline <script> tags are not allowed (use nonce)."
+    severity: ERROR
+    languages: [javascript, typescript, tsx, jsx, html]
+    patterns:
+      - pattern: |
+          <script ...>
+    paths:
+      include:
+        - apps/web/**
+      exclude:
+        - apps/web/node_modules/**
+
+  - id: no-eval
+    message: "Do not use eval/new Function."
+    severity: ERROR
+    languages: [javascript, typescript, tsx, jsx]
+    patterns:
+      - pattern: eval($X)
+      - pattern: new Function(...)
+    paths:
+      include: [apps/web/**]
+      exclude: [apps/web/node_modules/**]
+
+  - id: no-dangerouslysetinnerhtml
+    message: "Avoid dangerouslySetInnerHTML; sanitize + nonce if absolutely necessary."
+    severity: WARNING
+    languages: [javascript, typescript, tsx, jsx]
+    pattern: dangerouslySetInnerHTML
+    paths:
+      include: [apps/web/**]
+      exclude: [apps/web/node_modules/**]
+

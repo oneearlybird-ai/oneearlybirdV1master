@@ -1,0 +1,29 @@
+# Fly.io configuration for EarlyBird Media Server
+# Safe defaults for low-latency WS; adjust 'app' if needed.
+
+app = "earlybird-media"
+primary_region = "iad"  # choose region near callers/ElevenLabs PoP
+
+[build]
+
+[env]
+  PORT = "8080"
+  WS_PATH = "/rtm/voice"
+
+[http_service]
+  internal_port = 8080
+  force_https = true
+  auto_stop_machines = false
+  auto_start_machines = true
+  min_machines_running = 1
+  processes = ["app"]
+  [http_service.concurrency]
+    type = "connections"
+    soft_limit = 200
+    hard_limit = 300
+
+[[vm]]
+  cpu_kind = "shared"
+  cpus = 1
+  memory_mb = 512
+

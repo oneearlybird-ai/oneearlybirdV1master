@@ -16,5 +16,10 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Start the WS server
-CMD ["npm","start"]
+HEALTHCHECK --interval=30s --timeout=3s --start-period=10s --retries=3 \
+  CMD wget -q -O - http://127.0.0.1:8080/ >/dev/null || exit 1
 
+# Drop privileges
+USER node
+
+CMD ["npm","start"]

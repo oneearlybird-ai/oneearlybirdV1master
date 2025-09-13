@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { assertStripeMetadataPHIZero } from "@/lib/stripeGuard";
 
 export const runtime = "nodejs";
+export const dynamic = "force-dynamic";
 
 function extractMetadata(obj: unknown): Record<string, unknown> {
   if (!obj || typeof obj !== "object") return {};
@@ -17,10 +18,10 @@ function extractMetadata(obj: unknown): Record<string, unknown> {
 
 export async function POST(req: NextRequest): Promise<Response> {
   const secret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!secret) return NextResponse.json({ ok: false, error: "unconfigured" }, { status: 500 });
+  if (!secret) return NextResponse.json({ ok: false, error: "unconfigured" }, { status: 500, headers: { 'cache-control': 'no-store' } });
 
   const sig = req.headers.get("stripe-signature");
-  if (!sig) return NextResponse.json({ ok: false, error: "missing signature" }, { status: 403 });
+  if (!sig) return NextResponse.json({ ok: false, error: "missing signature" }, { status: 403, headers: { 'cache-control': 'no-store' } });
 
   const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || "", {
     apiVersion: "2024-06-20" as Stripe.LatestApiVersion,
@@ -32,15 +33,15 @@ export async function POST(req: NextRequest): Promise<Response> {
   try {
     event = stripe.webhooks.constructEvent(raw, sig, secret);
   } catch {
-    return NextResponse.json({ ok: false, error: "invalid signature" }, { status: 403 });
+    return NextResponse.json({ ok: false, error: "invalid signature" }, { status: 403, headers: { 'cache-control': 'no-store' } });
   }
 
   const meta = extractMetadata(event.data?.object as unknown);
   try {
     assertStripeMetadataPHIZero(meta);
   } catch {
-    return NextResponse.json({ ok: false, error: "phi metadata blocked" }, { status: 400 });
+    return NextResponse.json({ ok: false, error: "phi metadata blocked" }, { status: 400, headers: { 'cache-control': 'no-store' } });
   }
 
-  return NextResponse.json({ ok: true, id: event.id, type: event.type });
+  return NextResponse.json({ ok: true, id: event.id, type: event.type }, { status: 200, headers: { 'cache-control': 'no-store' } });
 }

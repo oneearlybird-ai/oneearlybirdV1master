@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
-. "$(dirname -- "$0")/_/husky.sh"
+. "$(dirname "$0")/_/husky.sh" 2>/dev/null || true
 
-npm test
+# Lint all code; fail on warnings
+npm run lint

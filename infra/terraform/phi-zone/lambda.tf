@@ -10,6 +10,9 @@ resource "aws_lambda_function" "audit" {
   runtime       = "nodejs18.x"
   filename      = data.archive_file.audit_zip.output_path
   timeout       = 10
+  tracing_config {
+    mode = "Active"
+  }
   environment {
     variables = {
       AUDIT_LOG_SECRET = var.audit_log_secret

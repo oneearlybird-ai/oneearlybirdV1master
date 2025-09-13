@@ -5,8 +5,8 @@ Date: 2025-09-11
 ## Domains
 - Web (Vercel, prod): `https://oneearlybird-v1master.vercel.app`
 - API (Fly): `https://earlybird-api.fly.dev`
-- Media (Railway): `https://earlybird-media-production.up.railway.app`
-  - WS: `wss://earlybird-media-production.up.railway.app/rtm/voice`
+- Media (Fly): `https://media.oneearlybird.ai`
+  - WS: `wss://media.oneearlybird.ai/rtm/voice`
 
 ## Health Endpoints
 - Web: `GET /api/usage/summary` and `GET /api/status`
@@ -18,17 +18,16 @@ Date: 2025-09-11
 ### Vercel (Production)
 - `NEXT_PUBLIC_API_BASE = https://earlybird-api.fly.dev`
 - `API_UPSTREAM = https://earlybird-api.fly.dev`
-- `MEDIA_WSS_URL = wss://earlybird-media-production.up.railway.app/rtm/voice`
+- `MEDIA_WSS_URL = wss://media.oneearlybird.ai/rtm/voice`
 - `NEXT_PUBLIC_SITE_URL = https://oneearlybird-v1master.vercel.app`
 - `NEXT_PUBLIC_BASE_URL = https://oneearlybird-v1master.vercel.app`
 - Stripe: `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 
-### Railway — Media Service (earlybird-media)
+### Media Service (Fly.io)
 - `WS_PATH = /rtm/voice`
 - `NODE_ENV = production`
-- `(optional) PORT = 8080` (platform also provides `$PORT`)
-- Health check path: `/` (timeout 5s; bump to 10–15s if cold starts)
-- Build method: Dockerfile (apps/media) — Start command blank (CMD in Dockerfile)
+- Health check path: `/` (timeout 5–10s)
+- Build method: Dockerfile (apps/media)
 
 ### Fly — API (earlybird-api)
 - Configure `fly.toml` as needed; consider:
@@ -55,20 +54,19 @@ fly deploy -a earlybird-api --remote-only --auto-confirm
 curl -i https://earlybird-api.fly.dev/health
 ```
 
-### Media (Railway)
+### Media (Fly)
 ```
 cd apps/media
-railway link -p shimmering-light -s earlybird-media
-railway up
-curl -i https://earlybird-media-production.up.railway.app/
-npx -y wscat@6 -c wss://earlybird-media-production.up.railway.app/rtm/voice
+fly deploy -a earlybird-media --remote-only --auto-confirm
+curl -i https://media.oneearlybird.ai/
+npx -y wscat@6 -c wss://media.oneearlybird.ai/rtm/voice
 ```
 
 ## Twilio & Stripe
 - Twilio number → Voice webhook (HTTP POST): `https://<vercel-domain>/api/voice/incoming`
   - Returns TwiML `<Connect><Stream url="${MEDIA_WSS_URL}"/>`
   - Next: live call smoke (verify 101 upgrade and audio flow)
-- Stripe webhook: `POST /api/stripe/webhook` (Node + raw body + `constructEvent`)
+- Stripe webhook: `POST /api/webhooks/stripe` (Node + raw body + `constructEvent`)
   - Unsigned → 400; add `STRIPE_SECRET_KEY` and `STRIPE_WEBHOOK_SECRET`
   - Stripe CLI test: `stripe listen --forward-to "https://<vercel-domain>/api/stripe/webhook"`
 
@@ -81,4 +79,3 @@ npx -y wscat@6 -c wss://earlybird-media-production.up.railway.app/rtm/voice
 - Twilio Streams: run live call; measure latency (≤700ms mouth‑to‑ear); maintain PHI‑safe logs.
 - Tools/KB stubs: JSON validation; 501/202 responses; wire as needed.
 - Keep `/api/status` enriched and version.sha current.
-

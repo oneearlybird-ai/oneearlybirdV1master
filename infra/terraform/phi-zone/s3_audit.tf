@@ -38,6 +38,34 @@ resource "aws_s3_bucket_public_access_block" "audit" {
   restrict_public_buckets = true
 }
 
+# Access logging bucket and configuration
+resource "aws_s3_bucket" "audit_logs" {
+  bucket = "${var.audit_bucket_name}-logs"
+}
+
+resource "aws_s3_bucket_server_side_encryption_configuration" "audit_logs" {
+  bucket = aws_s3_bucket.audit_logs.id
+  rule {
+    apply_server_side_encryption_by_default {
+      sse_algorithm = "AES256"
+    }
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "audit_logs" {
+  bucket                  = aws_s3_bucket.audit_logs.id
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
+}
+
+resource "aws_s3_bucket_logging" "audit" {
+  bucket        = aws_s3_bucket.audit.id
+  target_bucket = aws_s3_bucket.audit_logs.id
+  target_prefix = "s3-access-logs/"
+}
+
 resource "aws_s3_bucket_policy" "audit" {
   bucket = aws_s3_bucket.audit.id
   policy = jsonencode({

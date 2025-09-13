@@ -7,7 +7,7 @@ export const dynamic = 'force-dynamic'
 type Op = 'upload' | 'download'
 
 function denied(reason = 'forbidden') {
-  return NextResponse.json({ error: reason }, { status: 403 })
+  return NextResponse.json({ error: reason }, { status: 403, headers: { 'cache-control': 'no-store' } })
 }
 
 function expectedEnv() {
@@ -34,29 +34,29 @@ export async function POST(req: NextRequest) {
   try {
     body = await req.json()
   } catch {
-    return NextResponse.json({ error: 'invalid json' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid json' }, { status: 400, headers: { 'cache-control': 'no-store' } })
   }
   const { key, contentType, op } = body
   if (!key || !/^[A-Za-z0-9/_\-.]+$/.test(key) || key.includes('..')) {
-    return NextResponse.json({ error: 'invalid key' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid key' }, { status: 400, headers: { 'cache-control': 'no-store' } })
   }
   const parsed = parseKey(key)
-  if (!parsed) return NextResponse.json({ error: 'invalid key shape' }, { status: 400 })
+  if (!parsed) return NextResponse.json({ error: 'invalid key shape' }, { status: 400, headers: { 'cache-control': 'no-store' } })
   const envOk = parsed.env === expectedEnv() || (expectedEnv() === 'development' && parsed.env === 'preview')
-  if (!envOk) return NextResponse.json({ error: 'env mismatch' }, { status: 400 })
+  if (!envOk) return NextResponse.json({ error: 'env mismatch' }, { status: 400, headers: { 'cache-control': 'no-store' } })
   if (op !== 'upload' && op !== 'download') {
-    return NextResponse.json({ error: 'invalid op' }, { status: 400 })
+    return NextResponse.json({ error: 'invalid op' }, { status: 400, headers: { 'cache-control': 'no-store' } })
   }
 
   try {
     if (op === 'upload') {
       const url = await getUploadUrl({ Key: key, ContentType: contentType })
-      return NextResponse.json({ method: 'PUT', url }, { status: 200 })
+      return NextResponse.json({ method: 'PUT', url }, { status: 200, headers: { 'cache-control': 'no-store' } })
     } else {
       const url = await getDownloadUrl({ Key: key })
-      return NextResponse.json({ method: 'GET', url }, { status: 200 })
+      return NextResponse.json({ method: 'GET', url }, { status: 200, headers: { 'cache-control': 'no-store' } })
     }
   } catch (_e) {
-    return NextResponse.json({ error: 'presign failed' }, { status: 500 })
+    return NextResponse.json({ error: 'presign failed' }, { status: 500, headers: { 'cache-control': 'no-store' } })
   }
 }

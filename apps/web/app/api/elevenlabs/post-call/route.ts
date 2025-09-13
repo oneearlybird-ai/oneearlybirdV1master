@@ -44,13 +44,13 @@ export async function POST(req: NextRequest) {
 
   if (!verifyHmacWithTs(raw, sigHeader, secret)) {
     console.info("[elevenlabs:post-call]", { ok: false, dur_ms: Date.now() - t0 });
-    return new Response("invalid signature", { status: 401 });
+    return new Response("invalid signature", { status: 403, headers: { 'cache-control': 'no-store' } });
   }
 
   // Minimal, PHI-safe parse (no transcript/audio echoed)
   let type = "unknown";
-  let _conversation_id: string | undefined;
-  let _agent_id: string | undefined;
+  let conversation_id: string | undefined;
+  let agent_id: string | undefined;
   try {
     const body = JSON.parse(raw);
     type = body?.type ?? "unknown";

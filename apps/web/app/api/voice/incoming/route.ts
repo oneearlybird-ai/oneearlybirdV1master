@@ -33,7 +33,7 @@ export async function POST(req: Request) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const mediaUrl = process.env.MEDIA_WSS_URL;
   if (!authToken || !mediaUrl) {
-    return new Response('Twilio not configured', { status: 503 });
+    return new Response('Twilio not configured', { status: 503, headers: { 'cache-control': 'no-store' } });
   }
   const sig = req.headers.get('x-twilio-signature') ?? '';
   const fullUrl = externalUrl(req);
@@ -49,10 +49,10 @@ export async function POST(req: Request) {
     const params = Object.fromEntries(new URLSearchParams(raw)) as Record<string, string>;
     valid = tw.validateRequest(authToken, sig, fullUrl, params);
   }
-  if (!valid) return new Response('Forbidden', { status: 403 });
+  if (!valid) return new Response('Forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
 
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<Response><Connect><Stream url="${mediaUrl}"/></Connect></Response>`;
-  return new Response(xml, { status: 200, headers: { 'Content-Type': 'application/xml' } });
+  return new Response(xml, { status: 200, headers: { 'Content-Type': 'application/xml', 'cache-control': 'no-store' } });
 }

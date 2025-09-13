@@ -24,4 +24,26 @@ resource "aws_apigatewayv2_stage" "prod" {
   api_id      = aws_apigatewayv2_api.audit.id
   name        = "prod"
   auto_deploy = true
+  access_log_settings {
+    destination_arn = aws_cloudwatch_log_group.apigw.arn
+    format = jsonencode({
+      requestId      = "$context.requestId",
+      httpMethod     = "$context.httpMethod",
+      routeKey       = "$context.routeKey",
+      status         = "$context.status",
+      protocol       = "$context.protocol",
+      responseLength = "$context.responseLength",
+      requestTime    = "$context.requestTime",
+      integration    = {
+        status        = "$context.integration.status",
+        error         = "$context.integration.error",
+        latency       = "$context.integration.latency"
+      }
+    })
+  }
+}
+
+resource "aws_cloudwatch_log_group" "apigw" {
+  name              = "/aws/http-api/${var.project}/audit"
+  retention_in_days = 14
 }

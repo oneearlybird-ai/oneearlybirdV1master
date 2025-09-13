@@ -1,0 +1,125 @@
+EarlyBird — Final Roadmap (Single Path)
+Date: 2025-09-13
+
+Legend: ✅ complete, 🟡 in progress, ❌ not started
+
+End‑to‑End Flow (top → bottom)
+Twilio (Phone Numbers, Webhook Signing) — ✅ 90%
+↓
+Vercel Web: POST /api/voice/incoming → TwiML <Connect><Stream> — ✅ 90%
+↓
+Fly.io Media Server (WSS /rtm/voice; Twilio Media Streams) — 🟡 30%
+↓
+ElevenLabs Realtime Agent (ASR+TTS + tools) — 🟡 60%
+↓
+Upstash Redis (rate limit, light call state) — ✅ 90%
+↓
+Rumble Cloud (audio objects via presigned URLs) — ✅ 80%
+↓
+Post‑Call Processing (transcript finalize, summaries) — 🟡 60%
+↓
+Stripe Billing (webhooks, portal, usage) — ✅ 70%
+↓
+Dashboard (Auth, Billing, Recordings + Transcripts) — 🟡 50%
+
+What’s in / What’s out
+- Use: Twilio, ElevenLabs, Fly.io (media), Upstash, Rumble Cloud, Stripe.
+- Remove/ignore: Railway, Deepgram, multi‑option model placeholders (OpenAI/others for this path).
+
+Evidence from repo scan (apps/web)
+- Webhooks present & hardened: Twilio (voice/incoming, voice/status), ElevenLabs (personalization, post‑call), Stripe (/api/webhooks/stripe).
+- Security headers centralized in middleware (CSP nonce, HSTS, COOP/COEP, Permissions‑Policy, nosniff).
+- Storage presign route (x‑smoke‑key) + server‑only S3 client.
+- Rate‑limit smoke route using Upstash REST.
+
+Finish Checklist (high‑impact)
+1) Media Server on Fly.io — 🟡 30%
+   - Implement WSS /rtm/voice (Twilio Streams handshake, ping/pong).
+   - Wire ElevenLabs realtime (ASR+TTS) loop; relay audio back to Twilio.
+   - Emit minimal events to App (no PHI) and upload audio chunks to Rumble.
+
+2) ElevenLabs Integration — 🟡 60%
+   - Keep HMAC‑verified webhooks (personalization, post‑call).
+   - Add tool triggers (booking/CRM) from media session events.
+
+3) Storage & Transcripts — 🟡 60–80%
+   - Use presigned PUTs from media to Rumble; store object keys only.
+   - Complete transcript finalize route; attach summaries/metadata.
+
+4) Dashboard — 🟡 50–70%
+   - Billing summary + pay button (Stripe portal link).
+   - Calls index with recordings + transcripts (read from Rumble keys + DB).
+
+5) Env & Ops — ✅/🟡
+   - Vercel: NEXT_PUBLIC_SITE_URL, API_UPSTREAM, MEDIA_WSS_URL.
+   - Fly: media app with TLS 443; custom domain media.oneearlybird.ai.
+   - Stripe CLI smoke for /api/webhooks/stripe; Twilio live call smoke for Streams.
+
+Notes
+- Keep one upstream proxy: prefer Edge route at /api/upstream/[...path] → API_UPSTREAM (Fly).
+- Keep logs PHI‑free; central headers remain single source.
+
+Mandatory Coding Practices (Security & Guardrails)
+1) Headers & Edge Security
+- Single source headers in `apps/web/middleware.ts` only.
+- Content-Security-Policy: per-request nonce; no `unsafe-inline`/`unsafe-eval`.
+- Strict-Transport-Security: `max-age=63072000; includeSubDomains; preload`.
+- Cross-Origin-Opener-Policy: `same-origin`; Cross-Origin-Embedder-Policy: `require-corp`.
+- Permissions-Policy: deny geolocation, camera, microphone, payment, usb, xr, pip, etc.
+- X-Content-Type-Options: `nosniff`; Referrer-Policy: `strict-origin-when-cross-origin`.
+- Next config: `poweredByHeader: false`; no duplicate header setting elsewhere.
+
+2) No Inline or Dangerous Code
+- No inline `<script>` tags; all scripts/styles must be nonce’d.
+- Never use `eval`, `new Function`, or dynamic import of untrusted URLs.
+- Avoid `dangerouslySetInnerHTML`; if unavoidable, sanitize and gate behind nonce.
+
+3) Webhook Security (Node runtime + force-dynamic)
+- Twilio `/api/voice/incoming` and `/api/voice/status`: validate `X-Twilio-Signature` with official SDK.
+  - Support JSON body (`validateRequestWithBody`) and URL-encoded (`validateRequest`).
+  - Derive full external URL from `NEXT_PUBLIC_SITE_URL`. On failure return 403.
+- Stripe `/api/webhooks/stripe`: read raw body; verify with `constructEvent`; 400/403 on failure.
+  - PHI/PII guard on metadata; minimal logs; no sensitive fields.
+- ElevenLabs `/api/elevenlabs/*`: HMAC (t + v0) with time-skew tolerance; 403 on failure.
+- All sensitive endpoints: `export const runtime = 'nodejs'`; `export const dynamic = 'force-dynamic'` as needed; `cache-control: no-store`.
+
+4) Storage & Object Security (Rumble/S3)
+- Server-only AWS SDK v3 module; never import client-side.
+- Presigned URLs only; short TTL (`S3_SIGNED_URL_EXPIRES`).
+- Auth for presign endpoint via `x-smoke-key`; deny-by-default.
+- Enforce key template and validation (no traversal, strict charset, env/date checks).
+- Support path-style + custom endpoint for Rumble; never expose credentials to client.
+
+5) Rate Limiting & Caching
+- Upstash Redis REST for limiter; smoke must show 200→429 with Retry-After.
+- No wildcard `*` CORS; sensitive routes return `cache-control: no-store`.
+
+6) Upstream Proxy (Optional)
+- Keep only Edge version at `/api/upstream/[...path]` if browser must call Fly API.
+- Strip hop-by-hop headers; do not forward cookies unless required.
+- Restrict to allowlist if feasible; log minimally; apply edge rate limits.
+
+7) Secrets & Environment
+- Track only `*.example` env files; ignore `.env*` locals. Rotate any leaked tokens.
+- Use Vercel envs for prod/preview; avoid printing secrets in logs.
+- Client-visible only via `NEXT_PUBLIC_*`.
+
+8) Input Validation & Limits
+- Deny-by-default tooling routes; strict JSON schema, content-type checks, and size limits.
+- Enforce method allowlists; return explicit 4xx for invalid inputs.
+
+9) Logging & PHI Hygiene
+- No PHI/PII in logs; redact tokens and IDs. Use minimal structured logs.
+- No stack traces in production responses; consistent error shapes.
+
+10) Smokes & Monitoring
+- Headers probe on `/` for CSP/HSTS/COOP/COEP/PP.
+- Unsigned webhook smokes: Twilio→403, Stripe→400/403, ElevenLabs→403.
+- Limiter smoke: 200→429→200 (cooldown).
+- Media smoke: WS health (`/`), ping→pong on `/rtm/voice`.
+
+11) Process: Anti-Drift & SVP Discipline
+- Anti-Drift gate at top of changes/PRs; reference guardrails.
+- Small, verifiable patches: ≤2 files or ≤120 LOC per change unless migration.
+- Precommit: lint, typecheck, format; CI audit for vulnerabilities.
+

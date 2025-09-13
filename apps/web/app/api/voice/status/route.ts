@@ -20,17 +20,17 @@ function absoluteUrlFrom(req: Request): string {
 }
 
 export async function GET() {
-  return new Response('ok', { status: 200 });
+  return new Response('ok', { status: 200, headers: { 'cache-control': 'no-store' } });
 }
 
 export async function POST(req: Request) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const signature = req.headers.get('x-twilio-signature') || '';
-  if (!authToken || !signature) return new Response('forbidden', { status: 403 });
+  if (!authToken || !signature) return new Response('forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
 
   const ct = req.headers.get('content-type') || '';
   if (!ct.includes('application/x-www-form-urlencoded')) {
-    return new Response('forbidden', { status: 403 });
+    return new Response('forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
   }
 
   const bodyText = await req.text();
@@ -38,7 +38,7 @@ export async function POST(req: Request) {
   const url = absoluteUrlFrom(req);
 
   const valid = twilio.validateRequest(authToken, signature, url, params);
-  if (!valid) return new Response('forbidden', { status: 403 });
+  if (!valid) return new Response('forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
 
-  return new Response('ok', { status: 200 });
+  return new Response('ok', { status: 200, headers: { 'cache-control': 'no-store' } });
 }

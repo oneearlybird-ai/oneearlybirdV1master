@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
   const ok = verify(raw, sig, secret);
   if (!ok) {
     console.info("[elevenlabs:personalization]", { ok: false, dur_ms: Date.now() - t0 });
-    return new Response("invalid signature", { status: 401 });
+    return new Response("invalid signature", { status: 403, headers: { 'cache-control': 'no-store' } });
   }
   // Minimal response to avoid latency; add overrides later if needed.
   const res = {};
