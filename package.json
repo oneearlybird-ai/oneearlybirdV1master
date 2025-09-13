@@ -7,6 +7,12 @@
     "ws": "8.17.1"
   },
   "scripts": {
+    "check:inline": "bash scripts/security/inline_check.sh .",
+    "check:routes": "bash scripts/security/route_runtime_check.sh .",
+    "check:headers": "node scripts/headers_check.mjs",
+    "check:http": "bash scripts/security/no_http_urls.sh .",
+    "smoke:ratelimit": "bash scripts/smokes/ratelimit.sh $PREVIEW_URL",
+    "security:local": "bash scripts/security/gitleaks_scan.sh . && bash scripts/security/semgrep_scan.sh . && bash scripts/security/trivy_fs.sh .",
     "build": "npm --prefix apps/web run build",
     "dev": "concurrently -n api,web -c yellow,cyan \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
     "lint": "eslint . --max-warnings=0",
