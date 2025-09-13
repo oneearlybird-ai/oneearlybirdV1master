@@ -17,11 +17,33 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ ok: true, service: 'media', wsPath: WS_PATH, time: new Date().toISOString() }));
     return;
   }
+  if (pathname === '/metrics') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    const now = Date.now();
+    res.end(JSON.stringify({
+      ok: true,
+      time: new Date(now).toISOString(),
+      fps10s: metrics.fps10s,
+      frames10s: metrics.frames10s,
+      backpressureCount10m: metrics.backpressure10m,
+      lastMsgAgoSec: metrics.lastMsgAt ? Math.round((now - metrics.lastMsgAt)/1000) : null,
+      lastBackpressureAgoSec: metrics.lastBackpressureAt ? Math.round((now - metrics.lastBackpressureAt)/1000) : null,
+    }));
+    return;
+  }
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ ok: false, error: 'not_found' }));
 });
 
 const wss = new WebSocketServer({ server, path: WS_PATH });
+
+// lightweight metrics for autoscaling decisions (no PHI)
+const metrics = { frames10s: 0, fps10s: 0, lastMsgAt: 0, backpressure10m: 0, lastBackpressureAt: 0 };
+setInterval(() => {
+  metrics.fps10s = Math.round(metrics.frames10s / 10);
+  metrics.frames10s = 0;
+  if (metrics.backpressure10m > 0) metrics.backpressure10m -= 1; // decay over ~10 minutes
+}, 10_000);
 
 function safeJsonParse(buf) {
   try {
@@ -130,6 +152,7 @@ wss.on('connection', async (ws, req) => {
     // Twilio sends JSON events: { event: 'start'|'media'|'stop'|..., ... }
     const txt = Buffer.isBuffer(msg) ? msg.toString('utf8') : String(msg);
     lastMsgAt = Date.now();
+    metrics.lastMsgAt = lastMsgAt;
     if (txt.toLowerCase() === 'ping') { ws.send('pong'); return; }
     const ev = safeJsonParse(txt);
     if (!ev || typeof ev.event !== 'string') return;
@@ -145,6 +168,7 @@ wss.on('connection', async (ws, req) => {
       }
       case 'media': {
         frames++;
+        metrics.frames10s++;
         // ev.media.payload is base64 mulaw (8kHz) from Twilio
         if (el.connected) {
           try {
@@ -159,7 +183,10 @@ wss.on('connection', async (ws, req) => {
           } catch { /* drop frame on error */ }
         }
         // Backpressure guard: if socket backed up, drop processing
-        if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; } }
+        if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; }
+          metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60); // bump within decay window
+          metrics.lastBackpressureAt = Date.now();
+        }
         break;
       }
       case 'stop': {

@@ -1,7 +1,7 @@
 "use client";
 export const dynamic = "force-dynamic";
 import { INTEGRATIONS } from "./catalog";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 function ConnectBtn({ provider }: { provider: string }) {
   const [busy, setBusy] = useState(false);
@@ -39,6 +39,21 @@ function ConnectBtn({ provider }: { provider: string }) {
 }
 
 export default function IntegrationsPage() {
+  const [status, setStatus] = useState<Record<string, boolean>>({})
+  useEffect(() => {
+    let cancelled = false
+    ;(async () => {
+      try {
+        const res = await fetch('/api/integrations/status', { cache: 'no-store' })
+        const data = await res.json()
+        if (!res.ok || !data?.ok) return
+        const map: Record<string, boolean> = {}
+        for (const p of (data.providers||[])) map[p.id] = !!p.connected
+        if (!cancelled) setStatus(map)
+      } catch { /* ignore */ }
+    })()
+    return () => { cancelled = true }
+  }, [])
   return (
     <section>
       <h2 className="text-xl font-semibold tracking-tight mb-4">Integrations</h2>
@@ -46,7 +61,7 @@ export default function IntegrationsPage() {
         {INTEGRATIONS.map((it) => (
           <div key={it.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="font-medium">{it.name}</div>
-            <div className="mt-1 text-xs text-white/60">Status: Not connected</div>
+            <div className="mt-1 text-xs text-white/60">Status: {status[it.id] ? 'Connected' : 'Not connected'}</div>
             <ConnectBtn provider={it.id} />
           </div>
         ))}

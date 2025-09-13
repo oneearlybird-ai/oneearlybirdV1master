@@ -26,4 +26,6 @@ primary_region = "iad"  # choose region near callers/ElevenLabs PoP
   cpu_kind = "shared"
   cpus = 1
   memory_mb = 512
-
+  [vm.restart]
+    policy = "always"
+    max_retries = 0

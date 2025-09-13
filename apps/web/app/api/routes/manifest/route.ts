@@ -26,8 +26,10 @@ const routes: RouteEntry[] = [
   { method: 'POST', path: '/api/billing/portal',               status: 'present' },
 
   { method: 'GET',  path: '/api/integrations/oauth/start',     status: 'present' },
+  { method: 'GET',  path: '/api/integrations/status',          status: 'present' },
   { method: 'POST', path: '/api/numbers/buy',                  status: 'present' },
   { method: 'POST', path: '/api/numbers/webhook',              status: 'present' }
+ ,{ method: 'GET',  path: '/api/recordings/list',              status: 'present' }
 ];
 
 export async function GET() {
