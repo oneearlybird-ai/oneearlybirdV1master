@@ -53,7 +53,13 @@ export default function Home() {
         </div>
 
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
-          Answer every call. <span className="text-white/70">Book more appointments.</span>
+          <span className="eb-fade-word eb-delay-1000">Diana</span>{" "}
+          <span className="eb-fade-word eb-delay-2500">is</span>{" "}
+          <span className="eb-fade-word eb-delay-4000">JOPA.</span>{" "}
+          <span className="text-white/70">
+            <span className="eb-fade-word eb-delay-7500">🚪</span>{" "}
+            <span className="eb-fade-word eb-delay-9000">🏃‍➡️</span>
+          </span>
         </h1>
 
         <p className="mt-6 max-w-2xl text-white/70">
