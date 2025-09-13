@@ -20,7 +20,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 srcSet="/brand/logo.png 1x, /brand/logo@2x.png 2x, /brand/logo@3x.png 3x"
                 src="/brand/logo.png"
                 alt="EarlyBird"
-                className="h-[1.2em] w-auto align-text-bottom"
+                className="h-[3em] w-auto align-text-bottom"
               />
             </Link>
             <div className="hidden md:flex items-center gap-6 text-sm">
