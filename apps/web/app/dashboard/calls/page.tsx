@@ -1,20 +1,14 @@
 export const dynamic = "force-dynamic";
 
-type CallRow = {
+type ApiCall = {
   id: string;
-  time: string;
-  caller: string;
+  startedAt: string;
+  callerMasked: string;
   outcome: "booked" | "qualified" | "voicemail" | "missed";
   sentiment: "pos" | "neu" | "neg";
-  duration: string;
-  cost: string;
+  durationSec: number;
+  costCents: number;
 };
-
-const SAMPLE: CallRow[] = [
-  { id: "c_1001", time: "Today 10:14", caller: "+1 (415) •••• 2214", outcome: "booked", sentiment: "pos", duration: "03:12", cost: "$0.42" },
-  { id: "c_1000", time: "Today 09:58", caller: "+1 (510) •••• 8821", outcome: "qualified", sentiment: "neu", duration: "02:06", cost: "$0.31" },
-  { id: "c_0999", time: "Yesterday 17:41", caller: "+1 (212) •••• 4470", outcome: "voicemail", sentiment: "neg", duration: "00:18", cost: "$0.03" },
-];
 
 function Badge({ children, tone = "default" as const }: { children: React.ReactNode; tone?: "default" | "success" | "warn" | "danger" }) {
   const tones: Record<string, string> = {
@@ -27,7 +21,9 @@ function Badge({ children, tone = "default" as const }: { children: React.ReactN
 }
 
 export default async function CallsPage() {
-  const rows = SAMPLE; // TODO: replace with server fetch when backend endpoint is ready
+  const res = await fetch(`${process.env.NEXT_PUBLIC_SITE_URL || ''}/api/calls/list`, { cache: 'no-store' }).catch(() => null);
+  const data = res && res.ok ? await res.json() : { rows: [] };
+  const rows: ApiCall[] = Array.isArray(data?.rows) ? data.rows : [];
   return (
     <section>
       <h2 className="text-xl font-semibold tracking-tight mb-4">Calls</h2>
@@ -68,8 +64,8 @@ export default async function CallsPage() {
           <tbody>
             {rows.map((r) => (
               <tr key={r.id} className="border-t border-white/10">
-                <td className="px-4 py-3 whitespace-nowrap">{r.time}</td>
-                <td className="px-4 py-3">{r.caller}</td>
+                <td className="px-4 py-3 whitespace-nowrap">{new Date(r.startedAt).toLocaleString()}</td>
+                <td className="px-4 py-3">{r.callerMasked}</td>
                 <td className="px-4 py-3">
                   {r.outcome === "booked" ? (
                     <Badge tone="success">Booked</Badge>
@@ -84,8 +80,8 @@ export default async function CallsPage() {
                 <td className="px-4 py-3">
                   {r.sentiment === "pos" ? <Badge tone="success">Positive</Badge> : r.sentiment === "neg" ? <Badge tone="danger">Negative</Badge> : <Badge>Neutral</Badge>}
                 </td>
-                <td className="px-4 py-3">{r.duration}</td>
-                <td className="px-4 py-3">{r.cost}</td>
+                <td className="px-4 py-3">{String(Math.floor(r.durationSec/60)).padStart(2,'0')}:{String(r.durationSec%60).padStart(2,'0')}</td>
+                <td className="px-4 py-3">${(r.costCents/100).toFixed(2)}</td>
                 <td className="px-4 py-3">
                   <a className="rounded-lg border border-white/20 px-3 py-1 hover:-translate-y-0.5 motion-safe:transition-transform" href={`#`}>View</a>
                 </td>
@@ -99,4 +95,3 @@ export default async function CallsPage() {
     </section>
   );
 }
-
