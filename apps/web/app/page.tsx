@@ -173,9 +173,23 @@ export default function Home() {
       {/* 5. Integrations Preview */}
       <Section id="integrations" title="Works with your stack">
         <div className="grid gap-4 md:grid-cols-5">
-          {["Google Calendar","Microsoft 365","Twilio","Plivo","Vonage","HubSpot","Salesforce","Stripe","Postmark","Zapier"].map((name) => (
-            <div key={name} className="rounded-2xl border border-white/10 bg-white/5 p-6 text-white/80 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
-              {name}
+          {[
+            { id: 'google-calendar', label: 'Google Calendar' },
+            { id: 'microsoft-365', label: 'Microsoft 365' },
+            { id: 'twilio', label: 'Twilio' },
+            { id: 'plivo', label: 'Plivo' },
+            { id: 'vonage', label: 'Vonage' },
+            { id: 'hubspot', label: 'HubSpot' },
+            { id: 'salesforce', label: 'Salesforce' },
+            { id: 'stripe', label: 'Stripe' },
+            { id: 'postmark', label: 'Postmark' },
+            { id: 'zapier', label: 'Zapier' },
+          ].map((it) => (
+            <div key={it.id} className="rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
+              <figure className="flex items-center justify-center min-h-10">
+                <img src={`/logos/${it.id}.svg`} alt={it.label} className="h-8 w-auto" />
+                <figcaption className="sr-only">{it.label}</figcaption>
+              </figure>
             </div>
           ))}
         </div>
