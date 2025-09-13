@@ -2,5 +2,74 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Hero headline staggered fade-in (total ~5s from first to last char) */
+@keyframes ebFade { from { opacity: 0 } to { opacity: 1 } }
+.eb-stagger > span { opacity: 0; animation: ebFade 0.5s ease forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .eb-stagger > span { animation: none; opacity: 1; }
+}
+/* Delay slots: 0..60, step ≈ 0.0833s (5s / 60) */
+.eb-i-0 { animation-delay: 0s }
+.eb-i-1 { animation-delay: 0.083s }
+.eb-i-2 { animation-delay: 0.166s }
+.eb-i-3 { animation-delay: 0.249s }
+.eb-i-4 { animation-delay: 0.332s }
+.eb-i-5 { animation-delay: 0.415s }
+.eb-i-6 { animation-delay: 0.498s }
+.eb-i-7 { animation-delay: 0.581s }
+.eb-i-8 { animation-delay: 0.664s }
+.eb-i-9 { animation-delay: 0.747s }
+.eb-i-10 { animation-delay: 0.830s }
+.eb-i-11 { animation-delay: 0.913s }
+.eb-i-12 { animation-delay: 0.996s }
+.eb-i-13 { animation-delay: 1.079s }
+.eb-i-14 { animation-delay: 1.162s }
+.eb-i-15 { animation-delay: 1.245s }
+.eb-i-16 { animation-delay: 1.328s }
+.eb-i-17 { animation-delay: 1.411s }
+.eb-i-18 { animation-delay: 1.494s }
+.eb-i-19 { animation-delay: 1.577s }
+.eb-i-20 { animation-delay: 1.660s }
+.eb-i-21 { animation-delay: 1.743s }
+.eb-i-22 { animation-delay: 1.826s }
+.eb-i-23 { animation-delay: 1.909s }
+.eb-i-24 { animation-delay: 1.992s }
+.eb-i-25 { animation-delay: 2.075s }
+.eb-i-26 { animation-delay: 2.158s }
+.eb-i-27 { animation-delay: 2.241s }
+.eb-i-28 { animation-delay: 2.324s }
+.eb-i-29 { animation-delay: 2.407s }
+.eb-i-30 { animation-delay: 2.490s }
+.eb-i-31 { animation-delay: 2.573s }
+.eb-i-32 { animation-delay: 2.656s }
+.eb-i-33 { animation-delay: 2.739s }
+.eb-i-34 { animation-delay: 2.822s }
+.eb-i-35 { animation-delay: 2.905s }
+.eb-i-36 { animation-delay: 2.988s }
+.eb-i-37 { animation-delay: 3.071s }
+.eb-i-38 { animation-delay: 3.154s }
+.eb-i-39 { animation-delay: 3.237s }
+.eb-i-40 { animation-delay: 3.320s }
+.eb-i-41 { animation-delay: 3.403s }
+.eb-i-42 { animation-delay: 3.486s }
+.eb-i-43 { animation-delay: 3.569s }
+.eb-i-44 { animation-delay: 3.652s }
+.eb-i-45 { animation-delay: 3.735s }
+.eb-i-46 { animation-delay: 3.818s }
+.eb-i-47 { animation-delay: 3.901s }
+.eb-i-48 { animation-delay: 3.984s }
+.eb-i-49 { animation-delay: 4.067s }
+.eb-i-50 { animation-delay: 4.150s }
+.eb-i-51 { animation-delay: 4.233s }
+.eb-i-52 { animation-delay: 4.316s }
+.eb-i-53 { animation-delay: 4.399s }
+.eb-i-54 { animation-delay: 4.482s }
+.eb-i-55 { animation-delay: 4.565s }
+.eb-i-56 { animation-delay: 4.648s }
+.eb-i-57 { animation-delay: 4.731s }
+.eb-i-58 { animation-delay: 4.814s }
+.eb-i-59 { animation-delay: 4.897s }
+.eb-i-60 { animation-delay: 4.980s }
+
 /* Smooth fonts */
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }

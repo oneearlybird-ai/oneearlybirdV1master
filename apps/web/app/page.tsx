@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
+import StaggerText from "@/components/StaggerText";
 
 function Section({
   id,
@@ -53,7 +54,7 @@ export default function Home() {
         </div>
 
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
-          Answer every call. <span className="text-white/70">Book more appointments.</span>
+          <StaggerText text="Answer every call. Book more appointments." />
         </h1>
 
         <p className="mt-6 max-w-2xl text-white/70">
