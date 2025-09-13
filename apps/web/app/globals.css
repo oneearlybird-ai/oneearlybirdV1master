@@ -15,6 +15,8 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 .eb-delay-1000 { animation-delay: 1s; }
 .eb-delay-2500 { animation-delay: 2.5s; }
 .eb-delay-4000 { animation-delay: 4s; }
+.eb-delay-5500 { animation-delay: 5.5s; }
+.eb-delay-7000 { animation-delay: 7s; }
 .eb-delay-7500 { animation-delay: 7.5s; }
 .eb-delay-9000 { animation-delay: 9s; }
 

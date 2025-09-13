@@ -57,8 +57,8 @@ export default function Home() {
           <span className="eb-fade-word eb-delay-2500">is</span>{" "}
           <span className="eb-fade-word eb-delay-4000">JOPA</span>{" "}
           <span className="text-white/70">
-            <span className="eb-fade-word eb-delay-7500">🚪</span>{" "}
-            <span className="eb-fade-word eb-delay-9000">🏃‍➡️</span>
+            <span className="eb-fade-word eb-delay-5500">🚪</span>{" "}
+            <span className="eb-fade-word eb-delay-7000">🏃‍➡️</span>
           </span>
         </h1>
 
