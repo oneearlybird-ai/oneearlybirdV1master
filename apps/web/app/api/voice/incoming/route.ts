@@ -51,8 +51,23 @@ export async function POST(req: Request) {
   }
   if (!valid) return new Response('Forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
 
+  // Append token query param if MEDIA_AUTH_TOKEN is configured (for media WS auth)
+  const token = process.env.MEDIA_AUTH_TOKEN || '';
+  const wsUrl = (() => {
+    if (!token) return mediaUrl;
+    try {
+      const u = new URL(mediaUrl);
+      if (u.search) u.search += `&token=${encodeURIComponent(token)}`;
+      else u.search = `?token=${encodeURIComponent(token)}`;
+      return u.toString();
+    } catch {
+      const sep = mediaUrl.includes('?') ? '&' : '?';
+      return `${mediaUrl}${sep}token=${encodeURIComponent(token)}`;
+    }
+  })();
+
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Response><Connect><Stream url="${mediaUrl}"/></Connect></Response>`;
+    `<Response><Connect><Stream url="${wsUrl}"/></Connect></Response>`;
   return new Response(xml, { status: 200, headers: { 'Content-Type': 'application/xml', 'cache-control': 'no-store' } });
 }

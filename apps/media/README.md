@@ -12,7 +12,7 @@ Runtime
 Env Vars
 - `PORT` (default 8080)
 - `WS_PATH` (default `/rtm/voice`)
-- `MEDIA_AUTH_TOKEN` (optional): if set, requires header `x-media-auth: <token>` on WS connect
+- `MEDIA_AUTH_TOKEN` (optional): if set, requires query param `?token=...` on WS connect (header `x-media-auth` also accepted)
 - `ELEVENLABS_API_KEY` (optional): realtime integration key (header `xi-api-key`)
 - `ELEVENLABS_AGENT_ID` (optional): reserved for session config
 - `ELEVENLABS_WS_URL` (optional): realtime WS URL; connect on Twilio `start`
@@ -29,6 +29,15 @@ npx -y wscat@6 -c ws://localhost:8080/rtm/voice
 > ping
 < pong
 ```
+
+Auth (optional)
+- Set `MEDIA_AUTH_TOKEN=...` and ensure your TwiML `<Stream url>` includes `?token=...`.
+- The web voice handler now appends `?token=$MEDIA_AUTH_TOKEN` automatically if set.
+
+Guards
+- Idle timeout (30s without messages) closes the WS
+- Payload limit on media frames; abnormal size closes the WS
+- Backpressure close when buffered output is too large
 
 Twilio Media Streams
 - On connect, Twilio sends JSON events:

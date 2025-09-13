@@ -49,7 +49,7 @@ class ElevenLabsSession {
     this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey } });
     this.ws.on('open', () => { this.connected = true; });
     this.ws.on('close', () => { this.connected = false; });
-    this.ws.on('error', () => { /* no noisy logs */ });
+    this.ws.on('error', () => { /* ignore */ return; });
   }
   async sendAudio(pcm16leBuffer) {
     if (!this.connected || !this.ws) return;
@@ -58,28 +58,33 @@ class ElevenLabsSession {
     }
   }
   async close() {
-    if (this.ws) { try { this.ws.close(); } catch {} }
+    if (this.ws) { try { this.ws.close(); } catch (e) { void e; } }
     this.connected = false;
   }
 }
 
 wss.on('connection', async (ws, req) => {
-  // Optional auth: require header x-media-auth to match token if set
+  // Optional auth: prefer query param token=; fallback to header x-media-auth
   if (AUTH_TOKEN) {
-    const hdr = (req.headers['x-media-auth'] || '').toString();
-    if (hdr !== AUTH_TOKEN) {
-      try { ws.close(1008, 'policy violation'); } catch {}
-      return;
-    }
+    let ok = false;
+    try {
+      const u = new URL(req.url || '/', 'http://localhost');
+      const qp = u.searchParams.get('token') || '';
+      const hdr = (req.headers['x-media-auth'] || '').toString();
+      ok = (qp && qp === AUTH_TOKEN) || (hdr && hdr === AUTH_TOKEN);
+    } catch (e) { void e; }
+    if (!ok) { try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
   }
 
   const connId = nanoid(8);
   let frames = 0;
-  let started = false;
   let streamSid = undefined;
+  let lastMsgAt = Date.now();
   let keepalive = setInterval(() => {
-    try { ws.ping(); } catch {}
-  }, 15000);
+    try { ws.ping(); } catch (e) { void e; }
+    // Idle timeout: close if no messages for 30s
+    if (Date.now() - lastMsgAt > 30000) { try { ws.close(1001, 'idle'); } catch (e) { void e; } }
+    }, 15000);
 
   // Placeholder EL session (not connected by default)
   const el = new ElevenLabsSession({ apiKey: process.env.ELEVENLABS_API_KEY, agentId: process.env.ELEVENLABS_AGENT_ID, url: process.env.ELEVENLABS_WS_URL });
@@ -124,13 +129,13 @@ wss.on('connection', async (ws, req) => {
   ws.on('message', async (msg) => {
     // Twilio sends JSON events: { event: 'start'|'media'|'stop'|..., ... }
     const txt = Buffer.isBuffer(msg) ? msg.toString('utf8') : String(msg);
+    lastMsgAt = Date.now();
     if (txt.toLowerCase() === 'ping') { ws.send('pong'); return; }
     const ev = safeJsonParse(txt);
     if (!ev || typeof ev.event !== 'string') return;
 
     switch (ev.event) {
       case 'start': {
-        started = true;
         streamSid = ev.start?.streamSid || ev.streamSid || undefined;
         // No PHI logs; emit minimal structured signal
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
@@ -144,6 +149,8 @@ wss.on('connection', async (ws, req) => {
         if (el.connected) {
           try {
             const b = Buffer.from(ev.media?.payload || '', 'base64');
+            // Guard max payload size (drop or close on abnormal input)
+            if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
             const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
             const pcm8k = decodeMuLawToPCM16(mu);
             const pcm16k = upsample8kTo16k(pcm8k);
@@ -152,14 +159,12 @@ wss.on('connection', async (ws, req) => {
           } catch { /* drop frame on error */ }
         }
         // Backpressure guard: if socket backed up, drop processing
-        if (ws.bufferedAmount > 1_000_000) {
-          // drop frame silently
-        }
+        if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; } }
         break;
       }
       case 'stop': {
         process.stdout.write(`media:stop id=${connId} frames=${frames}\n`);
-        try { ws.close(1000, 'normal'); } catch {}
+        try { ws.close(1000, 'normal'); } catch (e) { void e; }
         break;
       }
       default:
@@ -173,9 +178,7 @@ wss.on('connection', async (ws, req) => {
     await el.close().catch(()=>{});
   });
 
-  ws.on('error', () => {
-    // no-op; avoid noisy logs
-  });
+  ws.on('error', () => { /* ignore */ return; });
 });
 
 server.listen(PORT, () => {
