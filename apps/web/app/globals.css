@@ -73,16 +73,16 @@
 
 /* Word-by-word hero fade-in (user-specified timings) */
 @keyframes ebWordFade { from { opacity: 0 } to { opacity: 1 } }
-.eb-fade-word { opacity: 0; animation: ebWordFade 1.5s ease forwards; }
+.eb-fade-word { opacity: 0; animation: ebWordFade 0.75s ease forwards; }
 @media (prefers-reduced-motion: reduce) {
   .eb-fade-word { animation: none; opacity: 1; }
 }
-.eb-delay-1000 { animation-delay: 1.0s }
-.eb-delay-2500 { animation-delay: 2.5s }
-.eb-delay-4000 { animation-delay: 4.0s }
-.eb-delay-7500 { animation-delay: 7.5s }
-.eb-delay-9000 { animation-delay: 9.0s }
-.eb-delay-10500 { animation-delay: 10.5s }
+.eb-delay-1000 { animation-delay: 0.5s }   /* halved */
+.eb-delay-2500 { animation-delay: 1.25s } /* halved */
+.eb-delay-4000 { animation-delay: 2.0s }  /* halved */
+.eb-delay-7500 { animation-delay: 3.75s } /* halved (includes 1s pause) */
+.eb-delay-9000 { animation-delay: 4.5s }  /* halved */
+.eb-delay-10500 { animation-delay: 5.25s }/* halved */
 
 /* Smooth fonts */
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
