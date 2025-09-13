@@ -1,7 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import Link from "next/link";
-import StaggerText from "@/components/StaggerText";
+// (StaggerText retained for future use, but not used in hero now)
 
 function Section({
   id,
@@ -54,9 +54,13 @@ export default function Home() {
         </div>
 
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
-          <StaggerText text="Answer every call." />{" "}
+          <span className="eb-fade-word eb-delay-1000">Answer</span>{" "}
+          <span className="eb-fade-word eb-delay-2500">every</span>{" "}
+          <span className="eb-fade-word eb-delay-4000">call.</span>{" "}
           <span className="text-white/70">
-            <StaggerText text="Book more appointments." />
+            <span className="eb-fade-word eb-delay-7500">Book</span>{" "}
+            <span className="eb-fade-word eb-delay-9000">more</span>{" "}
+            <span className="eb-fade-word eb-delay-10500">appointments.</span>
           </span>
         </h1>
 

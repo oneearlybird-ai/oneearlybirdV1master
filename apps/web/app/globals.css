@@ -71,5 +71,18 @@
 .eb-i-59 { animation-delay: 4.897s }
 .eb-i-60 { animation-delay: 4.980s }
 
+/* Word-by-word hero fade-in (user-specified timings) */
+@keyframes ebWordFade { from { opacity: 0 } to { opacity: 1 } }
+.eb-fade-word { opacity: 0; animation: ebWordFade 1.5s ease forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .eb-fade-word { animation: none; opacity: 1; }
+}
+.eb-delay-1000 { animation-delay: 1.0s }
+.eb-delay-2500 { animation-delay: 2.5s }
+.eb-delay-4000 { animation-delay: 4.0s }
+.eb-delay-7500 { animation-delay: 7.5s }
+.eb-delay-9000 { animation-delay: 9.0s }
+.eb-delay-10500 { animation-delay: 10.5s }
+
 /* Smooth fonts */
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
