@@ -55,7 +55,7 @@ export default function Home() {
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
           <span className="eb-fade-word eb-delay-1000">Diana</span>{" "}
           <span className="eb-fade-word eb-delay-2500">is</span>{" "}
-          <span className="eb-fade-word eb-delay-4000">JOPA.</span>{" "}
+          <span className="eb-fade-word eb-delay-4000">JOPA</span>{" "}
           <span className="text-white/70">
             <span className="eb-fade-word eb-delay-7500">🚪</span>{" "}
             <span className="eb-fade-word eb-delay-9000">🏃‍➡️</span>
