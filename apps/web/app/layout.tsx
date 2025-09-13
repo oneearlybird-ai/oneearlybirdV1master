@@ -22,7 +22,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 alt="EarlyBird"
                 width={112}
                 height={34}
-                className="h-6 w-auto"
+                className="h-5 md:h-6 w-auto"
+                sizes="(min-width: 768px) 24px, 20px"
                 priority
               />
             </Link>
