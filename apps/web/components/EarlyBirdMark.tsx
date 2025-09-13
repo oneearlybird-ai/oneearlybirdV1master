@@ -3,7 +3,7 @@ import React from 'react'
 // EarlyBird bird mark — solid, no background. Dimensions scale with height.
 // The geometry is tuned to match the brand raster provided (ratio ~1.25:1).
 // Color: brand yellow (#F2C230). Eye: near-black.
-export default function EarlyBirdMark({ className = 'h-6 w-auto' }: { className?: string }) {
+export default function EarlyBirdMark({ className = 'inline-block h-[1em] w-auto align-text-bottom' }: { className?: string }) {
   return (
     <svg
       className={className}
@@ -26,4 +26,3 @@ export default function EarlyBirdMark({ className = 'h-6 w-auto' }: { className?
     </svg>
   )
 }
-
