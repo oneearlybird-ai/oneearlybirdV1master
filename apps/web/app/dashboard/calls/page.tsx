@@ -83,7 +83,7 @@ export default async function CallsPage() {
                 <td className="px-4 py-3">{String(Math.floor(r.durationSec/60)).padStart(2,'0')}:{String(r.durationSec%60).padStart(2,'0')}</td>
                 <td className="px-4 py-3">${(r.costCents/100).toFixed(2)}</td>
                 <td className="px-4 py-3">
-                  <a className="rounded-lg border border-white/20 px-3 py-1 hover:-translate-y-0.5 motion-safe:transition-transform" href={`#`}>View</a>
+                  <a className="rounded-lg border border-white/20 px-3 py-1 hover:-translate-y-0.5 motion-safe:transition-transform" href={`/dashboard/calls/${encodeURIComponent(r.id)}`}>View</a>
                 </td>
               </tr>
             ))}

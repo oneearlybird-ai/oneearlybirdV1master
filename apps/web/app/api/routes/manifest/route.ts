@@ -20,6 +20,7 @@ const routes: RouteEntry[] = [
   { method: 'POST', path: '/api/kb/search',                    status: 'present' },
   { method: 'POST', path: '/api/kb/doc',                       status: 'present' },
   { method: 'GET',  path: '/api/calls/list',                   status: 'present' },
+  { method: 'GET',  path: '/api/recordings/item',              status: 'present' },
 
   { method: 'GET',  path: '/api/stripe/usage',                 status: 'present' },
   { method: 'POST', path: '/api/billing/portal',               status: 'present' },
