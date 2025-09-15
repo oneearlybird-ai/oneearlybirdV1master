@@ -55,14 +55,8 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
 }
 
 function LogoBadge({ id, label }: { id: string; label: string }) {
-  const brandBg: Record<string, string> = {
-    'google-workspace': '#ffffff', 'microsoft-365': '#ffffff', 'outlook': '#ffffff',
-    'salesforce': '#ffffff', 'hubspot': '#ffffff', 'zoho': '#ffffff', 'twilio': '#ffffff',
-    'stripe': '#ffffff', 'slack': '#ffffff', 'zapier': '#ffffff'
-  };
-  const bg = brandBg[id] ?? '#ffffff';
   return (
-    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95" style={{ backgroundColor: bg }}>
+    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
       <img src={`/logos/${id}.svg`} alt={label} className="block max-h-6 max-w-full object-contain" />
       <figcaption className="sr-only">{label}</figcaption>
     </figure>

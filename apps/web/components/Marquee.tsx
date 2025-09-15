@@ -12,12 +12,7 @@ type Props = {
 export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
   return (
     <div className="eb-marquee" aria-label={ariaLabel} role="marquee">
-      <div
-        className="eb-marquee-track"
-        style={{
-          animationDuration: `${speedSec}s`,
-        }}
-      >
+      <div className="eb-marquee-track" data-speed={speedSec}>
         <div className="flex items-center gap-3 min-w-max pr-4">{children}</div>
         <div className="flex items-center gap-3 min-w-max pr-4" aria-hidden>
           {children}
@@ -26,4 +21,3 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
     </div>
   );
 }
-
