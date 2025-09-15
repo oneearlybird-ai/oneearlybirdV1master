@@ -10,6 +10,15 @@ export function middleware(req: NextRequest) {
       return NextResponse.redirect(url);
     }
   }
+  // If a signed-in user hits the marketing homepage, send them to the Dashboard.
+  if (p === '/') {
+    const cookie = req.headers.get('cookie') || '';
+    const has = /(^|;\s*)(__Secure-next-auth\.session-token|next-auth\.session-token)=/.test(cookie);
+    if (has) {
+      const url = new URL('/dashboard', req.url);
+      return NextResponse.redirect(url);
+    }
+  }
   const res = NextResponse.next();
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   const nonce = btoa(String.fromCharCode(...bytes)).replace(/=+$/, '');
