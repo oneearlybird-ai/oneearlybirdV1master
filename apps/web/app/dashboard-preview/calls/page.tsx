@@ -219,32 +219,22 @@ function CallsAnalytics() {
     { label: 'Voicemail', value: 20, color: '#EAB308' },
   ];
   const total = outcomes.reduce((a,b)=>a+b.value,0);
-  const stops: string[] = [];
-  let acc = 0;
-  for (const p of outcomes) {
-    const from = (acc/total)*100;
-    const to = ((acc+p.value)/total)*100;
-    stops.push(`${p.color} ${from}% ${to}%`);
-    acc += p.value;
-  }
-  const bg = `conic-gradient(${stops.join(',')})`;
   const perDay = [6,8,7,9,5,10,8];
-  const max = Math.max(...perDay,1);
   return (
     <div className="mt-6 grid gap-4 md:grid-cols-3">
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-center">
-        <div style={{ backgroundImage: bg }} className="relative h-40 w-40 rounded-full">
-          <div className="absolute inset-6 rounded-full bg-neutral-950 border border-white/10 flex items-center justify-center text-sm">Outcomes</div>
-        </div>
+        <Donut parts={outcomes} />
       </div>
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
         <div className="font-medium">Outcome distribution</div>
         <ul className="mt-3 text-sm text-white/80 space-y-2">
           {outcomes.map(p => (
             <li key={p.label} className="flex items-center gap-2">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: p.color }} />
+              <svg width="8" height="8" aria-hidden><circle cx="4" cy="4" r="4" fill={p.color} /></svg>
               <span className="w-28">{p.label}</span>
-              <div className="flex-1 h-2 rounded bg-white/10 overflow-hidden"><div className="h-full" style={{ width: `${(p.value/total)*100}%`, background: p.color }} /></div>
+              <svg viewBox="0 0 100 6" className="flex-1 h-2">
+                <rect x="0" y="0" height="6" width={(p.value/total)*100} fill={p.color} />
+              </svg>
               <span className="w-10 text-right">{p.value}%</span>
             </li>
           ))}
@@ -252,12 +242,57 @@ function CallsAnalytics() {
       </div>
       <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-3">
         <div className="font-medium">Calls per day</div>
-        <div className="mt-3 flex items-end gap-2 h-28">
-          {perDay.map((v,i)=> (
-            <div key={i} className="w-8 bg-white/10" style={{ height: `${(v/max)*100}%` }} />
-          ))}
-        </div>
+        <Bars data={perDay} />
       </div>
     </div>
+  );
+}
+
+function Donut({ parts }: { parts: { label: string; value: number; color: string }[] }) {
+  const total = parts.reduce((a,b)=>a+b.value,0) || 1;
+  let startAngle = -Math.PI/2; // start at top
+  const radius = 60; const cx = 80; const cy = 80; const thickness = 20;
+  const rings = parts.map((p, idx) => {
+    const angle = (p.value/total) * Math.PI * 2;
+    const end = startAngle + angle;
+    const path = arcPath(cx, cy, radius, startAngle, end);
+    startAngle = end;
+    return <path key={idx} d={path} fill={p.color} />;
+  });
+  return (
+    <svg viewBox="0 0 160 160" width="160" height="160" aria-label="Outcomes donut">
+      <g transform={`translate(0,0)`}>{rings}</g>
+      <circle cx={cx} cy={cy} r={radius - thickness} fill="#0F1117" stroke="rgba(255,255,255,0.1)" />
+      <text x={cx} y={cy} fill="#FFFFFF" opacity="0.8" fontSize="10" textAnchor="middle" dominantBaseline="middle">Outcomes</text>
+    </svg>
+  );
+}
+
+function arcPath(cx: number, cy: number, r: number, start: number, end: number) {
+  const x1 = cx + r * Math.cos(start);
+  const y1 = cy + r * Math.sin(start);
+  const x2 = cx + r * Math.cos(end);
+  const y2 = cy + r * Math.sin(end);
+  const largeArc = end - start > Math.PI ? 1 : 0;
+  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
+}
+
+function Bars({ data }: { data: number[] }) {
+  const max = Math.max(...data, 1);
+  const width = data.length * 14 + 6; // bar width 12 + gap 2
+  const height = 100;
+  let x = 3;
+  const rects = data.map((v, i) => {
+    const h = Math.round((v / max) * height);
+    const y = height - h;
+    const r = <rect key={i} x={x} y={y} width={12} height={h} fill="rgba(255,255,255,0.6)" />;
+    x += 14;
+    return r;
+  });
+  return (
+    <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 w-full h-28" aria-label="Calls per day">
+      <rect x="0" y="0" width={width} height={height} fill="none" />
+      {rects}
+    </svg>
   );
 }
