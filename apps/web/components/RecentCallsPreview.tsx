@@ -5,6 +5,7 @@ import React, { useEffect, useState } from "react";
 export type CallItem = {
   id: string;
   time: string;
+  ts: string; // ISO timestamp for filtering/sorting
   caller: string;
   duration: string;
   outcome: string;
@@ -15,6 +16,7 @@ export const SAMPLE_CALLS: CallItem[] = [
   {
     id: "c1",
     time: "Today 10:14",
+    ts: "2025-09-15T10:14:00.000Z",
     caller: "(415) 555‑0198",
     duration: "02:45",
     outcome: "Appointment booked",
@@ -27,6 +29,7 @@ export const SAMPLE_CALLS: CallItem[] = [
   {
     id: "c2",
     time: "Today 09:05",
+    ts: "2025-09-15T09:05:00.000Z",
     caller: "(347) 555‑0101",
     duration: "01:12",
     outcome: "Info provided",
@@ -39,6 +42,7 @@ export const SAMPLE_CALLS: CallItem[] = [
   {
     id: "c3",
     time: "Yesterday 18:21",
+    ts: "2025-09-14T18:21:00.000Z",
     caller: "(206) 555‑0112",
     duration: "00:48",
     outcome: "Voicemail deflected",
@@ -52,21 +56,35 @@ export const SAMPLE_CALLS: CallItem[] = [
 
 // Removed row expander in favor of a dedicated drawer
 
-function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => void }) {
+// Shared drawer component
+export function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => void }) {
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
+  const [copied, setCopied] = useState(false);
   React.useEffect(() => {
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, [onClose]);
+  const doCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(call.transcript.join('\n'));
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch (_err) {
+      // ignore clipboard errors in preview
+    }
+  };
   return (
     <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="call-details-title">
       <div className="absolute inset-0 bg-black/60 eb-overlay-in" onClick={onClose} />
       <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-neutral-950 border-l border-white/10 shadow-xl eb-drawer-in focus:outline-none" tabIndex={-1}>
         <div className="flex items-center justify-between border-b border-white/10 p-4">
           <h3 id="call-details-title" className="font-medium">Call details</h3>
-          <button ref={closeRef} onClick={onClose} className="rounded border border-white/20 px-2 py-1 text-sm text-white/80 hover:text-white">Close</button>
+          <div className="flex items-center gap-2">
+            <button onClick={doCopy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">{copied ? 'Copied' : 'Copy transcript'}</button>
+            <button ref={closeRef} onClick={onClose} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Close</button>
+          </div>
         </div>
         <div className="p-4 space-y-4 overflow-y-auto h-[calc(100%-56px)]">
           <div className="text-sm text-white/70">{call.time} — {call.caller} — {call.duration}</div>
