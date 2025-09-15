@@ -58,29 +58,31 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
 }
 
 function LogoBadge({ id, label }: { id: string; label: string }) {
-  const brand: Record<string, { bg: string; invert?: boolean }> = {
-    'google-workspace': { bg: '#ffffff', invert: false },
-    'microsoft-365': { bg: '#D83B01', invert: true },
-    'outlook': { bg: '#0078D4', invert: true },
-    'salesforce': { bg: '#00A1E0', invert: true },
-    'hubspot': { bg: '#FF7A59', invert: true },
-    'zoho': { bg: '#C8202F', invert: true },
-    'twilio': { bg: '#F22F46', invert: true },
-    'stripe': { bg: '#635BFF', invert: true },
-    'slack': { bg: '#4A154B', invert: true },
-    'zapier': { bg: '#FF4A00', invert: true },
+  // Brand backgrounds — use the brand’s typical presentation background.
+  // Most integrations present on white; Google explicitly on white.
+  const brandBg: Record<string, string> = {
+    'google-workspace': '#ffffff',
+    'microsoft-365': '#ffffff',
+    'outlook': '#ffffff',
+    'salesforce': '#ffffff',
+    'hubspot': '#ffffff',
+    'zoho': '#ffffff',
+    'twilio': '#ffffff',
+    'stripe': '#ffffff',
+    'slack': '#ffffff',
+    'zapier': '#ffffff',
   };
-  const style = brand[id] ?? { bg: 'rgba(255,255,255,0.05)' };
-  const imgClass = [
-    'block max-h-6 max-w-full object-contain motion-safe:transition',
-    style.invert ? 'invert' : '',
-  ].join(' ');
+  const bg = brandBg[id] ?? '#ffffff';
   return (
     <figure
-      className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center"
-      style={{ backgroundColor: style.bg }}
+      className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
+      style={{ backgroundColor: bg }}
     >
-      <img src={`/logos/${id}.svg`} alt={label} className={imgClass} />
+      <img
+        src={`/logos/${id}.svg`}
+        alt={label}
+        className="block max-h-6 max-w-full object-contain"
+      />
       <figcaption className="sr-only">{label}</figcaption>
     </figure>
   );
