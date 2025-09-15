@@ -8,9 +8,13 @@ export default function CallsPage() {
   const [outcome, setOutcome] = useState("all");
   const [start, setStart] = useState<string>("");
   const [end, setEnd] = useState<string>("");
+  const [minDur, setMinDur] = useState<string>("");
+  const [maxDur, setMaxDur] = useState<string>("");
   const [openId, setOpenId] = useState<string | null>(null);
   const [tab, setTab] = useState<'list'|'analytics'>('list');
+  const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
 
+  const ps = (s:string) => { const [m,sec] = s.split(':').map(Number); return (m||0)*60 + (sec||0); };
   const filtered: CallItem[] = useMemo(() => {
     return SAMPLE_CALLS.filter((c) => {
       const q = query.trim().toLowerCase();
@@ -23,9 +27,13 @@ export default function CallsPage() {
       if (end) {
         okD = okD && new Date(c.ts) <= new Date(end + 'T23:59:59Z');
       }
-      return okQ && okO && okD;
+      let okT = true;
+      const secs = ps(c.duration);
+      if (minDur) okT = okT && secs >= Number(minDur);
+      if (maxDur) okT = okT && secs <= Number(maxDur);
+      return okQ && okO && okD && okT;
     });
-  }, [query, outcome, start, end]);
+  }, [query, outcome, start, end, minDur, maxDur]);
 
   const pageSize = 10;
   const [page, setPage] = useState(1);
@@ -40,8 +48,6 @@ export default function CallsPage() {
         const db = new Date(b.ts).getTime();
         return sortDir === 'asc' ? da - db : db - da;
       }
-      // duration mm:ss
-      const ps = (s:string) => { const [m,sec] = s.split(':').map(Number); return (m||0)*60 + (sec||0); };
       const da = ps(a.duration), db = ps(b.duration);
       return sortDir === 'asc' ? da - db : db - da;
     });
@@ -87,6 +93,22 @@ export default function CallsPage() {
           onChange={(e) => setEnd(e.target.value)}
           className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
           aria-label="End date"
+        />
+        <input
+          type="number"
+          placeholder="Min sec"
+          value={minDur}
+          onChange={(e) => setMinDur(e.target.value)}
+          className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
+          aria-label="Min duration (seconds)"
+        />
+        <input
+          type="number"
+          placeholder="Max sec"
+          value={maxDur}
+          onChange={(e) => setMaxDur(e.target.value)}
+          className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
+          aria-label="Max duration (seconds)"
         />
         <button
           onClick={() => exportCsv(filtered)}
@@ -136,15 +158,22 @@ export default function CallsPage() {
               <div>Outcome</div>
               <div>Actions</div>
             </div>
-            {pageRows.map((call) => (
-              <div key={call.id} className="grid grid-cols-5 items-center gap-3 py-3 hover:bg-white/[0.03]">
-                <button onClick={() => setOpenId(call.id)} className="text-left text-sm text-white/80">{call.time}</button>
-                <div className="text-sm text-white/80">{call.caller}</div>
-                <div className="text-sm text-white/60">{call.duration}</div>
-                <div className="text-sm"><OutcomeBadge text={call.outcome} /></div>
-                <RowActions caller={call.caller} id={call.id} onOpen={() => setOpenId(call.id)} />
-              </div>
-            ))}
+            {pageRows.map((call) => {
+              const isRecent = Date.now() - new Date(call.ts).getTime() < 24*60*60*1000;
+              const isNew = isRecent && !reviewed[call.id];
+              return (
+                <div key={call.id} className="grid grid-cols-5 items-center gap-3 py-3 hover:bg-white/[0.03]">
+                  <button onClick={() => setOpenId(call.id)} className="text-left text-sm text-white/80 flex items-center gap-2">
+                    {call.time}
+                    {isNew ? <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-1.5 py-0.5">NEW</span> : null}
+                  </button>
+                  <div className="text-sm text-white/80">{call.caller}</div>
+                  <div className="text-sm text-white/60">{call.duration}</div>
+                  <div className="text-sm"><OutcomeBadge text={call.outcome} /></div>
+                  <RowActions caller={call.caller} id={call.id} onOpen={() => setOpenId(call.id)} onReviewed={() => setReviewed(r=>({...r,[call.id]:true}))} reviewed={!!reviewed[call.id]} />
+                </div>
+              );
+            })}
             {filtered.length === 0 ? (
               <div className="text-sm text-white/60 py-6">No calls match your filters.</div>
             ) : null}
@@ -198,7 +227,7 @@ function OutcomeBadge({ text }: { text: string }) {
   return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 ${cls}`}>{text}</span>;
 }
 
-function RowActions({ caller, id, onOpen }: { caller: string; id: string; onOpen: () => void }) {
+function RowActions({ caller, id, onOpen, onReviewed, reviewed }: { caller: string; id: string; onOpen: () => void; onReviewed: () => void; reviewed: boolean }) {
   const [copied, setCopied] = useState<string | null>(null);
   const copy = async () => {
     try { await navigator.clipboard.writeText(caller); setCopied(id); setTimeout(() => setCopied(null), 1200); } catch (_err) { /* ignore in preview */ }
@@ -207,6 +236,7 @@ function RowActions({ caller, id, onOpen }: { caller: string; id: string; onOpen
     <div className="flex items-center gap-2">
       <button onClick={onOpen} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Open</button>
       <button onClick={copy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">{copied===id ? 'Copied' : 'Copy #'}</button>
+      <button onClick={onReviewed} className={`rounded border px-2 py-1 text-xs ${reviewed ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-white/20 text-white/80 hover:text-white'}`}>{reviewed ? 'Reviewed' : 'Mark reviewed'}</button>
     </div>
   );
 }
