@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +22,15 @@ function NavLink({ href, label }: { href: string; label: string }) {
 
 export default function DashboardPreviewLayout({ children }: { children: ReactNode }) {
   const [live, setLive] = useState(true);
+  const [build, setBuild] = useState<string|undefined>(undefined);
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/usage/summary', { cache: 'no-store' })
+      .then(async r => r.ok ? (await r.json()) : null)
+      .then((j) => { if (!cancelled && j?.version) setBuild(String(j.version).slice(0,7)); })
+      .catch(() => {});
+    return () => { cancelled = true };
+  }, []);
   return (
     <div className="min-h-dvh bg-neutral-950 text-white">
       <div className="mx-auto max-w-7xl grid grid-cols-1 md:grid-cols-[240px,1fr] gap-0">
@@ -61,6 +70,7 @@ export default function DashboardPreviewLayout({ children }: { children: ReactNo
                 >
                   {live ? 'Pause' : 'Go Live'}
                 </button>
+                <span className="hidden md:inline text-xs text-white/50">feat/ux-preview{build ? ` @ ${build}` : ''}</span>
                 <input
                   type="search"
                   placeholder="Search"
