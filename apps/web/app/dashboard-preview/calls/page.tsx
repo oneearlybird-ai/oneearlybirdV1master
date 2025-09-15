@@ -29,7 +29,28 @@ export default function CallsPage() {
   const pageSize = 10;
   const [page, setPage] = useState(1);
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
+  const [sortBy, setSortBy] = useState<'time'|'duration'>('time');
+  const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
+  const sorted = useMemo(() => {
+    const arr = filtered.slice();
+    arr.sort((a,b) => {
+      if (sortBy === 'time') {
+        const da = new Date(a.ts).getTime();
+        const db = new Date(b.ts).getTime();
+        return sortDir === 'asc' ? da - db : db - da;
+      }
+      // duration mm:ss
+      const ps = (s:string) => { const [m,sec] = s.split(':').map(Number); return (m||0)*60 + (sec||0); };
+      const da = ps(a.duration), db = ps(b.duration);
+      return sortDir === 'asc' ? da - db : db - da;
+    });
+    return arr;
+  }, [filtered, sortBy, sortDir]);
+  const pageRows = sorted.slice((page - 1) * pageSize, page * pageSize);
+  const setSort = (key: 'time'|'duration') => {
+    if (sortBy === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortBy(key); setSortDir('desc'); }
+  };
 
   return (
     <section>
@@ -72,6 +93,13 @@ export default function CallsPage() {
         >
           Export CSV
         </button>
+        <div className="ml-auto flex items-center gap-2 text-xs text-white/60">
+          <span>Quick range:</span>
+          <button onClick={() => { setStart(new Date().toISOString().slice(0,10)); setEnd(new Date().toISOString().slice(0,10)); setPage(1); }} className="rounded border border-white/20 px-2 py-1 hover:text-white">Today</button>
+          <button onClick={() => { const d=new Date(); const endS=d.toISOString().slice(0,10); d.setDate(d.getDate()-6); const startS=d.toISOString().slice(0,10); setStart(startS); setEnd(endS); setPage(1); }} className="rounded border border-white/20 px-2 py-1 hover:text-white">7d</button>
+          <button onClick={() => { const d=new Date(); const endS=d.toISOString().slice(0,10); d.setDate(d.getDate()-29); const startS=d.toISOString().slice(0,10); setStart(startS); setEnd(endS); setPage(1); }} className="rounded border border-white/20 px-2 py-1 hover:text-white">30d</button>
+          <button onClick={() => { setStart(''); setEnd(''); setPage(1); }} className="rounded border border-white/20 px-2 py-1 hover:text-white">Clear</button>
+        </div>
       </div>
 
       {/* Render using the existing preview list if no filters applied; else show filtered table */}
@@ -88,26 +116,21 @@ export default function CallsPage() {
             <h2 className="font-medium">Filtered calls</h2>
           </div>
           <div className="px-4 pb-4">
-            <div className="grid grid-cols-4 gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
-              <div>Time</div>
+            <div className="grid grid-cols-5 gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
+              <button onClick={() => setSort('time')} className="text-left hover:text-white">Time {sortBy==='time' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               <div>Caller</div>
-              <div>Duration</div>
+              <button onClick={() => setSort('duration')} className="text-left hover:text-white">Duration {sortBy==='duration' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               <div>Outcome</div>
+              <div>Actions</div>
             </div>
             {pageRows.map((call) => (
-              <button
-                key={call.id}
-                className="grid w-full grid-cols-4 items-center gap-3 py-3 text-left hover:bg-white/[0.03]"
-                onClick={() => setOpenId(call.id)}
-                aria-haspopup="dialog"
-              >
-                <div className="text-sm text-white/80">{call.time}</div>
+              <div key={call.id} className="grid grid-cols-5 items-center gap-3 py-3 hover:bg-white/[0.03]">
+                <button onClick={() => setOpenId(call.id)} className="text-left text-sm text-white/80">{call.time}</button>
                 <div className="text-sm text-white/80">{call.caller}</div>
                 <div className="text-sm text-white/60">{call.duration}</div>
-                <div className="text-sm">
-                  <OutcomeBadge text={call.outcome} />
-                </div>
-              </button>
+                <div className="text-sm"><OutcomeBadge text={call.outcome} /></div>
+                <RowActions caller={call.caller} id={call.id} onOpen={() => setOpenId(call.id)} />
+              </div>
             ))}
             {filtered.length === 0 ? (
               <div className="text-sm text-white/60 py-6">No calls match your filters.</div>
@@ -158,4 +181,17 @@ function OutcomeBadge({ text }: { text: string }) {
   else if (t.includes("info")) cls = "border-indigo-500/30 bg-indigo-500/10 text-indigo-300";
   else if (t.includes("voicemail")) cls = "border-yellow-500/30 bg-yellow-500/10 text-yellow-300";
   return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 ${cls}`}>{text}</span>;
+}
+
+function RowActions({ caller, id, onOpen }: { caller: string; id: string; onOpen: () => void }) {
+  const [copied, setCopied] = useState<string | null>(null);
+  const copy = async () => {
+    try { await navigator.clipboard.writeText(caller); setCopied(id); setTimeout(() => setCopied(null), 1200); } catch (_err) { /* ignore in preview */ }
+  };
+  return (
+    <div className="flex items-center gap-2">
+      <button onClick={onOpen} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Open</button>
+      <button onClick={copy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">{copied===id ? 'Copied' : 'Copy #'}</button>
+    </div>
+  );
 }

@@ -15,7 +15,8 @@ function Kpi({ label, value, hint }: { label: string; value: string; hint?: stri
   );
 }
 
-function StatCard({ title, value }: { title: string; value: string }) {
+// reserved: simple stat tile
+function _StatCard({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-lg border border-white/10 p-3">
       <div className="text-xs text-white/60">{title}</div>
@@ -64,19 +65,7 @@ export default async function DashboardPreview() {
         <a href="/dashboard/billing" className="inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Upgrade plan</a>
       </div>
 
-      {/* Quick stats */}
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="flex items-center justify-between">
-          <h2 className="font-medium">This week</h2>
-          <span className="text-sm text-white/60">Live snapshot</span>
-        </div>
-        <div className="mt-3 grid gap-3 sm:grid-cols-4">
-          <StatCard title="Answered" value={String(week.answered)} />
-          <StatCard title="Booked appts" value={String(week.booked)} />
-          <StatCard title="Voicemail deflected" value={String(week.deflected)} />
-          <StatCard title="Avg duration" value={week.avgDuration} />
-        </div>
-      </div>
+      <ThisWeekPanel week={week} />
 
       {/* Recent calls */}
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5">
@@ -103,5 +92,44 @@ export default async function DashboardPreview() {
         </div>
       </div>
     </section>
+  );
+}
+
+function ThisWeekPanel({ week }: { week: { answered: number; booked: number; deflected: number; avgDuration: string } }) {
+  const series = [8, 12, 9, 14, 10, 16, 11]; // preview-only sparkline data
+  const max = Math.max(...series, 1);
+  const points = series.map((v, i) => {
+    const x = (i / (series.length - 1)) * 100;
+    const y = 100 - (v / max) * 100;
+    return `${x},${y}`;
+  }).join(' ');
+  return (
+    <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex items-center justify-between">
+        <h2 className="font-medium">This week</h2>
+        <span className="text-sm text-white/60">Live snapshot</span>
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-4">
+        <div className="rounded-lg border border-white/10 p-3">
+          <div className="text-xs text-white/60">Answered (sparkline)</div>
+          <svg viewBox="0 0 100 30" className="mt-1 h-12 w-full">
+            <polyline points={points} fill="none" stroke="rgba(255,255,255,0.8)" strokeWidth="1.5"/>
+          </svg>
+        </div>
+        <div className="rounded-lg border border-white/10 p-3">
+          <div className="text-xs text-white/60">Booked appts</div>
+          <div className="text-lg font-semibold">{String(week.booked)}</div>
+        </div>
+        <div className="rounded-lg border border-white/10 p-3">
+          <div className="text-xs text-white/60">Voicemail deflected</div>
+          <div className="text-lg font-semibold">{String(week.deflected)}</div>
+        </div>
+        <div className="rounded-lg border border-white/10 p-3">
+          <div className="text-xs text-white/60">Avg duration</div>
+          <div className="text-lg font-semibold">{week.avgDuration}</div>
+        </div>
+      </div>
+      <div className="mt-3 text-xs text-white/60">Last updated just now</div>
+    </div>
   );
 }
