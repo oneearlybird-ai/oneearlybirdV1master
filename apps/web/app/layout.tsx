@@ -11,7 +11,6 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const isPreview = process.env.VERCEL_ENV === 'preview' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
   const cookieStore = cookies();
   const hasSession = !!(cookieStore.get("__Secure-next-auth.session-token") || cookieStore.get("next-auth.session-token"));
   return (
@@ -35,12 +34,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/roi" className="text-white/80 hover:text-white">ROI</Link>
               <Link href="/docs" className="text-white/80 hover:text-white">Docs</Link>
               <Link href="/support" className="text-white/80 hover:text-white">Support</Link>
-              {isPreview ? (
-                <>
-                  <Link href="/preview" className="text-amber-300/80 hover:text-amber-300">UX Preview</Link>
-                  <Link href="/dashboard-preview" className="text-amber-300/80 hover:text-amber-300">Dashboard Preview</Link>
-                </>
-              ) : null}
+              {/* Preview links removed now that preview is main */}
             </div>
             <AuthControls hasSession={hasSession} />
           </nav>

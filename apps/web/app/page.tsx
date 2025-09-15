@@ -1,316 +1,203 @@
 export const dynamic = 'force-dynamic';
+import Link from 'next/link';
+import { Marquee } from '@/components/Marquee';
+import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
 
-import Link from "next/link";
-// (StaggerText retained for future use, but not used in hero now)
-
-function Section({
-  id,
-  title,
-  children,
-}: {
-  id?: string;
-  title?: string;
-  children: React.ReactNode;
-}) {
+function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
     <section id={id} className="mx-auto max-w-6xl px-6 py-16 md:py-24">
-      {title ? (
-        <h2 className="text-2xl md:text-3xl font-semibold tracking-tight mb-6">
-          {title}
-        </h2>
-      ) : null}
+      {title ? (<h2 className="text-2xl md:3xl font-semibold tracking-tight mb-6">{title}</h2>) : null}
       {children}
     </section>
   );
 }
 
-function Stat({ label, value }: { label: string; value: string }) {
+function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-      <div className="text-3xl font-semibold">{value}</div>
-      <div className="mt-2 text-white/70">{label}</div>
+    <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95 eb-reveal ${className}`}>
+      {children}
     </div>
   );
 }
 
-
-function Logo({ name }: { name: string }) {
+function Benefit({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
-    <div className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60 motion-safe:transition-opacity motion-reduce:transition-none">
-      <span aria-label={name}>{name}</span>
-    </div>
+    <Card>
+      <div className="text-amber-400" aria-hidden>{icon}</div>
+      <div className="mt-3 font-medium">{title}</div>
+      <p className="mt-1 text-sm text-white/70">{text}</p>
+    </Card>
+  );
+}
+
+function Step({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <Card>
+      <div className="flex items-center gap-3">
+        <div className="text-amber-400" aria-hidden>{icon}</div>
+        <div className="font-medium">{title}</div>
+      </div>
+      <p className="mt-2 text-sm text-white/70">{text}</p>
+    </Card>
+  );
+}
+
+function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+  return (
+    <Card>
+      <div className="flex items-center gap-3">
+        <div className="text-amber-400" aria-hidden>{icon}</div>
+        <div className="font-medium">{title}</div>
+      </div>
+      <p className="mt-2 text-sm text-white/70">{text}</p>
+    </Card>
+  );
+}
+
+function LogoBadge({ id, label }: { id: string; label: string }) {
+  const brandBg: Record<string, string> = {
+    'google-workspace': '#ffffff', 'microsoft-365': '#ffffff', 'outlook': '#ffffff',
+    'salesforce': '#ffffff', 'hubspot': '#ffffff', 'zoho': '#ffffff', 'twilio': '#ffffff',
+    'stripe': '#ffffff', 'slack': '#ffffff', 'zapier': '#ffffff'
+  };
+  const bg = brandBg[id] ?? '#ffffff';
+  return (
+    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95" style={{ backgroundColor: bg }}>
+      <img src={`/logos/${id}.svg`} alt={label} className="block max-h-6 max-w-full object-contain" />
+      <figcaption className="sr-only">{label}</figcaption>
+    </figure>
   );
 }
 
 export default function Home() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-white">
-      {/* Hero (unchanged) */}
+      {/* Hero with wave background and timed word fade-in */}
       <Section>
-        <div className="mb-6">
-          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">
-            🚀 AI Voice Receptionist for business phone calls
-          </span>
+        <div className="relative">
+          <div className="absolute inset-0 -z-10 eb-hero-wave pointer-events-none">
+            <svg viewBox="0 0 1200 400" className="h-[420px] w-full" aria-hidden>
+              <defs>
+                <linearGradient id="ebWaveGrad" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+                  <stop offset="50%" stopColor="rgba(255,255,255,0.25)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                </linearGradient>
+              </defs>
+              <path className="eb-wave-path" stroke="url(#ebWaveGrad)" strokeWidth="2" fill="none" d="M0,240 C120,180 240,300 360,240 C480,180 600,300 720,240 C840,180 960,300 1080,240 C1140,210 1200,240 1200,240"/>
+            </svg>
+          </div>
         </div>
-
+        <div className="mb-6">
+          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">🚀 AI Voice Receptionist for business phone calls</span>
+        </div>
         <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
-          <span className="eb-fade-word eb-delay-1000">Answer</span>{" "}
-          <span className="eb-fade-word eb-delay-2500">every</span>{" "}
-          <span className="eb-fade-word eb-delay-4000">call.</span>{" "}
+          <span className="eb-fade-word eb-delay-1000">Answer</span>{' '}
+          <span className="eb-fade-word eb-delay-2500">every</span>{' '}
+          <span className="eb-fade-word eb-delay-4000">call.</span>{' '}
           <span className="text-white/70">
-            <span className="eb-fade-word eb-delay-7500">Book</span>{" "}
-            <span className="eb-fade-word eb-delay-9000">more</span>{" "}
+            <span className="eb-fade-word eb-delay-7500">Book</span>{' '}
+            <span className="eb-fade-word eb-delay-9000">more</span>{' '}
             <span className="eb-fade-word eb-delay-10500">appointments.</span>
           </span>
         </h1>
-
-        <p className="mt-6 max-w-2xl text-white/70">
-          EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs,
-          routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts,
-          recordings, analytics, and clean billing.
-        </p>
-
+        <p className="mt-6 max-w-2xl text-white/70">EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs, routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts, recordings, analytics, and clean billing.</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/signup"
-            className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
-          >
-            Start free
-          </Link>
-          <Link
-            href="/pricing"
-            className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
-          >
-            See pricing
-          </Link>
-        </div>
-
-        {/* Stats */}
-        <div className="mt-12 grid gap-4 sm:grid-cols-3">
-          <Stat label="Call answer rate" value="99.9%" />
-          <Stat label="Avg. booking time" value="~35s" />
-          <Stat label="Languages & accents" value="40+" />
+          <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">Start free</Link>
+          <Link href="/pricing" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">See pricing</Link>
         </div>
       </Section>
 
-      {/* 1. Trust Bar */}
-      <Section id="trust">
-        <div className="flex items-center justify-between gap-6 flex-wrap">
-          <div className="text-white/70">Trusted by fast-growing teams</div>
-          <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-3">
-            {["ClinicCo", "HomePro", "Northstar", "Mosaic", "Waypoint", "Acme Dental"].map((n) => (
-              <Logo key={n} name={n} />
-            ))}
-          </div>
-        </div>
-      </Section>
-
-      {/* 2. Value Snapshot */}
-      <Section id="value" title="Results at a glance">
+      {/* Benefits */}
+      <Section title="What EarlyBird AI does">
         <div className="grid gap-4 md:grid-cols-4">
-          {[{
-            value: "99.9%",
-            label: "answered — missed calls captured",
-          },{
-            value: "<60s",
-            label: "to booking — from hello to calendar",
-          },{
-            value: "+32%",
-            label: "more appointments — versus baseline",
-          },{
-            value: "24/7",
-            label: "coverage — after-hours included",
-          }].map((s) => (
-            <div key={s.value} className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <div className="text-3xl font-semibold">{s.value}</div>
-              <div className="mt-2 text-white/70 text-sm">{s.label}</div>
-            </div>
-          ))}
+          <Benefit icon={<ClockIcon />} title="24/7 Answering" text="Never miss a call — your AI receptionist is on duty 24/7." />
+          <Benefit icon={<CalendarIcon />} title="Appointment Booking" text="Seamlessly schedule or cancel appointments in your calendar." />
+          <Benefit icon={<CrmIcon />} title="CRM Integration" text="Automatically log calls and leads into your CRM." />
+          <Benefit icon={<SavingsIcon />} title="Cost Savings" text="Save on staffing costs while increasing customer satisfaction." />
         </div>
       </Section>
 
-      {/* 3. How it works */}
-      <Section id="how" title="How it works">
-        <ol className="grid gap-4 md:grid-cols-3 list-decimal pl-6">
-          <li className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="font-medium">Connect your number</div>
-            <p className="mt-2 text-sm text-white/70">Point Twilio/Plivo/Vonage to EarlyBird.</p>
-          </li>
-          <li className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="font-medium">Set rules and FAQs</div>
-            <p className="mt-2 text-sm text-white/70">Hours, routing, services, guardrails.</p>
-          </li>
-          <li className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <div className="font-medium">Go live</div>
-            <p className="mt-2 text-sm text-white/70">We answer, qualify, route, and book.</p>
-          </li>
-        </ol>
-      </Section>
-
-      {/* 4. Live Demo CTA */}
-      <Section id="demo">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
-          <h3 className="text-xl font-semibold">Hear a live call</h3>
-          <p className="mt-2 text-white/70">See a real transcript</p>
-          <div className="mt-4 flex justify-center gap-3">
-            <button
-              className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
-              aria-haspopup="dialog"
-            >
-              Hear a live call
-            </button>
-            <button
-              className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
-              aria-haspopup="dialog"
-            >
-              See a transcript
-            </button>
-          </div>
-          <p className="mt-2 text-xs text-white/50">Sample audio coming soon.</p>
-        </div>
-      </Section>
-
-      {/* 5. Integrations Preview */}
-      <Section id="integrations" title="Works with your stack">
-        <div className="grid gap-4 md:grid-cols-5">
+      {/* Integrations marquee */}
+      <Section id="integrations" title="Integrates with your tools">
+        <div className="text-white/60 text-sm mb-3">Seamless integration with your workflow</div>
+        <Marquee ariaLabel="Integrations logos" speedSec={16}>
           {[
-            { id: 'google-calendar', label: 'Google Calendar' },
+            { id: 'google-workspace', label: 'Google Workspace' },
             { id: 'microsoft-365', label: 'Microsoft 365' },
-            { id: 'twilio', label: 'Twilio' },
-            { id: 'plivo', label: 'Plivo' },
-            { id: 'vonage', label: 'Vonage' },
-            { id: 'hubspot', label: 'HubSpot' },
+            { id: 'outlook', label: 'Outlook' },
             { id: 'salesforce', label: 'Salesforce' },
+            { id: 'hubspot', label: 'HubSpot' },
+            { id: 'zoho', label: 'Zoho' },
+            { id: 'twilio', label: 'Twilio' },
             { id: 'stripe', label: 'Stripe' },
-            { id: 'postmark', label: 'Postmark' },
+            { id: 'slack', label: 'Slack' },
             { id: 'zapier', label: 'Zapier' },
           ].map((it) => (
-            <div key={it.id} className="rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
-              <figure className="flex items-center justify-center min-h-10">
-                <img src={`/logos/${it.id}.svg`} alt={it.label} className="h-8 w-auto" />
-                <figcaption className="sr-only">{it.label}</figcaption>
-              </figure>
-            </div>
+            <LogoBadge key={it.id} id={it.id} label={it.label} />
           ))}
+        </Marquee>
+      </Section>
+
+      {/* How it works */}
+      <Section id="how" title="How it works">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Step icon={<PlugIcon />} title="Connect Your Systems" text="Sign up and connect your phone line, calendar, and CRM in minutes." />
+          <Step icon={<PhoneIcon />} title="AI Answers Calls" text="Friendly, human‑like greeting, 24/7 — fast and natural responses." />
+          <Step icon={<CheckIcon />} title="Scheduling & Follow‑up" text="Books appointments, answers FAQs, and logs details + transcripts in your CRM." />
         </div>
       </Section>
 
-      {/* 6. Outcomes & Proof + Backed by data */}
-      <Section id="proof" title="Outcomes that matter">
-        <div className="grid gap-8 md:grid-cols-2">
-          <ul className="space-y-3">
-            {[
-              "+32% appointments — better capture",
-              "<35s booking — faster handoffs",
-              "24/7 coverage — no voicemails",
-              "60–85% deflection — self-serve answers",
-              "Clean billing — no surprises",
-              "Owner visibility — calls, transcripts, analytics",
-            ].map((t) => (
-              <li key={t} className="flex items-start gap-2">
-                <span aria-hidden className="mt-1">✅</span>
-                <span className="text-white/80">{t}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
-            <h4 className="font-medium">Backed by data</h4>
-            <ul className="mt-3 space-y-2 text-sm text-white/70">
-              <li>60–85% deflection — FAQs reduce live load (industry)</li>
-              <li>&lt;60s to booking — faster handoffs (internal timing)</li>
-              <li>24/7 coverage — fewer lost leads (ops studies)</li>
-              <li>+32% appointments — capture + scheduling (cohorts)</li>
-              <li>Lower cost per booking — usage efficiency (billing)</li>
-            </ul>
-          </div>
-        </div>
-      </Section>
-
-      {/* 7. Social Proof */}
-      <Section id="social" title="Loved by operators">
+      {/* Testimonials */}
+      <Section title="Trusted by operators">
         <div className="grid gap-4 md:grid-cols-3">
           {[
-            { q: "After-hours bookings up 28%.", a: "Operations Lead, Home services" },
-            { q: "Answers sound on-brand.", a: "Practice Manager, Dental group" },
-            { q: "Setup was fast and safe.", a: "CTO, Multi-location clinic" },
-          ].map((s) => (
-            <figure key={s.q} className="rounded-2xl border border-white/10 bg-white/5 p-6">
-              <blockquote className="text-white/90">“{s.q}”</blockquote>
-              <figcaption className="mt-2 text-sm text-white/60">— {s.a}</figcaption>
-            </figure>
+            { q: '“EarlyBird AI is like having a full‑time receptionist at a fraction of the cost.”', a: 'Alex R., Owner — ServicePro' },
+            { q: '“Setup took minutes. Our calendar started filling the same week.”', a: 'Mia L., Practice Manager — Bright Dental' },
+            { q: '“We capture after‑hours leads we used to miss — huge impact.”', a: 'Sam D., Ops Lead — Northstar Clinics' },
+          ].map((t) => (
+            <Card key={t.q}>
+              <blockquote className="text-white/90">{t.q}</blockquote>
+              <figcaption className="mt-2 text-sm text-white/60">{t.a}</figcaption>
+            </Card>
           ))}
         </div>
       </Section>
 
-      {/* 8. Objections Strip (Accordions) */}
-      <Section id="faqs" title="Common questions">
-        <div className="divide-y divide-white/10 rounded-2xl border border-white/10 bg-white/5">
-          {[
-            {q:"Will it sound human?", a:"Natural tone with barge-in; latency optimized for smooth flow."},
-            {q:"Can we control voice?", a:"Guardrails, approved phrases, and brand style settings."},
-            {q:"What about transfers?", a:"Warm transfers to on-call staff with context."},
-            {q:"How’s scheduling handled?", a:"Direct Google/Microsoft Calendar sync with confirmations."},
-            {q:"Is it secure?", a:"CSP nonces, hardening, HIPAA-aware posture; no PHI on public UI."},
-            {q:"Billing clarity?", a:"Usage + clear monthly line items; no surprises."},
-          ].map((item, idx) => (
-            <details key={idx} className="px-6 py-4" role="group">
-              <summary className="cursor-pointer list-none select-none flex items-center justify-between text-white/90">
-                <span>{item.q}</span>
-                <span aria-hidden className="text-white/50">+</span>
-              </summary>
-              <div className="mt-2 text-sm text-white/70">{item.a}</div>
-            </details>
-          ))}
+      {/* Feature highlights */}
+      <Section title="Why EarlyBird">
+        <div className="grid gap-4 md:grid-cols-4">
+          <Feature icon={<VoiceIcon />} title="Human‑Like Voice" text="Natural, friendly voice agents callers can’t distinguish from a human." />
+          <Feature icon={<BoltIcon />} title="Barge‑in & Real‑Time" text="Understands interruptions; fast responses without awkward pauses." />
+          <Feature icon={<LockIcon />} title="Security & Privacy" text="Enterprise‑grade security; encrypted recordings and data handling." />
+          <Feature icon={<ControlsIcon />} title="Easy Setup & Management" text="No code. Set up in minutes and monitor everything in one place." />
         </div>
       </Section>
 
-      {/* 9. Why EarlyBird vs Alternatives */}
-      <Section id="compare" title="Why EarlyBird vs alternatives">
-        <div className="overflow-x-auto">
-          <div className="min-w-[640px] grid grid-cols-4 text-sm">
-            <div className="text-white/50">&nbsp;</div>
-            <div className="font-medium">EarlyBird</div>
-            <div className="font-medium">Answering Service</div>
-            <div className="font-medium">IVR/Voicemail</div>
-
-            <div className="py-3 text-white/70">24/7 coverage</div>
-            <div className="py-3">✓</div>
-            <div className="py-3">✓</div>
-            <div className="py-3">✕</div>
-
-            <div className="py-3 text-white/70">Booking speed</div>
-            <div className="py-3">&lt;60s</div>
-            <div className="py-3">2–5 min</div>
-            <div className="py-3">N/A</div>
-
-            <div className="py-3 text-white/70">Brand voice</div>
-            <div className="py-3">On-brand</div>
-            <div className="py-3">Varies</div>
-            <div className="py-3">Robotic</div>
-          </div>
-        </div>
-      </Section>
-
-      {/* 10. Final CTA */}
-      <Section id="final-cta">
-        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
-          <h3 className="text-xl font-semibold">Ready to capture every call?</h3>
+      {/* CTA */}
+      <Section>
+        <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-white/5 to-white/10 p-8 text-center">
+          <h3 className="text-xl font-semibold">Never miss another call. Ready to get started?</h3>
           <div className="mt-4 flex justify-center gap-3">
-            <Link
-              href="/signup"
-              className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
-            >
-              Start free
-            </Link>
-            <Link
-              href="/pricing"
-              className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
-            >
-              See pricing
-            </Link>
+            <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black hover:bg-white/90">Start Free Trial</Link>
+            <Link href="/signup" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white">Book a Demo</Link>
           </div>
+        </div>
+      </Section>
+
+      {/* Pricing teaser */}
+      <Section title="Plans for every stage">
+        <div className="grid gap-4 md:grid-cols-4">
+          <Card><div className="font-medium">Basic</div><p className="mt-1 text-sm text-white/70">For small businesses getting started.</p></Card>
+        	<Card><div className="font-medium">Pro</div><p className="mt-1 text-sm text-white/70">For growing teams that want more.</p></Card>
+        	<Card><div className="font-medium">Elite</div><p className="mt-1 text-sm text-white/70">High volume or multi‑location.</p></Card>
+        	<Card><div className="font-medium">Enterprise</div><p className="mt-1 text-sm text-white/70">Custom solution — let’s talk.</p></Card>
+        </div>
+        <div className="mt-6">
+          <Link href="/pricing" className="inline-flex items-center rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white">View detailed pricing</Link>
         </div>
       </Section>
     </main>
   );
 }
+
