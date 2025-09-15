@@ -1,5 +1,15 @@
 import { NextResponse, type NextRequest } from 'next/server';
-export function middleware(_req: NextRequest) {
+export function middleware(req: NextRequest) {
+  // Auth gate for app dashboard (not preview). Simple cookie presence check.
+  const p = req.nextUrl.pathname;
+  if ((p === '/dashboard' || p.startsWith('/dashboard/')) && !p.startsWith('/dashboard-preview')) {
+    const cookie = req.headers.get('cookie') || '';
+    const has = /(^|;\s*)(__Secure-next-auth\.session-token|next-auth\.session-token)=/.test(cookie);
+    if (!has) {
+      const url = new URL('/login', req.url);
+      return NextResponse.redirect(url);
+    }
+  }
   const res = NextResponse.next();
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   const nonce = btoa(String.fromCharCode(...bytes)).replace(/=+$/, '');
