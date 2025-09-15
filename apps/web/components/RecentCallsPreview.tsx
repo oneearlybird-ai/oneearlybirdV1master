@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 
-type CallItem = {
+export type CallItem = {
   id: string;
   time: string;
   caller: string;
@@ -11,7 +11,7 @@ type CallItem = {
   transcript: string[];
 };
 
-const SAMPLE_CALLS: CallItem[] = [
+export const SAMPLE_CALLS: CallItem[] = [
   {
     id: "c1",
     time: "Today 10:14",
