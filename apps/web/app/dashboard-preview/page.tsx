@@ -53,6 +53,19 @@ export default async function DashboardPreview() {
     <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to EarlyBird AI, Alex</h1>
       <p className="mt-2 text-white/70">Your AI receptionist is <span className="text-emerald-400">Active</span> and handling calls. <span className="ml-2"><LiveStatusBadge /></span></p>
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
+          <div>
+            <div className="font-medium">AI Receptionist is live</div>
+            <div className="text-sm text-white/60">Answering, booking, and logging into your CRM</div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <a href="/dashboard-preview/calls" className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">View Calls</a>
+          <a href="/dashboard-preview/integrations" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Integrations</a>
+        </div>
+      </div>
 
       {/* Plan & Usage */}
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">

@@ -9,6 +9,7 @@ export default function CallsPage() {
   const [start, setStart] = useState<string>("");
   const [end, setEnd] = useState<string>("");
   const [openId, setOpenId] = useState<string | null>(null);
+  const [tab, setTab] = useState<'list'|'analytics'>('list');
 
   const filtered: CallItem[] = useMemo(() => {
     return SAMPLE_CALLS.filter((c) => {
@@ -103,17 +104,29 @@ export default function CallsPage() {
       </div>
 
       {/* Render using the existing preview list if no filters applied; else show filtered table */}
-      {query === "" && outcome === "all" ? (
+      {tab === 'list' && query === "" && outcome === "all" ? (
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
           <div className="flex items-center justify-between p-4">
-            <h2 className="font-medium">Recent calls</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="font-medium">Recent calls</h2>
+              <div className="ml-4 rounded bg-white/10 p-1 text-xs">
+                <button onClick={() => setTab('list')} className={`px-2 py-1 rounded ${tab === 'list' ? 'bg-white text-black' : 'text-white/80'}`}>List</button>
+                <button onClick={() => setTab('analytics')} className={`px-2 py-1 rounded ${tab !== 'list' ? 'bg-white text-black' : 'text-white/80'}`}>Analytics</button>
+              </div>
+            </div>
           </div>
           <RecentCallsPreview />
         </div>
-      ) : (
+      ) : tab === 'list' ? (
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
           <div className="flex items-center justify-between p-4">
-            <h2 className="font-medium">Filtered calls</h2>
+            <div className="flex items-center gap-3">
+              <h2 className="font-medium">Filtered calls</h2>
+              <div className="ml-4 rounded bg-white/10 p-1 text-xs">
+                <button onClick={() => setTab('list')} className={`px-2 py-1 rounded ${tab === 'list' ? 'bg-white text-black' : 'text-white/80'}`}>List</button>
+                <button onClick={() => setTab('analytics')} className={`px-2 py-1 rounded ${tab !== 'list' ? 'bg-white text-black' : 'text-white/80'}`}>Analytics</button>
+              </div>
+            </div>
           </div>
           <div className="px-4 pb-4">
             <div className="grid grid-cols-5 gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
@@ -137,6 +150,8 @@ export default function CallsPage() {
             ) : null}
           </div>
         </div>
+      ) : (
+        <CallsAnalytics />
       )}
       <div className="mt-3 flex items-center justify-between text-sm text-white/60">
         <div>
@@ -192,6 +207,57 @@ function RowActions({ caller, id, onOpen }: { caller: string; id: string; onOpen
     <div className="flex items-center gap-2">
       <button onClick={onOpen} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Open</button>
       <button onClick={copy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">{copied===id ? 'Copied' : 'Copy #'}</button>
+    </div>
+  );
+}
+
+function CallsAnalytics() {
+  // preview-only charts
+  const outcomes = [
+    { label: 'Appointment', value: 48, color: '#10B981' },
+    { label: 'Info', value: 32, color: '#6366F1' },
+    { label: 'Voicemail', value: 20, color: '#EAB308' },
+  ];
+  const total = outcomes.reduce((a,b)=>a+b.value,0);
+  const stops: string[] = [];
+  let acc = 0;
+  for (const p of outcomes) {
+    const from = (acc/total)*100;
+    const to = ((acc+p.value)/total)*100;
+    stops.push(`${p.color} ${from}% ${to}%`);
+    acc += p.value;
+  }
+  const bg = `conic-gradient(${stops.join(',')})`;
+  const perDay = [6,8,7,9,5,10,8];
+  const max = Math.max(...perDay,1);
+  return (
+    <div className="mt-6 grid gap-4 md:grid-cols-3">
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-center">
+        <div style={{ backgroundImage: bg }} className="relative h-40 w-40 rounded-full">
+          <div className="absolute inset-6 rounded-full bg-neutral-950 border border-white/10 flex items-center justify-center text-sm">Outcomes</div>
+        </div>
+      </div>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
+        <div className="font-medium">Outcome distribution</div>
+        <ul className="mt-3 text-sm text-white/80 space-y-2">
+          {outcomes.map(p => (
+            <li key={p.label} className="flex items-center gap-2">
+              <span className="inline-block h-2 w-2 rounded-full" style={{ background: p.color }} />
+              <span className="w-28">{p.label}</span>
+              <div className="flex-1 h-2 rounded bg-white/10 overflow-hidden"><div className="h-full" style={{ width: `${(p.value/total)*100}%`, background: p.color }} /></div>
+              <span className="w-10 text-right">{p.value}%</span>
+            </li>
+          ))}
+        </ul>
+      </div>
+      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-3">
+        <div className="font-medium">Calls per day</div>
+        <div className="mt-3 flex items-end gap-2 h-28">
+          {perDay.map((v,i)=> (
+            <div key={i} className="w-8 bg-white/10" style={{ height: `${(v/max)*100}%` }} />
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
