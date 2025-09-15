@@ -24,7 +24,30 @@ function StatCard({ title, value }: { title: string; value: string }) {
   );
 }
 
-export default function DashboardPreview() {
+async function getDemo() {
+  try {
+    const res = await fetch('/api/usage/demo', { cache: 'no-store' });
+    if (!res.ok) return null;
+    return (await res.json()) as {
+      plan: string; renewal: string;
+      calls: number; minutes: number; quota: { calls: number; minutes: number };
+      week: { answered: number; booked: number; deflected: number; avgDuration: string };
+    };
+  } catch {
+    return null;
+  }
+}
+
+export default async function DashboardPreview() {
+  const demo = await getDemo();
+  const plan = demo?.plan ?? 'Pro';
+  const renewal = demo?.renewal ?? '—';
+  const calls = demo?.calls ?? 125;
+  const callsQuota = demo?.quota?.calls ?? 500;
+  const minutes = demo?.minutes ?? 600;
+  const minutesQuota = demo?.quota?.minutes ?? 1000;
+  const week = demo?.week ?? { answered: 58, booked: 12, deflected: 9, avgDuration: '3m 12s' };
+
   return (
     <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to EarlyBird AI, Alex</h1>
@@ -32,9 +55,9 @@ export default function DashboardPreview() {
 
       {/* Plan & Usage */}
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-        <Kpi label="Current plan" value="Pro" hint="Renews Oct 12" />
-        <Kpi label="Calls this month" value="125 / 500" />
-        <Kpi label="Minutes used" value="600 / 1000" />
+        <Kpi label="Current plan" value={plan} hint={`Renews ${renewal}`} />
+        <Kpi label="Calls this month" value={`${calls} / ${callsQuota}`} />
+        <Kpi label="Minutes used" value={`${minutes} / ${minutesQuota}`} />
         <Kpi label="After‑hours coverage" value="24/7" />
       </div>
       <div className="mt-3">
@@ -48,10 +71,10 @@ export default function DashboardPreview() {
           <span className="text-sm text-white/60">Live snapshot</span>
         </div>
         <div className="mt-3 grid gap-3 sm:grid-cols-4">
-          <StatCard title="Answered" value="58" />
-          <StatCard title="Booked appts" value="12" />
-          <StatCard title="Voicemail deflected" value="9" />
-          <StatCard title="Avg duration" value="3m 12s" />
+          <StatCard title="Answered" value={String(week.answered)} />
+          <StatCard title="Booked appts" value={String(week.booked)} />
+          <StatCard title="Voicemail deflected" value={String(week.deflected)} />
+          <StatCard title="Avg duration" value={week.avgDuration} />
         </div>
       </div>
 

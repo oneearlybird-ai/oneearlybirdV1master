@@ -57,11 +57,12 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
   );
 }
 
-function LogoPill({ name }: { name: string }) {
+function LogoBadge({ id, label }: { id: string; label: string }) {
   return (
-    <div className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60 hover:bg-white/10 hover:text-white motion-safe:transition-colors">
-      <span aria-label={name}>{name}</span>
-    </div>
+    <figure className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60 hover:bg-white/10 hover:text-white motion-safe:transition-colors">
+      <img src={`/logos/${id}.svg`} alt={label} className="h-6 w-auto opacity-80 hover:opacity-100 motion-safe:transition-opacity" />
+      <figcaption className="sr-only">{label}</figcaption>
+    </figure>
   );
 }
 
@@ -113,8 +114,20 @@ export default function PreviewLanding() {
       <Section id="integrations" title="Integrates with your tools">
         <div className="text-white/60 text-sm mb-3">Seamless integration with your workflow</div>
         <Marquee ariaLabel="Integrations logos" speedSec={16}>
-          {['Salesforce','HubSpot','Zoho','Google Calendar','Outlook','Twilio','SignalWire','Stripe','Slack','Zapier','AWS'].map((n) => (
-            <LogoPill key={n} name={n} />
+          {[
+            { id: 'salesforce', label: 'Salesforce' },
+            { id: 'hubspot', label: 'HubSpot' },
+            { id: 'zoho', label: 'Zoho' },
+            { id: 'google-calendar', label: 'Google Calendar' },
+            { id: 'microsoft-365', label: 'Microsoft 365' },
+            { id: 'twilio', label: 'Twilio' },
+            { id: 'signalwire', label: 'SignalWire' },
+            { id: 'stripe', label: 'Stripe' },
+            { id: 'slack', label: 'Slack' },
+            { id: 'zapier', label: 'Zapier' },
+            { id: 'aws', label: 'AWS' },
+          ].map((it) => (
+            <LogoBadge key={it.id} id={it.id} label={it.label} />
           ))}
         </Marquee>
       </Section>
