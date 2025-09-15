@@ -59,7 +59,7 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
 
 function LogoPill({ name }: { name: string }) {
   return (
-    <div className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60">
+    <div className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60 hover:bg-white/10 hover:text-white motion-safe:transition-colors">
       <span aria-label={name}>{name}</span>
     </div>
   );
