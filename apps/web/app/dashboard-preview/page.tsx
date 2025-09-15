@@ -1,5 +1,7 @@
 export const dynamic = 'force-dynamic';
 
+import { LiveStatusBadge, RecentCallsPreview } from '@/components/RecentCallsPreview';
+
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -22,24 +24,11 @@ function StatCard({ title, value }: { title: string; value: string }) {
   );
 }
 
-function Row({ time, caller, duration, outcome }: { time: string; caller: string; duration: string; outcome: string }) {
-  return (
-    <div className="grid grid-cols-4 items-center gap-3 py-3">
-      <div className="text-sm text-white/80">{time}</div>
-      <div className="text-sm text-white/80">{caller}</div>
-      <div className="text-sm text-white/60">{duration}</div>
-      <div className="text-sm">
-        <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-white/80">{outcome}</span>
-      </div>
-    </div>
-  );
-}
-
 export default function DashboardPreview() {
   return (
     <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to EarlyBird AI, Alex</h1>
-      <p className="mt-2 text-white/70">Your AI receptionist is <span className="text-emerald-400">Active</span> and handling calls.</p>
+      <p className="mt-2 text-white/70">Your AI receptionist is <span className="text-emerald-400">Active</span> and handling calls. <span className="ml-2"><LiveStatusBadge /></span></p>
 
       {/* Plan & Usage */}
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
@@ -72,17 +61,7 @@ export default function DashboardPreview() {
           <h2 className="font-medium">Recent calls</h2>
           <a className="text-sm text-white/80 hover:text-white" href="/dashboard/calls">View all</a>
         </div>
-        <div className="px-4 pb-4">
-          <div className="grid grid-cols-4 gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
-            <div>Time</div>
-            <div>Caller</div>
-            <div>Duration</div>
-            <div>Outcome</div>
-          </div>
-          <Row time="Today 10:14" caller="(415) 555‑0198" duration="02:45" outcome="Appointment booked" />
-          <Row time="Today 09:05" caller="(347) 555‑0101" duration="01:12" outcome="Info provided" />
-          <Row time="Yesterday 18:21" caller="(206) 555‑0112" duration="00:48" outcome="Voicemail deflected" />
-        </div>
+        <RecentCallsPreview />
       </div>
 
       {/* Onboarding checklist */}
@@ -103,4 +82,3 @@ export default function DashboardPreview() {
     </section>
   );
 }
-
