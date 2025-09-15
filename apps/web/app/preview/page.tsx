@@ -58,13 +58,29 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
 }
 
 function LogoBadge({ id, label }: { id: string; label: string }) {
+  const brand: Record<string, { bg: string; invert?: boolean }> = {
+    'google-workspace': { bg: '#ffffff', invert: false },
+    'microsoft-365': { bg: '#D83B01', invert: true },
+    'outlook': { bg: '#0078D4', invert: true },
+    'salesforce': { bg: '#00A1E0', invert: true },
+    'hubspot': { bg: '#FF7A59', invert: true },
+    'zoho': { bg: '#C8202F', invert: true },
+    'twilio': { bg: '#F22F46', invert: true },
+    'stripe': { bg: '#635BFF', invert: true },
+    'slack': { bg: '#4A154B', invert: true },
+    'zapier': { bg: '#FF4A00', invert: true },
+  };
+  const style = brand[id] ?? { bg: 'rgba(255,255,255,0.05)' };
+  const imgClass = [
+    'block max-h-6 max-w-full object-contain motion-safe:transition',
+    style.invert ? 'invert' : '',
+  ].join(' ');
   return (
-    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60 hover:bg-white/10 hover:text-white motion-safe:transition-colors">
-      <img
-        src={`/logos/${id}.svg`}
-        alt={label}
-        className="block max-h-6 max-w-full object-contain filter grayscale opacity-80 hover:opacity-100 hover:grayscale-0 motion-safe:transition"
-      />
+    <figure
+      className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center"
+      style={{ backgroundColor: style.bg }}
+    >
+      <img src={`/logos/${id}.svg`} alt={label} className={imgClass} />
       <figcaption className="sr-only">{label}</figcaption>
     </figure>
   );
