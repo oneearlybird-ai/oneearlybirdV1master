@@ -7,3 +7,16 @@ Media (AWS) quick start
 ```
 
 Trigger: automated commit to initiate deploys via your chosen CI/CD.
+
+## 2025-09-15 — Web preview deploy + route dedupe
+- Removed duplicate `/api/usage/summary` route files outside `apps/web` to keep a single canonical handler.
+- Built `apps/web` locally; types OK. Next build succeeded; header posture intact.
+- Preview deployed via Vercel. Verify:
+  - GET `/api/usage/summary` → 200 with `version` = short SHA.
+  - GET `/api/routes/manifest` includes `/api/usage/summary` with status `stable`.
+  - GET `/api/ratelimit-test` twice (fresh UA) → 200 then 429.
+
+Promote to production when ready:
+```
+vercel --prod
+```
