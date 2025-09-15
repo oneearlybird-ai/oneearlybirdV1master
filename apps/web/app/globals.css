@@ -99,7 +99,7 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 }
 .eb-marquee:hover .eb-marquee-track { animation-play-state: paused; }
 @keyframes eb-marquee { 0% { transform: translateX(0) } 100% { transform: translateX(-50%) } }
-@media (prefers-reduced-motion: reduce) { .eb-marquee-track { animation: none !important } }
+/* Always animate marquee (matches UX preview); ignore reduced-motion for this specific strip */
 
 /* Reveal animation for cards (first-load only) */
 .eb-reveal { opacity: 0; transform: translateY(10px); animation: eb-reveal 350ms cubic-bezier(.2,.8,.2,1) forwards; }
