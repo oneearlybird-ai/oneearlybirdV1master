@@ -59,8 +59,12 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
 
 function LogoBadge({ id, label }: { id: string; label: string }) {
   return (
-    <figure className="h-10 rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60 hover:bg-white/10 hover:text-white motion-safe:transition-colors">
-      <img src={`/logos/${id}.svg`} alt={label} className="h-6 w-auto filter grayscale opacity-80 hover:opacity-100 hover:grayscale-0 motion-safe:transition" />
+    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white/5 px-3 flex items-center justify-center text-sm text-white/60 hover:bg-white/10 hover:text-white motion-safe:transition-colors">
+      <img
+        src={`/logos/${id}.svg`}
+        alt={label}
+        className="block max-h-6 max-w-full object-contain filter grayscale opacity-80 hover:opacity-100 hover:grayscale-0 motion-safe:transition"
+      />
       <figcaption className="sr-only">{label}</figcaption>
     </figure>
   );
@@ -132,6 +136,8 @@ export default function PreviewLanding() {
         <Marquee ariaLabel="Integrations logos" speedSec={16}>
           {[
             { id: 'google-workspace', label: 'Google Workspace' },
+            { id: 'microsoft-365', label: 'Microsoft 365' },
+            { id: 'outlook', label: 'Outlook' },
             { id: 'salesforce', label: 'Salesforce' },
             { id: 'hubspot', label: 'HubSpot' },
             { id: 'zoho', label: 'Zoho' },
@@ -139,7 +145,6 @@ export default function PreviewLanding() {
             { id: 'stripe', label: 'Stripe' },
             { id: 'slack', label: 'Slack' },
             { id: 'zapier', label: 'Zapier' },
-            { id: 'aws', label: 'AWS' },
           ].map((it) => (
             <LogoBadge key={it.id} id={it.id} label={it.label} />
           ))}
