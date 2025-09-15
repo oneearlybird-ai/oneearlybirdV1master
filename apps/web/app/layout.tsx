@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const isPreview = process.env.VERCEL_ENV === 'preview' || process.env.NEXT_PUBLIC_VERCEL_ENV === 'preview';
   return (
     <html lang="en">
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
@@ -30,6 +31,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/roi" className="text-white/80 hover:text-white">ROI</Link>
               <Link href="/docs" className="text-white/80 hover:text-white">Docs</Link>
               <Link href="/support" className="text-white/80 hover:text-white">Support</Link>
+              {isPreview ? (
+                <>
+                  <Link href="/preview" className="text-amber-300/80 hover:text-amber-300">UX Preview</Link>
+                  <Link href="/dashboard-preview" className="text-amber-300/80 hover:text-amber-300">Dashboard Preview</Link>
+                </>
+              ) : null}
             </div>
             <div className="flex items-center gap-3">
               <Link href="/login" className="hidden md:inline rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Log in</Link>
