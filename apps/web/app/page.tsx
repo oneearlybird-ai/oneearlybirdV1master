@@ -124,14 +124,17 @@ export default function Home() {
         <Marquee ariaLabel="Integrations logos" speedSec={16}>
           {[
             { id: 'google-workspace', label: 'Google Workspace' },
+            { id: 'google-calendar', label: 'Google Calendar' },
             { id: 'microsoft-365', label: 'Microsoft 365' },
             { id: 'outlook', label: 'Outlook' },
             { id: 'salesforce', label: 'Salesforce' },
             { id: 'hubspot', label: 'HubSpot' },
             { id: 'zoho', label: 'Zoho' },
             { id: 'twilio', label: 'Twilio' },
+            { id: 'signalwire', label: 'SignalWire' },
             { id: 'stripe', label: 'Stripe' },
             { id: 'slack', label: 'Slack' },
+            { id: 'aws', label: 'AWS' },
             { id: 'zapier', label: 'Zapier' },
           ].map((it) => (
             <LogoBadge key={it.id} id={it.id} label={it.label} />
@@ -200,4 +203,3 @@ export default function Home() {
     </main>
   );
 }
-
