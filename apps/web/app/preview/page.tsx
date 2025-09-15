@@ -71,6 +71,22 @@ export default function PreviewLanding() {
     <main className="min-h-dvh bg-neutral-950 text-white">
       {/* Hero (keep wording; style-only tweaks) */}
       <Section>
+        <div className="relative">
+          {/* Subtle animated waveform background */}
+          <div className="absolute inset-0 -z-10 eb-hero-wave pointer-events-none">
+            <svg viewBox="0 0 1200 400" className="h-[420px] w-full" aria-hidden>
+              <defs>
+                <linearGradient id="ebWaveGrad" x1="0" x2="1" y1="0" y2="0">
+                  <stop offset="0%" stopColor="rgba(255,255,255,0)" />
+                  <stop offset="50%" stopColor="rgba(255,255,255,0.25)" />
+                  <stop offset="100%" stopColor="rgba(255,255,255,0)" />
+                </linearGradient>
+              </defs>
+              <path className="eb-wave-path" stroke="url(#ebWaveGrad)" strokeWidth="2" fill="none"
+                d="M0,240 C120,180 240,300 360,240 C480,180 600,300 720,240 C840,180 960,300 1080,240 C1140,210 1200,240 1200,240"/>
+            </svg>
+          </div>
+        </div>
         <div className="mb-6">
           <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">
             🚀 AI Voice Receptionist for business phone calls

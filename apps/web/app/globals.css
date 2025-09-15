@@ -108,3 +108,26 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 /* Hide scrollbars for integration strips while keeping accessibility */
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
+
+/* Drawer and overlay animations */
+@keyframes eb-overlay-in { from { opacity: 0 } to { opacity: 1 } }
+@keyframes eb-drawer-in { from { transform: translateX(100%) } to { transform: translateX(0) } }
+.eb-overlay-in { animation: eb-overlay-in 200ms ease forwards; }
+.eb-drawer-in { animation: eb-drawer-in 300ms cubic-bezier(.2,.8,.2,1) forwards; }
+@media (prefers-reduced-motion: reduce) {
+  .eb-overlay-in, .eb-drawer-in { animation: none !important; }
+}
+
+/* Hero waveform background */
+@keyframes eb-dash {
+  from { stroke-dashoffset: 1200 }
+  to { stroke-dashoffset: 0 }
+}
+.eb-hero-wave svg .eb-wave-path {
+  stroke-dasharray: 6 10;
+  animation: eb-dash 12s linear infinite;
+  opacity: .18;
+}
+@media (prefers-reduced-motion: reduce) {
+  .eb-hero-wave svg .eb-wave-path { animation: none; }
+}

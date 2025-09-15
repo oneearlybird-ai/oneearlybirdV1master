@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 
 type CallItem = {
   id: string;
@@ -50,48 +50,54 @@ const SAMPLE_CALLS: CallItem[] = [
   }
 ];
 
-function Row({ call, open, onToggle }: { call: CallItem; open: boolean; onToggle: () => void }) {
+// Removed row expander in favor of a dedicated drawer
+
+function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => void }) {
+  const closeRef = React.useRef<HTMLButtonElement | null>(null);
+  React.useEffect(() => {
+    closeRef.current?.focus();
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    document.addEventListener('keydown', onKey);
+    return () => document.removeEventListener('keydown', onKey);
+  }, [onClose]);
   return (
-    <div className="border-b border-white/10">
-      <button
-        className="grid w-full grid-cols-4 items-center gap-3 py-3 text-left hover:bg-white/[0.03] motion-safe:transition-colors"
-        aria-expanded={open}
-        onClick={onToggle}
-      >
-        <div className="text-sm text-white/80">{call.time}</div>
-        <div className="text-sm text-white/80">{call.caller}</div>
-        <div className="text-sm text-white/60">{call.duration}</div>
-        <div className="text-sm">
-          <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-white/80">
-            {call.outcome}
-          </span>
+    <div className="fixed inset-0 z-50" role="dialog" aria-modal="true" aria-labelledby="call-details-title">
+      <div className="absolute inset-0 bg-black/60 eb-overlay-in" onClick={onClose} />
+      <aside className="absolute right-0 top-0 h-full w-full max-w-md bg-neutral-950 border-l border-white/10 shadow-xl eb-drawer-in focus:outline-none" tabIndex={-1}>
+        <div className="flex items-center justify-between border-b border-white/10 p-4">
+          <h3 id="call-details-title" className="font-medium">Call details</h3>
+          <button ref={closeRef} onClick={onClose} className="rounded border border-white/20 px-2 py-1 text-sm text-white/80 hover:text-white">Close</button>
         </div>
-      </button>
-      {open && (
-        <div className="px-4 pb-4 text-sm text-white/80">
-          <div className="mt-2 rounded-lg border border-white/10 p-3">
+        <div className="p-4 space-y-4 overflow-y-auto h-[calc(100%-56px)]">
+          <div className="text-sm text-white/70">{call.time} — {call.caller} — {call.duration}</div>
+          <div>
+            <div className="text-xs text-white/60">Outcome</div>
+            <div className="mt-1 inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-white/80">{call.outcome}</div>
+          </div>
+          <div className="rounded-lg border border-white/10 p-3">
             <div className="flex items-center justify-between">
               <div className="font-medium">Recording</div>
               <button disabled className="rounded border border-white/20 px-2 py-1 text-xs text-white/50">Play sample (coming soon)</button>
             </div>
-            <p className="mt-2 text-xs text-white/60">Preview only — no PHI, no live audio.</p>
+            <p className="mt-2 text-xs text-white/60">Preview only — UI demo. No PHI, no live audio.</p>
           </div>
-          <div className="mt-3">
+          <div>
             <div className="font-medium">Transcript (preview)</div>
-            <ul className="mt-2 space-y-1 text-white/70">
+            <ul className="mt-2 space-y-1 text-sm text-white/70">
               {call.transcript.map((line, i) => (
                 <li key={i}>• {line}</li>
               ))}
             </ul>
           </div>
         </div>
-      )}
+      </aside>
     </div>
   );
 }
 
 export function RecentCallsPreview() {
   const [openId, setOpenId] = useState<string | null>(null);
+  const openCall = SAMPLE_CALLS.find(c => c.id === openId) || null;
   return (
     <div className="px-4 pb-4">
       <div className="grid grid-cols-4 gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
@@ -100,9 +106,23 @@ export function RecentCallsPreview() {
         <div>Duration</div>
         <div>Outcome</div>
       </div>
-      {SAMPLE_CALLS.map((c) => (
-        <Row key={c.id} call={c} open={openId === c.id} onToggle={() => setOpenId(openId === c.id ? null : c.id)} />
+      {SAMPLE_CALLS.map((call) => (
+        <button
+          key={call.id}
+          className="grid w-full grid-cols-4 items-center gap-3 py-3 text-left hover:bg-white/[0.03] motion-safe:transition-colors"
+          onClick={() => setOpenId(call.id)}
+          aria-haspopup="dialog"
+          aria-controls="call-details-title"
+        >
+          <div className="text-sm text-white/80">{call.time}</div>
+          <div className="text-sm text-white/80">{call.caller}</div>
+          <div className="text-sm text-white/60">{call.duration}</div>
+          <div className="text-sm">
+            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-white/80">{call.outcome}</span>
+          </div>
+        </button>
       ))}
+      {openCall ? <CallDrawer call={openCall} onClose={() => setOpenId(null)} /> : null}
     </div>
   );
 }
@@ -130,4 +150,3 @@ export function LiveStatusBadge() {
     </span>
   );
 }
-
