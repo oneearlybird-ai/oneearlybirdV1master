@@ -2,7 +2,7 @@ TEAM 5 ROADMAP COMPLETION — EarlyBird (Team 4 → Team 5)
 Date: 2025-09-09 • Prod: https://oneearlybird.ai
 
 ONE-LINE MAP (backend, routes → integrations)
-Twilio Call → POST /api/voice/incoming → TwiML <Connect><Stream url="wss://media.oneearlybird.ai/rtm/voice"> → Media WS (Fly/Railway) → ASR→Policy/Tools→LLM→TTS → optional S3 store.
+Twilio Call → POST /api/voice/incoming → TwiML <Connect><Stream url="wss://media.oneearlybird.ai/rtm/voice"> → Media WS (AWS) → ASR→Policy/Tools→LLM→TTS → optional S3 store.
 Client (billing) → Stripe portal → Stripe events → POST /api/stripe/webhook → usage table → GET /api/usage/summary.
 Client (storage) → POST /api/storage/presign → signed PUT/GET to Rumble S3 (short TTL).
 Public endpoints → limiter policy (Upstash) → /api/ratelimit-test 200→429 proof.

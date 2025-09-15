@@ -1,6 +1,8 @@
 export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
+import { Marquee } from '@/components/Marquee';
+import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
@@ -13,29 +15,29 @@ function Section({ id, title, children }: { id?: string; title?: string; childre
   );
 }
 
-function Card({ children }: { children: React.ReactNode }) {
+function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
+    <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95 eb-reveal ${className}`}>
       {children}
     </div>
   );
 }
 
-function Benefit({ icon, title, text }: { icon: string; title: string; text: string }) {
+function Benefit({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
     <Card>
-      <div className="text-2xl" aria-hidden>{icon}</div>
+      <div className="text-amber-400" aria-hidden>{icon}</div>
       <div className="mt-3 font-medium">{title}</div>
       <p className="mt-1 text-sm text-white/70">{text}</p>
     </Card>
   );
 }
 
-function Step({ icon, title, text }: { icon: string; title: string; text: string }) {
+function Step({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
     <Card>
       <div className="flex items-center gap-3">
-        <div className="text-xl" aria-hidden>{icon}</div>
+        <div className="text-amber-400" aria-hidden>{icon}</div>
         <div className="font-medium">{title}</div>
       </div>
       <p className="mt-2 text-sm text-white/70">{text}</p>
@@ -43,11 +45,11 @@ function Step({ icon, title, text }: { icon: string; title: string; text: string
   );
 }
 
-function Feature({ icon, title, text }: { icon: string; title: string; text: string }) {
+function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
     <Card>
       <div className="flex items-center gap-3">
-        <div className="text-xl" aria-hidden>{icon}</div>
+        <div className="text-amber-400" aria-hidden>{icon}</div>
         <div className="font-medium">{title}</div>
       </div>
       <p className="mt-2 text-sm text-white/70">{text}</p>
@@ -100,33 +102,29 @@ export default function PreviewLanding() {
       {/* What EarlyBird AI Does */}
       <Section title="What EarlyBird AI does">
         <div className="grid gap-4 md:grid-cols-4">
-          <Benefit icon="🕒" title="24/7 Answering" text="Never miss a call — your AI receptionist is on duty 24/7." />
-          <Benefit icon="📅" title="Appointment Booking" text="Seamlessly schedule or cancel appointments in your calendar." />
-          <Benefit icon="🔗" title="CRM Integration" text="Automatically log calls and leads into your CRM." />
-          <Benefit icon="💸" title="Cost Savings" text="Save on staffing costs while increasing customer satisfaction." />
+          <Benefit icon={<ClockIcon />} title="24/7 Answering" text="Never miss a call — your AI receptionist is on duty 24/7." />
+          <Benefit icon={<CalendarIcon />} title="Appointment Booking" text="Seamlessly schedule or cancel appointments in your calendar." />
+          <Benefit icon={<CrmIcon />} title="CRM Integration" text="Automatically log calls and leads into your CRM." />
+          <Benefit icon={<SavingsIcon />} title="Cost Savings" text="Save on staffing costs while increasing customer satisfaction." />
         </div>
       </Section>
 
       {/* Integrations Marquee (manual scroll for CSP safety) */}
       <Section id="integrations" title="Integrates with your tools">
         <div className="text-white/60 text-sm mb-3">Seamless integration with your workflow</div>
-        <div className="overflow-x-auto no-scrollbar" aria-label="Integrations list">
-          <div className="flex gap-3 min-w-max pr-4">
-            {[
-              'Salesforce','HubSpot','Zoho','Google Calendar','Outlook','Twilio','SignalWire','Stripe','Slack','Zapier','AWS'
-            ].map((n) => (
-              <LogoPill key={n} name={n} />
-            ))}
-          </div>
-        </div>
+        <Marquee ariaLabel="Integrations logos" speedSec={16}>
+          {['Salesforce','HubSpot','Zoho','Google Calendar','Outlook','Twilio','SignalWire','Stripe','Slack','Zapier','AWS'].map((n) => (
+            <LogoPill key={n} name={n} />
+          ))}
+        </Marquee>
       </Section>
 
       {/* How it works */}
       <Section id="how" title="How it works">
         <div className="grid gap-4 md:grid-cols-3">
-          <Step icon="🔌" title="Connect Your Systems" text="Sign up and connect your phone line, calendar, and CRM in minutes." />
-          <Step icon="📞" title="AI Answers Calls" text="Friendly, human‑like greeting, 24/7 — fast and natural responses." />
-          <Step icon="✅" title="Scheduling & Follow‑up" text="Books appointments, answers FAQs, and logs details + transcripts in your CRM." />
+          <Step icon={<PlugIcon />} title="Connect Your Systems" text="Sign up and connect your phone line, calendar, and CRM in minutes." />
+          <Step icon={<PhoneIcon />} title="AI Answers Calls" text="Friendly, human‑like greeting, 24/7 — fast and natural responses." />
+          <Step icon={<CheckIcon />} title="Scheduling & Follow‑up" text="Books appointments, answers FAQs, and logs details + transcripts in your CRM." />
         </div>
       </Section>
 
@@ -149,10 +147,10 @@ export default function PreviewLanding() {
       {/* Feature Highlights */}
       <Section title="Why EarlyBird">
         <div className="grid gap-4 md:grid-cols-4">
-          <Feature icon="🗣️" title="Human‑Like Voice" text="Natural, friendly voice agents callers can’t distinguish from a human." />
-          <Feature icon="⚡" title="Barge‑in & Real‑Time" text="Understands interruptions; fast responses without awkward pauses." />
-          <Feature icon="🔒" title="Security & Privacy" text="Enterprise‑grade security; encrypted recordings and data handling." />
-          <Feature icon="🎛️" title="Easy Setup & Management" text="No code. Set up in minutes and monitor everything in one place." />
+          <Feature icon={<VoiceIcon />} title="Human‑Like Voice" text="Natural, friendly voice agents callers can’t distinguish from a human." />
+          <Feature icon={<BoltIcon />} title="Barge‑in & Real‑Time" text="Understands interruptions; fast responses without awkward pauses." />
+          <Feature icon={<LockIcon />} title="Security & Privacy" text="Enterprise‑grade security; encrypted recordings and data handling." />
+          <Feature icon={<ControlsIcon />} title="Easy Setup & Management" text="No code. Set up in minutes and monitor everything in one place." />
         </div>
       </Section>
 
@@ -196,4 +194,3 @@ export default function PreviewLanding() {
     </main>
   );
 }
-
