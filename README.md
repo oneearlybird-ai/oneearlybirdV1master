@@ -26,7 +26,7 @@ pnpm -C apps/web dev
 ```
 
 ## Deploy
-- **API**: Fly.io (Dockerfile & fly.toml included).
+- **API**: AWS (EC2/ECS) — containerized via Dockerfile; Fly-specific configs removed.
 - **Web**: Vercel; set `Root Directory` = `apps/web` and `NEXT_PUBLIC_API_URL` to your API base URL.
 
 ## Environment

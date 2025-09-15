@@ -38,7 +38,7 @@ export default function CallsPage() {
   const pageSize = 10;
   const [page, setPage] = useState(1);
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const [sortBy, setSortBy] = useState<'time'|'duration'>('time');
+  const [sortBy, setSortBy] = useState<'time'|'duration'|'outcome'>('time');
   const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
   const sorted = useMemo(() => {
     const arr = filtered.slice();
@@ -48,13 +48,19 @@ export default function CallsPage() {
         const db = new Date(b.ts).getTime();
         return sortDir === 'asc' ? da - db : db - da;
       }
+      if (sortBy === 'outcome') {
+        const oa = a.outcome.toLowerCase();
+        const ob = b.outcome.toLowerCase();
+        if (oa === ob) return 0;
+        return sortDir === 'asc' ? (oa < ob ? -1 : 1) : (oa < ob ? 1 : -1);
+      }
       const da = ps(a.duration), db = ps(b.duration);
       return sortDir === 'asc' ? da - db : db - da;
     });
     return arr;
   }, [filtered, sortBy, sortDir]);
   const pageRows = sorted.slice((page - 1) * pageSize, page * pageSize);
-  const setSort = (key: 'time'|'duration') => {
+  const setSort = (key: 'time'|'duration'|'outcome') => {
     if (sortBy === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortBy(key); setSortDir('desc'); }
   };
@@ -155,7 +161,7 @@ export default function CallsPage() {
               <button onClick={() => setSort('time')} className="text-left hover:text-white">Time {sortBy==='time' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               <div>Caller</div>
               <button onClick={() => setSort('duration')} className="text-left hover:text-white">Duration {sortBy==='duration' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
-              <div>Outcome</div>
+              <button onClick={() => setSort('outcome')} className="text-left hover:text-white">Outcome {sortBy==='outcome' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               <div>Actions</div>
             </div>
             {pageRows.map((call) => {
@@ -187,6 +193,7 @@ export default function CallsPage() {
           Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
         </div>
         <div className="flex items-center gap-2">
+          <button onClick={() => setReviewed(r => ({...r, ...Object.fromEntries(pageRows.map(c=>[c.id,true]))}))} className="rounded border border-white/20 px-2 py-1">Mark all reviewed</button>
           <button disabled={page<=1} onClick={() => setPage(p => Math.max(1, p-1))} className="rounded border border-white/20 px-2 py-1 disabled:opacity-50">Prev</button>
           <span>Page {page} / {pageCount}</span>
           <button disabled={page>=pageCount} onClick={() => setPage(p => Math.min(pageCount, p+1))} className="rounded border border-white/20 px-2 py-1 disabled:opacity-50">Next</button>

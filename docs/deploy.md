@@ -1,10 +1,9 @@
-Note: Previous deployments used Railway for the media service. This has been replaced with Fly.io.
+Note: Previous deployments used Railway and Fly.io for the media service. This has been replaced with AWS (EC2 behind ALB/ACM).
 
-Media (Fly) quick start
+Media (AWS) quick start
 ```
-cd apps/media
-fly launch --no-deploy
-fly deploy -a earlybird-media --remote-only --auto-confirm
+# Build container and run under systemd on EC2; place behind an internal ALB with ACM TLS.
+# See docs/operations/handoff_checklist.md for environment variables and smokes.
 ```
 
 Trigger: automated commit to initiate deploys via your chosen CI/CD.

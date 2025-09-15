@@ -15,11 +15,11 @@ Twilio (PSTN, Media Streams WS, signed webhooks) — ✅ 90%
 ↓
 Vercel Web: POST /api/voice/incoming → TwiML <Connect><Stream url="${MEDIA_WSS_URL}"/> — ✅ 90%
 ↓
-Fly.io Media Server (WS: /rtm/voice, keepalive, backpressure) — 🟡 40%
+AWS Media Server (WS: /rtm/voice, keepalive, backpressure) — 🟡 40%
 ↓
 ElevenLabs Realtime Agent (full‑duplex ASR/TTS, barge‑in) — 🟡 60%
 ↓
-Fly.io Media Server (relay TTS frames back to Twilio) — 🟡 40%
+AWS Media Server (relay TTS frames back to Twilio) — 🟡 40%
 ↓
 Post‑Call: finalize transcript + summaries (enqueue) — 🟡 60%
 ↓
@@ -40,13 +40,13 @@ Control Plane (keep on Vercel)
 What to Remove / Avoid
 - Railway + Deepgram (legacy) — ❌ not used
 - Extra proxies in audio path — Media should talk directly to ElevenLabs WS
-- CORS for app→API — use Edge upstream proxy only if browser must call Fly API
+- CORS for app→API — use Edge upstream proxy only if browser must call the API
 
 Region & Networking
-- Place Fly media in a region closest to expected callers and ElevenLabs PoP (measure RTT)
+- Place media in an AWS region/AZ closest to expected callers and ElevenLabs PoP (measure RTT)
 - Keep 1 machine warm: `min_machines_running = 1`, avoid cold starts
-- Use dedicated CPU on Fly for predictable latency (`dedicated-cpu-1x`)
-- Terminate TLS on Fly; no CDN in front of WS
+- Use appropriate EC2 instance class for predictable latency (e.g., c7i/c6in)
+- Terminate TLS on ALB; no CDN in front of WS
 
 Codec & Framing
 - Twilio sends 8 kHz mu‑law (20 ms frames). Decode asap; only resample if ElevenLabs requires 16 kHz
@@ -64,15 +64,15 @@ Observability
 
 Env & Config
 - Vercel: `MEDIA_WSS_URL`, `NEXT_PUBLIC_SITE_URL`, (`API_UPSTREAM` only if using upstream proxy)
-- Fly (media): `PORT`, `WS_PATH=/rtm/voice`, `MEDIA_AUTH_TOKEN` (optional), `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`
+- Media (AWS): `PORT`, `WS_PATH=/rtm/voice`, `MEDIA_AUTH_TOKEN` (optional), `ELEVENLABS_API_KEY`, `ELEVENLABS_AGENT_ID`
 - Storage: `AWS_*`/`S3_*` for Rumble; short `S3_SIGNED_URL_EXPIRES`
 
 Action Checklist
-1) Media (Fly) — 🟡 40%
+1) Media (AWS) — 🟡 40%
    - Wire ElevenLabs realtime WS in apps/media/server.mjs (bridge mulaw↔PCM as required)
    - Set `min_machines_running=1`, dedicated CPU; deploy and set DNS `media.oneearlybird.ai`
 2) Vercel — ✅/🟡
-   - Ensure envs set; keep single upstream Edge route only if browser needs Fly API
+   - Ensure envs set; keep single upstream Edge route only if browser needs to call API directly
 3) Dashboard — 🟡 50%
    - Calls view (from DB + Rumble keys); Transcripts view; Stripe portal
 4) Smokes — 🟡
@@ -114,7 +114,7 @@ Mandatory Coding Practices (Security & Guardrails)
 - No wildcard `*` CORS; sensitive routes return `cache-control: no-store`.
 
 6) Upstream Proxy (Optional)
-- Keep only Edge version at `/api/upstream/[...path]` if browser must call Fly API.
+- Keep only Edge version at `/api/upstream/[...path]` if browser must call API directly.
 - Strip hop-by-hop headers; do not forward cookies unless required.
 - Restrict to allowlist if feasible; log minimally; apply edge rate limits.
 

@@ -8,7 +8,7 @@ Twilio (Phone Numbers, Webhook Signing) — ✅ 90%
 ↓
 Vercel Web: POST /api/voice/incoming → TwiML <Connect><Stream> — ✅ 90%
 ↓
-Fly.io Media Server (WSS /rtm/voice; Twilio Media Streams) — 🟡 30%
+AWS Media Server (WSS /rtm/voice; Twilio Media Streams) — 🟡 30%
 ↓
 ElevenLabs Realtime Agent (ASR+TTS + tools) — 🟡 60%
 ↓
@@ -23,7 +23,7 @@ Stripe Billing (webhooks, portal, usage) — ✅ 70%
 Dashboard (Auth, Billing, Recordings + Transcripts) — 🟡 50%
 
 What’s in / What’s out
-- Use: Twilio, ElevenLabs, Fly.io (media), Upstash, Rumble Cloud, Stripe.
+- Use: Twilio, ElevenLabs, AWS-hosted media, Upstash, Rumble Cloud, Stripe.
 - Remove/ignore: Railway, Deepgram, multi‑option model placeholders (OpenAI/others for this path).
 
 Evidence from repo scan (apps/web)
@@ -33,7 +33,7 @@ Evidence from repo scan (apps/web)
 - Rate‑limit smoke route using Upstash REST.
 
 Finish Checklist (high‑impact)
-1) Media Server on Fly.io — 🟡 30%
+1) Media Server on AWS — 🟡 30%
    - Implement WSS /rtm/voice (Twilio Streams handshake, ping/pong).
    - Wire ElevenLabs realtime (ASR+TTS) loop; relay audio back to Twilio.
    - Emit minimal events to App (no PHI) and upload audio chunks to Rumble.
@@ -52,11 +52,11 @@ Finish Checklist (high‑impact)
 
 5) Env & Ops — ✅/🟡
    - Vercel: NEXT_PUBLIC_SITE_URL, API_UPSTREAM, MEDIA_WSS_URL.
-   - Fly: media app with TLS 443; custom domain media.oneearlybird.ai.
+   - Media: AWS EC2 behind ALB with TLS 443; custom domain media.oneearlybird.ai.
    - Stripe CLI smoke for /api/webhooks/stripe; Twilio live call smoke for Streams.
 
 Notes
-- Keep one upstream proxy: prefer Edge route at /api/upstream/[...path] → API_UPSTREAM (Fly).
+- Keep one upstream proxy: prefer Edge route at /api/upstream/[...path] → API_UPSTREAM.
 - Keep logs PHI‑free; central headers remain single source.
 
 Mandatory Coding Practices (Security & Guardrails)
@@ -95,7 +95,7 @@ Mandatory Coding Practices (Security & Guardrails)
 - No wildcard `*` CORS; sensitive routes return `cache-control: no-store`.
 
 6) Upstream Proxy (Optional)
-- Keep only Edge version at `/api/upstream/[...path]` if browser must call Fly API.
+- Keep only Edge version at `/api/upstream/[...path]` if browser must call API directly.
 - Strip hop-by-hop headers; do not forward cookies unless required.
 - Restrict to allowlist if feasible; log minimally; apply edge rate limits.
 
@@ -122,4 +122,3 @@ Mandatory Coding Practices (Security & Guardrails)
 - Anti-Drift gate at top of changes/PRs; reference guardrails.
 - Small, verifiable patches: ≤2 files or ≤120 LOC per change unless migration.
 - Precommit: lint, typecheck, format; CI audit for vulnerabilities.
-

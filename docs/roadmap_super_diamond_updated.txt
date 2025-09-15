@@ -26,7 +26,7 @@ Database (≈80%)
 
 Media/Telephony (≈50%)
 - ✅ WS Media Orchestrator scaffold (apps/media), backpressure, ping/pong, no PHI logs
-- ✅ Railway deploy helper script present
+- ✅ AWS deploy helper script present (Railway removed)
 - ❌ Deployed WS with public TLS domain — PENDING
 - ❌ Twilio Media Streams handshake (kill 31920) — PENDING
 - ❌ ASR(TBD Deepgram/Google), TTS(ElevenLabs/MS/Google), barge-in — PENDING
@@ -87,7 +87,7 @@ Targets
 - TTS start < 150 ms
 
 Next Patches (strict SVP)
-1) Media deploy (Railway/Fly), confirm Twilio Streams handshake (kill 31920)
+1) Media deploy (AWS), confirm Twilio Streams handshake (kill 31920)
 2) Header hardening: Permissions-Policy, COOP/COEP, hide X-Powered-By
 3) Stripe usage metering endpoint → DB → Stripe usage records
 4) Minimal ASR streaming (Deepgram/Google) to get partials flowing
@@ -99,3 +99,31 @@ Guardrails & Gates (always)
 - No PHI in logs; redact secrets; do not overwrite CSP/nonce
 - Stripe: unsigned → 4xx; signed → 2xx fast path
 
+==== 2025-09-14 – Infra & DNS Progress (Append) ====
+Summary
+- EC2 FreeSWITCH bridge in IAD stood up (t3.micro). Public subnet with IGW route created; SG restricted to Twilio IAD CIDRs (5061/tcp, 20000–30000/udp); 80/tcp temporary for LE.
+- FreeSWITCH to be installed/configured (tls-5061, PCMU, SRTP, inbound-proxy-media, RTP 20000–30000); dialplan to fork uplink to AWS media WS; EIP 52.205.16.98 attached.
+- DNS: using Vercel DNS A record for sip.media.oneearlybird.ai → 52.205.16.98 (pending → now live).
+
+Next Steps
+- Add/verify A record; SSM finish block to set MEDIA_TOKEN and LE cert; remove 80/tcp; Twilio SIP Domain; smokes; then EL outbound playback.
+
+Status
+- AWS FreeSWITCH bridge: 60% (initial infra in place)
+- DNS: 50%
+
+==== 2025-09-14 (Later) – DNS Live & FS Install Pending (Append) ====
+Updates
+- DNS: Vercel DNS A sip.media.oneearlybird.ai → 52.205.16.98 (TTL 60) is live; verified with dig.
+- Instance to keep: i-0ccc80b16a2da659f (EIP 52.205.16.98); ensure duplicates are terminated.
+- FreeSWITCH: Not installed yet on the kept instance; plan to install via deb repo, then configure tls-5061 + dialplan and set token.
+
+Next
+1) SSM root session → install FreeSWITCH + modules; configure RTP 20000–30000 and external IPs; add tls-5061.
+2) Add dialplan (answer → audio_fork → AWS WS with token); reload FS.
+3) LE cert; link certs; remove 80/tcp from SG.
+4) Twilio SIP Domain + smokes.
+
+Status
+- DNS: 90%
+- AWS FreeSWITCH bridge: 55%
