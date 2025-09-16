@@ -6,7 +6,7 @@ import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mx-auto max-w-6xl px-6 py-14 md:py-24">
+    <section id={id} className="mx-auto max-w-6xl px-4 sm:px-6 py-12 sm:py-14 md:py-24">
       {title ? (<h2 className="text-2xl md:3xl font-semibold tracking-tight mb-6">{title}</h2>) : null}
       {children}
     </section>
@@ -94,7 +94,7 @@ export default function Home() {
         <div className="mb-6">
           <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">🚀 AI Voice Receptionist for business phone calls</span>
         </div>
-        <h1 className="text-4xl md:text-6xl font-semibold tracking-tight">
+        <h1 className="eb-hero-title text-4xl md:text-6xl font-semibold tracking-tight">
           <span className="eb-fade-word eb-delay-1000">Answer</span>{' '}
           <span className="eb-fade-word eb-delay-2500">every</span>{' '}
           <span className="eb-fade-word eb-delay-4000">call.</span>{' '}
@@ -104,7 +104,7 @@ export default function Home() {
             <span className="eb-fade-word eb-delay-10500">appointments.</span>
           </span>
         </h1>
-        <p className="mt-6 max-w-2xl text-white/70">EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs, routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts, recordings, analytics, and clean billing.</p>
+        <p className="mt-6 max-w-xl sm:max-w-2xl text-white/70">EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs, routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts, recordings, analytics, and clean billing.</p>
         <div className="mt-8 flex flex-wrap gap-3">
           <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">Start free</Link>
           <Link href="/pricing" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">See pricing</Link>
@@ -123,7 +123,7 @@ export default function Home() {
 
       {/* Integrations marquee */}
       <Section id="integrations" title="Integrates with your tools">
-        <div className="text-white/60 text-sm mb-3">Seamless integration with your workflow</div>
+        <div className="text-white/60 text-sm mb-2 sm:mb-3">Seamless integration with your workflow</div>
         <Marquee ariaLabel="Integrations logos" speedSec={16}>
           {[
             { id: 'google-workspace', label: 'Google Workspace' },
@@ -147,7 +147,7 @@ export default function Home() {
 
       {/* How it works */}
       <Section id="how" title="How it works">
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
           <Step icon={<PlugIcon />} title="Connect Your Systems" text="Sign up and connect your phone line, calendar, and CRM in minutes." />
           <Step icon={<PhoneIcon />} title="AI Answers Calls" text="Friendly, human‑like greeting, 24/7 — fast and natural responses." />
           <Step icon={<CheckIcon />} title="Scheduling & Follow‑up" text="Books appointments, answers FAQs, and logs details + transcripts in your CRM." />

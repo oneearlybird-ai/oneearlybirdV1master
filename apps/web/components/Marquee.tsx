@@ -13,9 +13,9 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
   return (
     <div className="eb-marquee" aria-label={ariaLabel} role="marquee">
       <div className="eb-marquee-track" data-speed={speedSec}>
-        <div className="flex items-center gap-3 min-w-max">{children}</div>
+        <div className="flex items-center gap-3 md:gap-5 min-w-max">{children}</div>
         {/* Seam gap: ensure spacing between end of set A and start of set B */}
-        <div className="flex items-center gap-3 min-w-max ml-3" aria-hidden>
+        <div className="flex items-center gap-3 md:gap-5 min-w-max ml-3" aria-hidden>
           {children}
         </div>
       </div>

@@ -48,6 +48,12 @@ export default function SupportDrawer() {
                 <li>
                   <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/support">Support Center</a>
                 </li>
+                <li>
+                  <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/status">System Status</a>
+                </li>
+                <li>
+                  <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/changelog">Changelog</a>
+                </li>
               </ul>
               <div className="text-xs text-white/50">No PHI in emails. For account-specific questions, please include your org name and callback details.</div>
             </div>
@@ -57,4 +63,3 @@ export default function SupportDrawer() {
     </div>
   );
 }
-

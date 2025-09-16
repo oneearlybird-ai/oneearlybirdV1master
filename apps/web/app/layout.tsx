@@ -7,6 +7,7 @@ import AuthControls from "@/components/AuthControls";
 import SupportDrawer from "@/components/SupportDrawer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import ScrollHeaderElevator from "@/components/ScrollHeaderElevator";
+import BackToTop from "@/components/BackToTop";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -54,6 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
 
         {/* Main content */}
         <main className="flex-1">{children}</main>
+        <BackToTop />
 
         {/* Footer */}
         <footer className="border-t border-white/10 mt-12">
