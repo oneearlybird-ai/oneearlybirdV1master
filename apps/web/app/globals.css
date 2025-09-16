@@ -103,8 +103,9 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 @keyframes eb-marquee { 0% { transform: translate3d(0,0,0) } 100% { transform: translate3d(-50%,0,0) } }
 /* Always animate marquee (matches UX preview); ignore reduced-motion for this specific strip */
 
-/* Reveal animation for cards (first-load only) */
-.eb-reveal { opacity: 0; transform: translateY(10px); animation: eb-reveal 350ms cubic-bezier(.2,.8,.2,1) forwards; }
+/* Reveal animation for cards (on-scroll) */
+.eb-reveal { opacity: 0; transform: translateY(10px); }
+.eb-reveal.eb-in { animation: eb-reveal 350ms cubic-bezier(.2,.8,.2,1) forwards; }
 @keyframes eb-reveal { to { opacity: 1; transform: translateY(0) } }
 
 /* Hide scrollbars for integration strips while keeping accessibility */
