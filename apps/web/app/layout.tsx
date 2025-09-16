@@ -4,6 +4,7 @@ import { ReactNode } from "react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import AuthControls from "@/components/AuthControls";
+import SupportDrawer from "@/components/SupportDrawer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import ScrollHeaderElevator from "@/components/ScrollHeaderElevator";
 
@@ -44,7 +45,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/support" className="text-white/80 hover:text-white">Support</Link>
               {/* Preview links removed now that preview is main */}
             </div>
-            <AuthControls hasSession={hasSession} />
+            <div className="flex items-center gap-3">
+              <SupportDrawer />
+              <AuthControls hasSession={hasSession} />
+            </div>
           </nav>
         </header>
 
