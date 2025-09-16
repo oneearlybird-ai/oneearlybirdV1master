@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+import ManageBillingButton from "@/components/ManageBillingButton";
 
 async function getDemo() {
   try {
@@ -61,9 +62,10 @@ export default async function BillingPage() {
           <BarSvg used={calls} total={cQuota} />
           <div className="mt-3 text-sm">Minutes: {mins} / {mQuota}</div>
           <BarSvg used={mins} total={mQuota} />
-          <div className="mt-4 flex gap-3">
-            <a href="/dashboard/billing" className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">Upgrade</a>
-            <a href="/dashboard/billing" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Change plan</a>
+          <div className="mt-4 flex gap-3 items-center">
+            {/* Opens Stripe Billing Portal (server validates session + keys) */}
+            <ManageBillingButton />
+            <a href="/pricing" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">View pricing</a>
           </div>
         </div>
 
@@ -93,4 +95,3 @@ export default async function BillingPage() {
     </section>
   );
 }
-
