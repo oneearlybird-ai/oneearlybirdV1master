@@ -3,7 +3,7 @@
 title: API Reference
 ---
 # EarlyBird API
-Base URL: `https://api.yourdomain.com` (or Fly.dev URL)
+Base URL: `https://api.yourdomain.com`
 ## Endpoints
 - GET /health
 - GET /version

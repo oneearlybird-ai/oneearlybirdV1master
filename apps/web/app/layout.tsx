@@ -2,6 +2,8 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import AuthControls from "@/components/AuthControls";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -9,6 +11,8 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
+  const cookieStore = cookies();
+  const hasSession = !!(cookieStore.get("__Secure-next-auth.session-token") || cookieStore.get("next-auth.session-token"));
   return (
     <html lang="en">
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
@@ -30,11 +34,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link href="/roi" className="text-white/80 hover:text-white">ROI</Link>
               <Link href="/docs" className="text-white/80 hover:text-white">Docs</Link>
               <Link href="/support" className="text-white/80 hover:text-white">Support</Link>
+              {/* Preview links removed now that preview is main */}
             </div>
-            <div className="flex items-center gap-3">
-              <Link href="/login" className="hidden md:inline rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Log in</Link>
-              <Link href="/signup" className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90">Get Started</Link>
-            </div>
+            <AuthControls hasSession={hasSession} />
           </nav>
         </header>
 

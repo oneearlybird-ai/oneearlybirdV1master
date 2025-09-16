@@ -11,7 +11,7 @@ COPY . .
 # Environment
 ENV NODE_ENV=production
 
-# Railway/Fly provide $PORT; default to 8080 for local
+# Platform provides $PORT (e.g., ECS/ALB); default to 8080 for local
 ENV PORT=8080
 EXPOSE 8080
 

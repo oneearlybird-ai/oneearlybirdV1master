@@ -14,7 +14,7 @@ Acceptance for media.oneearlybird.ai:
 - No PHI logs; redact tokens; follow HIPAA Protected Zone rules.
 
 Operational plan:
-1) Host: Fly.io / Railway / EC2 (not Vercel; long-lived sockets).
+1) Host: AWS EC2 (not Vercel; long-lived sockets).
 2) Minimal WS service: accept connection, log call SID metadata only, reply to ping/pong, then close on test.
 3) Configure DNS: CNAME media.oneearlybird.ai -> provider; TLS cert issued.
 4) Once online, set MEDIA_WSS_URL to the deployed WSS endpoint and re-test a live call.

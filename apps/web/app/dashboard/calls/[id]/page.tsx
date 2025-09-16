@@ -1,41 +1,55 @@
-export const dynamic = "force-dynamic";
+"use client";
 
-async function getItem(id: string) {
-  try {
-    const base = process.env.NEXT_PUBLIC_SITE_URL || ''
-    const res = await fetch(`${base}/api/recordings/item?id=${encodeURIComponent(id)}`, { cache: 'no-store' })
-    if (!res.ok) return null
-    return await res.json()
-  } catch {
-    return null
+import Link from "next/link";
+import { useMemo } from "react";
+import { SAMPLE_CALLS, type CallItem } from "@/components/RecentCallsPreview";
+
+export default function CallDetailPage({ params }: { params: { id: string } }) {
+  const call = useMemo<CallItem | null>(() => SAMPLE_CALLS.find(c => c.id === params.id) ?? null, [params.id]);
+  if (!call) {
+    return (
+      <section>
+        <div className="text-sm text-white/60">Call not found.</div>
+        <div className="mt-3"><Link href="/dashboard/calls" className="underline">Back to Calls</Link></div>
+      </section>
+    );
   }
-}
-
-export default async function CallDetail({ params }: { params: { id: string } }) {
-  const data = await getItem(params.id)
-  const started = data?.startedAt ? new Date(data.startedAt).toLocaleString() : '—'
-  const dur = typeof data?.durationSec === 'number' ? `${Math.floor(data.durationSec/60)}m ${data.durationSec%60}s` : '—'
-
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-tight mb-2">Call detail</h2>
-      <div className="text-white/70 text-sm mb-4">ID: {params.id} · Started: {started} · Duration: {dur}</div>
-
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="font-medium">Recording</div>
-        {data?.audioUrl ? (
-          <audio className="mt-2 w-full" controls src={data.audioUrl} />
-        ) : (
-          <div className="mt-2 text-xs text-white/60">Audio not available in preview.</div>
-        )}
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold tracking-tight">Call details</h1>
+        <Link href="/dashboard/calls" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Back</Link>
       </div>
 
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <div className="font-medium mb-2">Transcript (masked)</div>
-        <pre className="whitespace-pre-wrap text-sm text-white/80">{data?.transcript || '—'}</pre>
-        <div className="mt-2 text-[11px] text-white/50">PII is masked (emails, phone numbers). No PHI stored or shown here.</div>
+      <div className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-3">
+        <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="text-sm text-white/70">{call.time} — {call.caller} — {call.duration}</div>
+          <div className="mt-3 rounded-lg border border-white/10 p-3">
+            <div className="flex items-center justify-between">
+              <div className="font-medium">Recording</div>
+              <button disabled className="rounded border border-white/20 px-2 py-1 text-xs text-white/50">Play sample (coming soon)</button>
+            </div>
+            <p className="mt-2 text-xs text-white/60">Preview only — UI demo. No PHI, no live audio.</p>
+          </div>
+          <div className="mt-3">
+            <div className="font-medium">Transcript (preview)</div>
+            <ul className="mt-2 space-y-1 text-sm text-white/70">
+              {call.transcript.map((line, i) => (
+                <li key={i}>• {line}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="font-medium">Summary</div>
+          <ul className="mt-2 text-sm text-white/80 space-y-1">
+            <li>Outcome: {call.outcome}</li>
+            <li>Caller: {call.caller}</li>
+            <li>When: {new Date(call.ts).toLocaleString()}</li>
+            <li>Duration: {call.duration}</li>
+          </ul>
+        </div>
       </div>
     </section>
-  )
+  );
 }
-

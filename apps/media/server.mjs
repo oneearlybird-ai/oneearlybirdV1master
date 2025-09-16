@@ -17,6 +17,11 @@ const server = http.createServer((req, res) => {
     res.end(JSON.stringify({ ok: true, service: 'media', wsPath: WS_PATH, time: new Date().toISOString() }));
     return;
   }
+  if (pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
+    res.end(JSON.stringify({ ok: true, service: 'media', time: new Date().toISOString() }));
+    return;
+  }
   if (pathname === '/metrics') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     const now = Date.now();

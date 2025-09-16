@@ -1,70 +1,28 @@
-"use client";
-export const dynamic = "force-dynamic";
-import { INTEGRATIONS } from "./catalog";
-import { useEffect, useState } from "react";
-
-function ConnectBtn({ provider }: { provider: string }) {
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  async function start() {
-    setErr(null);
-    setBusy(true);
-    try {
-      const res = await fetch(`/api/integrations/oauth/start?provider=${encodeURIComponent(provider)}`, { method: 'POST', cache: 'no-store' });
-      const data = await res.json().catch(() => ({} as any));
-      if (res.status === 501) {
-        setErr('Coming soon');
-      } else if (!res.ok) {
-        const msg = data?.message || res.statusText || 'unavailable';
-        setErr(String(msg));
-      } else if (data?.url) {
-        window.location.href = data.url as string;
-      } else {
-        setErr('No redirect URL');
-      }
-    } catch {
-      setErr('network');
-    } finally {
-      setBusy(false);
-    }
-  }
+function Card({ title, desc, status, action }: { title: string; desc: string; status: string; action: React.ReactNode }) {
   return (
-    <div>
-      <button onClick={start} disabled={busy} className="mt-3 rounded-lg border border-white/20 px-3 py-1 text-sm disabled:opacity-50">
-        {busy ? 'Connecting…' : 'Connect'}
-      </button>
-      {err ? <div className="mt-2 text-xs text-red-300">{err}</div> : null}
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-medium">{title}</div>
+          <div className="text-sm text-white/70">{desc}</div>
+        </div>
+        <div className="text-xs text-white/60">{status}</div>
+      </div>
+      <div className="mt-3">{action}</div>
     </div>
   );
 }
 
 export default function IntegrationsPage() {
-  const [status, setStatus] = useState<Record<string, boolean>>({})
-  useEffect(() => {
-    let cancelled = false
-    ;(async () => {
-      try {
-        const res = await fetch('/api/integrations/status', { cache: 'no-store' })
-        const data = await res.json()
-        if (!res.ok || !data?.ok) return
-        const map: Record<string, boolean> = {}
-        for (const p of (data.providers||[])) map[p.id] = !!p.connected
-        if (!cancelled) setStatus(map)
-      } catch { /* ignore */ }
-    })()
-    return () => { cancelled = true }
-  }, [])
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-tight mb-4">Integrations</h2>
-      <div className="grid gap-4 md:grid-cols-4">
-        {INTEGRATIONS.map((it) => (
-          <div key={it.id} className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="font-medium">{it.name}</div>
-            <div className="mt-1 text-xs text-white/60">Status: {status[it.id] ? 'Connected' : 'Not connected'}</div>
-            <ConnectBtn provider={it.id} />
-          </div>
-        ))}
+      <h1 className="text-xl font-semibold tracking-tight">Integrations</h1>
+      <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+        <Card title="Phone (Twilio)" desc="Ingress number connected to EarlyBird" status="Connected" action={<button className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Manage</button>} />
+        <Card title="Calendar (Google)" desc="Scheduling on your business calendar" status="Connected as user@business.com" action={<button className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Manage</button>} />
+        <Card title="Calendar (Outlook)" desc="Microsoft 365 calendar support" status="Not connected" action={<button className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">Connect</button>} />
+        <Card title="CRM (Salesforce/HubSpot/Zoho)" desc="Log calls and leads automatically" status="Connected (HubSpot)" action={<button className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Manage</button>} />
+        <Card title="Slack" desc="Real-time notifications" status="Not connected" action={<button className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">Connect</button>} />
       </div>
     </section>
   );

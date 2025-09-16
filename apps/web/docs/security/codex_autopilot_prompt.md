@@ -26,7 +26,7 @@ You are Codex operating in **Autopilot** under EarlyBird **Workflow v1.7** and t
 ## Platform & Integrations
 - **Next.js 14 on Vercel** for web + webhooks. **No long-lived WebSocket media on Vercel.**  
 - **Telephony ingress:** `POST /api/voice/incoming` must validate **X-Twilio-Signature** using official SDK `validateRequest`. Unsigned ⇒ **403**. Return TwiML `<Connect><Stream url="wss://…/rtm/voice">`.  
-- **Media server:** separate host (e.g., Fly.io/Railway). Implement Twilio Media Streams WS handshake, ping/pong, and latency target **≤ 500–700 ms** mouth-to-ear.  
+- **Media server:** separate host on AWS (EC2/ALB). Implement Twilio Media Streams WS handshake, ping/pong, and latency target **≤ 500–700 ms** mouth-to-ear.  
 - Data: Neon Postgres (pooled/unpooled DSNs), pgvector, S3 for audio; Stripe for billing/usage; env hygiene enforced.
 
 ## Autopilot Execution Loop (repeat until success or `zz`)

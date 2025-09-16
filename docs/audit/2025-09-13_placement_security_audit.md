@@ -9,7 +9,7 @@ Summary of Changes
 - Removed legacy: `scripts/deploy_media_railway.sh` (Railway deprecated)
 - Unified Stripe webhook path: kept `/api/webhooks/stripe`, removed duplicate `/api/stripe/webhook`
 - ElevenLabs webhooks: invalid signature now returns 403 (was 401)
-- Docs: moved handoff checklist to `docs/operations/` and updated Media to Fly (`media.oneearlybird.ai`)
+- Docs: moved handoff checklist to `docs/operations/` and updated Media to AWS (`media.oneearlybird.ai`)
 - Docs: added `docs/README.md`, `docs/architecture/voice_pipeline.md`, `docs/security/headers.md`, and migration notes
 - Docs: imported Desktop notes (security_features_expectations, roadmap_annotated) into `docs/`
 - .gitignore: ensured local .env files are ignored; keep only `.example` files tracked
@@ -30,14 +30,13 @@ Findings & Recommendations
 - Secrets & Env
   - Local `.env.*` files are now ignored via `.gitignore`. If any non‑example env files were previously committed, remove from Git history and rotate tokens.
 - Legacy Cleanup
-  - Removed Railway script and references in handoff checklist. Some historical docs still mention Railway/Deepgram; kept for context but marked in `docs/migration/`.
+- Removed Railway and Fly scripts and references in handoff checklist. Some historical docs still mention Railway/Deepgram; kept for context but marked in `docs/migration/`.
 
 Next Steps
-- Confirm `MEDIA_WSS_URL` points to your Fly media server: `wss://media.oneearlybird.ai/rtm/voice`.
+- Confirm `MEDIA_WSS_URL` points to your AWS media server (ALB): `wss://media.oneearlybird.ai/rtm/voice`.
 - Decide on a single upstream proxy route and remove the alternate.
 - Run smokes:
   - `/api/ratelimit-test` → 200 then 429 per client key
   - `/api/webhooks/stripe` with Stripe CLI (signed events) → 2xx
   - `/api/voice/incoming` (Twilio simulator) → TwiML Stream
 - Invite Vercel team if needed and set envs via `vercel env`.
-

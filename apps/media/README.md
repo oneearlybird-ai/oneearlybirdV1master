@@ -57,13 +57,12 @@ Endpoints
 
 Security posture
 - No PHI in logs (only minimal structured events)
-- TLS via platform (Fly); process listens HTTP and upgrades to WS
+- TLS via ALB/ACM or instance TLS; process listens HTTP and upgrades to WS behind a load balancer
 - Keepalive pings every 15s; policy-close on bad auth when `MEDIA_AUTH_TOKEN` set
 
-Deploy (Fly.io)
+Deploy (AWS EC2)
 ```
-cd apps/media
-fly launch --no-deploy
-fly deploy -a earlybird-media --remote-only --auto-confirm
+# Build and run under systemd on EC2 (behind internal ALB with ACM TLS)
+# See infra docs for unit files and ALB target group settings.
 ```
-Route DNS: `wss://media.oneearlybird.ai/rtm/voice` and set Twilio Streams URL accordingly.
+Route DNS: `wss://media.oneearlybird.ai/rtm/voice` (ALB); set Twilio Streams URL accordingly.

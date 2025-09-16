@@ -59,7 +59,7 @@ WHAT TEAM 4 DELIVERED
 • Stripe keys/webhook configured (no secrets in docs). • Header posture maintained. 
 
 OPEN ITEMS (prioritized)
-P0 Media server: provision wss://media.oneearlybird.ai (Fly/Railway); TLS; Twilio Streams handler; ping/pong; redact logs.
+P0 Media server: provision wss://media.oneearlybird.ai (AWS EC2/ALB); TLS; Twilio Streams handler; ping/pong; redact logs.
 P0 Redis: prove 200→429; fix env/route if not. 
 P1 Stripe: RAW body + constructEvent verification via Stripe CLI. 
 P1 Routes manifest: central registry + GET /api/routes/manifest.

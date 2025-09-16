@@ -86,7 +86,7 @@ Scope
 - OAuth start: safe redirect scaffold present; finalize with strict allowlists.
 
 11) Media Streams (Operational Expectations)
-- Host media server off Vercel (Fly/Railway/EC2) to support long-lived WebSocket.
+- Host media server off Vercel on AWS EC2 (behind ALB/ACM) to support long-lived WebSocket.
 - TLS 443 with valid cert; path /rtm/voice upgrades with HTTP 101; ping/pong; safe closure.
 - Follow Twilio Media Streams framing; target end-to-end latency 500–700 ms.
 - No PHI in media logs; redact tokens and IDs.
@@ -115,4 +115,3 @@ Scope
 - Roadmap (annotated): apps/web/docs/roadmap_annotated.txt
 - Media Streams notes: apps/web/docs/media/README.md
 - Anti-Drift Gate: apps/web/docs/anti-drift-gate.md
-
