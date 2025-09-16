@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { Marquee } from '@/components/Marquee';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
+import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
@@ -155,18 +156,14 @@ export default function Home() {
 
       {/* Testimonials */}
       <Section title="Trusted by operators">
-        <div className="grid gap-4 md:grid-cols-3">
-          {[
+        <TestimonialsCarousel
+          items={[
             { q: '“EarlyBird AI is like having a full‑time receptionist at a fraction of the cost.”', a: 'Alex R., Owner — ServicePro' },
             { q: '“Setup took minutes. Our calendar started filling the same week.”', a: 'Mia L., Practice Manager — Bright Dental' },
             { q: '“We capture after‑hours leads we used to miss — huge impact.”', a: 'Sam D., Ops Lead — Northstar Clinics' },
-          ].map((t) => (
-            <Card key={t.q}>
-              <blockquote className="text-white/90">{t.q}</blockquote>
-              <figcaption className="mt-2 text-sm text-white/60">{t.a}</figcaption>
-            </Card>
-          ))}
-        </div>
+          ]}
+          interval={6000}
+        />
       </Section>
 
       {/* Feature highlights */}
