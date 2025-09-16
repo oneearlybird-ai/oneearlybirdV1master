@@ -13,8 +13,8 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
   return (
     <div className="eb-marquee" aria-label={ariaLabel} role="marquee">
       <div className="eb-marquee-track" data-speed={speedSec}>
-        <div className="flex items-center gap-3 min-w-max pr-4">{children}</div>
-        <div className="flex items-center gap-3 min-w-max pr-4" aria-hidden>
+        <div className="flex items-center gap-3 min-w-max">{children}</div>
+        <div className="flex items-center gap-3 min-w-max" aria-hidden>
           {children}
         </div>
       </div>

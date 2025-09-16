@@ -132,3 +132,16 @@ html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; 
 @media (prefers-reduced-motion: reduce) {
   .eb-hero-wave svg .eb-wave-path { animation: none; }
 }
+/* Brand logo masking (single-color) for icons that are not multi-color assets */
+.logo-mask { display:inline-block; width: 100%; height: 1.5rem; background-color: var(--logo-color, #111827);
+  -webkit-mask-size: contain; mask-size: contain; -webkit-mask-position: center; mask-position: center; -webkit-mask-repeat: no-repeat; mask-repeat: no-repeat; }
+.logo-hubspot { --logo-color: #FF7A59; -webkit-mask-image: url('/logos/hubspot.svg'); mask-image: url('/logos/hubspot.svg'); }
+.logo-salesforce { --logo-color: #00A1E0; -webkit-mask-image: url('/logos/salesforce.svg'); mask-image: url('/logos/salesforce.svg'); }
+.logo-zoho { --logo-color: #C8202F; -webkit-mask-image: url('/logos/zoho.svg'); mask-image: url('/logos/zoho.svg'); }
+.logo-twilio { --logo-color: #F22F46; -webkit-mask-image: url('/logos/twilio.svg'); mask-image: url('/logos/twilio.svg'); }
+.logo-slack { --logo-color: #36C5F0; -webkit-mask-image: url('/logos/slack.svg'); mask-image: url('/logos/slack.svg'); }
+.logo-stripe { --logo-color: #635BFF; -webkit-mask-image: url('/logos/stripe.svg'); mask-image: url('/logos/stripe.svg'); }
+.logo-signalwire { --logo-color: #FF4154; -webkit-mask-image: url('/logos/signalwire.svg'); mask-image: url('/logos/signalwire.svg'); }
+.logo-outlook { --logo-color: #0078D4; -webkit-mask-image: url('/logos/outlook.svg'); mask-image: url('/logos/outlook.svg'); }
+.logo-microsoft-365 { --logo-color: #F25022; -webkit-mask-image: url('/logos/microsoft-365.svg'); mask-image: url('/logos/microsoft-365.svg'); }
+.logo-zapier { --logo-color: #FF4A00; -webkit-mask-image: url('/logos/zapier.svg'); mask-image: url('/logos/zapier.svg'); }

@@ -55,9 +55,17 @@ function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; 
 }
 
 function LogoBadge({ id, label }: { id: string; label: string }) {
+  const colored = new Set(['google-workspace','google-calendar','aws']);
+  const masked = new Set(['hubspot','salesforce','zoho','twilio','slack','stripe','signalwire','outlook','microsoft-365','zapier']);
   return (
     <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
-      <img src={`/logos/${id}.svg`} alt={label} className="block max-h-6 max-w-full object-contain" />
+      {colored.has(id) ? (
+        <img src={`/logos/${id}.svg`} alt={label} className="block max-h-6 max-w-full object-contain" />
+      ) : masked.has(id) ? (
+        <span className={`logo-mask logo-${id}`} aria-label={label} />
+      ) : (
+        <img src={`/logos/${id}.svg`} alt={label} className="block max-h-6 max-w-full object-contain" />
+      )}
       <figcaption className="sr-only">{label}</figcaption>
     </figure>
   );
