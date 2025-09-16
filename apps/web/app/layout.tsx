@@ -5,6 +5,7 @@ import Link from "next/link";
 import { cookies } from "next/headers";
 import AuthControls from "@/components/AuthControls";
 import RevealOnScroll from "@/components/RevealOnScroll";
+import ScrollHeaderElevator from "@/components/ScrollHeaderElevator";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -19,7 +20,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
         <RevealOnScroll />
         {/* Header */}
-        <header className="sticky top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
+        <ScrollHeaderElevator />
+        <header id="eb-header" className="eb-header sticky top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
           <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
             <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="EarlyBird home">
               <img

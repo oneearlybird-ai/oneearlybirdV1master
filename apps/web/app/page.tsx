@@ -6,7 +6,7 @@ import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
-    <section id={id} className="mx-auto max-w-6xl px-6 py-16 md:py-24">
+    <section id={id} className="mx-auto max-w-6xl px-6 py-14 md:py-24">
       {title ? (<h2 className="text-2xl md:3xl font-semibold tracking-tight mb-6">{title}</h2>) : null}
       {children}
     </section>
@@ -15,7 +15,7 @@ function Section({ id, title, children }: { id?: string; title?: string; childre
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95 eb-reveal ${className}`}>
+    <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 active:scale-95 eb-reveal ${className}`}>
       {children}
     </div>
   );
