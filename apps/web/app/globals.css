@@ -85,7 +85,8 @@
 .eb-delay-10500 { animation-delay: 5.25s }/* halved */
 
 /* Smooth fonts */
-html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
 /* Anchor offset for sticky header */
 :root { --eb-header-h: 72px; }

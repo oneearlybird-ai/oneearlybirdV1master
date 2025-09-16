@@ -12,6 +12,10 @@ export const metadata: Metadata = {
   description: "AI voice receptionist for your business",
 };
 
+// Ensure header reflects session cookies on every request (no static caching)
+export const dynamic = "force-dynamic";
+export const revalidate = 0;
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   const cookieStore = cookies();
   const hasSession = !!(cookieStore.get("__Secure-next-auth.session-token") || cookieStore.get("next-auth.session-token"));
