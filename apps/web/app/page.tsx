@@ -181,8 +181,8 @@ export default function Home() {
         <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-white/5 to-white/10 p-8 text-center">
           <h3 className="text-xl font-semibold">Never miss another call. Ready to get started?</h3>
           <div className="mt-4 flex justify-center gap-3">
-            <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black hover:bg-white/90">Start Free Trial</Link>
-            <Link href="/signup" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white">Book a Demo</Link>
+            <Link href="/signup" className="btn btn-primary">Start Free Trial</Link>
+            <Link href="/signup" className="btn btn-outline">Book a Demo</Link>
           </div>
         </div>
       </Section>
@@ -196,7 +196,7 @@ export default function Home() {
         	<Card><div className="font-medium">Enterprise</div><p className="mt-1 text-sm text-white/70">Custom solution — let’s talk.</p></Card>
         </div>
         <div className="mt-6">
-          <Link href="/pricing" className="inline-flex items-center rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white">View detailed pricing</Link>
+          <Link href="/pricing" className="btn btn-outline">View detailed pricing</Link>
         </div>
       </Section>
     </main>

@@ -18,7 +18,7 @@ export default function NavMainLinks() {
     <div className="hidden md:flex items-center gap-6 text-sm">
       {LINKS.map((l) => {
         const isHash = l.type === "hash";
-        const href = l.href;
+        const href = (isHash && pathname !== "/") ? ("/" + l.href) : l.href;
         const current = !isHash && pathname === href;
         return (
           <Link
@@ -34,4 +34,3 @@ export default function NavMainLinks() {
     </div>
   );
 }
-
