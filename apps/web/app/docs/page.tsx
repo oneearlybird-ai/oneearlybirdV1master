@@ -21,6 +21,10 @@ export default function Docs() {
           </li>
         </ul>
 
+        <h2 className="mt-10 text-xl font-medium">Porting your number</h2>
+        <p className="mt-3 text-white/80">Already have a phone number? We’ll port it for you.</p>
+        <p className="mt-2 text-white/70">Gather your account number, port‑out PIN, service address, and the numbers to move, then <a className="underline" href="/support/porting">start a port request</a>.</p>
+
         <h2 className="mt-10 text-xl font-medium">Authentication</h2>
         <p className="mt-3 text-white/80">
           API requests require an API key (for server-to-server) and standard session auth for the dashboard.

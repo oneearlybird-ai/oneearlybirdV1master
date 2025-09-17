@@ -16,7 +16,7 @@ export default function SupportPage() {
         <h2 id="telephony" className="mt-10 text-xl font-medium">Telephony</h2>
         <p className="mt-3 text-white/70">We provide managed telephony. No separate carrier account is needed.</p>
         <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
-          <li>Request new numbers or port existing ones — <a className="underline" href="mailto:support@earlybird.ai">contact support</a>.</li>
+          <li>Request new numbers or port existing ones — <a className="underline" href="/support/porting">start here</a>.</li>
           <li>All telephony charges are included on your single Stripe invoice.</li>
         </ul>
 

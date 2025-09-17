@@ -43,6 +43,9 @@ export default async function DashboardPage() {
     <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to EarlyBird AI, Alex</h1>
       <p className="mt-2 text-white/70">Your AI receptionist is <span className="text-emerald-400">Active</span> and handling calls. <span className="ml-2"><LiveStatusBadge /></span></p>
+      <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white/80">
+        Using an existing business number? We can port it for you. <a href="/support/porting" className="underline">Start porting</a>.
+      </div>
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
@@ -80,7 +83,7 @@ export default async function DashboardPage() {
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 className="font-medium">Get set up</h2>
         <ul className="mt-2 space-y-2 text-sm text-white/80">
-          <li>✅ Connect phone number</li>
+          <li>✅ Connect phone number (or <a className="underline" href="/support/porting">port your number</a>)</li>
           <li>✅ Connect Google Calendar</li>
           <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
           <li>⬜ Customize greeting & FAQs</li>
@@ -133,4 +136,3 @@ function ThisWeekPanel({ week }: { week: { answered: number; booked: number; def
     </div>
   );
 }
-
