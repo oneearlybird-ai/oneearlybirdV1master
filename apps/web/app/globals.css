@@ -99,16 +99,7 @@ section[id] { scroll-margin-top: var(--eb-header-h); }
 
 /* Marquee: CSS-only, pause on hover, respects reduced motion */
 .eb-marquee { overflow: hidden; position: relative; }
-.eb-marquee-track {
-  display: flex;
-  width: max-content;
-  will-change: transform;
-  backface-visibility: hidden;
-  animation-name: eb-marquee;
-  animation-timing-function: linear;
-  animation-iteration-count: infinite;
-  animation-duration: 16s; /* CSP-safe default; no inline style */
-}
+.eb-marquee-track { display:flex; width:max-content; will-change:transform; backface-visibility:hidden; animation-name: eb-marquee; animation-timing-function: linear; animation-iteration-count: infinite; animation-duration: 16s; }
 .eb-marquee:hover .eb-marquee-track { animation-play-state: paused; }
 @keyframes eb-marquee { 0% { transform: translate3d(0,0,0) } 100% { transform: translate3d(-50%,0,0) } }
 /* Always animate marquee (matches UX preview); ignore reduced-motion for this specific strip */
