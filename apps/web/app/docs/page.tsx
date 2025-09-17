@@ -49,6 +49,15 @@ export default function Docs() {
           Need a new number or want to port? Email <a className="underline" href="mailto:support@earlybird.ai">support@earlybird.ai</a> or visit
           <a className="underline ml-1" href="/support">Support</a>.
         </p>
+
+        <h2 className="mt-10 text-xl font-medium">Security & Guardrails</h2>
+        <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
+          <li>Strict CSP with per-request nonce; no inline scripts or eval.</li>
+          <li>HSTS preload, COOP/COEP, Permissions-Policy deny-by-default.</li>
+          <li>Signed webhooks, short-lived presigned URLs, minimal logs (no PHI).</li>
+          <li>Rate limits on sensitive endpoints; cache-control: no-store as needed.</li>
+          <li>Small, reviewable changes: ≤120 LOC per patch; security gates must pass.</li>
+        </ul>
       </section>
     </main>
   );
