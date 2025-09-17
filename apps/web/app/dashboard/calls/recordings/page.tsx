@@ -16,9 +16,14 @@ export default async function RecordingsPage() {
   const rows = await fetchList()
   return (
     <section>
-      <h2 className="text-xl font-semibold tracking-tight mb-4">Recordings</h2>
-      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
+      <h2 className="text-xl font-semibold tracking-tight mb-2">Recordings</h2>
+      <div className="text-sm text-white/60" aria-live="polite">
+        {rows.length > 0 ? `${rows.length} recording${rows.length===1?'':'s'}` : 'No recordings available'}
+      </div>
+
+      <div className="mt-3 overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
         <table className="w-full text-sm">
+          <caption className="sr-only">Recordings list</caption>
           <thead className="text-left text-white/60">
             <tr>
               <th className="px-4 py-3">Started</th>
@@ -38,10 +43,19 @@ export default async function RecordingsPage() {
                 </td>
               </tr>
             ))}
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={4} className="px-4 py-8 text-center text-white/60">
+                  No recordings yet. After your first calls complete, recordings will appear here.
+                  <div className="mt-3 text-xs">
+                    Need help? Visit <a href="/docs" className="underline">Docs</a> or <a href="/support" className="underline">Support</a>.
+                  </div>
+                </td>
+              </tr>
+            ) : null}
           </tbody>
         </table>
       </div>
     </section>
   )
 }
-
