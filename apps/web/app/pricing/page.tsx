@@ -110,6 +110,9 @@ export default function Page() {
             Usage billed per minute with transparent margins. Typical effective
             cost per booking is $5–$12 depending on call length and volume.
           </p>
+          <p className="mt-3 text-sm text-white/70">
+            Telephony included — no separate carrier account required. One invoice via Stripe.
+          </p>
         </div>
       </section>
     </main>

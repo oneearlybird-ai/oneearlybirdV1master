@@ -18,7 +18,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
     <section>
       <div className="flex items-center justify-between">
         <h1 className="text-xl font-semibold tracking-tight">Call details</h1>
-        <Link href="/dashboard/calls" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Back</Link>
+        <Link href="/dashboard/calls" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white hover:-translate-y-0.5 transition-transform">Back</Link>
       </div>
 
       <div className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-3">
@@ -27,7 +27,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
           <div className="mt-3 rounded-lg border border-white/10 p-3">
             <div className="flex items-center justify-between">
               <div className="font-medium">Recording</div>
-              <button disabled className="rounded border border-white/20 px-2 py-1 text-xs text-white/50">Play sample (coming soon)</button>
+              <button disabled className="rounded border border-white/20 px-2 py-1 text-xs text-white/60">Play sample (coming soon)</button>
             </div>
             <p className="mt-2 text-xs text-white/60">Preview only — UI demo. No PHI, no live audio.</p>
           </div>

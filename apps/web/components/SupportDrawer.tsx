@@ -36,21 +36,24 @@ export default function SupportDrawer() {
               <div className="font-medium">Support</div>
               <button onClick={close} className="rounded-lg border border-white/15 px-2 py-1 text-sm text-white/70 hover:text-white">Close</button>
             </div>
-            <div className="p-4 space-y-4 text-sm">
-              <p className="text-white/80">We’re here to help. Choose an option:</p>
-              <ul className="space-y-2">
-                <li>
-                  <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/docs">View Docs</a>
-                </li>
-                <li>
-                  <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="mailto:support@oneearlybird.ai">Email support@oneearlybird.ai</a>
-                </li>
-                <li>
-                  <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/support">Support Center</a>
-                </li>
-                <li>
-                  <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/status">System Status</a>
-                </li>
+        <div className="p-4 space-y-4 text-sm">
+          <p className="text-white/80">We’re here to help. Choose an option:</p>
+          <ul className="space-y-2">
+            <li>
+              <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/docs">View Docs</a>
+            </li>
+            <li>
+              <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="mailto:support@oneearlybird.ai">Email support@oneearlybird.ai</a>
+            </li>
+            <li>
+              <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/support#telephony">Request a phone number or port</a>
+            </li>
+            <li>
+              <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/support">Support Center</a>
+            </li>
+            <li>
+              <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/status">System Status</a>
+            </li>
                 <li>
                   <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/changelog">Changelog</a>
                 </li>
