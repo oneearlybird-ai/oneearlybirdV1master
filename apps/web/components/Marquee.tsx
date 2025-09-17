@@ -14,8 +14,8 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
     <div className="eb-marquee" aria-label={ariaLabel} role="marquee">
       <div className="eb-marquee-track" data-speed={speedSec}>
         <div className="flex items-center gap-3 md:gap-5 min-w-max">{children}</div>
-        {/* Duplicate without extra margin to ensure a seamless loop */}
-        <div className="flex items-center gap-3 md:gap-5 min-w-max" aria-hidden>
+        {/* Seam spacer: match the same gap as items to keep equal spacing at the loop */}
+        <div className="flex items-center gap-3 md:gap-5 min-w-max ml-3 md:ml-5" aria-hidden>
           {children}
         </div>
       </div>
