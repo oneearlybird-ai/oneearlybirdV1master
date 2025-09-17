@@ -6,11 +6,45 @@ export default function SupportDrawer() {
   const [open, setOpen] = useState(false);
   const close = () => setOpen(false);
   const ref = useRef<HTMLDivElement | null>(null);
+  const lastActive = useRef<HTMLElement | null>(null);
+
+  // Escape to close
   useEffect(() => {
     function onKey(e: KeyboardEvent) { if (e.key === 'Escape') close(); }
     document.addEventListener('keydown', onKey);
     return () => document.removeEventListener('keydown', onKey);
   }, []);
+
+  // Focus trap and restore
+  useEffect(() => {
+    if (!open) return;
+    const root = ref.current;
+    if (!root) return;
+    const prev = (document.activeElement as HTMLElement) || null;
+    lastActive.current = prev;
+    const focusables = Array.from(root.querySelectorAll<HTMLElement>(
+      'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
+    ));
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    first?.focus();
+    function onTrap(e: KeyboardEvent) {
+      if (e.key !== 'Tab') return;
+      if (focusables.length === 0) return;
+      const active = document.activeElement as HTMLElement | null;
+      if (e.shiftKey) {
+        if (active === first || !root.contains(active)) { e.preventDefault(); last?.focus(); }
+      } else {
+        if (active === last) { e.preventDefault(); first?.focus(); }
+      }
+    }
+    document.addEventListener('keydown', onTrap, true);
+    return () => {
+      document.removeEventListener('keydown', onTrap, true);
+      // Restore focus to the last active element when closing
+      lastActive.current && lastActive.current.focus?.();
+    };
+  }, [open]);
 
   return (
     <div className="relative">
@@ -29,6 +63,7 @@ export default function SupportDrawer() {
           <aside
             ref={ref}
             role="dialog"
+            aria-modal="true"
             aria-label="Support drawer"
             className="fixed right-0 top-0 z-[80] h-dvh w-[90vw] max-w-sm border-l border-white/15 bg-neutral-950 eb-drawer-in"
           >
