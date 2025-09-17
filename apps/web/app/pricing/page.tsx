@@ -114,6 +114,20 @@ export default function Page() {
             Telephony included — no separate carrier account required. One invoice via Stripe.
           </p>
         </div>
+
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6">
+          <h2 className="text-lg font-medium">FAQ</h2>
+          <dl className="mt-3 space-y-3 text-sm text-white/80">
+            <div>
+              <dt className="font-medium">Do I need a Twilio account?</dt>
+              <dd className="text-white/70">No. We manage telephony for you. You can also <a className="underline" href="/support/porting">port your existing number</a>.</dd>
+            </div>
+            <div>
+              <dt className="font-medium">How am I billed?</dt>
+              <dd className="text-white/70">One invoice via Stripe that includes platform and usage fees.</dd>
+            </div>
+          </dl>
+        </div>
       </section>
     </main>
   );
