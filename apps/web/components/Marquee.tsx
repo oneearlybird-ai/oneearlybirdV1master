@@ -22,6 +22,7 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
   const xBRef = useRef(0);
   const pausedRef = useRef(false);
   const reduceRef = useRef(false);
+  const dprRef = useRef(1);
 
   function readGapPx(el: HTMLElement): number {
     const cs = getComputedStyle(el);
@@ -43,6 +44,7 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
   useEffect(() => {
     const m = window.matchMedia('(prefers-reduced-motion: reduce)');
     reduceRef.current = !!m.matches;
+    dprRef.current = Math.max(1, Math.round(window.devicePixelRatio || 1));
     const onChange = () => { reduceRef.current = !!m.matches; if (reduceRef.current) stop(); else start(); };
     m.addEventListener?.('change', onChange);
     return () => m.removeEventListener?.('change', onChange);
@@ -59,7 +61,9 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
       const spacers = aWrap.querySelectorAll<HTMLElement>('[data-marquee-spacer]');
       spacers.forEach(s => { s.style.width = `${gapRef.current}px`; });
       const bWrap = laneWrapBRef.current;
-      if (bWrap) bWrap.querySelectorAll<HTMLElement>('[data-marquee-spacer]').forEach(s => { s.style.width = `${gapRef.current}px`; });
+      const gapRounded = Math.round(gapRef.current * dprRef.current) / dprRef.current;
+      if (bWrap) bWrap.querySelectorAll<HTMLElement>('[data-marquee-spacer]').forEach(s => { s.style.width = `${gapRounded}px`; });
+      spacers.forEach(s => { s.style.width = `${gapRounded}px`; });
       // Set container height to content height so absolute lanes are visible
       const h = aWrap.offsetHeight;
       if (h && h !== containerH) setContainerH(h);
@@ -82,9 +86,13 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
     xBRef.current -= dt * pxPerMs;
     if (xARef.current <= -w) xARef.current = xBRef.current + w;
     if (xBRef.current <= -w) xBRef.current = xARef.current + w;
+    // Quantize to device pixel to avoid subpixel seam rounding differences
+    const q = dprRef.current;
+    const qA = Math.round(xARef.current * q) / q;
+    const qB = Math.round(xBRef.current * q) / q;
     const a = laneARef.current, b = laneBRef.current;
-    if (a) a.style.transform = `translate3d(${xARef.current}px,0,0)`;
-    if (b) b.style.transform = `translate3d(${xBRef.current}px,0,0)`;
+    if (a) a.style.transform = `translate3d(${qA}px,0,0)`;
+    if (b) b.style.transform = `translate3d(${qB}px,0,0)`;
     rafRef.current = requestAnimationFrame(tick);
   }
 
