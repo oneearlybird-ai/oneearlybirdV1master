@@ -97,6 +97,7 @@ export default function CallsPage() {
         >
           Clear filters
         </button>
+        <span className="text-xs text-white/60">Tip: filter by outcome or date; use Min/Max sec for duration.</span>
       </div>
 
       {/* Loading skeleton during filtering */}
