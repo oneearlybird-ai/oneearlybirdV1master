@@ -125,6 +125,11 @@ export default function CallsPage() {
                 <button onClick={() => setTab('analytics')} className={`px-2 py-1 rounded ${tab !== 'list' ? 'bg-white text-black' : 'text-white/80'}`}>Analytics</button>
               </div>
             </div>
+            <div>
+              <button disabled className="rounded border border-white/20 px-3 py-1.5 text-xs text-white/60 cursor-not-allowed" aria-disabled="true" aria-label="Download CSV (coming soon)">
+                Download CSV (soon)
+              </button>
+            </div>
           </div>
           <div className="px-4 pb-4">
             <div className="grid grid-cols-5 gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
@@ -209,9 +214,9 @@ function RowActions({ caller, id, onOpen, onReviewed, reviewed }: { caller: stri
   };
   return (
     <div className="flex items-center gap-2">
-      <button onClick={onOpen} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Open</button>
-      <button onClick={copy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">{copied===id ? 'Copied' : 'Copy #'}</button>
-      <button onClick={onReviewed} className={`rounded border px-2 py-1 text-xs ${reviewed ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-white/20 text-white/80 hover:text-white'}`}>{reviewed ? 'Reviewed' : 'Mark reviewed'}</button>
+      <button onClick={onOpen} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white" aria-label={`Open call ${id}`}>Open</button>
+      <button onClick={copy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white" aria-label={`Copy caller for ${id}`}>{copied===id ? 'Copied' : 'Copy #'}</button>
+      <button onClick={onReviewed} className={`rounded border px-2 py-1 text-xs ${reviewed ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-white/20 text-white/80 hover:text-white'}`} aria-pressed={reviewed} aria-label={reviewed ? `Mark ${id} unreviewed` : `Mark ${id} reviewed`}>{reviewed ? 'Reviewed' : 'Mark reviewed'}</button>
     </div>
   );
 }
