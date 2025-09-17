@@ -8,6 +8,7 @@ import SupportDrawer from "@/components/SupportDrawer";
 import RevealOnScroll from "@/components/RevealOnScroll";
 import ScrollHeaderElevator from "@/components/ScrollHeaderElevator";
 import BackToTop from "@/components/BackToTop";
+import NavMainLinks from "@/components/NavMainLinks";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -38,15 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 className="h-[3em] w-auto align-text-bottom"
               />
             </Link>
-            <div className="hidden md:flex items-center gap-6 text-sm">
-              <Link href="#how" className="text-white/80 hover:text-white">How it works</Link>
-              <Link href="#integrations" className="text-white/80 hover:text-white">Integrations</Link>
-              <Link href="/pricing" className="text-white/80 hover:text-white">Pricing</Link>
-              <Link href="/roi" className="text-white/80 hover:text-white">ROI</Link>
-              <Link href="/docs" className="text-white/80 hover:text-white">Docs</Link>
-              <Link href="/support" className="text-white/80 hover:text-white">Support</Link>
-              {/* Preview links removed now that preview is main */}
-            </div>
+            <NavMainLinks />
             <div className="flex items-center gap-3">
               <SupportDrawer />
               <AuthControls hasSession={hasSession} />
