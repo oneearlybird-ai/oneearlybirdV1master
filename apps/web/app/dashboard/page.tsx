@@ -3,6 +3,7 @@ export const dynamic = 'force-dynamic';
 import { LiveStatusBadge, RecentCallsPreview } from '@/components/RecentCallsPreview';
 import NextDynamic from 'next/dynamic';
 const PortingBanner = NextDynamic(() => import('@/components/PortingBanner'), { ssr: false });
+import CopyDiagnostics from '@/components/CopyDiagnostics';
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -85,6 +86,7 @@ export default async function DashboardPage() {
           <a href="/docs" className="btn btn-outline">Docs</a>
           <a href="/support" className="btn btn-outline">Support</a>
           <a href="/dashboard/billing" className="btn btn-outline">Billing</a>
+          <CopyDiagnostics />
           <a href="/changelog" className="btn btn-outline">Changelog</a>
         </div>
       </div>

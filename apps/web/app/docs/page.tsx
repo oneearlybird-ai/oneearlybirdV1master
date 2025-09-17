@@ -5,7 +5,7 @@ export default function Docs() {
     <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
       <section className="mx-auto max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
-        <nav className="mt-3 text-sm text-white/70" aria-label="On this page">
+        <nav className="mt-3 text-sm text-white/70 sticky top-[calc(var(--eb-header-h)+8px)] z-10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55 rounded px-2 py-1" aria-label="On this page">
           <a className="underline mr-3" href="#getting-started">Getting Started</a>
           <a className="underline mr-3" href="#porting">Porting</a>
           <a className="underline mr-3" href="#authentication">Authentication</a>

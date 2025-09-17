@@ -22,6 +22,15 @@ function Tier({
   popular?: boolean;
 }) {
   const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
+  function featureHint(f: string): string | null {
+    const s = f.toLowerCase();
+    if (s.includes('premium voice')) return 'Higher‑quality voice output and configuration.';
+    if (s.includes('calendar')) return 'Google and Microsoft calendars supported.';
+    if (s.includes('crm')) return 'Works with HubSpot and Salesforce.';
+    if (s.includes('analytics')) return 'Enhanced usage insights and summaries.';
+    if (s.includes('priority routing')) return 'Lower latency routes during peak times.';
+    return null;
+  }
   return (
     <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col ${popular ? "outline outline-1 outline-white/20" : ""}`}>
       <div className="flex items-center justify-between">
@@ -35,12 +44,17 @@ function Tier({
       <div className="mt-3 text-3xl font-semibold">{price}</div>
       <p className="mt-2 text-sm text-white/70">{blurb}</p>
       <ul className="mt-6 space-y-2 text-sm text-white/80">
-        {features.map((f) => (
-          <li key={f} className="flex gap-2">
-            <span aria-hidden>✓</span>
-            <span>{f}</span>
-          </li>
-        ))}
+        {features.map((f, i) => {
+          const id = `feat-${slug}-${i}`;
+          const hint = featureHint(f);
+          return (
+            <li key={f} className="flex gap-2">
+              <span aria-hidden>✓</span>
+              <span {...(hint ? { title: hint, 'aria-describedby': id } : {})}>{f}</span>
+              {hint ? <span id={id} className="sr-only">{hint}</span> : null}
+            </li>
+          );
+        })}
       </ul>
       <p id={`tier-desc-${slug}`} className="sr-only">Managed telephony included; one invoice via Stripe.</p>
       <Link
