@@ -88,6 +88,10 @@
 html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; scroll-behavior: smooth; }
 @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
 
+/* Accessible skip link */
+.skip-link { position: absolute; left: -9999px; top: 0; padding: 8px 12px; background: white; color: black; border-radius: 0.5rem; z-index: 1000; }
+.skip-link:focus { left: 12px; top: 12px; outline: 2px solid rgba(255,255,255,0.4); }
+
 /* Anchor offset for sticky header */
 :root { --eb-header-h: 72px; }
 @media (min-width: 768px) { :root { --eb-header-h: 80px; } }

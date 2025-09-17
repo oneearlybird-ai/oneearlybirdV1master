@@ -24,6 +24,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
+        <a href="#content" className="skip-link">Skip to content</a>
         <RevealOnScroll />
         {/* Header */}
         <ScrollHeaderElevator />
@@ -54,7 +55,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         </header>
 
         {/* Main content */}
-        <main className="flex-1">{children}</main>
+        <main id="content" className="flex-1">{children}</main>
         <BackToTop />
 
         {/* Footer */}
