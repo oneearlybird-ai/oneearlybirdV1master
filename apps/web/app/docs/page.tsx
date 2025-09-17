@@ -11,6 +11,7 @@ export default function Docs() {
           <a className="underline mr-3" href="#authentication">Authentication</a>
           <a className="underline" href="#endpoints">Endpoints</a>
         </nav>
+        <div className="mt-2 text-xs text-white/60"><a className="underline" href="#content">Back to top</a></div>
         <p className="mt-4 text-white/70">Everything you need to launch your AI receptionist with managed telephony.</p>
 
         <h2 id="getting-started" className="mt-10 text-xl font-medium">Getting Started</h2>
@@ -49,6 +50,7 @@ export default function Docs() {
           Need a new number or want to port? Email <a className="underline" href="mailto:support@earlybird.ai">support@earlybird.ai</a> or visit
           <a className="underline ml-1" href="/support">Support</a>.
         </p>
+        <div className="mt-6 text-xs text-white/60"><a className="underline" href="#content">Back to top</a></div>
 
         <h2 className="mt-10 text-xl font-medium">Security & Guardrails</h2>
         <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
