@@ -10,54 +10,99 @@ type Props = {
 
 // CSS-only marquee using duplicated tracks; pausable on hover; reduced motion aware via globals.css
 export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
-  const trackRef = useRef<HTMLDivElement | null>(null);
-  const groupRef = useRef<HTMLDivElement | null>(null);
+  const laneARef = useRef<HTMLDivElement | null>(null);
+  const laneBRef = useRef<HTMLDivElement | null>(null);
+  const laneWrapARef = useRef<HTMLDivElement | null>(null);
+  const laneWrapBRef = useRef<HTMLDivElement | null>(null);
   const rafRef = useRef<number | null>(null);
-  const offsetRef = useRef(0);
-  const widthRef = useRef(0);
   const lastRef = useRef<number | null>(null);
+  const laneWRef = useRef(0);
+  const gapRef = useRef(0);
+  const xARef = useRef(0);
+  const xBRef = useRef(0);
   const pausedRef = useRef(false);
   const reduceRef = useRef(false);
+
+  function readGapPx(el: HTMLElement): number {
+    const cs = getComputedStyle(el);
+    const g = cs.columnGap || cs.gap || '0';
+    const n = parseFloat(g);
+    return Number.isFinite(n) ? n : 0;
+  }
+
+  function placeLanes() {
+    const a = laneARef.current, b = laneBRef.current;
+    if (!a || !b) return;
+    laneWRef.current = a.offsetWidth;
+    xARef.current = 0;
+    xBRef.current = laneWRef.current;
+    a.style.transform = `translate3d(${xARef.current}px,0,0)`;
+    b.style.transform = `translate3d(${xBRef.current}px,0,0)`;
+  }
 
   useEffect(() => {
     const m = window.matchMedia('(prefers-reduced-motion: reduce)');
     reduceRef.current = !!m.matches;
-    const onChange = () => { reduceRef.current = !!m.matches; if (reduceRef.current) cancel(); else start(); };
+    const onChange = () => { reduceRef.current = !!m.matches; if (reduceRef.current) stop(); else start(); };
     m.addEventListener?.('change', onChange);
     return () => m.removeEventListener?.('change', onChange);
   }, []);
 
   useEffect(() => {
+    // Measure lane width and computed gap; set spacer widths accordingly
     function measure() {
-      const g = groupRef.current; if (!g) return; widthRef.current = g.offsetWidth;
+      const aWrap = laneWrapARef.current; if (!aWrap) return;
+      gapRef.current = readGapPx(aWrap);
+      // Update spacer widths
+      const spacers = aWrap.querySelectorAll<HTMLElement>('[data-marquee-spacer]');
+      spacers.forEach(s => { s.style.width = `${gapRef.current}px`; });
+      const bWrap = laneWrapBRef.current;
+      if (bWrap) bWrap.querySelectorAll<HTMLElement>('[data-marquee-spacer]').forEach(s => { s.style.width = `${gapRef.current}px`; });
+      placeLanes();
     }
     measure();
     const ro = new ResizeObserver(measure);
-    if (groupRef.current) ro.observe(groupRef.current);
+    if (laneARef.current) ro.observe(laneARef.current);
     window.addEventListener('resize', measure);
     start();
-    return () => { cancel(); window.removeEventListener('resize', measure); ro.disconnect(); };
+    return () => { stop(); window.removeEventListener('resize', measure); ro.disconnect(); };
   }, [speedSec]);
 
-  function step(ts: number) {
-    if (reduceRef.current || pausedRef.current) { lastRef.current = ts; rafRef.current = requestAnimationFrame(step); return; }
+  function tick(ts: number) {
+    if (pausedRef.current || reduceRef.current) { lastRef.current = ts; rafRef.current = requestAnimationFrame(tick); return; }
     const last = lastRef.current ?? ts; const dt = Math.min(64, ts - last); lastRef.current = ts;
-    const w = widthRef.current || 1; // px; avoid 0
+    const w = laneWRef.current || 1;
     const pxPerMs = (w / (speedSec * 1000));
-    offsetRef.current -= dt * pxPerMs;
-    if (offsetRef.current <= -w) offsetRef.current += w;
-    const t = trackRef.current; if (t) t.style.transform = `translate3d(${offsetRef.current}px,0,0)`;
-    rafRef.current = requestAnimationFrame(step);
+    xARef.current -= dt * pxPerMs;
+    xBRef.current -= dt * pxPerMs;
+    if (xARef.current <= -w) xARef.current = xBRef.current + w;
+    if (xBRef.current <= -w) xBRef.current = xARef.current + w;
+    const a = laneARef.current, b = laneBRef.current;
+    if (a) a.style.transform = `translate3d(${xARef.current}px,0,0)`;
+    if (b) b.style.transform = `translate3d(${xBRef.current}px,0,0)`;
+    rafRef.current = requestAnimationFrame(tick);
   }
-  function start() { cancel(); lastRef.current = null; rafRef.current = requestAnimationFrame(step); }
-  function cancel() { if (rafRef.current) cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+
+  function start() { stop(); lastRef.current = null; rafRef.current = requestAnimationFrame(tick); }
+  function stop() { if (rafRef.current) cancelAnimationFrame(rafRef.current); rafRef.current = null; }
+
+  const laneClass = "absolute top-0 left-0 flex items-center gap-3 md:gap-5 min-w-max will-change-transform";
 
   return (
     <div className="eb-marquee" aria-label={ariaLabel} role="marquee" onMouseEnter={() => { pausedRef.current = true; }} onMouseLeave={() => { pausedRef.current = false; }}>
-      <div className="eb-marquee-track" ref={trackRef} style={{ animation: 'none' }}>
-        <div ref={groupRef} className="flex items-center gap-3 md:gap-5 min-w-max">{children}</div>
-        <div className="flex items-center gap-3 md:gap-5 min-w-max" aria-hidden>{children}</div>
-        <div className="flex items-center gap-3 md:gap-5 min-w-max" aria-hidden>{children}</div>
+      {/* Lane A */}
+      <div ref={laneARef} className={laneClass}>
+        <div ref={laneWrapARef} className="flex items-center gap-3 md:gap-5 min-w-max">
+          {children}
+          <div data-marquee-spacer style={{ width: 0, height: 1 }} aria-hidden />
+        </div>
+      </div>
+      {/* Lane B (identical) */}
+      <div ref={laneBRef} className={laneClass} aria-hidden>
+        <div ref={laneWrapBRef} className="flex items-center gap-3 md:gap-5 min-w-max">
+          {children}
+          <div data-marquee-spacer style={{ width: 0, height: 1 }} aria-hidden />
+        </div>
       </div>
     </div>
   );
