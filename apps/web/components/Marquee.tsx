@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useRef } from "react";
+import { ReactNode, useEffect, useRef, useState } from "react";
 
 type Props = {
   children: ReactNode;
@@ -48,6 +48,8 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
     return () => m.removeEventListener?.('change', onChange);
   }, []);
 
+  const [containerH, setContainerH] = useState<number | null>(null);
+
   useEffect(() => {
     // Measure lane width and computed gap; set spacer widths accordingly
     function measure() {
@@ -58,6 +60,9 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
       spacers.forEach(s => { s.style.width = `${gapRef.current}px`; });
       const bWrap = laneWrapBRef.current;
       if (bWrap) bWrap.querySelectorAll<HTMLElement>('[data-marquee-spacer]').forEach(s => { s.style.width = `${gapRef.current}px`; });
+      // Set container height to content height so absolute lanes are visible
+      const h = aWrap.offsetHeight;
+      if (h && h !== containerH) setContainerH(h);
       placeLanes();
     }
     measure();
@@ -89,7 +94,7 @@ export function Marquee({ children, speedSec = 16, ariaLabel }: Props) {
   const laneClass = "absolute top-0 left-0 flex items-center gap-3 md:gap-5 min-w-max will-change-transform";
 
   return (
-    <div className="eb-marquee" aria-label={ariaLabel} role="marquee" onMouseEnter={() => { pausedRef.current = true; }} onMouseLeave={() => { pausedRef.current = false; }}>
+    <div className="eb-marquee" aria-label={ariaLabel} role="marquee" style={containerH ? { height: `${containerH}px` } : undefined} onMouseEnter={() => { pausedRef.current = true; }} onMouseLeave={() => { pausedRef.current = false; }}>
       {/* Lane A */}
       <div ref={laneARef} className={laneClass}>
         <div ref={laneWrapARef} className="flex items-center gap-3 md:gap-5 min-w-max">
