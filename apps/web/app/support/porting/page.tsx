@@ -1,5 +1,6 @@
 export const dynamic = 'force-static';
 
+import PortingFormClient from "./PortingFormClient";
 function MailtoButton() {
   const subject = encodeURIComponent('Port my number to EarlyBird');
   const href = `mailto:support@earlybird.ai?subject=${subject}`;
@@ -45,8 +46,9 @@ export default function PortingPage() {
           <li>We coordinate to avoid downtime. Keep your current service active until the port is confirmed.</li>
           <li>We’ll provide a pre‑filled LOA for e‑signature and keep you updated on status (FOC date/time).</li>
         </ul>
+
+        <PortingFormClient />
       </section>
     </main>
   );
 }
-
