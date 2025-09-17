@@ -1,4 +1,5 @@
 export const dynamic = 'force-dynamic';
+import ManageBillingButton from "@/components/ManageBillingButton";
 
 async function getDemo() {
   try {
@@ -6,6 +7,25 @@ async function getDemo() {
     if (!r.ok) return null;
     return await r.json();
   } catch { return null; }
+}
+
+async function getStripeUsage() {
+  try {
+    const r = await fetch('/api/stripe/usage', { cache: 'no-store' });
+    if (!r.ok) return null;
+    return await r.json();
+  } catch { return null; }
+}
+
+function fmtCurrency(cents?: number | null, currency?: string | null) {
+  if (typeof cents !== 'number' || !isFinite(cents)) return null;
+  const cur = (currency || 'usd').toUpperCase();
+  const amount = cents / 100;
+  try {
+    return new Intl.NumberFormat(undefined, { style: 'currency', currency: cur }).format(amount);
+  } catch {
+    return `${amount.toFixed(2)} ${cur}`;
+  }
 }
 
 function BarSvg({ used, total }: { used: number; total: number }) {
@@ -43,12 +63,21 @@ function PlanTile({ name, price, tag, features, current }: { name: string; price
 
 export default async function BillingPage() {
   const demo = await getDemo();
+  const stripe = await getStripeUsage();
   const plan = demo?.plan ?? 'Pro';
   const renewal = demo?.renewal ?? '—';
   const calls = demo?.calls ?? 0;
   const cQuota = demo?.quota?.calls ?? 1;
   const mins = demo?.minutes ?? 0;
   const mQuota = demo?.quota?.minutes ?? 1;
+  const sPlan = stripe?.plan ?? null;
+  const upcoming = stripe?.upcoming ?? null;
+  const upcomingAmt = fmtCurrency(upcoming?.amount_due, upcoming?.currency || sPlan?.currency || 'usd');
+  const nextWhen = (() => {
+    const ts = typeof upcoming?.next_payment_attempt === 'number' ? upcoming.next_payment_attempt : null;
+    if (!ts) return null;
+    try { return new Date(ts * 1000).toLocaleString(); } catch { return null; }
+  })();
   return (
     <section>
       <h1 className="text-xl font-semibold tracking-tight">Billing & plan</h1>
@@ -57,13 +86,28 @@ export default async function BillingPage() {
           <div className="text-sm text-white/60">Current plan</div>
           <div className="mt-1 text-2xl font-semibold">{plan}</div>
           <div className="mt-1 text-sm text-white/60">Renews {renewal}</div>
+          {sPlan ? (
+            <div className="mt-3 text-sm text-white/80">
+              <div>Stripe plan: {sPlan.price_nickname || sPlan.product_name || '—'}</div>
+              <div className="text-white/60">Status: {sPlan.status || '—'}</div>
+              <div className="text-white/60">
+                Recurring: {fmtCurrency(sPlan.unit_amount, sPlan.currency) || '—'}{sPlan.interval ? ` / ${sPlan.interval}` : ''}
+              </div>
+            </div>
+          ) : null}
+          {upcomingAmt ? (
+            <div className="mt-2 text-sm text-white/80">
+              <div>Next invoice: {upcomingAmt}{nextWhen ? ` on ${nextWhen}` : ''}</div>
+            </div>
+          ) : null}
           <div className="mt-4 text-sm">Calls: {calls} / {cQuota}</div>
           <BarSvg used={calls} total={cQuota} />
           <div className="mt-3 text-sm">Minutes: {mins} / {mQuota}</div>
           <BarSvg used={mins} total={mQuota} />
-          <div className="mt-4 flex gap-3">
-            <a href="/dashboard/billing" className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">Upgrade</a>
-            <a href="/dashboard/billing" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Change plan</a>
+          <div className="mt-4 flex gap-3 items-center">
+            {/* Opens Stripe Billing Portal (server validates session + keys) */}
+            <ManageBillingButton />
+            <a href="/pricing" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">View pricing</a>
           </div>
         </div>
 
@@ -93,4 +137,3 @@ export default async function BillingPage() {
     </section>
   );
 }
-

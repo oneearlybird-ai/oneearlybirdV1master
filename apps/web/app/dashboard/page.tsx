@@ -43,6 +43,9 @@ export default async function DashboardPage() {
     <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to EarlyBird AI, Alex</h1>
       <p className="mt-2 text-white/70">Your AI receptionist is <span className="text-emerald-400">Active</span> and handling calls. <span className="ml-2"><LiveStatusBadge /></span></p>
+      <div className="mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white/80">
+        Using an existing business number? We can port it for you. <a href="/support/porting" className="underline">Start porting</a>.
+      </div>
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
@@ -52,8 +55,8 @@ export default async function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href="/dashboard/calls" className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">View Calls</a>
-          <a href="/dashboard/integrations" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Integrations</a>
+          <a href="/dashboard/calls" className="btn btn-primary">View Calls</a>
+          <a href="/dashboard/integrations" className="btn btn-outline">Integrations</a>
         </div>
       </div>
 
@@ -64,7 +67,7 @@ export default async function DashboardPage() {
         <Kpi label="After‑hours coverage" value="24/7" />
       </div>
       <div className="mt-3">
-        <a href="/dashboard/billing" className="inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Upgrade plan</a>
+        <a href="/dashboard/billing" className="btn btn-outline">Upgrade plan</a>
       </div>
 
       <ThisWeekPanel week={week} />
@@ -80,15 +83,15 @@ export default async function DashboardPage() {
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 className="font-medium">Get set up</h2>
         <ul className="mt-2 space-y-2 text-sm text-white/80">
-          <li>✅ Connect phone number</li>
+          <li>✅ Connect phone number (or <a className="underline" href="/support/porting">port your number</a>)</li>
           <li>✅ Connect Google Calendar</li>
           <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
           <li>⬜ Customize greeting & FAQs</li>
           <li>⬜ Make a test call</li>
         </ul>
         <div className="mt-3 flex gap-3">
-          <a href="/dashboard/integrations" className="rounded-xl bg-white px-4 py-2 text-black text-sm font-medium hover:bg-white/90">Open Integrations</a>
-          <a href="/dashboard/kb" className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Edit Greeting</a>
+          <a href="/dashboard/integrations" className="btn btn-primary">Open Integrations</a>
+          <a href="/dashboard/kb" className="btn btn-outline">Edit Greeting</a>
         </div>
       </div>
     </section>
@@ -133,4 +136,3 @@ function ThisWeekPanel({ week }: { week: { answered: number; booked: number; def
     </div>
   );
 }
-

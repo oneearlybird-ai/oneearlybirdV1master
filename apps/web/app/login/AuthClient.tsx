@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
@@ -16,6 +16,8 @@ export default function AuthClient({
   const router = useRouter();
   const sp = useSearchParams();
   const [tab, setTab] = useState<"login" | "signup">(initialTab);
+  const loginEmailRef = useRef<HTMLInputElement | null>(null);
+  const signupEmailRef = useRef<HTMLInputElement | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -29,6 +31,11 @@ export default function AuthClient({
     const q = new URLSearchParams(Array.from(sp.entries()));
     if (next === "signup") q.set("tab", "signup"); else q.delete("tab");
     router.replace(`/login${q.toString() ? `?${q.toString()}` : ""}`);
+    // Move focus to the first field of the target panel for better a11y
+    setTimeout(() => {
+      if (next === "login") loginEmailRef.current?.focus();
+      else signupEmailRef.current?.focus();
+    }, 0);
   }
 
   async function onLogin(e: React.FormEvent) {
@@ -57,11 +64,13 @@ export default function AuthClient({
   return (
     <div className="bg-neutral-950 text-white">
       <section className="mx-auto max-w-lg px-6 py-16 md:py-24">
-        <div className="flex gap-1 rounded-2xl border border-white/15 bg-white/5 p-1">
+        <div className="flex gap-1 rounded-2xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Authentication tabs">
           <button
             onClick={() => switchTab("login")}
             className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium ${tab==="login" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"}`}
             aria-selected={tab==="login"}
+            aria-controls="panel-login"
+            id="tab-login"
             role="tab"
           >
             Sign in
@@ -70,14 +79,23 @@ export default function AuthClient({
             onClick={() => switchTab("signup")}
             className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium ${tab==="signup" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"}`}
             aria-selected={tab==="signup"}
+            aria-controls="panel-signup"
+            id="tab-signup"
             role="tab"
           >
             Create account
           </button>
         </div>
 
-        {tab === "login" && (
-          <div className="mt-8">
+        <div
+          id="panel-login"
+          role="tabpanel"
+          aria-labelledby="tab-login"
+          hidden={tab !== "login"}
+          className="mt-8"
+        >
+          {tab === "login" && (
+            <>
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Welcome back</h1>
             <p className="mt-2 text-white/70">Use your email and password, or Google if enabled.</p>
 
@@ -92,6 +110,7 @@ export default function AuthClient({
                 className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 outline-none placeholder-white/40 text-white"
                 autoComplete="email"
                 aria-label="Email"
+                ref={loginEmailRef}
               />
               <input
                 name="password"
@@ -121,11 +140,19 @@ export default function AuthClient({
             )}
 
             {err && <p className="mt-3 text-sm text-red-300">Error: {err}</p>}
-          </div>
-        )}
+            </>
+          )}
+        </div>
 
-        {tab === "signup" && (
-          <div className="mt-8">
+        <div
+          id="panel-signup"
+          role="tabpanel"
+          aria-labelledby="tab-signup"
+          hidden={tab !== "signup"}
+          className="mt-8"
+        >
+          {tab === "signup" && (
+            <>
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Create your account</h1>
             <p className="mt-2 text-white/70">Set your email and password to get started.</p>
 
@@ -138,6 +165,7 @@ export default function AuthClient({
                 className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 outline-none placeholder-white/40 text-white"
                 autoComplete="email"
                 aria-label="Email"
+                ref={signupEmailRef}
               />
               <input
                 name="password"
@@ -172,8 +200,9 @@ export default function AuthClient({
                 <GoogleBtn label="Continue with Google" />
               </div>
             )}
-          </div>
-        )}
+            </>
+          )}
+        </div>
       </section>
     </div>
   );

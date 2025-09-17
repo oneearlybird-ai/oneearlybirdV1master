@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { RecentCallsPreview, SAMPLE_CALLS, type CallItem, CallDrawer } from "@/components/RecentCallsPreview";
 
 export default function CallsPage() {
@@ -13,6 +13,14 @@ export default function CallsPage() {
   const [openId, setOpenId] = useState<string | null>(null);
   const [tab, setTab] = useState<'list'|'analytics'>('list');
   const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
+  const [busy, setBusy] = useState(false);
+  const filterTimer = useRef<number | null>(null);
+
+  const bumpBusy = () => {
+    setBusy(true);
+    if (filterTimer.current) window.clearTimeout(filterTimer.current);
+    filterTimer.current = window.setTimeout(() => setBusy(false), 250);
+  };
 
   const ps = (s:string) => { const [m,sec] = s.split(':').map(Number); return (m||0)*60 + (sec||0); };
   const filtered: CallItem[] = useMemo(() => {
@@ -65,21 +73,36 @@ export default function CallsPage() {
     <section>
       <h1 className="text-xl font-semibold tracking-tight">Calls & recordings</h1>
       <div className="mt-4 flex flex-wrap items-center gap-3">
-        <input type="search" placeholder="Search by caller or outcome" value={query} onChange={(e) => setQuery(e.target.value)} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20" />
-        <select value={outcome} onChange={(e) => setOutcome(e.target.value)} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20">
+        <input
+          type="search"
+          placeholder="Search by caller or outcome"
+          aria-label="Search calls"
+          value={query}
+          onChange={(e) => { setQuery(e.target.value); setPage(1); bumpBusy(); }}
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
+        />
+        <select value={outcome} onChange={(e) => { setOutcome(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20">
           <option value="all">All outcomes</option>
           <option value="appointment">Appointment booked</option>
           <option value="info">Info provided</option>
           <option value="voicemail">Voicemail deflected</option>
         </select>
-        <input type="date" value={start} onChange={(e) => setStart(e.target.value)} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Start date" />
-        <input type="date" value={end} onChange={(e) => setEnd(e.target.value)} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="End date" />
-        <input type="number" placeholder="Min sec" value={minDur} onChange={(e) => setMinDur(e.target.value)} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Min duration (seconds)" />
-        <input type="number" placeholder="Max sec" value={maxDur} onChange={(e) => setMaxDur(e.target.value)} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Max duration (seconds)" />
+        <input type="date" value={start} onChange={(e) => { setStart(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Start date" />
+        <input type="date" value={end} onChange={(e) => { setEnd(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="End date" />
+        <input type="number" placeholder="Min sec" value={minDur} onChange={(e) => { setMinDur(e.target.value); setPage(1); bumpBusy(); }} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Min duration (seconds)" />
+        <input type="number" placeholder="Max sec" value={maxDur} onChange={(e) => { setMaxDur(e.target.value); setPage(1); bumpBusy(); }} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Max duration (seconds)" />
+        <button
+          onClick={() => { setQuery(""); setOutcome("all"); setStart(""); setEnd(""); setMinDur(""); setMaxDur(""); setPage(1); bumpBusy(); }}
+          className="ml-auto rounded-md border border-white/20 px-3 py-2 text-sm text-white/80 hover:text-white"
+        >
+          Clear filters
+        </button>
       </div>
 
-      {/* If no filters applied, reuse the preview list; otherwise show filtered table */}
-      {query === '' && outcome === 'all' && !start && !end && !minDur && !maxDur ? (
+      {/* Loading skeleton during filtering */}
+      {busy ? (
+        <SkeletonCalls />
+      ) : query === '' && outcome === 'all' && !start && !end && !minDur && !maxDur ? (
         <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
@@ -136,7 +159,7 @@ export default function CallsPage() {
         <CallsAnalytics />
       )}
       <div className="mt-3 flex items-center justify-between text-sm text-white/60">
-        <div>
+        <div aria-live="polite">
           Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
         </div>
         <div className="flex items-center gap-2">
@@ -152,6 +175,23 @@ export default function CallsPage() {
 }
 
 
+
+function SkeletonCalls() {
+  return (
+    <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 animate-pulse">
+      <div className="flex items-center justify-between p-4">
+        <div className="h-4 w-24 bg-white/10 rounded" />
+        <div className="h-6 w-32 bg-white/10 rounded" />
+      </div>
+      <div className="px-4 pb-4">
+        <div className="h-5 bg-white/10 rounded mb-3" />
+        {[...Array(6)].map((_, i) => (
+          <div key={i} className="h-10 bg-white/5 rounded mb-2 border border-white/10" />
+        ))}
+      </div>
+    </div>
+  );
+}
 
 function OutcomeBadge({ text }: { text: string }) {
   const t = text.toLowerCase();

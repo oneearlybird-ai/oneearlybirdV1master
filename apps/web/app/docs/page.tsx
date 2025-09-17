@@ -4,31 +4,50 @@ export default function Docs() {
   return (
     <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
       <section className="mx-auto max-w-3xl">
-        <h1 className="text-3xl font-semibold tracking-tight">Developer Docs</h1>
-        <p className="mt-4 text-white/70">
-          API references and integration guides for EarlyBird.
-        </p>
+        <h1 className="text-3xl font-semibold tracking-tight">Documentation</h1>
+        <nav className="mt-3 text-sm text-white/70" aria-label="On this page">
+          <a className="underline mr-3" href="#getting-started">Getting Started</a>
+          <a className="underline mr-3" href="#porting">Porting</a>
+          <a className="underline mr-3" href="#authentication">Authentication</a>
+          <a className="underline" href="#endpoints">Endpoints</a>
+        </nav>
+        <p className="mt-4 text-white/70">Everything you need to launch your AI receptionist with managed telephony.</p>
 
-        <h2 className="mt-10 text-xl font-medium">Getting Started</h2>
+        <h2 id="getting-started" className="mt-10 text-xl font-medium">Getting Started</h2>
+        <ul className="mt-3 list-disc pl-5 text-white/80 space-y-2">
+          <li>
+            Managed Telephony — We provision the phone number(s) for you or help port your existing numbers. No separate
+            Twilio account required.
+          </li>
+          <li>
+            One Invoice — Usage and platform fees are billed together via Stripe. No additional carrier invoices.
+          </li>
+          <li>
+            Configuration — In the dashboard, set business hours, routing preferences, and calendar/CRM connections.
+          </li>
+        </ul>
+
+        <h2 id="porting" className="mt-10 text-xl font-medium">Porting your number</h2>
+        <p className="mt-3 text-white/80">Already have a phone number? We’ll port it for you.</p>
+        <p className="mt-2 text-white/70">Gather your account number, port‑out PIN, service address, and the numbers to move, then <a className="underline" href="/support/porting">start a port request</a>.</p>
+
+        <h2 id="authentication" className="mt-10 text-xl font-medium">Authentication</h2>
         <p className="mt-3 text-white/80">
-          Install the EarlyBird client, set up authentication, and begin routing calls through our API.
+          API requests require an API key (for server-to-server) and standard session auth for the dashboard.
+          Manage credentials in your dashboard.
         </p>
 
-        <h2 className="mt-10 text-xl font-medium">Authentication</h2>
-        <p className="mt-3 text-white/80">
-          All API requests require an API key. You can create and manage keys in the dashboard.
-        </p>
-
-        <h2 className="mt-10 text-xl font-medium">Endpoints</h2>
+        <h2 id="endpoints" className="mt-10 text-xl font-medium">Key Endpoints</h2>
         <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
           <li><code>POST /api/v1/calls</code> — create and route a new call</li>
           <li><code>GET /api/v1/calls/:id</code> — fetch call status and transcript</li>
           <li><code>POST /api/v1/customers</code> — create or update a customer profile</li>
         </ul>
 
-        <h2 className="mt-10 text-xl font-medium">More</h2>
-        <p className="mt-3 text-white/70">
-          Visit our GitHub or contact support@earlybird.ai for advanced use cases and SDKs.
+        <h2 className="mt-10 text-xl font-medium">Support</h2>
+        <p className="mt-3 text-white/80">
+          Need a new number or want to port? Email <a className="underline" href="mailto:support@earlybird.ai">support@earlybird.ai</a> or visit
+          <a className="underline ml-1" href="/support">Support</a>.
         </p>
       </section>
     </main>
