@@ -1,4 +1,5 @@
 export const dynamic = 'force-static';
+import CopyLinkButton from "@/components/CopyLinkButton";
 
 export default function Changelog() {
   return (
@@ -13,8 +14,11 @@ export default function Changelog() {
         </p>
 
         <div className="mt-10 space-y-10">
-          <article>
-            <h2 className="text-xl font-medium">v0.1.4 — Landing & Legal <span className="ml-2 align-middle text-xs rounded-full border border-white/15 bg-white/10 px-1.5 py-0.5 text-white/70">Latest</span></h2>
+          <article id="v0-1-4">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-xl font-medium">v0.1.4 — Landing & Legal <span className="ml-2 align-middle text-xs rounded-full border border-white/15 bg-white/10 px-1.5 py-0.5 text-white/70">Latest</span></h2>
+              <CopyLinkButton anchorId="v0-1-4" />
+            </div>
             <div className="mt-1 text-xs text-white/50">2025-09-16</div>
             <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
               <li>Added Privacy and Terms pages (static, server-safe).</li>
@@ -24,8 +28,11 @@ export default function Changelog() {
             </ul>
           </article>
 
-          <article>
-            <h2 className="text-xl font-medium">v0.1.3 — Navigation polish</h2>
+          <article id="v0-1-3">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-xl font-medium">v0.1.3 — Navigation polish</h2>
+              <CopyLinkButton anchorId="v0-1-3" />
+            </div>
             <div className="mt-1 text-xs text-white/50">2025-09-13</div>
             <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
               <li>Consistent nav links (How it works, Integrations, Pricing, Docs, Support).</li>
@@ -33,8 +40,11 @@ export default function Changelog() {
             </ul>
           </article>
 
-          <article>
-            <h2 className="text-xl font-medium">v0.1.2 — Initial scaffold</h2>
+          <article id="v0-1-2">
+            <div className="flex items-center justify-between gap-2">
+              <h2 className="text-xl font-medium">v0.1.2 — Initial scaffold</h2>
+              <CopyLinkButton anchorId="v0-1-2" />
+            </div>
             <div className="mt-1 text-xs text-white/50">2025-09-10</div>
             <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
               <li>Home page hero, stats, sections (static).</li>
@@ -42,6 +52,7 @@ export default function Changelog() {
             </ul>
           </article>
         </div>
+        <div className="mt-8 text-xs text-white/60"><a className="underline" href="#content">Back to top</a></div>
       </section>
     </main>
   );
