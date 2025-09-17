@@ -84,7 +84,8 @@ export default function PortingFormClient() {
 
         <label className="text-sm">
           <span className="block text-white/70">Numbers to port (one per line, required)</span>
-          <textarea value={numbers} onChange={e=>setNumbers(e.target.value)} className="mt-1 w-full rounded-md border border-white/15 bg-transparent px-3 py-2 text-sm outline-none placeholder-white/40" rows={3} placeholder="+1 555-555-0100\n+1 555-555-0101" required />
+          <textarea value={numbers} onChange={e=>setNumbers(e.target.value)} className="mt-1 w-full rounded-md border border-white/15 bg-transparent px-3 py-2 text-sm outline-none placeholder-white/40" rows={3} placeholder="+15555550100\n+15555550101" required />
+          <span className="mt-1 block text-xs text-white/50">Use E.164 format (e.g., +15555550100). We’ll confirm details before porting.</span>
         </label>
 
         <div className="grid gap-2 sm:grid-cols-2">
@@ -163,6 +164,13 @@ export default function PortingFormClient() {
           <span className="text-xs text-white/50" aria-live="polite">
             {status === 'copied' ? 'Copied to clipboard' : status === 'error' ? 'Copy failed' : 'We’ll reply with a pre‑filled LOA and next steps.'}
           </span>
+          <button
+            type="button"
+            onClick={() => { setOrg(""); setContact(""); setEmail(""); setPhone(""); setNumbers(""); setCarrier(""); setAccount(""); setPin(""); setServiceAddress(""); setDesiredWindow(""); setTimezone(""); setSms(false); setCnam(""); setNotes(""); setStatus(""); }}
+            className="ml-auto inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white"
+          >
+            Reset form
+          </button>
         </div>
       </form>
     </section>
