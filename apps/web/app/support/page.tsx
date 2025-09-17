@@ -20,6 +20,12 @@ export default function SupportPage() {
           <li>All telephony charges are included on your single Stripe invoice.</li>
         </ul>
 
+        <h2 id="porting-status" className="mt-10 text-xl font-medium">Porting status</h2>
+        <p className="mt-3 text-white/70">
+          After you start a port request, we’ll confirm receipt and share an estimated FOC (firm order commit) date/time.
+          You’ll receive email updates at each step. Keep your current service active until the port completes.
+        </p>
+
         <h2 className="mt-10 text-xl font-medium">FAQ</h2>
         <p className="mt-3 text-white/70">
           Common issues and how to fix them are available in our Docs.
