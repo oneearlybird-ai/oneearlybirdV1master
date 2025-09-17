@@ -46,7 +46,8 @@
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0",
     "yaml": "^2.8.1",
-    "husky": "^8.0.0"
+    "husky": "^8.0.0",
+    "eslint-plugin-security": "^3.0.1"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.6",

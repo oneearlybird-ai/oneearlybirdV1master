@@ -33,7 +33,7 @@ export default function SupportDrawer() {
       if (focusables.length === 0) return;
       const active = document.activeElement as HTMLElement | null;
       if (e.shiftKey) {
-        if (active === first || !root.contains(active)) { e.preventDefault(); last?.focus(); }
+        if (active === first || (root?.contains(active) !== true)) { e.preventDefault(); last?.focus(); }
       } else {
         if (active === last) { e.preventDefault(); first?.focus(); }
       }
