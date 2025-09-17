@@ -13,6 +13,18 @@ export default function SupportPage() {
           <li>Docs: <a href="/docs" className="underline">Developer documentation</a></li>
         </ul>
 
+        <h2 className="mt-10 text-xl font-medium">Email templates</h2>
+        <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
+          <li>
+            <a
+              className="underline"
+              href="mailto:support@earlybird.ai?subject=Support%20request&body=Describe%20the%20issue%20you%E2%80%99re%20seeing%3A%0A%0AExpected%20result%3A%0AActual%20result%3A%0A%0AOrg%20name%3A%0APhone%20number%20(porting%20only)%3A%0A"
+            >
+              General support request (prefilled email)
+            </a>
+          </li>
+        </ul>
+
         <h2 id="telephony" className="mt-10 text-xl font-medium">Telephony</h2>
         <p className="mt-3 text-white/70">We provide managed telephony. No separate carrier account is needed.</p>
         <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
