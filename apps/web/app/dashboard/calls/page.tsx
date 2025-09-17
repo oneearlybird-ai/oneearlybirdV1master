@@ -169,6 +169,14 @@ export default function CallsPage() {
           Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
         </div>
         <div className="flex items-center gap-2">
+          <label className="hidden md:flex items-center gap-2">
+            <span>Rows per page</span>
+            <select disabled className="rounded border border-white/20 bg-white/5 px-2 py-1 text-white/60 cursor-not-allowed" aria-disabled="true" aria-label="Rows per page (coming soon)">
+              <option>10</option>
+              <option>25</option>
+              <option>50</option>
+            </select>
+          </label>
           <button onClick={() => setReviewed(r => ({...r, ...Object.fromEntries(pageRows.map(c=>[c.id,true]))}))} className="rounded border border-white/20 px-2 py-1">Mark all reviewed</button>
           <button disabled={page<=1} onClick={() => setPage(p => Math.max(1, p-1))} className="rounded border border-white/20 px-2 py-1 disabled:opacity-50">Prev</button>
           <span>Page {page} / {pageCount}</span>

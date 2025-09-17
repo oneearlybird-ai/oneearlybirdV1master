@@ -44,6 +44,7 @@ function Tier({
       <Link
         href={ctaHref}
         className="mt-6 inline-block rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 text-center"
+        aria-label={`Get started with the ${name} plan`}
       >
         Get started
       </Link>
