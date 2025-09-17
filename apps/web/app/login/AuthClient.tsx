@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
+import Link from "next/link";
 
 type Providers = Record<string, { id: string; name: string }>;
 
@@ -138,6 +139,11 @@ export default function AuthClient({
                 <GoogleBtn label="Continue with Google" />
               </div>
             )}
+
+            <div className="mt-3 text-xs text-white/60">
+              <span>Forgot your password? </span>
+              <Link href="/support" className="underline">Contact support</Link>
+            </div>
 
             {err && <p className="mt-3 text-sm text-red-300">Error: {err}</p>}
             </>
