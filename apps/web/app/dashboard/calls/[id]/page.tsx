@@ -33,7 +33,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
           </div>
           <div className="mt-3">
             <div className="font-medium">Transcript (preview)</div>
-            <ul className="mt-2 space-y-1 text-sm text-white/70">
+            <ul className="mt-2 space-y-1 text-sm text-white/70" aria-label="Transcript preview">
               {call.transcript.map((line, i) => (
                 <li key={i}>• {line}</li>
               ))}
@@ -48,6 +48,11 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
             <li>When: {new Date(call.ts).toLocaleString()}</li>
             <li>Duration: {call.duration}</li>
           </ul>
+          <div className="mt-3">
+            <button disabled className="rounded border border-white/20 px-3 py-1 text-xs text-white/60 cursor-not-allowed" aria-disabled>
+              Download audio (soon)
+            </button>
+          </div>
         </div>
       </div>
     </section>
