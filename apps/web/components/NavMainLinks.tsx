@@ -14,6 +14,7 @@ const LINKS = [
 
 export default function NavMainLinks() {
   const pathname = usePathname() || "/";
+  if (pathname.startsWith('/dashboard')) return null;
   return (
     <div className="hidden md:flex items-center gap-6 text-sm">
       {LINKS.map((l) => {
