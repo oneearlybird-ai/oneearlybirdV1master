@@ -176,6 +176,15 @@ export default function Home() {
         </div>
       </Section>
 
+      {/* Security & Compliance */}
+      <Section title="Security & Compliance">
+        <div className="grid gap-4 md:grid-cols-3">
+          <Feature icon={<LockIcon />} title="Strict CSP & HSTS" text="Per‑request nonces, no inline/eval; HTTPS enforced with preload." />
+          <Feature icon={<LockIcon />} title="Signed Webhooks" text="Twilio/Stripe/ElevenLabs events validated with HMAC; no PHI in logs." />
+          <Feature icon={<LockIcon />} title="Least Privilege" text="Short‑lived presigned URLs; rate limits and deny‑by‑default routes." />
+        </div>
+      </Section>
+
       {/* CTA */}
       <Section>
         <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-white/5 to-white/10 p-8 text-center">
