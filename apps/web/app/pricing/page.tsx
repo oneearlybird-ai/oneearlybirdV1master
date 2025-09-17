@@ -21,6 +21,7 @@ function Tier({
   features: string[];
   popular?: boolean;
 }) {
+  const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-');
   return (
     <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 flex flex-col ${popular ? "outline outline-1 outline-white/20" : ""}`}>
       <div className="flex items-center justify-between">
@@ -41,10 +42,12 @@ function Tier({
           </li>
         ))}
       </ul>
+      <p id={`tier-desc-${slug}`} className="sr-only">Managed telephony included; one invoice via Stripe.</p>
       <Link
         href={ctaHref}
         className="mt-6 inline-block rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 text-center"
         aria-label={`Get started with the ${name} plan`}
+        aria-describedby={`tier-desc-${slug}`}
       >
         Get started
       </Link>

@@ -40,13 +40,17 @@ export default async function DashboardPage() {
   const minutes = demo?.minutes ?? 600;
   const minutesQuota = demo?.quota?.minutes ?? 1000;
   const week = demo?.week ?? { answered: 58, booked: 12, deflected: 9, avgDuration: '3m 12s' };
+  const now = new Date();
+  const when = now.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' } as Intl.DateTimeFormatOptions);
 
   return (
     <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to EarlyBird AI, Alex</h1>
       <p className="mt-2 text-white/70">Your AI receptionist is <span className="text-emerald-400">Active</span> and handling calls. <span className="ml-2"><LiveStatusBadge /></span></p>
-      <div className="mt-1 text-xs text-white/60">
-        What’s new: <a className="underline" href="/changelog">See latest updates</a>
+      <div className="mt-1 text-xs text-white/60 flex items-center gap-3">
+        <span>{when}</span>
+        <span>•</span>
+        <span>What’s new: <a className="underline" href="/changelog">See latest updates</a></span>
       </div>
       <PortingBanner />
       <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-between">
