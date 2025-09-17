@@ -72,6 +72,15 @@ export default async function DashboardPage() {
 
       <ThisWeekPanel week={week} />
 
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <h2 className="font-medium">Quick links</h2>
+        <div className="mt-3 flex flex-wrap gap-3 text-sm">
+          <a href="/docs" className="btn btn-outline">Docs</a>
+          <a href="/support" className="btn btn-outline">Support</a>
+          <a href="/dashboard/billing" className="btn btn-outline">Billing</a>
+        </div>
+      </div>
+
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
