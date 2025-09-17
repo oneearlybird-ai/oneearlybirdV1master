@@ -24,9 +24,8 @@ export default function PortingFormClient() {
     return !org.trim() || !contact.trim() || !email.trim() || !numbers.trim();
   }, [org, contact, email, numbers]);
 
-  const mailto = useMemo(() => {
-    const subject = encodeURIComponent("Port my number to EarlyBird");
-    const bodyLines = [
+  const lines = useMemo(() => {
+    return [
       `Organization: ${org}`,
       `Contact: ${contact}`,
       `Email: ${email}`,
@@ -44,10 +43,16 @@ export default function PortingFormClient() {
       desiredWindow ? `Desired port window: ${desiredWindow}` : null,
       timezone ? `Timezone: ${timezone}` : null,
       notes ? `Notes: ${notes}` : null,
-    ].filter(Boolean);
-    const body = encodeURIComponent(bodyLines.join("\n"));
-    return `mailto:support@earlybird.ai?subject=${subject}&body=${body}`;
+    ].filter(Boolean) as string[];
   }, [org, contact, email, phone, numbers, carrier, account, pin, serviceAddress, desiredWindow, timezone, sms, cnam, notes]);
+
+  const mailto = useMemo(() => {
+    const subject = encodeURIComponent("Port my number to EarlyBird");
+    const body = encodeURIComponent(lines.join("\n"));
+    return `mailto:support@earlybird.ai?subject=${subject}&body=${body}`;
+  }, [lines]);
+
+  const [status, setStatus] = useState<"" | "copied" | "error">("");
 
   return (
     <section id="request" className="mt-10">
@@ -139,10 +144,27 @@ export default function PortingFormClient() {
           >
             Open email draft
           </a>
-          <span className="text-xs text-white/50">We’ll reply with a pre‑filled LOA and next steps.</span>
+          <button
+            type="button"
+            onClick={async () => {
+              try {
+                await navigator.clipboard.writeText(lines.join("\n"));
+                setStatus("copied");
+                setTimeout(() => setStatus(""), 1500);
+              } catch {
+                setStatus("error");
+                setTimeout(() => setStatus(""), 2000);
+              }
+            }}
+            className="inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white"
+          >
+            Copy details
+          </button>
+          <span className="text-xs text-white/50" aria-live="polite">
+            {status === 'copied' ? 'Copied to clipboard' : status === 'error' ? 'Copy failed' : 'We’ll reply with a pre‑filled LOA and next steps.'}
+          </span>
         </div>
       </form>
     </section>
   );
 }
-
