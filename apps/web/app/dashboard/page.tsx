@@ -55,8 +55,8 @@ export default async function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href="/dashboard/calls" className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">View Calls</a>
-          <a href="/dashboard/integrations" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Integrations</a>
+          <a href="/dashboard/calls" className="btn btn-primary">View Calls</a>
+          <a href="/dashboard/integrations" className="btn btn-outline">Integrations</a>
         </div>
       </div>
 
@@ -67,7 +67,7 @@ export default async function DashboardPage() {
         <Kpi label="After‑hours coverage" value="24/7" />
       </div>
       <div className="mt-3">
-        <a href="/dashboard/billing" className="inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Upgrade plan</a>
+        <a href="/dashboard/billing" className="btn btn-outline">Upgrade plan</a>
       </div>
 
       <ThisWeekPanel week={week} />
@@ -90,8 +90,8 @@ export default async function DashboardPage() {
           <li>⬜ Make a test call</li>
         </ul>
         <div className="mt-3 flex gap-3">
-          <a href="/dashboard/integrations" className="rounded-xl bg-white px-4 py-2 text-black text-sm font-medium hover:bg-white/90">Open Integrations</a>
-          <a href="/dashboard/kb" className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Edit Greeting</a>
+          <a href="/dashboard/integrations" className="btn btn-primary">Open Integrations</a>
+          <a href="/dashboard/kb" className="btn btn-outline">Edit Greeting</a>
         </div>
       </div>
     </section>
