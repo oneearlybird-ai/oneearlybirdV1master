@@ -43,6 +43,16 @@ export default function ROI() {
           </ul>
         </section>
       </section>
+
+      <section className="mx-auto max-w-6xl px-6 pb-16">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+          <h2 className="text-lg font-medium">Questions about ROI or pricing?</h2>
+          <div className="mt-3 flex justify-center gap-3">
+            <a href="/support" className="btn btn-outline">Talk to us</a>
+            <a href="mailto:support@earlybird.ai" className="btn btn-primary">Email support</a>
+          </div>
+        </div>
+      </section>
     </main>
   );
 }

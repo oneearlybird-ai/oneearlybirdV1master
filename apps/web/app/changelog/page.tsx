@@ -5,13 +5,16 @@ export default function Changelog() {
     <main className="min-h-dvh bg-neutral-950 text-white px-6 py-16">
       <section className="mx-auto max-w-3xl">
         <h1 className="text-3xl font-semibold tracking-tight">Changelog</h1>
+        <div className="mt-2 text-sm text-white/70">
+          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2.5 py-0.5">What’s new</span>
+        </div>
         <p className="mt-4 text-white/70">
           Shipping notes and improvements to EarlyBird.
         </p>
 
         <div className="mt-10 space-y-10">
           <article>
-            <h2 className="text-xl font-medium">v0.1.4 — Landing & Legal</h2>
+            <h2 className="text-xl font-medium">v0.1.4 — Landing & Legal <span className="ml-2 align-middle text-xs rounded-full border border-white/15 bg-white/10 px-1.5 py-0.5 text-white/70">Latest</span></h2>
             <ul className="mt-3 list-disc pl-5 text-white/80 space-y-1">
               <li>Added Privacy and Terms pages (static, server-safe).</li>
               <li>Docs, Support, ROI content pages.</li>

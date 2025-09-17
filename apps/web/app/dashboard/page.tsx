@@ -78,6 +78,7 @@ export default async function DashboardPage() {
           <a href="/docs" className="btn btn-outline">Docs</a>
           <a href="/support" className="btn btn-outline">Support</a>
           <a href="/dashboard/billing" className="btn btn-outline">Billing</a>
+          <a href="/changelog" className="btn btn-outline">Changelog</a>
         </div>
       </div>
 

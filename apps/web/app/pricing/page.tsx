@@ -115,6 +115,14 @@ export default function Page() {
           </p>
         </div>
 
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6 text-center">
+          <h2 className="text-lg font-medium">Need help choosing a plan?</h2>
+          <div className="mt-3 flex justify-center gap-3">
+            <a href="/support" className="btn btn-outline">Talk to us</a>
+            <a href="mailto:support@earlybird.ai" className="btn btn-primary">Email support</a>
+          </div>
+        </div>
+
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-6">
           <h2 className="text-lg font-medium">FAQ</h2>
           <dl className="mt-3 space-y-3 text-sm text-white/80">
