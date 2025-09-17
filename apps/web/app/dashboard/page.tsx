@@ -81,6 +81,24 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <h2 className="font-medium">Recent activity</h2>
+        <ul className="mt-2 text-sm text-white/80 space-y-2" aria-label="Recent activity">
+          <li className="flex items-center justify-between">
+            <span>Porting request received</span>
+            <span className="text-white/50">Today 10:14</span>
+          </li>
+          <li className="flex items-center justify-between">
+            <span>Billing portal opened</span>
+            <span className="text-white/50">Today 09:01</span>
+          </li>
+          <li className="flex items-center justify-between">
+            <span>Call logged: new lead</span>
+            <span className="text-white/50">Yesterday 5:23 PM</span>
+          </li>
+        </ul>
+      </div>
+
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
