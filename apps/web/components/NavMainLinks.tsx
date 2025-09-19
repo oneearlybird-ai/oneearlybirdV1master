@@ -26,7 +26,7 @@ export default function NavMainLinks() {
             key={href}
             href={href}
             aria-current={current ? "page" : undefined}
-            className={`text-white/80 hover:text-white${current ? " underline" : ""}`}
+            className={`main-link${current ? " underline" : ""}`}
           >
             {l.label}
           </Link>

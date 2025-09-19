@@ -134,6 +134,28 @@ section[id] { scroll-margin-top: var(--eb-header-h); }
 .btn-outline { border: 1px solid rgba(255,255,255,0.2); color: rgba(255,255,255,0.8); }
 .btn-outline:hover { color: #ffffff; }
 .btn-outline:focus-visible { outline: 2px solid rgba(255,255,255,0.75); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(255,255,255,0.12); }
+/* Subtle lift on hover for CTAs; respects reduced motion */
+.btn { transition: transform 150ms ease, background-color 150ms ease, color 150ms ease, border-color 150ms ease; will-change: transform; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0); }
+@media (prefers-reduced-motion: reduce) {
+  .btn { transition: none; }
+  .btn:hover, .btn:active { transform: none; }
+}
+
+/* Header nav links: slight contrast bump + focus ring */
+#eb-header a.main-link { color: rgba(255,255,255,0.85); text-decoration: none; border-radius: 8px; padding: 2px 4px; }
+#eb-header a.main-link:hover { color: #ffffff; }
+#eb-header a.main-link:focus-visible { outline: 2px solid rgba(255,255,255,0.85); outline-offset: 2px; box-shadow: 0 0 0 4px rgba(255,255,255,0.12); }
+
+/* Focus ring for clickable table rows in previews */
+.table-row-btn:focus-visible { outline: 2px solid rgba(255,255,255,0.6); outline-offset: 2px; border-radius: 10px; }
+
+/* Micro skeleton shimmer */
+@keyframes eb-shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
+.skeleton { position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.06) 63%); background-size: 200% 100%; animation: eb-shimmer 1.2s infinite linear; }
+.skeleton-line { height: 0.8rem; border-radius: 6px; }
+.skeleton-badge { height: 1.2rem; width: 6rem; border-radius: 9999px; }
 
 /* Hero waveform background */
 @keyframes eb-dash {

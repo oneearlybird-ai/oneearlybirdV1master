@@ -115,6 +115,11 @@ export function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => v
 
 export function RecentCallsPreview() {
   const [openId, setOpenId] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    const t = setTimeout(() => setLoading(false), 360);
+    return () => clearTimeout(t);
+  }, []);
   const openCall = SAMPLE_CALLS.find(c => c.id === openId) || null;
   return (
     <div className="px-4 pb-4">
@@ -124,10 +129,21 @@ export function RecentCallsPreview() {
         <div>Duration</div>
         <div>Outcome</div>
       </div>
-      {SAMPLE_CALLS.map((call) => (
+      {loading ? (
+        <div className="mt-2 space-y-2" aria-hidden>
+          {Array.from({ length: 3 }).map((_, i) => (
+            <div key={i} className="grid grid-cols-4 items-center gap-3 py-3">
+              <div className="skeleton skeleton-line w-24" />
+              <div className="skeleton skeleton-line w-36" />
+              <div className="skeleton skeleton-line w-16" />
+              <div className="skeleton skeleton-badge" />
+            </div>
+          ))}
+        </div>
+      ) : SAMPLE_CALLS.map((call) => (
         <button
           key={call.id}
-          className="grid w-full grid-cols-4 items-center gap-3 py-3 text-left hover:bg-white/[0.03] motion-safe:transition-colors"
+          className="table-row-btn grid w-full grid-cols-4 items-center gap-3 py-3 text-left hover:bg-white/[0.03] motion-safe:transition-colors"
           onClick={() => setOpenId(call.id)}
           aria-haspopup="dialog"
           aria-controls="call-details-title"
