@@ -9,6 +9,7 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 import ScrollHeaderElevator from "@/components/ScrollHeaderElevator";
 import BackToTop from "@/components/BackToTop";
 import NavMainLinks from "@/components/NavMainLinks";
+import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -65,6 +66,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </div>
           </div>
         </footer>
+        {/* Vercel Analytics */}
+        <Analytics />
       </body>
     </html>
   );
