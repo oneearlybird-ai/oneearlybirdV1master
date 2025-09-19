@@ -1,4 +1,5 @@
 import "./globals.css";
+import { MicrochipCornerOverlay } from "@/components/MicrochipCornerOverlay";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import Link from "next/link";
@@ -47,6 +48,9 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             </div>
           </nav>
         </header>
+
+        {/* Fixed microchip overlay (top-right, non-interactive) */}
+        <MicrochipCornerOverlay />
 
         {/* Main content */}
         <main id="content" className="flex-1">{children}</main>
