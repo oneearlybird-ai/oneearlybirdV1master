@@ -93,6 +93,12 @@ export default async function DashboardPage() {
           <CopyDiagnostics />
           <CopyOrgIdButton />
           <a href="/changelog" className="btn btn-outline">Changelog</a>
+          <a
+            href="mailto:support@earlybird.ai?subject=Report%20issue&body=Describe%20the%20issue%20you%E2%80%99re%20seeing%3A%0A%0AExpected%20result%3A%0AActual%20result%3A%0A%0AURL%3A%20%28paste%29%0A"
+            className="btn btn-outline"
+          >
+            Report issue
+          </a>
         </div>
       </div>
 

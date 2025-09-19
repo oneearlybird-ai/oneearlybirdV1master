@@ -66,6 +66,11 @@ function Tier({
         <summary className="cursor-pointer select-none">Plan details (coming soon)</summary>
         <div className="mt-2 text-white/60">
           More billing and usage controls will appear here, including minute bundles and overage pricing.
+          <ul className="mt-2 list-disc pl-5 space-y-1">
+            <li>Monthly billing; usage billed per minute with transparent margins.</li>
+            <li>Cancel anytime; no long‑term contracts.</li>
+            <li>Managed telephony included — one invoice via Stripe.</li>
+          </ul>
         </div>
       </details>
       <p id={`tier-desc-${slug}`} className="sr-only">Managed telephony included; one invoice via Stripe.</p>

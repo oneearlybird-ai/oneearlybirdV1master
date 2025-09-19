@@ -12,6 +12,17 @@ export default function Changelog() {
         <p className="mt-4 text-white/70">
           Shipping notes and improvements to EarlyBird.
         </p>
+        <div className="mt-4 flex items-center gap-2 text-sm text-white/70">
+          <label className="flex items-center gap-2">
+            <span>Filter</span>
+            <select disabled className="rounded border border-white/20 bg-white/5 px-2 py-1 text-white/60 cursor-not-allowed" aria-disabled="true" aria-label="Filter by category (coming soon)">
+              <option>All</option>
+              <option>UX</option>
+              <option>Docs</option>
+              <option>Billing</option>
+            </select>
+          </label>
+        </div>
 
         <div className="mt-10 space-y-10">
           <article id="v0-1-4">
