@@ -1,9 +1,9 @@
 export const dynamic = 'force-dynamic';
 import Link from 'next/link';
-import nextDynamic from 'next/dynamic';
+import dynamic from 'next/dynamic';
 import { Marquee } from '@/components/Marquee';
-const CircuitBoardBackground = nextDynamic(
-  () => import('../components/circuit-board-background').then((m) => m.CircuitBoardBackground),
+const CircuitBoardBackground = dynamic(
+  () => import('../components/circuit-board-background').then(m => m.CircuitBoardBackground),
   { ssr: false }
 );
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
@@ -26,6 +26,7 @@ function Card({ children, className = '' }: { children: React.ReactNode; classNa
   );
 }
 
+<<<<<<< HEAD
 function Benefit({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
   return (
     <Card>
@@ -211,9 +212,61 @@ export default function Home() {
         	<Card><div className="font-medium">Enterprise</div><p className="mt-1 text-sm text-white/70">Custom solution — let’s talk.</p></Card>
         </div>
         <div className="mt-6">
-      <Link href="/pricing" className="btn btn-outline">View detailed pricing</Link>
+          <Link href="/pricing" className="btn btn-outline">View detailed pricing</Link>
         </div>
       </Section>
     </main>
   );
 }
+=======
+import dynamic from "next/dynamic";
+const CircuitBoardBackground = dynamic(
+  () => import("../components/circuit-board-background").then(m => m.CircuitBoardBackground),
+  { ssr: false }
+);
+
+export default function HomePage() {
+  return (
+    <>
+      <CircuitBoardBackground />
+      <section className="hero">
+        <div className="container hero-inner">
+          <span className="eyebrow">AI voice for appointment-heavy teams</span>
+          <h1 className="headline">
+            <Words parts={["Answer", "every", "call."]} />{' '}
+            <br />
+            <Words parts={["Book", "more", "appointments."]} />
+          </h1>
+          <p className="subhead">
+            EarlyBird picks up immediately, qualifies, and books — so you never lose a
+            lead again. Secure by default, integrates with your tools.
+          </p>
+          <div className="hero-cta" id="cta">
+            <a className="btn btn-primary" href="/signup">Start free</a>
+            <a className="btn btn-ghost" href="#integrations">See integrations</a>
+          </div>
+        </div>
+      </section>
+
+      <section className="section" id="integrations">
+        <div className="container">
+          <h2 className="section-title">Integrations</h2>
+          <div className="logos">
+            <IntegrationLogo src="/logos/google-calendar.svg" alt="Google Calendar" />
+            <IntegrationLogo src="/logos/microsoft-365.svg" alt="Microsoft 365" />
+            <IntegrationLogo src="/logos/slack.svg" alt="Slack" />
+            <IntegrationLogo src="/logos/hubspot.svg" alt="HubSpot" />
+            <IntegrationLogo src="/logos/salesforce.svg" alt="Salesforce" />
+            <IntegrationLogo src="/logos/stripe.svg" alt="Stripe" />
+            <IntegrationLogo src="/logos/postmark.svg" alt="Postmark" />
+            <IntegrationLogo src="/logos/twilio.svg" alt="Twilio" />
+            <IntegrationLogo src="/logos/plivo.svg" alt="Plivo" />
+            <IntegrationLogo src="/logos/vonage.svg" alt="Vonage" />
+            <IntegrationLogo src="/logos/zapier.svg" alt="Zapier" />
+          </div>
+        </div>
+      </section>
+    </>
+  );
+}
+>>>>>>> 618c727 (feat(web): three.js circuit board background with scroll-linked light\n\n- Client-only dynamic import to avoid SSR issues\n- Full-screen non-interactive canvas, matte PCB, copper traces\n- Pulsing chip glow + traveling light mapped to scroll (GSAP)\n- Resize handling and cleanup; docs added with implementation notes)
