@@ -11,7 +11,6 @@ export default function EarlyBirdMark({ className = 'inline-block h-[1em] w-auto
       className={className}
       alt=""
       aria-hidden="true"
-      style={{ display: 'inline-block' }}
     />
   )
 }
