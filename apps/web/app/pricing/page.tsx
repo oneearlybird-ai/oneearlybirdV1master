@@ -29,6 +29,11 @@ function Tier({
     if (s.includes('crm')) return 'Works with HubSpot and Salesforce.';
     if (s.includes('analytics')) return 'Enhanced usage insights and summaries.';
     if (s.includes('priority routing')) return 'Lower latency routes during peak times.';
+    if (s.includes('email summaries')) return 'Daily or per‑call email summaries (no PHI).';
+    if (s.includes('sla') || s.includes('sso')) return 'Enterprise: SLA commitments and single sign‑on.';
+    if (s.includes('dedicated support')) return 'Priority support with faster response times.';
+    if (s.includes('custom integrations')) return 'We can integrate with tools beyond listed providers.';
+    if (s.includes('dpa') || s.includes('soc 2')) return 'Enterprise data processing addendum and SOC 2 readiness.';
     return null;
   }
   return (
