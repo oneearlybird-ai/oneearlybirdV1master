@@ -19,3 +19,4 @@ export async function GET(request: Request) {
 
   return new NextResponse(JSON.stringify({ ok: true }), { status: 200, headers });
 }
+export const dynamic = 'force-dynamic';
