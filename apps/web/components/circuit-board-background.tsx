@@ -169,9 +169,9 @@ export function CircuitBoardBackground() {
     makeBranch(new THREE.Vector3(0, -36, 0), [new THREE.Vector3(12, -40, 0), new THREE.Vector3(18, -48, 0)]);
 
     // Traveling light + small sphere for visibility
-    const travelLight = new THREE.PointLight(0x00ffff, 1.8, 22, 2.0);
+    const travelLight = new THREE.PointLight(0x00ffff, 2.4, 30, 2.0);
     const sphere = new THREE.Mesh(
-      new THREE.SphereGeometry(0.8, 12, 12),
+      new THREE.SphereGeometry(1.2, 16, 16),
       new THREE.MeshBasicMaterial({ color: 0x00ffff })
     );
     travelLight.add(sphere);
@@ -185,6 +185,7 @@ export function CircuitBoardBackground() {
     // Animation state
     let rafId = 0;
     let start = performance.now();
+    let scrollProgress = 0; // 0..1 mapped to mainCurve
 
     // ScrollTrigger: single master mapping page scroll to path progress
     const body = document.scrollingElement || document.documentElement;
@@ -194,11 +195,12 @@ export function CircuitBoardBackground() {
       end: () => Math.max(2000, body.scrollHeight - window.innerHeight) + "px",
       scrub: true,
       onUpdate: (self: any) => {
-        const t = THREE.MathUtils.clamp(self.progress, 0, 1);
-        const pos = mainCurve.getPointAt(t);
-        travelLight.position.copy(pos);
+        scrollProgress = THREE.MathUtils.clamp(self.progress, 0, 1);
       },
     });
+    // Ensure initial measurements after content loads
+    ScrollTrigger.refresh();
+    window.addEventListener('load', () => ScrollTrigger.refresh());
 
     // Resize handling
     const onResize = () => {
@@ -222,6 +224,15 @@ export function CircuitBoardBackground() {
       const tmp = new THREE.Color().setHSL(hue, 0.7, 0.6);
       chipLight.color.copy(tmp);
       chipLight.intensity = 0.8 + 0.4 * Math.sin(t * 1.2);
+
+      // Fallback mapping in case ScrollTrigger is unavailable or not updating
+      if (!scrollProgress || Number.isNaN(scrollProgress)) {
+        const docH = Math.max(document.body.scrollHeight, document.documentElement.scrollHeight);
+        const denom = Math.max(1, docH - window.innerHeight);
+        scrollProgress = THREE.MathUtils.clamp(window.scrollY / denom, 0, 1);
+      }
+      const pos = mainCurve.getPointAt(scrollProgress);
+      travelLight.position.copy(pos);
 
       renderer.render(scene, camera);
       rafId = requestAnimationFrame(tick);
