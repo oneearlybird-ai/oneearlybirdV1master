@@ -61,6 +61,13 @@ function Tier({
           );
         })}
       </ul>
+
+      <details className="mt-4 text-sm text-white/80">
+        <summary className="cursor-pointer select-none">Plan details (coming soon)</summary>
+        <div className="mt-2 text-white/60">
+          More billing and usage controls will appear here, including minute bundles and overage pricing.
+        </div>
+      </details>
       <p id={`tier-desc-${slug}`} className="sr-only">Managed telephony included; one invoice via Stripe.</p>
       <Link
         href={ctaHref}
