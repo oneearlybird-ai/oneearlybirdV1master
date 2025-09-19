@@ -19,12 +19,8 @@ export default function Hero() {
             delivers transcripts, analytics, and clean billing.
           </p>
           <div className="mt-8 flex gap-3">
-            <a className="inline-flex items-center rounded-lg bg-[#0B5FFF] px-5 py-3 text-white hover:bg-[#0847BF] focus:outline-none focus:ring-4 focus:ring-blue-200">
-              Start free
-            </a>
-            <a className="inline-flex items-center rounded-lg border px-5 py-3 hover:bg-gray-50">
-              Book a demo
-            </a>
+            <a href="/signup" className="btn btn-primary">Start free</a>
+            <a href="/signup" className="btn btn-outline">Book a demo</a>
           </div>
           <div className="mt-8 flex items-center gap-6 opacity-80">
             <Image src="/logo-lockup-supercrisp-clean.png" alt="EarlyBird" width={140} height={42} />

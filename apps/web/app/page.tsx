@@ -43,14 +43,14 @@ function Step({ icon, title, text }: { icon: React.ReactNode; title: string; tex
   );
 }
 
-function Feature({ icon, title, text }: { icon: React.ReactNode; title: string; text: string }) {
+function Feature({ icon, title, text, mutedClassName }: { icon: React.ReactNode; title: string; text: string; mutedClassName?: string }) {
   return (
     <Card>
       <div className="flex items-center gap-3">
         <div className="text-amber-400" aria-hidden>{icon}</div>
         <div className="font-medium">{title}</div>
       </div>
-      <p className="mt-2 text-sm text-white/70">{text}</p>
+      <p className={`mt-2 text-sm ${mutedClassName || 'text-white/70'}`}>{text}</p>
     </Card>
   );
 }
@@ -59,7 +59,7 @@ function LogoBadge({ id, label }: { id: string; label: string }) {
   const colored = new Set(['google-workspace','google-calendar','aws']);
   const masked = new Set(['hubspot','salesforce','zoho','twilio','slack','stripe','signalwire','outlook','microsoft-365','zapier']);
   return (
-    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 flex items-center justify-center flex-shrink-0 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
+    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center flex-shrink-0 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
       {colored.has(id) ? (
         <img src={`/logos/${id}.svg`} alt={label} className="block max-h-6 max-w-full object-contain" />
       ) : masked.has(id) ? (
@@ -179,9 +179,9 @@ export default function Home() {
       {/* Security & Compliance */}
       <Section title="Security & Compliance">
         <div className="grid gap-4 md:grid-cols-3">
-          <Feature icon={<LockIcon />} title="Strict CSP & HSTS" text="Per‑request nonces, no inline/eval; HTTPS enforced with preload." />
-          <Feature icon={<LockIcon />} title="Signed Webhooks" text="Twilio/Stripe/ElevenLabs events validated with HMAC; no PHI in logs." />
-          <Feature icon={<LockIcon />} title="Least Privilege" text="Short‑lived presigned URLs; rate limits and deny‑by‑default routes." />
+          <Feature icon={<LockIcon />} title="Strict CSP & HSTS" text="Per‑request nonces, no inline/eval; HTTPS enforced with preload." mutedClassName="text-white/80" />
+          <Feature icon={<LockIcon />} title="Signed Webhooks" text="Twilio/Stripe/ElevenLabs events validated with HMAC; no PHI in logs." mutedClassName="text-white/80" />
+          <Feature icon={<LockIcon />} title="Least Privilege" text="Short‑lived presigned URLs; rate limits and deny‑by‑default routes." mutedClassName="text-white/80" />
         </div>
       </Section>
 

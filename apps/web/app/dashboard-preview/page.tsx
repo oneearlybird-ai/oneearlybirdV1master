@@ -62,8 +62,8 @@ export default async function DashboardPreview() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <a href="/dashboard-preview/calls" className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">View Calls</a>
-          <a href="/dashboard-preview/integrations" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">Integrations</a>
+          <a href="/dashboard-preview/calls" className="btn btn-primary">View Calls</a>
+          <a href="/dashboard-preview/integrations" className="btn btn-outline">Integrations</a>
         </div>
       </div>
 

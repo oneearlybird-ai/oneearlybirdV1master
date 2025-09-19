@@ -157,6 +157,9 @@ section[id] { scroll-margin-top: var(--eb-header-h); }
 .skeleton-line { height: 0.8rem; border-radius: 6px; }
 .skeleton-badge { height: 1.2rem; width: 6rem; border-radius: 9999px; }
 
+/* Footer links focus-visible */
+footer a:focus-visible { outline: 2px solid rgba(255,255,255,0.75); outline-offset: 2px; border-radius: 8px; box-shadow: 0 0 0 4px rgba(255,255,255,0.12); }
+
 /* Hero waveform background */
 @keyframes eb-dash {
   from { stroke-dashoffset: 1200 }
