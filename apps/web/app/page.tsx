@@ -3,7 +3,7 @@ import Link from 'next/link';
 import { Marquee } from '@/components/Marquee';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
-import { SectionCircuitBoard } from '@/components/SectionCircuitBoard';
+import { HeroHaloBlock } from '@/components/HeroHaloBlock';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
@@ -78,7 +78,7 @@ export default function Home() {
     <main className="min-h-dvh bg-neutral-950 text-white">
       {/* Hero with wave background and timed word fade-in */}
       <Section>
-        <div className="relative">
+        <div className="relative h-[420px]">
           <div className="absolute inset-0 -z-10 eb-hero-wave pointer-events-none">
             <svg viewBox="0 0 1200 400" className="h-[420px] w-full" aria-hidden>
               <defs>
@@ -91,27 +91,28 @@ export default function Home() {
               <path className="eb-wave-path" stroke="url(#ebWaveGrad)" strokeWidth="2" fill="none" d="M0,240 C120,180 240,300 360,240 C480,180 600,300 720,240 C840,180 960,300 1080,240 C1140,210 1200,240 1200,240"/>
             </svg>
           </div>
-          {/* Circuit overlay on the same layer as the hero's black background */}
-          <SectionCircuitBoard />
+          {/* wave only */}
         </div>
         <div className="mb-6">
           <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">🚀 AI Voice Receptionist for business phone calls</span>
         </div>
-        <h1 className="eb-hero-title text-4xl md:text-6xl font-semibold tracking-tight">
-          <span className="eb-fade-word eb-delay-1000">Answer</span>{' '}
-          <span className="eb-fade-word eb-delay-2500">every</span>{' '}
-          <span className="eb-fade-word eb-delay-4000">call.</span>{' '}
-          <span className="text-white/70">
-            <span className="eb-fade-word eb-delay-7500">Book</span>{' '}
-            <span className="eb-fade-word eb-delay-9000">more</span>{' '}
-            <span className="eb-fade-word eb-delay-10500">appointments.</span>
-          </span>
-        </h1>
-        <p className="mt-6 max-w-xl sm:max-w-2xl text-white/70">EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs, routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts, recordings, analytics, and clean billing.</p>
-        <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">Start free</Link>
-          <Link href="/pricing" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">See pricing</Link>
-        </div>
+        <HeroHaloBlock>
+          <h1 className="eb-hero-title text-4xl md:text-6xl font-semibold tracking-tight">
+            <span className="eb-fade-word eb-delay-1000">Answer</span>{' '}
+            <span className="eb-fade-word eb-delay-2500">every</span>{' '}
+            <span className="eb-fade-word eb-delay-4000">call.</span>{' '}
+            <span className="text-white/70">
+              <span className="eb-fade-word eb-delay-7500">Book</span>{' '}
+              <span className="eb-fade-word eb-delay-9000">more</span>{' '}
+              <span className="eb-fade-word eb-delay-10500">appointments.</span>
+            </span>
+          </h1>
+          <p className="mt-6 max-w-xl sm:max-w-2xl text-white/70">EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs, routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts, recordings, analytics, and clean billing.</p>
+          <div className="mt-8 flex flex-wrap gap-3">
+            <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">Start free</Link>
+            <Link href="/pricing" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">See pricing</Link>
+          </div>
+        </HeroHaloBlock>
       </Section>
 
       {/* Benefits */}
@@ -150,13 +151,10 @@ export default function Home() {
 
       {/* How it works */}
       <Section id="how" title="How it works">
-        <div className="relative">
-          <SectionCircuitBoard variant="how" />
-          <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
           <Step icon={<PlugIcon />} title="Connect Your Systems" text="Sign up and connect your phone line, calendar, and CRM in minutes." />
           <Step icon={<PhoneIcon />} title="AI Answers Calls" text="Friendly, human‑like greeting, 24/7 — fast and natural responses." />
           <Step icon={<CheckIcon />} title="Scheduling & Follow‑up" text="Books appointments, answers FAQs, and logs details + transcripts in your CRM." />
-          </div>
         </div>
       </Section>
 
