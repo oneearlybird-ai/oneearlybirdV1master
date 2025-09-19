@@ -79,7 +79,7 @@ export function CircuitBoardBackground() {
     let chipLoaded = false;
     loader.load(
       "/models/microchip.glb",
-      (gltf: any) => {
+      (gltf) => {
         const chip = gltf.scene;
         chip.position.copy(chipPos);
         chip.scale.set(6, 6, 6);
@@ -107,9 +107,7 @@ export function CircuitBoardBackground() {
           chipGroup.add(pinLeft);
 
           const pinRight = pinLeft.clone();
-          // Align right-side pin material with pinMat without type narrowing
-          // (local TS shims declare 'three' modules loosely for CSP-safe build)
-          (pinRight as any).material = pinMat;
+          (pinRight.material as THREE.Material) = pinMat;
           pinRight.position.set(chipPos.x + 8.8, chipPos.y + i, 0);
           chipGroup.add(pinRight);
         }
@@ -131,7 +129,7 @@ export function CircuitBoardBackground() {
     });
 
     // Define a flowing path from top-right downward with a side loop near mid
-    const mainPoints = [
+    const mainPoints: THREE.Vector3[] = [
       new THREE.Vector3(chipPos.x - 2, chipPos.y - 2, 0),
       new THREE.Vector3(16, 18, 0),
       new THREE.Vector3(8, 10, 0),
@@ -156,8 +154,8 @@ export function CircuitBoardBackground() {
     scene.add(mainTube);
 
     // Secondary branches
-    const branches: any[] = [];
-    const makeBranch = (anchor: any, delta: any[]) => {
+    const branches: THREE.Mesh[] = [];
+    const makeBranch = (anchor: THREE.Vector3, delta: THREE.Vector3[]) => {
       const pts = [anchor.clone(), ...delta.map((d) => anchor.clone().add(d))];
       const c = new THREE.CatmullRomCurve3(pts, false, "centripetal", 0.5);
       const tube = new THREE.Mesh(new THREE.TubeGeometry(c, 120, 0.28, 6, false), copperMat);
@@ -193,7 +191,7 @@ export function CircuitBoardBackground() {
       start: "top top",
       end: () => Math.max(2000, body.scrollHeight - window.innerHeight) + "px",
       scrub: true,
-      onUpdate: (self: any) => {
+      onUpdate: (self) => {
         const t = THREE.MathUtils.clamp(self.progress, 0, 1);
         const pos = mainCurve.getPointAt(t);
         travelLight.position.copy(pos);
@@ -237,11 +235,11 @@ export function CircuitBoardBackground() {
       } catch {}
 
       // Dispose geometries/materials
-      const disposeMesh = (m: any) => {
-        m.traverse((obj: any) => {
-          const mesh = obj as any;
+      const disposeMesh = (m: THREE.Object3D) => {
+        m.traverse((obj) => {
+          const mesh = obj as THREE.Mesh;
           if (mesh.geometry) mesh.geometry.dispose?.();
-          const mat = (mesh as any).material as any;
+          const mat = (mesh as any).material as THREE.Material | THREE.Material[] | undefined;
           if (Array.isArray(mat)) mat.forEach((mm) => mm.dispose?.());
           else mat?.dispose?.();
         });

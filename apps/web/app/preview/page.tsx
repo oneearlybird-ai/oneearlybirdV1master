@@ -75,7 +75,8 @@ function LogoBadge({ id, label }: { id: string; label: string }) {
   const bg = brandBg[id] ?? '#ffffff';
   return (
     <figure
-      className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95 bg-white"
+      className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
+      style={{ backgroundColor: bg }}
     >
       <img
         src={`/logos/${id}.svg`}

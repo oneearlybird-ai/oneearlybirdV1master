@@ -12,7 +12,7 @@ export default function AppointmentsPage() {
           <div className="font-medium">Connect your calendar</div>
           <p className="mt-1 text-sm text-white/70">Connect Google or Outlook to enable AI scheduling.</p>
           <div className="mt-3 flex gap-3">
-            <Link href="/dashboard-preview/integrations" className="rounded-xl bg-white px-4 py-2 text-black text-sm font-medium hover:bg-white/90">Open Integrations</Link>
+            <a href="/dashboard-preview/integrations" className="rounded-xl bg-white px-4 py-2 text-black text-sm font-medium hover:bg-white/90">Open Integrations</a>
           </div>
         </div>
       ) : (
@@ -34,4 +34,4 @@ export default function AppointmentsPage() {
     </section>
   );
 }
-import Link from 'next/link';
+
