@@ -78,3 +78,4 @@ apps/web/.env.vercel
 *.zip
 *.tar
 *.tar.gz
+.vercel
