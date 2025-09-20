@@ -32,6 +32,8 @@ function externalUrl(req: Request): string {
 export async function POST(req: Request) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
   const mediaUrl = process.env.MEDIA_WSS_URL;
+  const sigOptional = process.env.TWILIO_SIGNATURE_OPTIONAL === '1';
+  const sigDebug = process.env.TWILIO_SIG_DEBUG === '1';
   if (!authToken || !mediaUrl) {
     return new Response('Twilio not configured', { status: 503, headers: { 'cache-control': 'no-store' } });
   }
@@ -49,7 +51,18 @@ export async function POST(req: Request) {
     const params = Object.fromEntries(new URLSearchParams(raw)) as Record<string, string>;
     valid = tw.validateRequest(authToken, sig, fullUrl, params);
   }
-  if (!valid) return new Response('Forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
+  if (!valid && !sigOptional) {
+    if (sigDebug) {
+      console.error('[twilio] signature failed', {
+        url: fullUrl,
+        method: 'POST',
+        contentType,
+        hasSig: Boolean(sig),
+        bodyLen: raw.length,
+      });
+    }
+    return new Response('Forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
+  }
 
   // Append token query param if MEDIA_AUTH_TOKEN is configured (for media WS auth)
   const token = process.env.MEDIA_AUTH_TOKEN || '';
@@ -69,5 +82,8 @@ export async function POST(req: Request) {
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<Response><Connect><Stream url="${wsUrl}"/></Connect></Response>`;
+  if (sigDebug) {
+    console.log('[twilio] returning TwiML Stream', { url: fullUrl, wsUrl });
+  }
   return new Response(xml, { status: 200, headers: { 'Content-Type': 'application/xml', 'cache-control': 'no-store' } });
 }
