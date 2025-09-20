@@ -18,7 +18,10 @@ export function middleware(req: NextRequest) {
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
+    // Allow external styles from this origin and nonced inline <style> blocks
     `style-src 'self' 'nonce-${nonce}'`,
+    // Some UAs support -elem specific directives; mirror allowance explicitly
+    `style-src-elem 'self' 'nonce-${nonce}'`,
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     "connect-src 'self' https: wss:",
