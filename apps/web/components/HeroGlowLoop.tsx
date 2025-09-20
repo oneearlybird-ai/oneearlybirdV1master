@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 
 type Props = {
-  containerRef: React.RefObject<HTMLElement | null>;
+  containerRef: React.RefObject<HTMLElement>;
   padding?: number; // px inset from container edges
   radius?: number;  // corner radius
 };
