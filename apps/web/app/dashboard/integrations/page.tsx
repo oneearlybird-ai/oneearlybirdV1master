@@ -4,15 +4,6 @@ import { useEffect, useState } from "react";
 
 type Provider = { id: string; name: string; connected: boolean };
 
-function Badge({ connected, label }: { connected: boolean; label?: string }) {
-  return (
-    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 border text-xs ${connected ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-white/15 bg-white/5 text-white/70'}`}>
-      <span className={`h-1.5 w-1.5 rounded-full ${connected ? 'bg-emerald-400' : 'bg-white/40'}`} />
-      {label || (connected ? 'Connected' : 'Not connected')}
-    </span>
-  );
-}
-
 function Logo({ id, alt }: { id: string; alt: string }) {
   const masked = new Set(['hubspot','salesforce','zoho','twilio','slack','stripe','signalwire','outlook','microsoft-365','zapier','aws']);
   const isMasked = masked.has(id);
@@ -27,7 +18,7 @@ function Logo({ id, alt }: { id: string; alt: string }) {
   );
 }
 
-function Card({ title, desc, status, action, logo }: { title: string; desc: string; status: React.ReactNode; action: React.ReactNode; logo?: React.ReactNode }) {
+function Card({ title, desc, action, logo }: { title: string; desc: string; action: React.ReactNode; logo?: React.ReactNode }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface">
       <div className="flex items-center justify-between">
@@ -35,7 +26,7 @@ function Card({ title, desc, status, action, logo }: { title: string; desc: stri
           {logo}
           <div className="font-medium">{title}</div>
         </div>
-        <div className="text-xs text-white/60">{status}</div>
+        {/* status removed per request */}
       </div>
       <div className="text-sm text-white/70 mt-1">{desc}</div>
       <div className="mt-3">{action}</div>
@@ -77,19 +68,13 @@ export default function IntegrationsPage() {
     const p = providers[it.connectId || it.id];
     const connected = !!p?.connected;
     if (loading) return <div className="skeleton skeleton-badge" aria-hidden />;
-    if (connected) return <button className="btn btn-outline btn-sm">Manage</button>;
+    if (connected) return <button className="btn btn-outline btn-sm" disabled aria-disabled>Connected</button>;
     if (it.oauth && it.connectId) return (
       <form method="post" action={`/api/integrations/oauth/start?provider=${encodeURIComponent(it.connectId)}`}>
         <button className="btn btn-primary btn-sm" type="submit">Connect</button>
       </form>
     );
     return <button className="btn btn-outline btn-sm" disabled aria-disabled>Coming soon</button>;
-  };
-
-  const statusFor = (it: { id: string; connectId?: string }) => {
-    const p = providers[it.connectId || it.id];
-    if (loading) return <div className="skeleton skeleton-badge" aria-hidden />;
-    return <Badge connected={!!p?.connected} />;
   };
 
   return (
@@ -103,7 +88,6 @@ export default function IntegrationsPage() {
             logo={<Logo id={it.id} alt={it.title} />}
             title={it.title}
             desc={it.desc}
-            status={statusFor(it)}
             action={actionFor(it)}
           />
         ))}
