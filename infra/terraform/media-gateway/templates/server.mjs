@@ -61,6 +61,26 @@ class ElevenLabsSession {
     this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey } });
     this.ws.on('open', () => { this.connected = true; });
     this.ws.on('close', () => { this.connected = false; });
+    this.ws.on('message', (data) => {
+      try {
+        if (typeof this.onAudio !== 'function') return;
+        if (Buffer.isBuffer(data)) {
+          // Assume raw PCM16LE 16k from EL; forward to handler
+          this.onAudio(data);
+        } else {
+          const txt = data.toString('utf8');
+          // Try to parse JSON and extract base64 audio if present
+          try {
+            const obj = JSON.parse(txt);
+            const b64 = obj?.audio || obj?.data?.audio;
+            if (b64 && typeof b64 === 'string') {
+              const buf = Buffer.from(b64, 'base64');
+              this.onAudio(buf);
+            }
+          } catch (e) { void e; }
+        }
+      } catch (e) { void e; }
+    });
   }
   async sendAudio(pcm16leBuffer) {
     if (!this.connected || !this.ws) return;
@@ -104,13 +124,53 @@ wss.on('connection', async (ws, req) => {
   }
   function int16ToLEBytes(int16) { const buf = Buffer.allocUnsafe(int16.length * 2); for (let i = 0; i < int16.length; i++) buf.writeInt16LE(int16[i], i * 2); return buf; }
 
+  function downsample16kTo8k(pcm16k) {
+    // simple 2:1 decimation
+    const out = new Int16Array(Math.floor(pcm16k.length / 2));
+    for (let i = 0, j = 0; i + 1 < pcm16k.length; i += 2, j++) out[j] = pcm16k[i];
+    return out;
+  }
+
+  function muLawEncodeSample(sample) {
+    const MAX = 32635;
+    let s = Math.max(-MAX, Math.min(MAX, sample));
+    const sign = (s < 0) ? 0x80 : 0x00; if (s < 0) s = -s;
+    let exponent = 7; for (let expMask = 0x4000; (s & expMask) === 0 && exponent > 0; exponent--, expMask >>= 1) {}
+    const mantissa = (s >> ((exponent === 0) ? 4 : (exponent + 3))) & 0x0F;
+    const mu = ~(sign | (exponent << 4) | mantissa) & 0xFF;
+    return mu;
+  }
+
+  function pcm16ToMuLaw(pcm) {
+    const out = Buffer.allocUnsafe(pcm.length);
+    for (let i = 0; i < pcm.length; i++) out[i] = muLawEncodeSample(pcm[i]);
+    return out;
+  }
+
   ws.on('message', async (msg) => {
     const txt = Buffer.isBuffer(msg) ? msg.toString('utf8') : String(msg);
     lastMsgAt = Date.now(); metrics.lastMsgAt = lastMsgAt;
     if (txt.toLowerCase() === 'ping') { ws.send('pong'); return; }
     const ev = safeJsonParse(txt); if (!ev || typeof ev.event !== 'string') return;
     switch (ev.event) {
-      case 'start': { streamSid = ev.start?.streamSid || ev.streamSid || undefined; process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`); await el.connect().catch(()=>{}); break; }
+      case 'start': {
+        streamSid = ev.start?.streamSid || ev.streamSid || undefined;
+        process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
+        // Configure back-audio path from ElevenLabs to Twilio
+        el.onAudio = (buf) => {
+          try {
+            if (!streamSid) return;
+            // Expect buf as PCM16LE 16k; convert → 8k μ-law
+            const samples = new Int16Array(buf.buffer, buf.byteOffset, Math.floor(buf.byteLength / 2));
+            const pcm8k = downsample16kTo8k(samples);
+            const mulaw = pcm16ToMuLaw(pcm8k);
+            const payload = mulaw.toString('base64');
+            const msg = JSON.stringify({ event: 'media', streamSid, media: { payload } });
+            ws.send(msg);
+          } catch (e) { void e; }
+        };
+        await el.connect().catch(()=>{});
+        break; }
       case 'media': {
         frames++; metrics.frames10s++;
         if (el.connected) {
@@ -128,7 +188,7 @@ wss.on('connection', async (ws, req) => {
     }
   });
 
-  ws.on('close', async () => { clearInterval(keepalive); await el.close().catch(()=>{}); });
+  ws.on('close', async () => { clearInterval(keepalive); await el.close().catch((e)=>{ void e; }); });
   ws.on('error', (e) => { void e; });
 });
 
