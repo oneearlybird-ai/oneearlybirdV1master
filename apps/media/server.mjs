@@ -62,32 +62,64 @@ function nanoid(n = 10) {
   return crypto.randomBytes(n).toString('base64url');
 }
 
-// Minimal stub for future ElevenLabs realtime session wiring
-class ElevenLabsSession {
-  constructor(opts) {
-    this.opts = opts;
-    this.ws = null;
-    this.connected = false;
+// Simple µ-law codec + resampling helpers (inlined)
+function decodeMuLawToPCM16(mu) {
+  const out = new Int16Array(mu.length);
+  for (let i = 0; i < mu.length; i++) {
+    const u = mu[i] ^ 0xFF;
+    const sign = u & 0x80;
+    let exponent = (u >> 4) & 0x07;
+    let mantissa = u & 0x0F;
+    let sample = ((mantissa << 3) + 0x84) << exponent;
+    sample -= 0x84;
+    out[i] = sign ? -sample : sample;
   }
-  async connect() {
-    const url = process.env.ELEVENLABS_WS_URL || this.opts?.url;
-    const apiKey = process.env.ELEVENLABS_API_KEY || this.opts?.apiKey;
-    if (!url || !apiKey) return; // not configured; remain disconnected
-    this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey } });
-    this.ws.on('open', () => { this.connected = true; });
-    this.ws.on('close', () => { this.connected = false; });
-    this.ws.on('error', () => { /* ignore */ return; });
+  return out;
+}
+function upsample8kTo16k(pcm8k) {
+  const out = new Int16Array(pcm8k.length * 2);
+  for (let i = 0; i < pcm8k.length - 1; i++) {
+    const a = pcm8k[i];
+    const b = pcm8k[i + 1];
+    out[i * 2] = a;
+    out[i * 2 + 1] = (a + b) >> 1;
   }
-  async sendAudio(pcm16leBuffer) {
-    if (!this.connected || !this.ws) return;
-    if (process.env.EL_FORWARD_BINARY === 'true') {
-      try { this.ws.send(pcm16leBuffer); } catch { /* drop on error */ }
-    }
+  if (pcm8k.length) {
+    out[out.length - 2] = pcm8k[pcm8k.length - 1];
+    out[out.length - 1] = pcm8k[pcm8k.length - 1];
   }
-  async close() {
-    if (this.ws) { try { this.ws.close(); } catch (e) { void e; } }
-    this.connected = false;
+  return out;
+}
+function downsample16kTo8k(pcm16k) {
+  const out = new Int16Array(Math.ceil(pcm16k.length / 2));
+  for (let i = 0, j = 0; i < pcm16k.length; i += 2, j++) out[j] = pcm16k[i];
+  return out;
+}
+function pcm16ToMuLaw(pcm) {
+  const out = new Uint8Array(pcm.length);
+  const BIAS = 0x84;
+  const CLIP = 32635;
+  for (let i = 0; i < pcm.length; i++) {
+    let s = pcm[i];
+    let sign = (s >> 8) & 0x80;
+    if (sign !== 0) s = -s;
+    if (s > CLIP) s = CLIP;
+    s = s + BIAS;
+    let exponent = 7;
+    for (let expMask = 0x4000; (s & expMask) === 0 && exponent > 0; exponent--, expMask >>= 1) {}
+    let mantissa = (s >> (exponent + 3)) & 0x0F;
+    let uval = ~(sign | (exponent << 4) | mantissa) & 0xFF;
+    out[i] = uval;
   }
+  return out;
+}
+function int16ToLEBytes(int16) {
+  const buf = Buffer.allocUnsafe(int16.length * 2);
+  for (let i = 0; i < int16.length; i++) buf.writeInt16LE(int16[i], i * 2);
+  return buf;
+}
+function leBytesToInt16(buf) {
+  return new Int16Array(buf.buffer, buf.byteOffset, buf.byteLength >> 1);
 }
 
 wss.on('connection', async (ws, req) => {
@@ -109,52 +141,39 @@ wss.on('connection', async (ws, req) => {
   let lastMsgAt = Date.now();
   let keepalive = setInterval(() => {
     try { ws.ping(); } catch (e) { void e; }
-    // Idle timeout: close if no messages for 30s
     if (Date.now() - lastMsgAt > 30000) { try { ws.close(1001, 'idle'); } catch (e) { void e; } }
     }, 15000);
 
-  // Placeholder EL session (not connected by default)
-  const el = new ElevenLabsSession({ apiKey: process.env.ELEVENLABS_API_KEY, agentId: process.env.ELEVENLABS_AGENT_ID, url: process.env.ELEVENLABS_WS_URL });
-
-  function decodeMuLawToPCM16(mu) {
-    // mu-law (G.711) decode: input Uint8Array -> Int16Array
-    const out = new Int16Array(mu.length);
-    for (let i = 0; i < mu.length; i++) {
-      const u = mu[i] ^ 0xFF;
-      const sign = u & 0x80;
-      let exponent = (u >> 4) & 0x07;
-      let mantissa = u & 0x0F;
-      let sample = ((mantissa << 3) + 0x84) << exponent;
-      sample -= 0x84;
-      out[i] = sign ? -sample : sample;
+  const EL_URL = process.env.ELEVENLABS_WS_URL || process.env.ELEVEN_WS_URL || 'wss://api.elevenlabs.io/v1/convai/ws';
+  const EL_API = process.env.ELEVENLABS_API_KEY || process.env.ELEVEN_API_KEY || '';
+  const EL_AGENT = process.env.ELEVENLABS_AGENT_ID || process.env.ELEVEN_AGENT_ID || '';
+  let vendor = null;
+  function vendorConnect() {
+    if (!EL_API) return;
+    let url = EL_URL;
+    if (EL_AGENT && !/agent_id=/.test(url)) {
+      const sep = url.includes('?') ? '&' : '?';
+      url = `${url}${sep}agent_id=${encodeURIComponent(EL_AGENT)}`;
     }
-    return out;
+    vendor = new WebSocket(url, { headers: { 'xi-api-key': EL_API }, perMessageDeflate: false });
+    vendor.on('message', (data, isBinary) => {
+      if (!streamSid) return;
+      if (isBinary && data?.length) {
+        try {
+          const pcm16k = leBytesToInt16(Buffer.from(data));
+          const pcm8k = downsample16kTo8k(pcm16k);
+          const mu = pcm16ToMuLaw(pcm8k);
+          const b64 = Buffer.from(mu).toString('base64');
+          ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
+        } catch { /* drop */ }
+      }
+    });
+    vendor.on('close', () => { vendor = null; });
+    vendor.on('error', () => { /* ignore */ });
   }
-
-  function upsample8kTo16k(pcm8k) {
-    // naive 2x linear upsample from 8k -> 16k
-    const out = new Int16Array(pcm8k.length * 2);
-    for (let i = 0; i < pcm8k.length - 1; i++) {
-      const a = pcm8k[i];
-      const b = pcm8k[i + 1];
-      out[i * 2] = a;
-      out[i * 2 + 1] = (a + b) >> 1;
-    }
-    if (pcm8k.length) {
-      out[out.length - 2] = pcm8k[pcm8k.length - 1];
-      out[out.length - 1] = pcm8k[pcm8k.length - 1];
-    }
-    return out;
-  }
-
-  function int16ToLEBytes(int16) {
-    const buf = Buffer.allocUnsafe(int16.length * 2);
-    for (let i = 0; i < int16.length; i++) buf.writeInt16LE(int16[i], i * 2);
-    return buf;
-  }
+  if (EL_API) vendorConnect();
 
   ws.on('message', async (msg) => {
-    // Twilio sends JSON events: { event: 'start'|'media'|'stop'|..., ... }
     const txt = Buffer.isBuffer(msg) ? msg.toString('utf8') : String(msg);
     lastMsgAt = Date.now();
     metrics.lastMsgAt = lastMsgAt;
@@ -165,31 +184,24 @@ wss.on('connection', async (ws, req) => {
     switch (ev.event) {
       case 'start': {
         streamSid = ev.start?.streamSid || ev.streamSid || undefined;
-        // No PHI logs; emit minimal structured signal
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
-        // Connect to ElevenLabs if configured
-        await el.connect().catch(()=>{});
+        if (!vendor && EL_API) vendorConnect();
         break;
       }
       case 'media': {
         frames++;
         metrics.frames10s++;
-        // ev.media.payload is base64 mulaw (8kHz) from Twilio
-        if (el.connected) {
-          try {
-            const b = Buffer.from(ev.media?.payload || '', 'base64');
-            // Guard max payload size (drop or close on abnormal input)
-            if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
-            const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
-            const pcm8k = decodeMuLawToPCM16(mu);
-            const pcm16k = upsample8kTo16k(pcm8k);
-            const le = int16ToLEBytes(pcm16k);
-            await el.sendAudio(le);
-          } catch { /* drop frame on error */ }
-        }
-        // Backpressure guard: if socket backed up, drop processing
+        try {
+          const b = Buffer.from(ev.media?.payload || '', 'base64');
+          if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
+          const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
+          const pcm8k = decodeMuLawToPCM16(mu);
+          const pcm16k = upsample8kTo16k(pcm8k);
+          const le = int16ToLEBytes(pcm16k);
+          if (vendor && vendor.readyState === WebSocket.OPEN) vendor.send(le);
+        } catch { /* drop frame on error */ }
         if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; }
-          metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60); // bump within decay window
+          metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60);
           metrics.lastBackpressureAt = Date.now();
         }
         break;
@@ -197,17 +209,16 @@ wss.on('connection', async (ws, req) => {
       case 'stop': {
         process.stdout.write(`media:stop id=${connId} frames=${frames}\n`);
         try { ws.close(1000, 'normal'); } catch (e) { void e; }
+        try { vendor?.close(); } catch {}
         break;
       }
-      default:
-        // ignore other event types (mark, dtmf, etc.)
-        break;
+      default: break;
     }
   });
 
   ws.on('close', async () => {
     clearInterval(keepalive);
-    await el.close().catch(()=>{});
+    try { vendor?.close(); } catch {}
   });
 
   ws.on('error', () => { /* ignore */ return; });
