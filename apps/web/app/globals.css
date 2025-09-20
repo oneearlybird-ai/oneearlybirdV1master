@@ -168,6 +168,20 @@ section[id] { scroll-margin-top: var(--eb-header-h); }
 /* Sticky header helper */
 .sticky-head { position: sticky; top: 0; z-index: 10; backdrop-filter: saturate(1.1) blur(6px); background: rgba(255,255,255,0.04); }
 
+/* Toasts */
+.toast-container { position: fixed; top: 12px; right: 12px; display: grid; gap: 8px; z-index: 1000; }
+.toast { padding: 8px 12px; border-radius: 10px; border: 1px solid rgba(255,255,255,0.18); background: rgba(255,255,255,0.08); color: #fff; font-size: 13px; box-shadow: 0 8px 24px rgba(0,0,0,0.3); }
+.toast.success { border-color: rgba(16,185,129,0.4); background: rgba(16,185,129,0.12); color: #A7F3D0; }
+.toast.error { border-color: rgba(239,68,68,0.4); background: rgba(239,68,68,0.12); color: #FCA5A5; }
+
+/* Timeline for transcript */
+.timeline { list-style: none; margin: 0; padding: 0; position: relative; }
+.timeline-item { display: grid; grid-template-columns: 14px 1fr; gap: 8px; align-items: start; padding: 6px 0; }
+.timeline-item .timeline-dot { width: 8px; height: 8px; border-radius: 9999px; margin-top: 6px; background: rgba(255,255,255,0.5); }
+.timeline-item.eb .timeline-dot { background: #60A5FA; }
+.timeline-item.caller .timeline-dot { background: #34D399; }
+.timeline-item .timeline-content { line-height: 1.5; }
+
 /* Micro skeleton shimmer */
 @keyframes eb-shimmer { 0% { background-position: -200% 0 } 100% { background-position: 200% 0 } }
 .skeleton { position: relative; overflow: hidden; background: linear-gradient(90deg, rgba(255,255,255,0.06) 25%, rgba(255,255,255,0.12) 37%, rgba(255,255,255,0.06) 63%); background-size: 200% 100%; animation: eb-shimmer 1.2s infinite linear; }

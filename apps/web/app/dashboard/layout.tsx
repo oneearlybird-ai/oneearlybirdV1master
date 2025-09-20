@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Toasts from "@/components/Toasts";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 
@@ -92,6 +93,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
           <div className="p-4">{children}</div>
         </div>
       </div>
+      <Toasts />
     </div>
   );
 }

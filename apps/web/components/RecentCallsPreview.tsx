@@ -61,10 +61,15 @@ export function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => v
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const [copied, setCopied] = useState(false);
   React.useEffect(() => {
+    const prevActive = (typeof document !== 'undefined') ? (document.activeElement as HTMLElement | null) : null;
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      // return focus to previously focused element if still in the document
+      try { prevActive?.focus(); } catch { /* ignore */ }
+    };
   }, [onClose]);
   const doCopy = async () => {
     try {
@@ -95,16 +100,22 @@ export function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => v
           <div className="rounded-lg border border-white/10 p-3">
             <div className="flex items-center justify-between">
               <div className="font-medium">Recording</div>
-              <button disabled className="rounded border border-white/20 px-2 py-1 text-xs text-white/50">Play sample (coming soon)</button>
+              <button disabled title="Audio playback pending presigned URL access" className="rounded border border-white/20 px-2 py-1 text-xs text-white/50">Play sample (coming soon)</button>
             </div>
             <p className="mt-2 text-xs text-white/60">Preview only — UI demo. No PHI, no live audio.</p>
           </div>
           <div>
             <div className="font-medium">Transcript (preview)</div>
-            <ul className="mt-2 space-y-1 text-sm text-white/70">
-              {call.transcript.map((line, i) => (
-                <li key={i}>• {line}</li>
-              ))}
+            <ul className="timeline mt-2 text-sm">
+              {call.transcript.map((line, i) => {
+                const who = line.startsWith('EB:') ? 'eb' : line.startsWith('Caller:') ? 'caller' : 'other';
+                return (
+                  <li key={i} className={`timeline-item ${who}`}>
+                    <span className="timeline-dot" aria-hidden />
+                    <span className="timeline-content text-white/80">{line}</span>
+                  </li>
+                );
+              })}
             </ul>
           </div>
         </div>

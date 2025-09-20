@@ -248,15 +248,33 @@ function OutcomeBadge({ text }: { text: string }) {
 }
 
 function RowActions({ caller, id, onOpen, onReviewed, reviewed }: { caller: string; id: string; onOpen: () => void; onReviewed: () => void; reviewed: boolean }) {
-  const [copied, setCopied] = useState<string | null>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
+  const btnRef = useRef<HTMLButtonElement | null>(null);
+  const menuRef = useRef<HTMLDivElement | null>(null);
   const copy = async () => {
-    try { await navigator.clipboard.writeText(caller); setCopied(id); setTimeout(() => setCopied(null), 1200); } catch (_err) { /* ignore in preview */ }
+    try { await navigator.clipboard.writeText(caller); window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Caller copied', kind: 'success' } })); } catch { window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Copy failed', kind: 'error' } })); }
   };
+  const toggle = () => setMenuOpen(v => !v);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      const t = e.target as Node; if (!menuRef.current?.contains(t) && !btnRef.current?.contains(t)) setMenuOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
+    document.addEventListener('mousedown', onDoc);
+    document.addEventListener('keydown', onKey);
+    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
+  }, [menuOpen]);
   return (
-    <div className="flex items-center gap-2">
-      <button onClick={onOpen} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white" aria-label={`Open call ${id}`}>Open</button>
-      <button onClick={copy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white" aria-label={`Copy caller for ${id}`}>{copied===id ? 'Copied' : 'Copy #'}</button>
-      <button onClick={onReviewed} className={`rounded border px-2 py-1 text-xs ${reviewed ? 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300' : 'border-white/20 text-white/80 hover:text-white'}`} aria-pressed={reviewed} aria-label={reviewed ? `Mark ${id} unreviewed` : `Mark ${id} reviewed`}>{reviewed ? 'Reviewed' : 'Mark reviewed'}</button>
+    <div className="relative">
+      <button ref={btnRef} onClick={toggle} aria-haspopup="menu" aria-expanded={menuOpen} aria-controls={`menu-${id}`} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white" aria-label={`Actions for ${id}`}>⋯</button>
+      {menuOpen ? (
+        <div ref={menuRef} id={`menu-${id}`} role="menu" className="absolute right-0 mt-2 min-w-[160px] rounded-md border border-white/10 bg-neutral-950 shadow-lg z-10">
+          <button role="menuitem" className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5" onClick={() => { onOpen(); setMenuOpen(false); }}>Open</button>
+          <button role="menuitem" className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5" onClick={() => { copy(); setMenuOpen(false); }}>Copy caller</button>
+          <button role="menuitem" className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5" onClick={() => { onReviewed(); setMenuOpen(false); window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: reviewed ? 'Marked unreviewed' : 'Marked reviewed' } })); }}>{reviewed ? 'Mark unreviewed' : 'Mark reviewed'}</button>
+        </div>
+      ) : null}
     </div>
   );
 }
