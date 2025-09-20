@@ -8,6 +8,7 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
   const [index, setIndex] = useState(0);
   const hover = useRef(false);
   const timer = useRef<number | null>(null);
+  const regionRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     if (!items || items.length <= 1) return;
@@ -24,6 +25,13 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
       className="relative"
       role="region"
       aria-label="Testimonials"
+      aria-roledescription="carousel"
+      onKeyDown={(e) => {
+        if (e.key === 'ArrowLeft') { e.preventDefault(); go(-1); }
+        if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
+      }}
+      tabIndex={0}
+      ref={regionRef}
       onMouseEnter={() => { hover.current = true; }}
       onMouseLeave={() => { hover.current = false; }}
     >
@@ -32,6 +40,7 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
           <figure
             key={t.q}
             aria-hidden={i !== index}
+            aria-live={i === index ? 'polite' : undefined}
             className={`rounded-2xl border border-white/10 bg-white/5 p-6 transition-opacity duration-500 ${i === index ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
           >
             <blockquote className="text-white/90">{t.q}</blockquote>
@@ -62,4 +71,3 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
     </div>
   );
 }
-

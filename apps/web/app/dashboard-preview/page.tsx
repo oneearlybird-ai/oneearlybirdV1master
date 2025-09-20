@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 
 import { LiveStatusBadge, RecentCallsPreview } from '@/components/RecentCallsPreview';
+import React from 'react';
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -74,6 +75,7 @@ export default async function DashboardPreview() {
         <Kpi label="Minutes used" value={`${minutes} / ${minutesQuota}`} />
         <Kpi label="After‑hours coverage" value="24/7" />
       </div>
+      <UsageOverviewCard />
       <div className="mt-3">
         <a href="/dashboard/billing" className="inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Upgrade plan</a>
       </div>
@@ -105,6 +107,48 @@ export default async function DashboardPreview() {
         </div>
       </div>
     </section>
+  );
+}
+
+function UsageOverviewCard() {
+  const [state, setState] = React.useState<{ loading: boolean; ok?: boolean; version?: string }>({ loading: true });
+  React.useEffect(() => {
+    let cancelled = false;
+    fetch('/api/usage/summary', { cache: 'no-store' })
+      .then(async r => ({ ok: r.ok, body: r.ok ? await r.json() : null }))
+      .then(({ ok, body }) => { if (!cancelled) setState({ loading: false, ok, version: body?.version }); })
+      .catch(() => { if (!cancelled) setState({ loading: false, ok: false }); });
+    return () => { cancelled = true };
+  }, []);
+  return (
+    <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="flex items-center justify-between">
+        <div className="font-medium">Usage overview</div>
+        {state.loading ? <div className="skeleton skeleton-badge" aria-hidden /> : (
+          <span className="text-xs text-white/60">{state.ok ? 'Live build ' + (state.version ? state.version.slice(0,7) : '') : 'Unavailable'}</span>
+        )}
+      </div>
+      <div className="mt-3 grid gap-3 sm:grid-cols-3">
+        <div className="rounded-lg border border-white/10 p-3">
+          <div className="text-xs text-white/60">Calls processed</div>
+          <div className="mt-1 h-5">
+            {state.loading ? <div className="skeleton skeleton-line w-24" aria-hidden /> : <div className="text-lg font-semibold">—</div>}
+          </div>
+        </div>
+        <div className="rounded-lg border border-white/10 p-3">
+          <div className="text-xs text-white/60">Minutes used</div>
+          <div className="mt-1 h-5">
+            {state.loading ? <div className="skeleton skeleton-line w-20" aria-hidden /> : <div className="text-lg font-semibold">—</div>}
+          </div>
+        </div>
+        <div className="rounded-lg border border-white/10 p-3">
+          <div className="text-xs text-white/60">Est. cost</div>
+          <div className="mt-1 h-5">
+            {state.loading ? <div className="skeleton skeleton-line w-16" aria-hidden /> : <div className="text-lg font-semibold">—</div>}
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }
 

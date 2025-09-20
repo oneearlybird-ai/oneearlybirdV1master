@@ -9,6 +9,7 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 import ScrollHeaderElevator from "@/components/ScrollHeaderElevator";
 import BackToTop from "@/components/BackToTop";
 import NavMainLinks from "@/components/NavMainLinks";
+import MobileNav from "@/components/MobileNav";
 import { Analytics } from "@vercel/analytics/next";
 
 export const metadata: Metadata = {
@@ -44,6 +45,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="flex items-center gap-3">
               <SupportDrawer />
               <AuthControls hasSession={hasSession} />
+              <MobileNav />
             </div>
           </nav>
         </header>
