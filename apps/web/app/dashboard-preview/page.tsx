@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 
 import { LiveStatusBadge, RecentCallsPreview } from '@/components/RecentCallsPreview';
-import Link from 'next/link';
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
@@ -63,8 +62,8 @@ export default async function DashboardPreview() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/dashboard-preview/calls" className="btn btn-primary">View Calls</Link>
-          <Link href="/dashboard-preview/integrations" className="btn btn-outline">Integrations</Link>
+          <a href="/dashboard-preview/calls" className="btn btn-primary">View Calls</a>
+          <a href="/dashboard-preview/integrations" className="btn btn-outline">Integrations</a>
         </div>
       </div>
 
@@ -76,7 +75,7 @@ export default async function DashboardPreview() {
         <Kpi label="After‑hours coverage" value="24/7" />
       </div>
       <div className="mt-3">
-        <Link href="/dashboard/billing" className="inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Upgrade plan</Link>
+        <a href="/dashboard/billing" className="inline-flex items-center rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Upgrade plan</a>
       </div>
 
       <ThisWeekPanel week={week} />
@@ -85,7 +84,7 @@ export default async function DashboardPreview() {
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
-          <Link className="text-sm text-white/80 hover:text-white" href="/dashboard/calls">View all</Link>
+          <a className="text-sm text-white/80 hover:text-white" href="/dashboard/calls">View all</a>
         </div>
         <RecentCallsPreview />
       </div>
@@ -101,8 +100,8 @@ export default async function DashboardPreview() {
           <li>⬜ Make a test call</li>
         </ul>
         <div className="mt-3 flex gap-3">
-          <Link href="/dashboard/integrations" className="rounded-xl bg-white px-4 py-2 text-black text-sm font-medium hover:bg-white/90">Open Integrations</Link>
-          <Link href="/dashboard/kb" className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Edit Greeting</Link>
+          <a href="/dashboard/integrations" className="rounded-xl bg-white px-4 py-2 text-black text-sm font-medium hover:bg-white/90">Open Integrations</a>
+          <a href="/dashboard/kb" className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white">Edit Greeting</a>
         </div>
       </div>
     </section>

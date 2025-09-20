@@ -39,7 +39,7 @@ export default async function RecordingsPage() {
                 <td className="px-4 py-3">{Math.floor(r.durationSec/60)}m {r.durationSec%60}s</td>
                 <td className="px-4 py-3 text-white/80">{r.summary}</td>
                 <td className="px-4 py-3">
-                  <Link className="rounded-lg border border-white/20 px-3 py-1 hover:-translate-y-0.5 motion-safe:transition-transform" href={`/dashboard/calls/${encodeURIComponent(r.id)}`}>View</Link>
+                  <a className="rounded-lg border border-white/20 px-3 py-1 hover:-translate-y-0.5 motion-safe:transition-transform" href={`/dashboard/calls/${encodeURIComponent(r.id)}`}>View</a>
                 </td>
               </tr>
             ))}
@@ -48,7 +48,7 @@ export default async function RecordingsPage() {
                 <td colSpan={4} className="px-4 py-8 text-center text-white/60">
                   No recordings yet. After your first calls complete, recordings will appear here.
                   <div className="mt-3 text-xs">
-                    Need help? Visit <Link href="/docs" className="underline">Docs</Link> or <Link href="/support" className="underline">Support</Link>.
+                    Need help? Visit <a href="/docs" className="underline">Docs</a> or <a href="/support" className="underline">Support</a>.
                   </div>
                 </td>
               </tr>
@@ -59,4 +59,3 @@ export default async function RecordingsPage() {
     </section>
   )
 }
-import Link from 'next/link'

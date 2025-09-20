@@ -1,7 +1,6 @@
 export const dynamic = 'force-dynamic';
 
 import { LiveStatusBadge, RecentCallsPreview } from '@/components/RecentCallsPreview';
-import Link from 'next/link';
 import NextDynamic from 'next/dynamic';
 const PortingBanner = NextDynamic(() => import('@/components/PortingBanner'), { ssr: false });
 import CopyDiagnostics from '@/components/CopyDiagnostics';
@@ -54,7 +53,7 @@ export default async function DashboardPage() {
       <div className="mt-1 flex items-center gap-3 text-xs text-white/60">
         <span>{when}</span>
         <span>•</span>
-        <span>What’s new: <Link className="underline" href="/changelog">See latest updates</Link></span>
+        <span>What’s new: <a className="underline" href="/changelog">See latest updates</a></span>
         <span className="hidden sm:inline">•</span>
         <span className="hidden sm:inline"><CopyPageLinkButton label="Copy dashboard link" /></span>
       </div>
@@ -68,8 +67,8 @@ export default async function DashboardPage() {
           </div>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/dashboard/calls" className="btn btn-primary">View Calls</Link>
-          <Link href="/dashboard/integrations" className="btn btn-outline">Integrations</Link>
+          <a href="/dashboard/calls" className="btn btn-primary">View Calls</a>
+          <a href="/dashboard/integrations" className="btn btn-outline">Integrations</a>
         </div>
       </div>
 
@@ -80,7 +79,7 @@ export default async function DashboardPage() {
         <Kpi label="After‑hours coverage" value="24/7" />
       </div>
       <div className="mt-3">
-        <Link href="/dashboard/billing" className="btn btn-outline">Upgrade plan</Link>
+        <a href="/dashboard/billing" className="btn btn-outline">Upgrade plan</a>
       </div>
 
       <ThisWeekPanel week={week} />
@@ -88,12 +87,12 @@ export default async function DashboardPage() {
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 className="font-medium">Quick links</h2>
         <div className="mt-3 flex flex-wrap gap-3 text-sm">
-          <Link href="/docs" className="btn btn-outline">Docs</Link>
-          <Link href="/support" className="btn btn-outline">Support</Link>
-          <Link href="/dashboard/billing" className="btn btn-outline">Billing</Link>
+          <a href="/docs" className="btn btn-outline">Docs</a>
+          <a href="/support" className="btn btn-outline">Support</a>
+          <a href="/dashboard/billing" className="btn btn-outline">Billing</a>
           <CopyDiagnostics />
           <CopyOrgIdButton />
-          <Link href="/changelog" className="btn btn-outline">Changelog</Link>
+          <a href="/changelog" className="btn btn-outline">Changelog</a>
           <a
             href="mailto:support@earlybird.ai?subject=Report%20issue&body=Describe%20the%20issue%20you%E2%80%99re%20seeing%3A%0A%0AExpected%20result%3A%0AActual%20result%3A%0A%0AURL%3A%20%28paste%29%0A"
             className="btn btn-outline"
@@ -124,7 +123,7 @@ export default async function DashboardPage() {
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
-          <Link className="text-sm text-white/80 hover:text-white" href="/dashboard/calls">View all</Link>
+          <a className="text-sm text-white/80 hover:text-white" href="/dashboard/calls">View all</a>
         </div>
         <RecentCallsPreview />
       </div>
@@ -132,15 +131,15 @@ export default async function DashboardPage() {
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 className="font-medium">Get set up</h2>
         <ul className="mt-2 space-y-2 text-sm text-white/80">
-          <li>✅ Connect phone number (or <Link className="underline" href="/support/porting">port your number</Link>)</li>
+          <li>✅ Connect phone number (or <a className="underline" href="/support/porting">port your number</a>)</li>
           <li>✅ Connect Google Calendar</li>
           <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
           <li>⬜ Customize greeting & FAQs</li>
           <li>⬜ Make a test call</li>
         </ul>
         <div className="mt-3 flex gap-3">
-          <Link href="/dashboard/integrations" className="btn btn-primary">Open Integrations</Link>
-          <Link href="/dashboard/kb" className="btn btn-outline">Edit Greeting</Link>
+          <a href="/dashboard/integrations" className="btn btn-primary">Open Integrations</a>
+          <a href="/dashboard/kb" className="btn btn-outline">Edit Greeting</a>
         </div>
       </div>
     </section>

@@ -74,7 +74,10 @@ function LogoBadge({ id, label }: { id: string; label: string }) {
   };
   const bg = brandBg[id] ?? '#ffffff';
   return (
-    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95 bg-white">
+    <figure
+      className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 px-3 flex items-center justify-center motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
+      style={{ backgroundColor: bg }}
+    >
       <img
         src={`/logos/${id}.svg`}
         alt={label}
@@ -148,7 +151,7 @@ export default function PreviewLanding() {
       {/* Integrations Marquee (manual scroll for CSP safety) */}
       <Section id="integrations" title="Integrates with your tools">
         <div className="text-white/60 text-sm mb-3">Seamless integration with your workflow</div>
-        <Marquee ariaLabel="Integrations logos">
+        <Marquee ariaLabel="Integrations logos" speedSec={16}>
           {[
             { id: 'google-workspace', label: 'Google Workspace' },
             { id: 'microsoft-365', label: 'Microsoft 365' },

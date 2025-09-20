@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { Marquee } from '@/components/Marquee';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
-import { SectionCircuitBoard } from '@/components/SectionCircuitBoard';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
@@ -91,8 +90,6 @@ export default function Home() {
               <path className="eb-wave-path" stroke="url(#ebWaveGrad)" strokeWidth="2" fill="none" d="M0,240 C120,180 240,300 360,240 C480,180 600,300 720,240 C840,180 960,300 1080,240 C1140,210 1200,240 1200,240"/>
             </svg>
           </div>
-          {/* Circuit overlay on the same layer as the hero's black background */}
-          <SectionCircuitBoard />
         </div>
         <div className="mb-6">
           <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">🚀 AI Voice Receptionist for business phone calls</span>
@@ -127,7 +124,7 @@ export default function Home() {
       {/* Integrations marquee */}
       <Section id="integrations" title="Integrates with your tools">
         <div className="text-white/60 text-sm mb-2 sm:mb-3">Seamless integration with your workflow</div>
-        <Marquee ariaLabel="Integrations logos">
+        <Marquee ariaLabel="Integrations logos" speedSec={16}>
           {[
             { id: 'google-workspace', label: 'Google Workspace' },
             { id: 'google-calendar', label: 'Google Calendar' },
@@ -150,13 +147,10 @@ export default function Home() {
 
       {/* How it works */}
       <Section id="how" title="How it works">
-        <div className="relative">
-          <SectionCircuitBoard variant="how" />
-          <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
+        <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
           <Step icon={<PlugIcon />} title="Connect Your Systems" text="Sign up and connect your phone line, calendar, and CRM in minutes." />
           <Step icon={<PhoneIcon />} title="AI Answers Calls" text="Friendly, human‑like greeting, 24/7 — fast and natural responses." />
           <Step icon={<CheckIcon />} title="Scheduling & Follow‑up" text="Books appointments, answers FAQs, and logs details + transcripts in your CRM." />
-          </div>
         </div>
       </Section>
 
