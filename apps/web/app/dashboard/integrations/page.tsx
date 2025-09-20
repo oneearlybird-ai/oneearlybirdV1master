@@ -62,7 +62,6 @@ export default function IntegrationsPage() {
   }, []);
 
   const items: Array<{ id: string; title: string; desc: string; oauth?: boolean; connectId?: string }> = [
-    { id: 'twilio', title: 'Phone (Twilio)', desc: 'Ingress number' },
     { id: 'google-calendar', title: 'Calendar (Google)', desc: 'Scheduling on your business calendar', oauth: true, connectId: 'google-calendar' },
     { id: 'microsoft-365', title: 'Calendar (Microsoft 365)', desc: 'Outlook calendar support' },
     { id: 'hubspot', title: 'CRM (HubSpot)', desc: 'Log calls and leads automatically', oauth: true, connectId: 'hubspot' },
@@ -78,13 +77,13 @@ export default function IntegrationsPage() {
     const p = providers[it.connectId || it.id];
     const connected = !!p?.connected;
     if (loading) return <div className="skeleton skeleton-badge" aria-hidden />;
-    if (connected) return <button className="btn btn-outline">Manage</button>;
+    if (connected) return <button className="btn btn-outline btn-sm">Manage</button>;
     if (it.oauth && it.connectId) return (
       <form method="post" action={`/api/integrations/oauth/start?provider=${encodeURIComponent(it.connectId)}`}>
-        <button className="btn btn-primary" type="submit">Connect</button>
+        <button className="btn btn-primary btn-sm" type="submit">Connect</button>
       </form>
     );
-    return <button className="btn btn-outline" disabled aria-disabled>Coming soon</button>;
+    return <button className="btn btn-outline btn-sm" disabled aria-disabled>Coming soon</button>;
   };
 
   const statusFor = (it: { id: string; connectId?: string }) => {

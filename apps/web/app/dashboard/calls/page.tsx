@@ -77,9 +77,22 @@ export default function CallsPage() {
       const target = e.target as HTMLElement | null;
       if (target && target.closest('input,select,textarea,button,[role="dialog"]')) return;
       if (tab !== 'list') return;
-      if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIndex(i => Math.min((i < 0 ? 0 : i + 1), pageRows.length - 1)); }
-      if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedIndex(i => Math.max((i <= 0 ? 0 : i - 1), 0)); }
-      if (e.key === 'Enter' && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault(); setOpenId(pageRows[focusedIndex].id); }
+      if (e.key === 'ArrowDown' || e.key.toLowerCase() === 'j') { e.preventDefault(); setFocusedIndex(i => Math.min((i < 0 ? 0 : i + 1), pageRows.length - 1)); }
+      if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'k') { e.preventDefault(); setFocusedIndex(i => Math.max((i <= 0 ? 0 : i - 1), 0)); }
+      if ((e.key === 'Enter' || e.key.toLowerCase() === 'o') && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault(); setOpenId(pageRows[focusedIndex].id); }
+      if (e.key.toLowerCase() === 'c' && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault();
+        const row = pageRows[focusedIndex];
+        navigator.clipboard?.writeText(row.caller).then(
+          () => window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Caller copied', kind: 'success' } })),
+          () => window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Copy failed', kind: 'error' } }))
+        );
+      }
+      if (e.key.toLowerCase() === 'r' && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault();
+        const row = pageRows[focusedIndex];
+        setReviewed(r => ({ ...r, [row.id]: !r[row.id] }));
+        const isNow = !reviewed[row.id];
+        window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: isNow ? 'Marked reviewed' : 'Marked unreviewed' } }));
+      }
       if (e.key === 'Escape') { setOpenId(null); }
     };
     window.addEventListener('keydown', onKey);
