@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RecentCallsPreview, SAMPLE_CALLS, type CallItem, CallDrawer } from "@/components/RecentCallsPreview";
 
 export default function CallsPage() {
@@ -44,6 +44,8 @@ export default function CallsPage() {
   const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
   const [sortBy, setSortBy] = useState<'time'|'duration'|'outcome'>('time');
   const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
+  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
+  const listRef = useRef<HTMLDivElement | null>(null);
   const sorted = useMemo(() => {
     const arr = filtered.slice();
     arr.sort((a,b) => {
@@ -69,6 +71,21 @@ export default function CallsPage() {
     else { setSortBy(key); setSortDir('desc'); }
   };
 
+  // Keyboard navigation for rows
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement | null;
+      if (target && target.closest('input,select,textarea,button,[role="dialog"]')) return;
+      if (tab !== 'list') return;
+      if (e.key === 'ArrowDown') { e.preventDefault(); setFocusedIndex(i => Math.min((i < 0 ? 0 : i + 1), pageRows.length - 1)); }
+      if (e.key === 'ArrowUp') { e.preventDefault(); setFocusedIndex(i => Math.max((i <= 0 ? 0 : i - 1), 0)); }
+      if (e.key === 'Enter' && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault(); setOpenId(pageRows[focusedIndex].id); }
+      if (e.key === 'Escape') { setOpenId(null); }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [tab, pageRows, focusedIndex]);
+
   return (
     <section>
       <h1 className="text-xl font-semibold tracking-tight">Calls & recordings</h1>
@@ -81,14 +98,26 @@ export default function CallsPage() {
           onChange={(e) => { setQuery(e.target.value); setPage(1); bumpBusy(); }}
           className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
         />
-        <select value={outcome} onChange={(e) => { setOutcome(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20">
-          <option value="all">All outcomes</option>
-          <option value="appointment">Appointment booked</option>
-          <option value="info">Info provided</option>
-          <option value="voicemail">Voicemail deflected</option>
-        </select>
+        <div className="pill-group" role="group" aria-label="Outcome filter">
+          {[
+            { key: 'all', label: 'All' },
+            { key: 'appointment', label: 'Booked' },
+            { key: 'info', label: 'Info' },
+            { key: 'voicemail', label: 'Voicemail' },
+          ].map(p => (
+            <button key={p.key} type="button" className="pill" aria-pressed={outcome===p.key}
+              onClick={() => { setOutcome(p.key); setPage(1); bumpBusy(); }}>
+              {p.label}
+            </button>
+          ))}
+        </div>
         <input type="date" value={start} onChange={(e) => { setStart(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Start date" />
         <input type="date" value={end} onChange={(e) => { setEnd(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="End date" />
+        <div className="pill-group" role="group" aria-label="Date range quick picks">
+          <button type="button" className="pill" onClick={() => { const d=new Date(); const iso=d.toISOString().slice(0,10); setStart(iso); setEnd(iso); setPage(1); bumpBusy(); }}>Today</button>
+          <button type="button" className="pill" onClick={() => { const d=new Date(); const endIso=d.toISOString().slice(0,10); const d2=new Date(Date.now()-6*24*3600*1000); const startIso=d2.toISOString().slice(0,10); setStart(startIso); setEnd(endIso); setPage(1); bumpBusy(); }}>7d</button>
+          <button type="button" className="pill" onClick={() => { const d=new Date(); const endIso=d.toISOString().slice(0,10); const d2=new Date(Date.now()-29*24*3600*1000); const startIso=d2.toISOString().slice(0,10); setStart(startIso); setEnd(endIso); setPage(1); bumpBusy(); }}>30d</button>
+        </div>
         <input type="number" placeholder="Min sec" value={minDur} onChange={(e) => { setMinDur(e.target.value); setPage(1); bumpBusy(); }} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Min duration (seconds)" />
         <input type="number" placeholder="Max sec" value={maxDur} onChange={(e) => { setMaxDur(e.target.value); setPage(1); bumpBusy(); }} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Max duration (seconds)" />
         <button
@@ -132,19 +161,21 @@ export default function CallsPage() {
               </button>
             </div>
           </div>
-          <div className="px-4 pb-4">
-            <div className="grid grid-cols-5 gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
+          <div className="px-4 pb-4" ref={listRef}>
+            <div className="grid grid-cols-5 gap-3 text-xs text-white/60 border-b border-white/10 pb-2 sticky-head">
               <button onClick={() => setSort('time')} className="text-left hover:text-white">Time {sortBy==='time' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               <div>Caller</div>
               <button onClick={() => setSort('duration')} className="text-left hover:text-white">Duration {sortBy==='duration' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               <button onClick={() => setSort('outcome')} className="text-left hover:text-white">Outcome {sortBy==='outcome' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
               <div>Actions</div>
             </div>
-            {pageRows.map((call) => {
+            {pageRows.map((call, i) => {
               const isRecent = Date.now() - new Date(call.ts).getTime() < 24*60*60*1000;
               const isNew = isRecent && !reviewed[call.id];
+              const isFocused = i === focusedIndex;
               return (
-                <div key={call.id} className="grid grid-cols-5 items-center gap-3 py-3 hover:bg-white/[0.03]">
+                <div key={call.id} className={`grid grid-cols-5 items-center gap-3 py-3 hover:bg-white/[0.03] ${isFocused ? 'outline outline-2 outline-white/40 rounded-md' : ''}`} tabIndex={isFocused ? 0 : -1}
+                  onClick={() => setFocusedIndex(i)} onFocus={() => setFocusedIndex(i)}>
                   <button onClick={() => setOpenId(call.id)} className="text-left text-sm text-white/80 flex items-center gap-2">
                     {call.time}
                     {isNew ? <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-1.5 py-0.5">NEW</span> : null}
