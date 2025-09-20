@@ -46,7 +46,7 @@ export default function IntegrationsPage() {
     return () => { cancelled = true };
   }, []);
 
-  const S = (id: string, fallbackText?: string) => loading
+  const S = (id: string) => loading
     ? (<span className="skeleton skeleton-badge" aria-hidden />)
     : (<Badge connected={!!providers[id]?.connected} />);
 
