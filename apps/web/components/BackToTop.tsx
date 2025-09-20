@@ -6,7 +6,9 @@ export default function BackToTop() {
   const [show, setShow] = useState(false);
   useEffect(() => {
     const onScroll = () => {
-      const threshold = Math.max(400, Math.floor(window.innerHeight * 0.5));
+      const threshold = Math.max(300, Math.floor(window.innerHeight * 0.5));
+      const scrollable = document.documentElement.scrollHeight - window.innerHeight;
+      if (scrollable < 400) { setShow(false); return; }
       setShow(window.scrollY > threshold);
     };
     onScroll();

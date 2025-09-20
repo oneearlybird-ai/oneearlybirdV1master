@@ -5,7 +5,7 @@ import React from 'react';
 
 function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface">
       <div className="text-xs text-white/60">{label}</div>
       <div className="mt-1 text-2xl font-semibold">{value}</div>
       {hint ? <div className="mt-1 text-xs text-white/50">{hint}</div> : null}
@@ -54,7 +54,7 @@ export default async function DashboardPreview() {
     <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome to EarlyBird AI, Alex</h1>
       <p className="mt-2 text-white/70">Your AI receptionist is <span className="text-emerald-400">Active</span> and handling calls. <span className="ml-2"><LiveStatusBadge /></span></p>
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-between">
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
           <div>
@@ -83,7 +83,7 @@ export default async function DashboardPreview() {
       <ThisWeekPanel week={week} />
 
       {/* Recent calls */}
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 eb-surface">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
           <a className="text-sm text-white/80 hover:text-white" href="/dashboard/calls">View all</a>
@@ -92,7 +92,7 @@ export default async function DashboardPreview() {
       </div>
 
       {/* Onboarding checklist */}
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface">
         <h2 className="font-medium">Get set up</h2>
         <ul className="mt-2 space-y-2 text-sm text-white/80">
           <li>✅ Connect phone number</li>
@@ -121,7 +121,7 @@ function UsageOverviewCard() {
     return () => { cancelled = true };
   }, []);
   return (
-    <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface">
       <div className="flex items-center justify-between">
         <div className="font-medium">Usage overview</div>
         {state.loading ? <div className="skeleton skeleton-badge" aria-hidden /> : (
@@ -161,7 +161,7 @@ function ThisWeekPanel({ week }: { week: { answered: number; booked: number; def
     return `${x},${y}`;
   }).join(' ');
   return (
-    <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface">
       <div className="flex items-center justify-between">
         <h2 className="font-medium">This week</h2>
         <span className="text-sm text-white/60">Live snapshot</span>

@@ -15,7 +15,7 @@ function Section({ id, title, children }: { id?: string; title?: string; childre
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 motion-safe:transition-all hover:-translate-y-0.5 hover:shadow-lg hover:shadow-black/20 active:scale-95 eb-reveal ${className}`}>
+    <div className={`rounded-2xl border border-white/10 bg-white/5 p-6 eb-surface motion-safe:transition-all hover:-translate-y-0.5 active:scale-95 eb-reveal ${className}`}>
       {children}
     </div>
   );

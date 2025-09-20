@@ -15,7 +15,7 @@ function Badge({ connected }: { connected: boolean }) {
 
 function Card({ title, desc, status, action }: { title: string; desc: string; status: React.ReactNode; action: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface">
       <div className="flex items-center justify-between">
         <div>
           <div className="font-medium">{title}</div>
