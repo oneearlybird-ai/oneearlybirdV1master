@@ -26,7 +26,7 @@ export default function NavMainLinks() {
             key={href}
             href={href}
             aria-current={current ? "page" : undefined}
-            className={`main-link${current ? " underline" : ""}`}
+            className="main-link"
           >
             {l.label}
           </Link>
