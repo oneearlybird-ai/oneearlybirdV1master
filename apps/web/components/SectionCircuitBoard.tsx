@@ -67,7 +67,7 @@ export function SectionCircuitBoard({ variant = 'hero' }: { variant?: Variant })
     );
 
   return (
-    <div ref={wrapRef} className="absolute inset-0 z-10 pointer-events-none">
+    <div ref={wrapRef} className="absolute inset-0 -z-10 pointer-events-none">
       <svg viewBox="0 0 1200 500" className="h-full w-full" aria-hidden>
         <defs>
           <linearGradient id="copper" x1="0" x2="1" y1="0" y2="0">

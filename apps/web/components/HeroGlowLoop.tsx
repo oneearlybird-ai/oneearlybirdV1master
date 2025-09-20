@@ -17,7 +17,7 @@ export function HeroGlowLoop({ containerRef, padding = 16, radius = 14 }: Props)
   const rafRef = useRef<number | null>(null);
   const [box, setBox] = useState<{ w: number; h: number }>({ w: 0, h: 0 });
 
-  const roundedRectPath = (w: number, h: number, r: number) => {
+  function roundedRectPath(w: number, h: number, r: number) {
     const rr = Math.max(0, Math.min(r, Math.min(w, h) / 2));
     const x0 = padding, y0 = padding;
     const x1 = Math.max(0, w - padding), y1 = Math.max(0, h - padding);
@@ -98,7 +98,9 @@ export function HeroGlowLoop({ containerRef, padding = 16, radius = 14 }: Props)
             </feMerge>
           </filter>
         </defs>
+        {/* Invisible guide */}
         <path ref={pathRef} fill="none" stroke="transparent" />
+        {/* Moving bright segment */
         <path
           ref={dashRef}
           fill="none"
@@ -107,6 +109,7 @@ export function HeroGlowLoop({ containerRef, padding = 16, radius = 14 }: Props)
           strokeLinecap="round"
           filter="url(#haloGlow)"
         />
+        {/* Dot */}
         <circle ref={dotRef} r="6" />
       </svg>
     </div>
