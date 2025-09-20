@@ -5,6 +5,7 @@ import { WebSocketServer, WebSocket } from 'ws';
 const PORT = Number(process.env.PORT || 8080);
 const WS_PATH = process.env.WS_PATH || '/rtm/voice';
 const AUTH_TOKEN = process.env.MEDIA_AUTH_TOKEN || '';
+const SHARED_SECRET = process.env.MEDIA_SHARED_SECRET || '';
 
 const server = http.createServer((req, res) => {
   const { url } = req;
@@ -123,14 +124,18 @@ function leBytesToInt16(buf) {
 }
 
 wss.on('connection', async (ws, req) => {
-  // Optional auth: prefer query param token=; fallback to header x-media-auth
-  if (AUTH_TOKEN) {
+  // Auth: prefer JWT when SHARED_SECRET is set; else static token
+  if (SHARED_SECRET || AUTH_TOKEN) {
     let ok = false;
     try {
       const u = new URL(req.url || '/', 'http://localhost');
       const qp = u.searchParams.get('token') || '';
-      const hdr = (req.headers['x-media-auth'] || '').toString();
-      ok = (qp && qp === AUTH_TOKEN) || (hdr && hdr === AUTH_TOKEN);
+      if (SHARED_SECRET) {
+        ok = verifyJwtHS256(qp, SHARED_SECRET).ok;
+      } else if (AUTH_TOKEN) {
+        const hdr = (req.headers['x-media-auth'] || '').toString();
+        ok = (qp && qp === AUTH_TOKEN) || (hdr && hdr === AUTH_TOKEN);
+      }
     } catch (e) { void e; }
     if (!ok) { try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
   }
@@ -223,6 +228,31 @@ wss.on('connection', async (ws, req) => {
 
   ws.on('error', () => { /* ignore */ return; });
 });
+function b64urlToBuf(str) {
+  const pad = str.length % 4 ? '='.repeat(4 - (str.length % 4)) : '';
+  const s = (str + pad).replace(/-/g,'+').replace(/_/g,'/');
+  return Buffer.from(s, 'base64');
+}
+
+function verifyJwtHS256(token, secret) {
+  try {
+    const parts = String(token).split('.');
+    if (parts.length !== 3) return { ok: false };
+    const [h,p,sig] = parts;
+    const header = JSON.parse(b64urlToBuf(h).toString('utf8'));
+    if (header?.alg !== 'HS256') return { ok: false };
+    const data = `${h}.${p}`;
+    const expSig = crypto.createHmac('sha256', secret).update(data).digest();
+    const gotSig = b64urlToBuf(sig);
+    if (expSig.length !== gotSig.length) return { ok: false };
+    if (!crypto.timingSafeEqual(expSig, gotSig)) return { ok: false };
+    const payload = JSON.parse(b64urlToBuf(p).toString('utf8'));
+    const now = Math.floor(Date.now() / 1000);
+    if (!payload?.exp || payload.exp < now) return { ok: false };
+    if (payload?.aud !== 'media') return { ok: false };
+    return { ok: true };
+  } catch { return { ok: false }; }
+}
 
 server.listen(PORT, () => {
   process.stdout.write(`media:listening ${PORT} ${WS_PATH}\n`);
