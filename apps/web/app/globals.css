@@ -113,6 +113,11 @@ section[id] { scroll-margin-top: var(--eb-header-h); }
 .no-scrollbar { scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
+/* Logo badge normalization */
+.logo-badge { height: 2.5rem; width: 8rem; }
+.logo-badge img { max-height: 1.5rem; }
+.logo-mask { height: 1.5rem; }
+
 /* Drawer and overlay animations */
 @keyframes eb-overlay-in { from { opacity: 0 } to { opacity: 1 } }
 @keyframes eb-drawer-in { from { transform: translateX(100%) } to { transform: translateX(0) } }

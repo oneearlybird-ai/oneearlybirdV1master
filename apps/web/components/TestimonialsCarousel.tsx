@@ -43,8 +43,8 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
             aria-live={i === index ? 'polite' : undefined}
             className={`rounded-2xl border border-white/10 bg-white/5 p-6 transition-opacity duration-500 ${i === index ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
           >
-            <blockquote className="text-white/90">{t.q}</blockquote>
-            <figcaption className="mt-2 text-sm text-white/60">{t.a}</figcaption>
+            <blockquote className="text-white/90 leading-relaxed md:leading-7">{t.q}</blockquote>
+            <figcaption className="mt-2 text-sm text-white/70 leading-6">{t.a}</figcaption>
           </figure>
         ))}
       </div>

@@ -59,7 +59,7 @@ function LogoBadge({ id, label }: { id: string; label: string }) {
   const colored = new Set(['google-workspace','google-calendar','aws']);
   const masked = new Set(['hubspot','salesforce','zoho','twilio','slack','stripe','signalwire','outlook','microsoft-365','zapier']);
   return (
-    <figure className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center flex-shrink-0 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
+    <figure className="logo-badge h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center flex-shrink-0 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
       {colored.has(id) ? (
         <img src={`/logos/${id}.svg`} alt={label} className="block max-h-6 max-w-full object-contain" />
       ) : masked.has(id) ? (

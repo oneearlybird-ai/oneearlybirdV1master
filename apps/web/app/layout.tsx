@@ -9,6 +9,7 @@ import RevealOnScroll from "@/components/RevealOnScroll";
 import ScrollHeaderElevator from "@/components/ScrollHeaderElevator";
 import BackToTop from "@/components/BackToTop";
 import NavMainLinks from "@/components/NavMainLinks";
+import FooterLinks from "@/components/FooterLinks";
 import MobileNav from "@/components/MobileNav";
 import { Analytics } from "@vercel/analytics/next";
 
@@ -60,12 +61,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <div className="text-sm text-white/60">
               © {new Date().getFullYear()} EarlyBird, Inc.
             </div>
-            <div className="flex gap-6 text-sm">
-              <Link href="/privacy" className="text-white/70 hover:text-white">Privacy</Link>
-              <Link href="/terms" className="text-white/70 hover:text-white">Terms</Link>
-              <Link href="/docs" className="text-white/70 hover:text-white">Docs</Link>
-              <Link href="/support" className="text-white/70 hover:text-white">Support</Link>
-            </div>
+            <FooterLinks />
           </div>
         </footer>
         {/* Vercel Analytics */}
