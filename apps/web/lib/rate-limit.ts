@@ -1,4 +1,5 @@
-import { getRedis } from "./redis";
+// Edge-safe rate limiter with optional Upstash; falls back to in-memory.
+// Note: Do NOT import server-only modules here (used by Edge routes too).
 
 export type RateLimitResult = {
   success: boolean;
@@ -28,24 +29,53 @@ export function createRateLimiter(opts: Options = {}) {
   const tokensPerWindow = opts.tokensPerWindow ?? 60;
   const windowSeconds = opts.windowSeconds ?? 60;
   const prefix = opts.prefix ?? "rate";
-  const redis = getRedis();
+  const upstashUrl = (process.env.UPSTASH_REDIS_REST_URL || '').trim();
+  const upstashToken = (process.env.UPSTASH_REDIS_REST_TOKEN || '').trim();
+  const useUpstash = Boolean(upstashUrl && upstashToken);
+
+  // Minimal in-memory windowed counter (per process)
+  const mem = new Map<string, { used: number; exp: number }>();
 
   return {
     async limit(identifier: string): Promise<RateLimitResult> {
       const now = Date.now();
       const window = Math.floor(now / (windowSeconds * 1000));
       const key = `${prefix}:${identifier}:${window}`;
-
-      const usedRaw = await redis.incr(key);
-  const used = typeof usedRaw === 'number' ? usedRaw : Number(usedRaw);
-      if (used === 1) {
-        await redis.set(key, String(used), { ex: windowSeconds } as { ex: number });
-      }
-
-      const remaining = Math.max(0, tokensPerWindow - used);
-      const success = used <= tokensPerWindow;
       const reset = (window + 1) * windowSeconds * 1000;
 
+      // Prefer Upstash REST API if configured (Edge-safe)
+      if (useUpstash) {
+        try {
+          const resp = await fetch(`${upstashUrl}/pipeline`, {
+            method: 'POST',
+            headers: { 'authorization': `Bearer ${upstashToken}`, 'content-type': 'application/json' },
+            body: JSON.stringify([["INCR", key], ["EXPIRE", key, windowSeconds]]),
+            cache: 'no-store',
+          });
+          const raw = await resp.json().catch(() => null) as unknown;
+          let used = 0;
+          if (Array.isArray(raw)) {
+            const first = (raw as Array<Record<string, unknown>>)[0];
+            const r = first?.result;
+            used = typeof r === 'number' ? r : Number(r ?? 0);
+          }
+          const remaining = Math.max(0, tokensPerWindow - used);
+          const success = used <= tokensPerWindow;
+          return { success, limit: tokensPerWindow, remaining, reset };
+        } catch {
+          // On any failure, fall back to memory
+        }
+      }
+
+      // In-memory fallback
+      const rec = mem.get(key);
+      if (!rec || rec.exp <= now) {
+        mem.set(key, { used: 1, exp: reset });
+        return { success: true, limit: tokensPerWindow, remaining: tokensPerWindow - 1, reset };
+      }
+      rec.used += 1;
+      const remaining = Math.max(0, tokensPerWindow - rec.used);
+      const success = rec.used <= tokensPerWindow;
       return { success, limit: tokensPerWindow, remaining, reset };
     },
   };

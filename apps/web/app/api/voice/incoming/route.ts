@@ -81,7 +81,7 @@ export async function POST(req: Request) {
 
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Response><Connect><Stream track="both" url="${wsUrl}"/></Connect></Response>`;
+    `<Response><Connect><Stream track="both_tracks" url="${wsUrl}"/></Connect></Response>`;
   if (sigDebug) {
     console.log('[twilio] returning TwiML Stream', { url: fullUrl, wsUrl });
   }
