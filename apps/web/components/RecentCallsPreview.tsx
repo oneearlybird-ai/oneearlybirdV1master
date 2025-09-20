@@ -57,13 +57,17 @@ export const SAMPLE_CALLS: CallItem[] = [
 // Removed row expander in favor of a dedicated drawer
 
 // Shared drawer component
-export function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => void }) {
+export function CallDrawer({ call, onClose, onPrev, onNext }: { call: CallItem; onClose: () => void; onPrev?: () => void; onNext?: () => void }) {
   const closeRef = React.useRef<HTMLButtonElement | null>(null);
   const [copied, setCopied] = useState(false);
   React.useEffect(() => {
     const prevActive = (typeof document !== 'undefined') ? (document.activeElement as HTMLElement | null) : null;
     closeRef.current?.focus();
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if ((e.key === 'ArrowLeft' || e.key.toLowerCase() === 'k') && onPrev) { e.preventDefault(); onPrev(); }
+      if ((e.key === 'ArrowRight' || e.key.toLowerCase() === 'j') && onNext) { e.preventDefault(); onNext(); }
+    };
     document.addEventListener('keydown', onKey);
     return () => {
       document.removeEventListener('keydown', onKey);
@@ -87,6 +91,8 @@ export function CallDrawer({ call, onClose }: { call: CallItem; onClose: () => v
         <div className="flex items-center justify-between border-b border-white/10 p-4">
           <h3 id="call-details-title" className="font-medium">Call details</h3>
           <div className="flex items-center gap-2">
+            {onPrev ? <button onClick={onPrev} title="Previous (K / ←)" className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Prev</button> : null}
+            {onNext ? <button onClick={onNext} title="Next (J / →)" className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Next</button> : null}
             <button onClick={doCopy} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">{copied ? 'Copied' : 'Copy transcript'}</button>
             <button ref={closeRef} onClick={onClose} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white">Close</button>
           </div>

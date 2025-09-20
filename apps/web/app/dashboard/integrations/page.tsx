@@ -96,7 +96,7 @@ export default function IntegrationsPage() {
     <section>
       <h1 className="text-xl font-semibold tracking-tight">Integrations</h1>
       <p className="mt-1 text-sm text-white/60">Connect your tools. OAuth flows open in a new window.</p>
-      <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+      <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         {items.map((it) => (
           <Card
             key={it.id}

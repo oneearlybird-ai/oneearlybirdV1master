@@ -193,6 +193,9 @@ section[id] { scroll-margin-top: var(--eb-header-h); }
 footer a:focus-visible { outline: 2px solid rgba(255,255,255,0.75); outline-offset: 2px; border-radius: 8px; box-shadow: 0 0 0 4px rgba(255,255,255,0.12); }
 footer a { transition: color 150ms ease; }
 footer a:hover { color: #ffffff; }
+footer a.footer-link { position: relative; color: rgba(255,255,255,0.85); text-decoration: none; }
+footer a.footer-link::after { content: ""; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: currentColor; transform-origin: left center; transform: scaleX(0); transition: transform 180ms ease; }
+footer a.footer-link:hover::after, footer a.footer-link[aria-current="page"]::after { transform: scaleX(1); }
 
 /* Harmonized elevation for surfaces */
 .eb-surface { box-shadow: 0 8px 26px rgba(0,0,0,0.24); }

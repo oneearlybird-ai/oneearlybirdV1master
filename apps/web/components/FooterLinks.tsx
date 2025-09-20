@@ -20,7 +20,7 @@ export default function FooterLinks() {
             key={i.href}
             href={i.href}
             aria-current={current ? 'page' : undefined}
-            className={`text-white/70 hover:text-white focus:outline-none${current ? ' underline' : ''}`}
+            className="footer-link"
           >
             {i.label}
           </Link>
@@ -29,4 +29,3 @@ export default function FooterLinks() {
     </div>
   );
 }
-

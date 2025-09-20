@@ -227,7 +227,24 @@ export default function CallsPage() {
           <button disabled={page>=pageCount} onClick={() => setPage(p => Math.min(pageCount, p+1))} className="rounded border border-white/20 px-2 py-1 disabled:opacity-50">Next</button>
         </div>
       </div>
-      {openId ? (<CallDrawer call={filtered.find(c => c.id === openId) ?? SAMPLE_CALLS[0]} onClose={() => setOpenId(null)} />) : null}
+      {openId ? (
+        <CallDrawer
+          call={filtered.find(c => c.id === openId) ?? SAMPLE_CALLS[0]}
+          onClose={() => setOpenId(null)}
+          onPrev={() => {
+            const idx = pageRows.findIndex(c => c.id === openId);
+            const prevIdx = Math.max(0, idx - 1);
+            const id = pageRows[prevIdx]?.id ?? openId;
+            setOpenId(id); setFocusedIndex(prevIdx);
+          }}
+          onNext={() => {
+            const idx = pageRows.findIndex(c => c.id === openId);
+            const nextIdx = Math.min(pageRows.length - 1, idx + 1);
+            const id = pageRows[nextIdx]?.id ?? openId;
+            setOpenId(id); setFocusedIndex(nextIdx);
+          }}
+        />
+      ) : null}
     </section>
   );
 }
