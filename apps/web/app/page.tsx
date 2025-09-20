@@ -91,9 +91,7 @@ export default function Home() {
             </svg>
           </div>
         </div>
-        <div className="mb-6">
-          <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-sm text-white/70">🚀 AI Voice Receptionist for business phone calls</span>
-        </div>
+        {/* Removed marketing bubble per request */}
         <h1 className="eb-hero-title text-4xl md:text-6xl font-semibold tracking-tight">
           <span className="eb-fade-word eb-delay-1000">Answer</span>{' '}
           <span className="eb-fade-word eb-delay-2500">every</span>{' '}
