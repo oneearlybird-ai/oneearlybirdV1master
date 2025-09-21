@@ -41,7 +41,8 @@ const server = http.createServer((req, res) => {
   res.end(JSON.stringify({ ok: false, error: 'not_found' }));
 });
 
-const wss = new WebSocketServer({ server, path: WS_PATH });
+// Disable perMessageDeflate and cap maxPayload to keep frames predictable and small
+const wss = new WebSocketServer({ server, path: WS_PATH, perMessageDeflate: false, maxPayload: 2 * 1024 * 1024 });
 
 // lightweight metrics for autoscaling decisions (no PHI)
 const metrics = { frames10s: 0, fps10s: 0, lastMsgAt: 0, backpressure10m: 0, lastBackpressureAt: 0 };

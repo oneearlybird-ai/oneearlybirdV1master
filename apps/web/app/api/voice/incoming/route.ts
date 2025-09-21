@@ -113,9 +113,14 @@ export async function POST(req: Request) {
     }
   })();
 
+  // Per routing plan: explicit both_tracks with Connect/Stream
+  // Track configuration: default to 'both_tracks' per routing plan, but allow override.
+  // Set TWILIO_CONNECT_TRACK=inbound_track (or 'omit') to avoid Twilio 31941 in some accounts.
+  const trackCfg = (process.env.TWILIO_CONNECT_TRACK || 'both_tracks').trim();
+  const trackAttr = trackCfg === 'omit' ? '' : ` track="${trackCfg}"`;
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Response><Connect><Stream track="both_tracks" url="${wsUrl}"/></Connect></Response>`;
+    `<Response><Connect><Stream${trackAttr} url="${wsUrl}"/></Connect></Response>`;
   if (sigDebug) {
     const safeWsUrl = wsUrl.replace(/token=[^&]+/, 'token=***');
     console.log('[twilio] returning TwiML Stream', { url: fullUrl, wsUrl: safeWsUrl });
