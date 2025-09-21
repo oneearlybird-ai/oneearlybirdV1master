@@ -29,11 +29,20 @@ export default function MobileNav() {
     document.addEventListener('keydown', onKeyDown);
     const prev = document.body.style.overflow;
     document.body.style.overflow = 'hidden';
+    // Mark main content inert/hidden for SRs while menu open
+    const main = document.getElementById('content');
+    const prevAria = main?.getAttribute('aria-hidden') || null;
+    const hadInert = main?.hasAttribute('inert') || false;
+    if (main) { main.setAttribute('aria-hidden', 'true'); main.setAttribute('inert',''); }
     // Focus trap basics
     firstFocusRef.current?.focus();
     return () => {
       document.removeEventListener('keydown', onKeyDown);
       document.body.style.overflow = prev;
+      if (main) {
+        if (prevAria === null) main.removeAttribute('aria-hidden'); else main.setAttribute('aria-hidden', prevAria);
+        if (!hadInert) main.removeAttribute('inert');
+      }
     };
   }, [open, onKeyDown]);
 
@@ -83,4 +92,3 @@ export default function MobileNav() {
     </>
   );
 }
-

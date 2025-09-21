@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { toast } from "@/components/Toasts";
 
 type Provider = { id: string; name: string; connected: boolean };
 
@@ -69,11 +70,24 @@ export default function IntegrationsPage() {
     const connected = !!p?.connected;
     if (loading) return <div className="skeleton skeleton-badge" aria-hidden />;
     if (connected) return <button className="btn btn-outline btn-sm" disabled aria-disabled>Connected</button>;
-    if (it.oauth && it.connectId) return (
-      <form method="post" action={`/api/integrations/oauth/start?provider=${encodeURIComponent(it.connectId)}`}>
-        <button className="btn btn-primary btn-sm" type="submit">Connect</button>
-      </form>
-    );
+    if (it.oauth && it.connectId) {
+      const onConnect = async () => {
+        try {
+          const res = await fetch(`/api/integrations/oauth/start?provider=${encodeURIComponent(it.connectId!)}`, { method: 'POST' });
+          if (res.status === 501) { toast('Linking not available yet', 'error'); return; }
+          if (!res.ok) { toast('Connect failed', 'error'); return; }
+          const body = await res.json().catch(() => ({} as any));
+          if (body?.url && typeof body.url === 'string') {
+            window.open(body.url, '_blank', 'noopener');
+          } else {
+            toast('Check your provider window to continue', 'default');
+          }
+        } catch {
+          toast('Connect failed', 'error');
+        }
+      };
+      return <button className="btn btn-primary btn-sm" type="button" onClick={onConnect} title="Connect to {it.title}">Connect</button>;
+    }
     return <button className="btn btn-outline btn-sm" disabled aria-disabled>Coming soon</button>;
   };
 

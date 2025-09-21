@@ -15,6 +15,24 @@ export default function CallsPage() {
   const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
   const [busy, setBusy] = useState(false);
   const filterTimer = useRef<number | null>(null);
+  // URL state sync
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams(window.location.search);
+      const q = sp.get('q'); if (q) setQuery(q);
+      const o = sp.get('o'); if (o) setOutcome(o);
+      const s = sp.get('s'); if (s) setStart(s);
+      const e = sp.get('e'); if (e) setEnd(e);
+      const mi = sp.get('mi'); if (mi) setMinDur(mi);
+      const ma = sp.get('ma'); if (ma) setMaxDur(ma);
+      const t = sp.get('tab'); if (t === 'analytics') setTab('analytics');
+      const sb = sp.get('sb'); const sd = sp.get('sd');
+      if (sb === 'duration' || sb === 'outcome' || sb === 'time') setSortBy(sb);
+      if (sd === 'asc' || sd === 'desc') setSortDir(sd);
+      const p = Number(sp.get('p') || '1'); if (Number.isFinite(p) && p > 0) setPage(p);
+    } catch { /* ignore malformed query */ }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const bumpBusy = () => {
     setBusy(true);
@@ -70,6 +88,26 @@ export default function CallsPage() {
     if (sortBy === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
     else { setSortBy(key); setSortDir('desc'); }
   };
+
+  // Persist state to URL (replaceState)
+  useEffect(() => {
+    try {
+      const sp = new URLSearchParams();
+      if (query) sp.set('q', query);
+      if (outcome !== 'all') sp.set('o', outcome);
+      if (start) sp.set('s', start);
+      if (end) sp.set('e', end);
+      if (minDur) sp.set('mi', String(minDur));
+      if (maxDur) sp.set('ma', String(maxDur));
+      if (tab !== 'list') sp.set('tab', tab);
+      if (sortBy !== 'time') sp.set('sb', sortBy);
+      if (sortDir !== 'desc') sp.set('sd', sortDir);
+      if (page !== 1) sp.set('p', String(page));
+      const qs = sp.toString();
+      const url = qs ? `${location.pathname}?${qs}` : location.pathname;
+      window.history.replaceState({}, '', url);
+    } catch { /* ignore */ }
+  }, [query, outcome, start, end, minDur, maxDur, tab, sortBy, sortDir, page]);
 
   // Keyboard navigation for rows
   useEffect(() => {
@@ -169,6 +207,7 @@ export default function CallsPage() {
               </div>
             </div>
             <div>
+              <button onClick={() => { setQuery(''); setOutcome('all'); setStart(''); setEnd(''); setMinDur(''); setMaxDur(''); setSortBy('time'); setSortDir('desc'); setPage(1); }} className="mr-2 rounded border border-white/20 px-3 py-1.5 text-xs text-white/80 hover:text-white">Reset</button>
               <button disabled className="rounded border border-white/20 px-3 py-1.5 text-xs text-white/60 cursor-not-allowed" aria-disabled="true" aria-label="Download CSV (coming soon)">
                 Download CSV (soon)
               </button>
