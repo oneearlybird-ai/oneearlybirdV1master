@@ -88,7 +88,7 @@ export default function IntegrationsPage() {
       };
       return <button className="btn btn-primary btn-sm" type="button" onClick={onConnect} title="Connect to {it.title}">Connect</button>;
     }
-    return <button className="btn btn-outline btn-sm" disabled aria-disabled>Coming soon</button>;
+    return <button className="btn btn-outline btn-sm" disabled aria-disabled title="Coming soon">Coming soon</button>;
   };
 
   return (

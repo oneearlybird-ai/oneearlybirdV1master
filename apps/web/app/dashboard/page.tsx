@@ -7,15 +7,17 @@ import CopyDiagnostics from '@/components/CopyDiagnostics';
 import CopyOrgIdButton from '@/components/CopyOrgIdButton';
 import CopyPageLinkButton from '@/components/CopyPageLinkButton';
 
-function Kpi({ label, value, hint }: { label: string; value: string; hint?: string }) {
+function Kpi({ label, value, hint, progress }: { label: string; value: string; hint?: string; progress?: number }) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <div className="text-xs text-white/60">{label}</div>
       <div className="mt-1 text-2xl font-semibold">{value}</div>
       {hint ? <div className="mt-1 text-xs text-white/50">{hint}</div> : null}
-      <div className="mt-3 h-2 w-full overflow-hidden rounded bg-white/5" aria-hidden>
-        <div className="h-full w-2/3 bg-white/10" />
-      </div>
+      {typeof progress === 'number' ? (
+        <div className="mt-3 h-2 w-full overflow-hidden rounded bg-white/5" aria-hidden title={`${Math.round(progress * 100)}%`}>
+          <div className="h-full bg-white/10" style={{ width: `${Math.max(0, Math.min(100, progress * 100))}%` }} />
+        </div>
+      ) : null}
     </div>
   );
 }
@@ -74,8 +76,8 @@ export default async function DashboardPage() {
 
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         <Kpi label="Current plan" value={plan} hint={`Renews ${renewal}`} />
-        <Kpi label="Calls this month" value={`${calls} / ${callsQuota}`} />
-        <Kpi label="Minutes used" value={`${minutes} / ${minutesQuota}`} />
+        <Kpi label="Calls this month" value={`${calls} / ${callsQuota}`} progress={callsQuota ? calls / callsQuota : 0} />
+        <Kpi label="Minutes used" value={`${minutes} / ${minutesQuota}`} progress={minutesQuota ? minutes / minutesQuota : 0} />
         <Kpi label="After‑hours coverage" value="24/7" />
       </div>
       <div className="mt-3">

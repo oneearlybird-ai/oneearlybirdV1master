@@ -215,10 +215,19 @@ export default function CallsPage() {
           </div>
           <div className="px-4 pb-4" ref={listRef}>
             <div className="grid grid-cols-5 gap-3 text-xs text-white/60 border-b border-white/10 pb-2 sticky-head">
-              <button onClick={() => setSort('time')} className="text-left hover:text-white">Time {sortBy==='time' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
+              <button onClick={() => setSort('time')} className="text-left hover:text-white flex items-center gap-1">
+                <span>Time</span>
+                <span className={`${sortBy==='time' ? 'text-white/80' : 'text-white/30'}`}>{sortBy==='time' ? (sortDir==='asc'?'↑':'↓') : '↕'}</span>
+              </button>
               <div>Caller</div>
-              <button onClick={() => setSort('duration')} className="text-left hover:text-white">Duration {sortBy==='duration' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
-              <button onClick={() => setSort('outcome')} className="text-left hover:text-white">Outcome {sortBy==='outcome' ? (sortDir==='asc'?'↑':'↓') : ''}</button>
+              <button onClick={() => setSort('duration')} className="text-left hover:text-white flex items-center gap-1">
+                <span>Duration</span>
+                <span className={`${sortBy==='duration' ? 'text-white/80' : 'text-white/30'}`}>{sortBy==='duration' ? (sortDir==='asc'?'↑':'↓') : '↕'}</span>
+              </button>
+              <button onClick={() => setSort('outcome')} className="text-left hover:text-white flex items-center gap-1">
+                <span>Outcome</span>
+                <span className={`${sortBy==='outcome' ? 'text-white/80' : 'text-white/30'}`}>{sortBy==='outcome' ? (sortDir==='asc'?'↑':'↓') : '↕'}</span>
+              </button>
               <div>Actions</div>
             </div>
             {pageRows.map((call, i) => {
