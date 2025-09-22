@@ -116,9 +116,8 @@ export async function POST(req: Request) {
   // Per routing plan: explicit both_tracks with Connect/Stream
   // Track configuration: default to 'inbound_track' to avoid Twilio 31941 on <Connect>/<Stream> in some accounts.
   // Bidirectional audio remains supported by sending media frames back to Twilio.
-  // Override via TWILIO_CONNECT_TRACK ('both_tracks'|'inbound_track'|'omit') if desired.
-  const trackCfg = (process.env.TWILIO_CONNECT_TRACK || 'inbound_track').trim();
-  const trackAttr = trackCfg === 'omit' ? '' : ` track="${trackCfg}"`;
+  // For <Connect><Stream>, Twilio requires 'inbound_track'. Outbound audio is still supported over the same socket.
+  const trackAttr = ` track="inbound_track"`;
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
     `<Response><Connect><Stream${trackAttr} url="${wsUrl}"/></Connect></Response>`;

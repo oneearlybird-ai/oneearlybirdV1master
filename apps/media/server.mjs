@@ -150,10 +150,16 @@ wss.on('connection', async (ws, req) => {
     if (Date.now() - lastMsgAt > 30000) { try { ws.close(1001, 'idle'); } catch (e) { void e; } }
     }, 15000);
 
-  const EL_URL = process.env.ELEVENLABS_WS_URL || process.env.ELEVEN_WS_URL || 'wss://api.elevenlabs.io/v1/convai/ws';
+  // Conversation WS endpoint (per ElevenLabs docs):
+  // wss://api.elevenlabs.io/v1/convai/conversation?agent_id=<agent_id>
+  const EL_URL = process.env.ELEVENLABS_WS_URL || process.env.ELEVEN_WS_URL || 'wss://api.elevenlabs.io/v1/convai/conversation';
   const EL_API = process.env.ELEVENLABS_API_KEY || process.env.ELEVEN_API_KEY || '';
   const EL_AGENT = process.env.ELEVENLABS_AGENT_ID || process.env.ELEVEN_AGENT_ID || '';
   let vendor = null;
+  let vendorReady = false;
+  // Buffer of 16k PCM (LE) chunks to append to vendor conversation WS
+  let pendingChunks = [];
+  let commitTimer = null;
   function vendorConnect() {
     if (!EL_API) return;
     let url = EL_URL;
@@ -162,17 +168,44 @@ wss.on('connection', async (ws, req) => {
       url = `${url}${sep}agent_id=${encodeURIComponent(EL_AGENT)}`;
     }
     vendor = new WebSocket(url, { headers: { 'xi-api-key': EL_API }, perMessageDeflate: false });
+    vendor.on('open', () => {
+      vendorReady = true;
+      // Send initial session/update to declare audio formats (PCM16 @16k mono)
+      try {
+        vendor.send(JSON.stringify({
+          type: 'session.update',
+          session: {
+            input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
+            output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
+          },
+        }));
+      } catch {}
+    });
     vendor.on('message', (data, isBinary) => {
       if (!streamSid) return;
-      if (isBinary && data?.length) {
-        try {
+      try {
+        if (isBinary && data?.length) {
+          // Some implementations may stream binary PCM16 16k frames
           const pcm16k = leBytesToInt16(Buffer.from(data));
           const pcm8k = downsample16kTo8k(pcm16k);
           const mu = pcm16ToMuLaw(pcm8k);
           const b64 = Buffer.from(mu).toString('base64');
           ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
-        } catch { /* drop */ }
-      }
+          return;
+        }
+        const txt = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
+        const ev = safeJsonParse(Buffer.from(txt));
+        if (!ev || typeof ev.type !== 'string') return;
+        // ElevenLabs conversation audio delta
+        if (ev.type === 'response.audio.delta' && typeof ev.delta === 'string') {
+          const buf = Buffer.from(ev.delta, 'base64');
+          const pcm16k = leBytesToInt16(buf);
+          const pcm8k = downsample16kTo8k(pcm16k);
+          const mu = pcm16ToMuLaw(pcm8k);
+          const b64 = Buffer.from(mu).toString('base64');
+          ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
+        }
+      } catch { /* ignore */ }
     });
     vendor.on('close', () => { vendor = null; });
     vendor.on('error', () => { /* ignore */ });
@@ -204,7 +237,27 @@ wss.on('connection', async (ws, req) => {
           const pcm8k = decodeMuLawToPCM16(mu);
           const pcm16k = upsample8kTo16k(pcm8k);
           const le = int16ToLEBytes(pcm16k);
-          if (vendor && vendor.readyState === WebSocket.OPEN) vendor.send(le);
+          // Buffer 16k PCM (LE) chunks for ElevenLabs conversation WS
+          if (vendor && vendor.readyState === WebSocket.OPEN) {
+            // Base64 encode and queue for append events
+            const b64 = Buffer.from(le).toString('base64');
+            pendingChunks.push(b64);
+            if (!commitTimer) {
+              commitTimer = setTimeout(() => {
+                try {
+                  // Send each chunk as an append event
+                  for (const chunk of pendingChunks) {
+                    vendor.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: chunk }));
+                  }
+                  pendingChunks = [];
+                  vendor.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
+                  // Prompt agent to generate a response
+                  vendor.send(JSON.stringify({ type: 'response.create' }));
+                } catch { /* ignore */ }
+                commitTimer = null;
+              }, 250);
+            }
+          }
         } catch { /* drop frame on error */ }
         if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; }
           metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60);

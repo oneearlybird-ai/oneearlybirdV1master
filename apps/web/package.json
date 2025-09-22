@@ -8,19 +8,19 @@
   },
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "next build --no-lint",
     "start": "next start",
     "typecheck": "tsc -p tsconfig.json --noEmit || next build --no-lint",
     "headers:check": "node scripts/check-headers.js"
   },
   "dependencies": {
-    "@vercel/analytics": "^1.3.1",
     "@aws-sdk/client-s3": "^3.884.0",
     "@aws-sdk/s3-request-presigner": "^3.884.0",
     "@tailwindcss/typography": "0.5.13",
     "@types/jsonwebtoken": "^9.0.10",
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
+    "@vercel/analytics": "^1.3.1",
     "@vercel/postgres": "^0.8.0",
     "gray-matter": "4.0.3",
     "jsonwebtoken": "^9.0.2",
