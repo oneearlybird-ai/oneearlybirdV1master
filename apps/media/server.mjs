@@ -194,7 +194,7 @@ wss.on('connection', async (ws, req) => {
           return;
         }
         const txt = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
-        const ev = safeJsonParse(Buffer.from(txt));
+        const ev = safeJsonParse(txt);
         if (!ev || typeof ev.type !== 'string') return;
         // ElevenLabs conversation audio delta
         if (ev.type === 'response.audio.delta' && typeof ev.delta === 'string') {
