@@ -1,5 +1,6 @@
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
+
 import crypto from 'crypto';
 
 type TwilioModule = {
@@ -25,13 +26,14 @@ function externalUrl(req: Request): string {
     u.protocol = s.protocol;
     u.host = s.host;
   } else {
+    // Ensure signature is computed against https even when previewing
     u.protocol = 'https:';
   }
   return u.toString();
 }
 
 function b64url(buf: Buffer) {
-  return buf.toString('base64').replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_');
+  return buf.toString('base64').replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
 }
 
 function signJwtHS256(payload: Record<string, unknown>, secret: string) {
@@ -43,62 +45,84 @@ function signJwtHS256(payload: Record<string, unknown>, secret: string) {
   return `${data}.${b64url(sig)}`;
 }
 
+// Safely place a URL inside an XML attribute
+function xmlAttr(s: string) {
+  return s.replace(/&/g, '&amp;').replace(/"/g, '&quot;');
+}
+
 export async function POST(req: Request) {
   const authToken = process.env.TWILIO_AUTH_TOKEN;
-  const mediaUrl = process.env.MEDIA_WSS_URL;
+  const mediaUrl = process.env.MEDIA_WSS_URL;            // e.g. wss://media.oneearlybird.ai/rtm/voice
   const sharedSecret = process.env.MEDIA_SHARED_SECRET || '';
   const sigOptional = process.env.TWILIO_SIGNATURE_OPTIONAL === '1';
   const sigDebug = process.env.TWILIO_SIG_DEBUG === '1';
-  if (!authToken || !mediaUrl) {
-    return new Response('Twilio not configured', { status: 503, headers: { 'cache-control': 'no-store' } });
-  }
-  const sig = req.headers.get('x-twilio-signature') ?? '';
-  const fullUrl = externalUrl(req);
-  const raw = await req.text();
-  const contentType = req.headers.get('content-type') || '';
 
+  if (!authToken || !mediaUrl) {
+    return new Response('Twilio not configured', {
+      status: 503,
+      headers: { 'Cache-Control': 'no-store' }
+    });
+  }
+
+  const fullUrl = externalUrl(req);
+  const signature = req.headers.get('x-twilio-signature') ?? '';
+  const contentType = (req.headers.get('content-type') || '').toLowerCase();
+
+  // Read the raw body exactly once (important for signature validation)
+  const raw = await req.text();
+
+  // Validate Twilio signature against the exact public URL + raw form body
   const mod: any = await import('twilio');
   const tw = (mod?.default ?? mod) as TwilioModule;
+
   let valid = false;
   if (contentType.includes('application/json')) {
-    valid = tw.validateRequestWithBody(authToken, sig, fullUrl, raw);
+    valid = tw.validateRequestWithBody(authToken, signature, fullUrl, raw);
   } else {
     const params = Object.fromEntries(new URLSearchParams(raw)) as Record<string, string>;
-    valid = tw.validateRequest(authToken, sig, fullUrl, params);
+    valid = tw.validateRequest(authToken, signature, fullUrl, params);
   }
+
   if (!valid && !sigOptional) {
     if (sigDebug) {
       console.error('[twilio] signature failed', {
         url: fullUrl,
         method: 'POST',
         contentType,
-        hasSig: Boolean(sig),
-        bodyLen: raw.length,
+        hasSig: Boolean(signature),
+        bodyLen: raw.length
       });
     }
-    return new Response('Forbidden', { status: 403, headers: { 'cache-control': 'no-store' } });
+    return new Response('Forbidden', {
+      status: 403,
+      headers: { 'Cache-Control': 'no-store' }
+    });
   }
 
   // Build token: prefer short-lived JWT when MEDIA_SHARED_SECRET is set; else fallback to static MEDIA_AUTH_TOKEN
   const now = Math.floor(Date.now() / 1000);
   let callSid = '';
   try {
-    const ct = (req.headers.get('content-type') || '').toLowerCase();
-    if (ct.includes('application/x-www-form-urlencoded')) {
-      const params = Object.fromEntries(new URLSearchParams(await (async()=>{ const t=await req.clone().text(); return t; })())) as Record<string,string>;
+    if (contentType.includes('application/x-www-form-urlencoded')) {
+      const params = Object.fromEntries(new URLSearchParams(raw)) as Record<string, string>;
       callSid = params['CallSid'] || '';
-    } else {
-      const body = await req.clone().text();
-      try { const js = JSON.parse(body); callSid = (js as any)?.CallSid || ''; } catch (_e) { /* ignore */ }
+    } else if (contentType.includes('application/json')) {
+      try { callSid = (JSON.parse(raw) as any)?.CallSid || ''; } catch { /* ignore */ }
     }
-  } catch (_e) { /* ignore */ }
+  } catch { /* ignore */ }
 
   const wsUrl = (() => {
     try {
       const u = new URL(mediaUrl);
       let tok = '';
       if (sharedSecret) {
-        const payload = { aud: 'media', iat: now, exp: now + 120, jti: crypto.randomBytes(8).toString('hex'), call_sid: callSid };
+        const payload = {
+          aud: 'media',
+          iat: now,
+          exp: now + 120,
+          jti: crypto.randomBytes(8).toString('hex'),
+          call_sid: callSid
+        };
         tok = signJwtHS256(payload, sharedSecret);
       } else if (process.env.MEDIA_AUTH_TOKEN) {
         tok = process.env.MEDIA_AUTH_TOKEN;
@@ -108,22 +132,30 @@ export async function POST(req: Request) {
         else u.search = `?token=${encodeURIComponent(tok)}`;
       }
       return u.toString();
-    } catch (_e) {
+    } catch {
       return mediaUrl;
     }
   })();
 
-  // Per routing plan: explicit both_tracks with Connect/Stream
-  // Track configuration: default to 'inbound_track' to avoid Twilio 31941 on <Connect>/<Stream> in some accounts.
-  // Bidirectional audio remains supported by sending media frames back to Twilio.
-  // For <Connect><Stream>, Twilio requires 'inbound_track'. Outbound audio is still supported over the same socket.
-  const trackAttr = ' track="inbound_track"';
+  /**
+   * Track configuration for Twilio Connect/Stream:
+   * - Use 'inbound_track' (Twilio requirement for <Connect><Stream>).
+   * - Outbound audio is still sent by us on the same WebSocket, so barge-in is unaffected.
+   */
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Response><Connect><Stream${trackAttr} url="${wsUrl}"/></Connect></Response>`;
+    `<Response><Connect><Stream track="inbound_track" url="${xmlAttr(wsUrl)}"/></Connect></Response>`;
+
   if (sigDebug) {
     const safeWsUrl = wsUrl.replace(/token=[^&]+/, 'token=***');
     console.log('[twilio] returning TwiML Stream', { url: fullUrl, wsUrl: safeWsUrl });
   }
-  return new Response(xml, { status: 200, headers: { 'Content-Type': 'application/xml', 'cache-control': 'no-store' } });
+
+  return new Response(xml, {
+    status: 200,
+    headers: {
+      'Content-Type': 'application/xml; charset=utf-8',
+      'Cache-Control': 'no-store'
+    }
+  });
 }

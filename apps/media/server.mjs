@@ -143,6 +143,7 @@ wss.on('connection', async (ws, req) => {
   }
 
   const connId = nanoid(8);
+  try { process.stdout.write(`conn:open id=${connId}\n`); } catch (e) { void e; }
   let frames = 0;
   let streamSid = undefined;
   let lastMsgAt = Date.now();
@@ -203,8 +204,13 @@ wss.on('connection', async (ws, req) => {
           }
         } catch (e) { void e; }
       });
-      vendor.on('close', () => { vendor = null; });
-      vendor.on('error', () => { /* ignore */ });
+      vendor.on('close', (code, reason) => {
+        try { process.stdout.write(`vendor:close id=${connId} code=${code} reason=${(reason||'').toString()}\n`); } catch (e) { void e; }
+        vendor = null;
+      });
+      vendor.on('error', (e) => {
+        try { process.stdout.write(`vendor:error id=${connId} ${e?.message || e}\n`); } catch (_e) { /* ignore */ }
+      });
     };
 
     try {
@@ -298,7 +304,8 @@ wss.on('connection', async (ws, req) => {
     }
   });
 
-  ws.on('close', async () => {
+  ws.on('close', async (code, reason) => {
+    try { process.stdout.write(`conn:close id=${connId} code=${code} reason=${(reason||'').toString()}\n`); } catch (e) { void e; }
     clearInterval(keepalive);
     try { vendor?.close(); } catch (e) { void e; }
   });
