@@ -209,7 +209,7 @@ wss.on('connection', async (ws, req) => {
         vendor = null;
       });
       vendor.on('error', (e) => {
-        try { process.stdout.write(`vendor:error id=${connId} ${e?.message || e}\n`); } catch (_e) { /* ignore */ }
+        try { process.stdout.write(`vendor:error id=${connId} ${e?.message || e}\n`); } catch (e) { void e; }
       });
     };
 
