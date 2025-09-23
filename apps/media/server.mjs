@@ -108,7 +108,8 @@ function pcm16ToMuLaw(pcm) {
     if (s > CLIP) s = CLIP;
     s = s + BIAS;
     let exponent = 7;
-    for (let expMask = 0x4000; (s & expMask) === 0 && exponent > 0; exponent--, expMask >>= 1) {}
+  let expMask = 0x4000;
+  while ((s & expMask) === 0 && exponent > 0) { exponent--; expMask >>= 1; }
     let mantissa = (s >> (exponent + 3)) & 0x0F;
     let uval = ~(sign | (exponent << 4) | mantissa) & 0xFF;
     out[i] = uval;
@@ -151,64 +152,86 @@ wss.on('connection', async (ws, req) => {
     }, 15000);
 
   // Conversation WS endpoint (per ElevenLabs docs):
-  // wss://api.elevenlabs.io/v1/convai/conversation?agent_id=<agent_id>
-  const EL_URL = process.env.ELEVENLABS_WS_URL || process.env.ELEVEN_WS_URL || 'wss://api.elevenlabs.io/v1/convai/conversation';
+  // wss://api.elevenlabs.io/v1/convai/conversation
+  const EL_URL = process.env.ELEVENLABS_WS_URL || process.env.ELEVEN_WS_URL || 'https://api.elevenlabs.io/v1/convai/conversation/get-signed-url';
   const EL_API = process.env.ELEVENLABS_API_KEY || process.env.ELEVEN_API_KEY || '';
   const EL_AGENT = process.env.ELEVENLABS_AGENT_ID || process.env.ELEVEN_AGENT_ID || '';
   let vendor = null;
-  let vendorReady = false;
+  // vendorReady removed (unused)
   // Buffer of 16k PCM (LE) chunks to append to vendor conversation WS
   let pendingChunks = [];
   let commitTimer = null;
   function vendorConnect() {
     if (!EL_API) return;
-    let url = EL_URL;
-    if (EL_AGENT && !/agent_id=/.test(url)) {
-      const sep = url.includes('?') ? '&' : '?';
-      url = `${url}${sep}agent_id=${encodeURIComponent(EL_AGENT)}`;
-    }
-    vendor = new WebSocket(url, { headers: { 'xi-api-key': EL_API }, perMessageDeflate: false });
-    vendor.on('open', () => {
-      vendorReady = true;
-      // Send initial session/update to declare audio formats (PCM16 @16k mono)
-      try {
-        vendor.send(JSON.stringify({
-          type: 'session.update',
-          session: {
-            input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
-            output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
-          },
-        }));
-      } catch {}
-    });
-    vendor.on('message', (data, isBinary) => {
-      if (!streamSid) return;
-      try {
-        if (isBinary && data?.length) {
-          // Some implementations may stream binary PCM16 16k frames
-          const pcm16k = leBytesToInt16(Buffer.from(data));
-          const pcm8k = downsample16kTo8k(pcm16k);
-          const mu = pcm16ToMuLaw(pcm8k);
-          const b64 = Buffer.from(mu).toString('base64');
-          ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
-          return;
-        }
-        const txt = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
-        const ev = safeJsonParse(txt);
-        if (!ev || typeof ev.type !== 'string') return;
-        // ElevenLabs conversation audio delta
-        if (ev.type === 'response.audio.delta' && typeof ev.delta === 'string') {
-          const buf = Buffer.from(ev.delta, 'base64');
-          const pcm16k = leBytesToInt16(buf);
-          const pcm8k = downsample16kTo8k(pcm16k);
-          const mu = pcm16ToMuLaw(pcm8k);
-          const b64 = Buffer.from(mu).toString('base64');
-          ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
-        }
-      } catch { /* ignore */ }
-    });
-    vendor.on('close', () => { vendor = null; });
-    vendor.on('error', () => { /* ignore */ });
+    // Resolve the WebSocket URL:
+    // - If EL_URL starts with wss, connect directly (public agent style)
+    // - Else, call the get-signed-url REST endpoint with agent_id to obtain a pre-signed wss URL
+    const connectWithUrl = (wsUrl) => {
+      vendor = new WebSocket(wsUrl, { headers: { 'xi-api-key': EL_API }, perMessageDeflate: false });
+      vendor.on('open', () => {
+        try {
+          vendor.send(JSON.stringify({
+            type: 'session.update',
+            session: {
+              input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
+              output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
+            },
+          }));
+        } catch (e) { void e; }
+      });
+      vendor.on('message', (data, isBinary) => {
+        if (!streamSid) return;
+        try {
+          if (isBinary && data?.length) {
+            const pcm16k = leBytesToInt16(Buffer.from(data));
+            const pcm8k = downsample16kTo8k(pcm16k);
+            const mu = pcm16ToMuLaw(pcm8k);
+            const b64 = Buffer.from(mu).toString('base64');
+            ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
+            return;
+          }
+          const txt = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
+          const ev = safeJsonParse(txt);
+          if (!ev || typeof ev.type !== 'string') return;
+          if (ev.type === 'response.audio.delta' && typeof ev.delta === 'string') {
+            const buf = Buffer.from(ev.delta, 'base64');
+            const pcm16k = leBytesToInt16(buf);
+            const pcm8k = downsample16kTo8k(pcm16k);
+            const mu = pcm16ToMuLaw(pcm8k);
+            const b64 = Buffer.from(mu).toString('base64');
+            ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
+          }
+        } catch (e) { void e; }
+      });
+      vendor.on('close', () => { vendor = null; });
+      vendor.on('error', () => { /* ignore */ });
+    };
+
+    try {
+      if (/^wss:/i.test(EL_URL)) {
+        connectWithUrl(EL_URL);
+      } else {
+        const https = require('https');
+        const base = EL_URL || 'https://api.elevenlabs.io/v1/convai/conversation/get-signed-url';
+        const u = new URL(base);
+        if (!EL_AGENT) { return; }
+        if (!u.searchParams.get('agent_id')) u.searchParams.set('agent_id', EL_AGENT);
+        const opts = { headers: { 'xi-api-key': EL_API } };
+        const req = https.request(u, opts, (res) => {
+          let body = '';
+          res.on('data', (c) => { body += c; });
+          res.on('end', () => {
+            try {
+              const js = JSON.parse(body);
+              const wsUrl = js?.signed_url || js?.url || js?.ws_url || '';
+              if (wsUrl && /^wss:/i.test(wsUrl)) connectWithUrl(wsUrl);
+            } catch (e) { void e; }
+          });
+        });
+        req.on('error', () => { /* noop */ });
+        req.end();
+      }
+    } catch (e) { void e; }
   }
   if (EL_API) vendorConnect();
 
@@ -268,7 +291,7 @@ wss.on('connection', async (ws, req) => {
       case 'stop': {
         process.stdout.write(`media:stop id=${connId} frames=${frames}\n`);
         try { ws.close(1000, 'normal'); } catch (e) { void e; }
-        try { vendor?.close(); } catch {}
+        try { vendor?.close(); } catch (e) { void e; }
         break;
       }
       default: break;
@@ -277,7 +300,7 @@ wss.on('connection', async (ws, req) => {
 
   ws.on('close', async () => {
     clearInterval(keepalive);
-    try { vendor?.close(); } catch {}
+    try { vendor?.close(); } catch (e) { void e; }
   });
 
   ws.on('error', () => { /* ignore */ return; });

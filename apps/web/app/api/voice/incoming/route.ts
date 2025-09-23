@@ -89,9 +89,9 @@ export async function POST(req: Request) {
       callSid = params['CallSid'] || '';
     } else {
       const body = await req.clone().text();
-      try { const js = JSON.parse(body); callSid = js?.CallSid || ''; } catch {}
+      try { const js = JSON.parse(body); callSid = (js as any)?.CallSid || ''; } catch (_e) { /* ignore */ }
     }
-  } catch {}
+  } catch (_e) { /* ignore */ }
 
   const wsUrl = (() => {
     try {
@@ -108,7 +108,7 @@ export async function POST(req: Request) {
         else u.search = `?token=${encodeURIComponent(tok)}`;
       }
       return u.toString();
-    } catch {
+    } catch (_e) {
       return mediaUrl;
     }
   })();

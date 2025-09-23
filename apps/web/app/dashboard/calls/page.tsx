@@ -31,7 +31,6 @@ export default function CallsPage() {
       if (sd === 'asc' || sd === 'desc') setSortDir(sd);
       const p = Number(sp.get('p') || '1'); if (Number.isFinite(p) && p > 0) setPage(p);
     } catch { /* ignore malformed query */ }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const bumpBusy = () => {

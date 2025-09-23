@@ -135,7 +135,7 @@ wss.on('connection', async (ws, req) => {
     const MAX = 32635;
     let s = Math.max(-MAX, Math.min(MAX, sample));
     const sign = (s < 0) ? 0x80 : 0x00; if (s < 0) s = -s;
-    let exponent = 7; for (let expMask = 0x4000; (s & expMask) === 0 && exponent > 0; exponent--, expMask >>= 1) {}
+    let exponent = 7; { let expMask = 0x4000; while ((s & expMask) === 0 && exponent > 0) { exponent--; expMask >>= 1; } }
     const mantissa = (s >> ((exponent === 0) ? 4 : (exponent + 3))) & 0x0F;
     const mu = ~(sign | (exponent << 4) | mantissa) & 0xFF;
     return mu;
