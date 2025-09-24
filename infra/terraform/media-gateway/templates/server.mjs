@@ -115,6 +115,7 @@ class ElevenLabsSession {
   async connect() {
     let url = process.env.ELEVENLABS_WS_URL || this.opts?.url;
     const apiKey = process.env.ELEVENLABS_API_KEY || this.opts?.apiKey;
+    const origin = process.env.ELEVENLABS_ORIGIN || 'https://oneearlybird.ai';
     const agentId = process.env.ELEVENLABS_AGENT_ID || this.opts?.agentId;
     if (!url || !apiKey) return;
     try {
@@ -128,8 +129,22 @@ class ElevenLabsSession {
         url = j.signed_url;
       }
     } catch (e) { try { process.stdout.write(`el:signed_url_error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } }
-    this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey } });
-    this.ws.on('open', () => { this.connected = true; try { process.stdout.write('el:open\n'); } catch (e) { void e; } });
+    this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey, 'Origin': origin } });
+    this.ws.on('open', () => { 
+      this.connected = true; 
+      try { process.stdout.write('el:open\n'); } catch (e) { void e; }
+      // Send a minimal session/update to declare audio formats
+      try {
+        const msg = {
+          type: 'session.update',
+          session: {
+            input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
+            output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 }
+          }
+        };
+        this.ws.send(JSON.stringify(msg));
+      } catch (e) { void e; }
+    });
     this.ws.on('close', (code, reason) => { this.connected = false; try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } });
     this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } });
     this.ws.on('error', (e) => { this.connected = false; try { process.stdout.write(`el:error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } });
