@@ -144,6 +144,9 @@ wss.on('connection', async (ws, req) => {
 
   const connId = nanoid(8);
   try { process.stdout.write(`conn:open id=${connId}\n`); } catch (e) { void e; }
+  // Enforce Twilio Media Streams message order: connected -> start -> media
+  let gotConnected = false;
+  let gotStart = false;
   let frames = 0;
   let streamSid = undefined;
   let lastMsgAt = Date.now();
@@ -250,13 +253,22 @@ wss.on('connection', async (ws, req) => {
     if (!ev || typeof ev.event !== 'string') return;
 
     switch (ev.event) {
+      case 'connected': {
+        // First frame per Twilio Media Streams
+        gotConnected = true;
+        break;
+      }
       case 'start': {
+        // Twilio sends 'start' immediately after 'connected'
+        if (!gotConnected) { try { ws.close(1008, 'connected_required'); } catch (e) { void e; } return; }
         streamSid = ev.start?.streamSid || ev.streamSid || undefined;
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
+        gotStart = true;
         if (!vendor && EL_API) vendorConnect();
         break;
       }
       case 'media': {
+        if (!gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } return; }
         frames++;
         metrics.frames10s++;
         try {

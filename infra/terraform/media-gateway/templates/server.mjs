@@ -152,10 +152,14 @@ wss.on('connection', async (ws, req) => {
     lastMsgAt = Date.now(); metrics.lastMsgAt = lastMsgAt;
     if (txt.toLowerCase() === 'ping') { ws.send('pong'); return; }
     const ev = safeJsonParse(txt); if (!ev || typeof ev.event !== 'string') return;
+    // Enforce Media Streams order: connected -> start -> media
+    if (ev.event === 'connected') { ws.__gotConnected = true; return; }
     switch (ev.event) {
       case 'start': {
+        if (!ws.__gotConnected) { try { ws.close(1008, 'connected_required'); } catch (e) { void e; } break; }
         streamSid = ev.start?.streamSid || ev.streamSid || undefined;
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
+        ws.__gotStart = true;
         // Configure back-audio path from ElevenLabs to Twilio
         el.onAudio = (buf) => {
           try {
@@ -172,6 +176,7 @@ wss.on('connection', async (ws, req) => {
         await el.connect().catch(()=>{});
         break; }
       case 'media': {
+        if (!ws.__gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } break; }
         frames++; metrics.frames10s++;
         if (el.connected) {
           try {
