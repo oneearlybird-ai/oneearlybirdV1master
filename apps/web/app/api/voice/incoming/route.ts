@@ -142,9 +142,23 @@ export async function POST(req: Request) {
    * - Use 'inbound_track' (Twilio requirement for <Connect><Stream>).
    * - Outbound audio is still sent by us on the same WebSocket, so barge-in is unaffected.
    */
+  // Optional Stream status callback (Twilio will POST stream lifecycle events)
+  const cbUrl = (() => {
+    try {
+      const u = new URL(externalUrl(req));
+      return `${u.protocol}//${u.host}/api/voice/logs/ingest`;
+    } catch {
+      return process.env.NEXT_PUBLIC_SITE_URL ? `${process.env.NEXT_PUBLIC_SITE_URL}/api/voice/logs/ingest` : '';
+    }
+  })();
+
+  const scAttrs = cbUrl
+    ? ` statusCallback="${xmlAttr(cbUrl)}" statusCallbackMethod="POST" statusCallbackEvent="start stop"`
+    : '';
+
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Response><Connect><Stream track="inbound_track" url="${xmlAttr(wsUrl)}"/></Connect></Response>`;
+    `<Response><Connect><Stream track="inbound_track" url="${xmlAttr(wsUrl)}"${scAttrs}/></Connect></Response>`;
 
   if (sigDebug) {
     const safeWsUrl = wsUrl.replace(/token=[^&]+/, 'token=***');

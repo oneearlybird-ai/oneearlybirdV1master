@@ -8,6 +8,8 @@ const AUTH_TOKEN = process.env.MEDIA_AUTH_TOKEN || '';
 const SHARED_SECRET = process.env.MEDIA_SHARED_SECRET || '';
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
 const JWT_SKEW_SEC = Number(process.env.JWT_SKEW_SEC || 30);
+const LOG_WEBHOOK_URL = process.env.LOG_WEBHOOK_URL || '';
+const LOG_WEBHOOK_KEY = process.env.LOG_WEBHOOK_KEY || '';
 
 const server = http.createServer((req, res) => {
   const { url } = req;
@@ -177,6 +179,7 @@ wss.on('connection', async (ws, req) => {
     } catch (e) { void e; }
     if (!allowed) { try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
     try { process.stdout.write(`auth:allow mode=${mode}\n`); } catch (e) { void e; }
+    postLog('upgrade', { mode, url: req.url, qp_token: (new URL(req.url||'/', 'http://x')).searchParams.get('token') ? '***' : '' });
   }
 
   const connId = nanoid(8);
@@ -239,6 +242,7 @@ wss.on('connection', async (ws, req) => {
         // Enforce Twilio streamSid shape: MS + 32 hex
         if (!/^MS[a-f0-9]{32}$/i.test(String(streamSid || ''))) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } break; }
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
+        postLog('start', { connId, streamSid });
         ws.__gotStart = true;
         // Configure back-audio path from ElevenLabs to Twilio
         el.onAudio = (buf) => {
@@ -273,7 +277,7 @@ wss.on('connection', async (ws, req) => {
     }
   });
 
-  ws.on('close', async () => { clearInterval(keepalive); await el.close().catch((e)=>{ void e; }); });
+  ws.on('close', async (code, reason) => { clearInterval(keepalive); await el.close().catch((e)=>{ void e; }); postLog('close', { connId, code, reason: (reason||'').toString() }); });
   ws.on('error', (e) => { void e; });
 });
 
@@ -290,5 +294,16 @@ server.on('upgrade', (req, socket, head) => {
     try { socket.destroy(); } catch (e2) { void e2; }
   }
 });
+async function postLog(type, data) {
+  try {
+    if (!LOG_WEBHOOK_URL || !LOG_WEBHOOK_KEY) return;
+    const payload = { type, ts: new Date().toISOString(), ...data };
+    await fetch(LOG_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-log-key': LOG_WEBHOOK_KEY },
+      body: JSON.stringify(payload)
+    }).catch(()=>{});
+  } catch (e) { void e; }
+}
 
 server.listen(PORT, () => { process.stdout.write(`media:listening ${PORT} ${WS_PATH}\n`); });
