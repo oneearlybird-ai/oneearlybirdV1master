@@ -33,7 +33,9 @@ resource "aws_iam_policy" "media_ssm_read" {
         Resource = [
           aws_ssm_parameter.media_auth_token.arn,
           "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/earlybird/eleven/*",
-          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/oneearlybird/eleven/*"
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/oneearlybird/eleven/*",
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/oneearlybird/media/SHARED_SECRET",
+          "arn:aws:ssm:${data.aws_region.current.name}:${data.aws_caller_identity.current.account_id}:parameter/oneearlybird/twilio/AUTH_TOKEN"
         ]
       },
       {

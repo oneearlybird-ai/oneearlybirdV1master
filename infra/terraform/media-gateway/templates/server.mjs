@@ -5,6 +5,9 @@ import { WebSocketServer, WebSocket } from 'ws';
 const PORT = Number(process.env.PORT || 8080);
 const WS_PATH = process.env.WS_PATH || '/rtm/voice';
 const AUTH_TOKEN = process.env.MEDIA_AUTH_TOKEN || '';
+const SHARED_SECRET = process.env.MEDIA_SHARED_SECRET || '';
+const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
+const JWT_SKEW_SEC = Number(process.env.JWT_SKEW_SEC || 30);
 
 const server = http.createServer((req, res) => {
   const { url } = req;
@@ -40,7 +43,59 @@ const server = http.createServer((req, res) => {
   res.end(JSON.stringify({ ok: false, error: 'not_found' }));
 });
 
-const wss = new WebSocketServer({ server, path: WS_PATH });
+// JWT utilities (HS256)
+function b64uDecode(str) {
+  const s = str.replace(/-/g, '+').replace(/_/g, '/');
+  const pad = '==='.slice((s.length + 3) % 4);
+  return Buffer.from(s + pad, 'base64');
+}
+function timingEqual(a, b) {
+  if (a.length !== b.length) return false;
+  return crypto.timingSafeEqual(a, b);
+}
+function verifyJwtHS256(token, secret, { aud, skewSec = 30 } = {}) {
+  try {
+    const parts = String(token).split('.');
+    if (parts.length !== 3) return { ok: false, err: 'format' };
+    const [h, p, s] = parts;
+    const header = JSON.parse(b64uDecode(h).toString('utf8'));
+    if (header.alg !== 'HS256') return { ok: false, err: 'alg' };
+    const sig = b64uDecode(s);
+    const expSig = crypto.createHmac('sha256', secret).update(`${h}.${p}`).digest();
+    if (!timingEqual(sig, expSig)) return { ok: false, err: 'sig' };
+    const payload = JSON.parse(b64uDecode(p).toString('utf8'));
+    const now = Math.floor(Date.now() / 1000);
+    if (typeof payload.iat === 'number' && payload.iat > now + skewSec) return { ok: false, err: 'iat' };
+    if (typeof payload.nbf === 'number' && payload.nbf > now + skewSec) return { ok: false, err: 'nbf' };
+    if (typeof payload.exp === 'number' && payload.exp < now - skewSec) return { ok: false, err: 'exp' };
+    if (aud && payload.aud && payload.aud !== aud) return { ok: false, err: 'aud' };
+    return { ok: true, payload };
+  } catch {
+    return { ok: false, err: 'exception' };
+  }
+}
+
+// Twilio upgrade signature validation for Media Streams (recommended)
+function validateTwilioUpgradeSignature(req) {
+  try {
+    if (!TWILIO_AUTH_TOKEN) return { ok: true, reason: 'no_auth_token' };
+    const sig = String(req.headers['x-twilio-signature'] || '');
+    if (!sig) return { ok: false, reason: 'no_signature' };
+    const host = String(req.headers.host || '');
+    const u0 = new URL(req.url || '/', `https://${host}`);
+    const base = `wss://${host}${u0.pathname}`; // exact public WSS URL
+    const keys = [...u0.searchParams.keys()].sort();
+    let payload = base;
+    for (const k of keys) payload += k + (u0.searchParams.get(k) || '');
+    const expected = crypto.createHmac('sha1', TWILIO_AUTH_TOKEN).update(payload, 'utf8').digest('base64');
+    const ok = timingEqual(Buffer.from(expected), Buffer.from(sig));
+    return ok ? { ok: true } : { ok: false, reason: 'mismatch' };
+  } catch {
+    return { ok: false, reason: 'exception' };
+  }
+}
+
+const wss = new WebSocketServer({ noServer: true, perMessageDeflate: false });
 
 const metrics = { frames10s: 0, fps10s: 0, lastMsgAt: 0, backpressure10m: 0, lastBackpressureAt: 0 };
 setInterval(() => {
@@ -61,6 +116,8 @@ class ElevenLabsSession {
     this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey } });
     this.ws.on('open', () => { this.connected = true; });
     this.ws.on('close', () => { this.connected = false; });
+    this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } });
+    this.ws.on('error', () => { this.connected = false; });
     this.ws.on('message', (data) => {
       try {
         if (typeof this.onAudio !== 'function') return;
@@ -91,14 +148,22 @@ class ElevenLabsSession {
 
 wss.on('connection', async (ws, req) => {
   if (AUTH_TOKEN) {
-    let ok = false;
+    let allowed = false;
+    let mode = 'unknown';
     try {
       const u = new URL(req.url || '/', 'http://localhost');
       const qp = u.searchParams.get('token') || '';
       const hdr = (req.headers['x-media-auth'] || '').toString();
-      ok = (qp && qp === AUTH_TOKEN) || (hdr && hdr === AUTH_TOKEN);
+      const tok = qp || hdr;
+      // Dual‑auth: accept valid JWT (if SHARED_SECRET) OR static token (if AUTH_TOKEN)
+      if (SHARED_SECRET && tok && tok.includes('.')) {
+        const v = verifyJwtHS256(tok, SHARED_SECRET, { aud: 'media', skewSec: JWT_SKEW_SEC });
+        if (v.ok) { allowed = true; mode = 'jwt'; }
+      }
+      if (!allowed && AUTH_TOKEN && tok && tok === AUTH_TOKEN) { allowed = true; mode = 'token'; }
     } catch (e) { void e; }
-    if (!ok) { try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
+    if (!allowed) { try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
+    try { process.stdout.write(`auth:allow mode=${mode}\n`); } catch (e) { void e; }
   }
 
   const connId = nanoid(8);
@@ -158,6 +223,8 @@ wss.on('connection', async (ws, req) => {
       case 'start': {
         if (!ws.__gotConnected) { try { ws.close(1008, 'connected_required'); } catch (e) { void e; } break; }
         streamSid = ev.start?.streamSid || ev.streamSid || undefined;
+        // Enforce Twilio streamSid shape: MS + 32 hex
+        if (!/^MS[a-f0-9]{32}$/i.test(String(streamSid || ''))) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } break; }
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
         ws.__gotStart = true;
         // Configure back-audio path from ElevenLabs to Twilio
@@ -195,6 +262,20 @@ wss.on('connection', async (ws, req) => {
 
   ws.on('close', async () => { clearInterval(keepalive); await el.close().catch((e)=>{ void e; }); });
   ws.on('error', (e) => { void e; });
+});
+
+// Intercept HTTP upgrade to validate Twilio signature before accepting WebSocket
+server.on('upgrade', (req, socket, head) => {
+  try {
+    const u = new URL(req.url || '/', 'http://localhost');
+    const pathname = u.pathname;
+    if (pathname !== WS_PATH) { try { socket.destroy(); } catch (e) { void e; } return; }
+    const v = validateTwilioUpgradeSignature(req);
+    if (!v.ok) { try { socket.destroy(); } catch (e) { void e; } return; }
+    wss.handleUpgrade(req, socket, head, (ws) => { wss.emit('connection', ws, req); });
+  } catch {
+    try { socket.destroy(); } catch (e2) { void e2; }
+  }
 });
 
 server.listen(PORT, () => { process.stdout.write(`media:listening ${PORT} ${WS_PATH}\n`); });

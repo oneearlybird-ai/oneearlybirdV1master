@@ -32,6 +32,10 @@ cd /
 TOKEN="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/media/MEDIA_AUTH_TOKEN --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"
 if [ -z "$TOKEN" ] || [ "$TOKEN" = "None" ]; then TOKEN="${MEDIA_AUTH_TOKEN}"; fi
 
+# Fetch MEDIA_SHARED_SECRET (JWT) and Twilio Auth Token for WS upgrade validation
+SHARED_SECRET="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/media/SHARED_SECRET --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"
+TWILIO_TOKEN="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/twilio/AUTH_TOKEN --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"
+
 # Fetch ElevenLabs API key and agent id from SSM if present (fallback to baked envs)
 EL_API="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /earlybird/eleven/api_key --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"
 if [ -z "$EL_API" ] || [ "$EL_API" = "None" ]; then EL_API="${ELEVENLABS_API_KEY}"; fi
@@ -42,6 +46,8 @@ cat >/etc/default/media-ws <<EOF_ENV
 PORT=${PORT}
 WS_PATH=${WS_PATH}
 MEDIA_AUTH_TOKEN=$${TOKEN}
+MEDIA_SHARED_SECRET=$${SHARED_SECRET}
+TWILIO_AUTH_TOKEN=$${TWILIO_TOKEN}
 ELEVENLABS_API_KEY=$${EL_API}
 ELEVENLABS_AGENT_ID=$${EL_AGENT}
 ELEVENLABS_WS_URL=$${EL_WS}
