@@ -7,7 +7,7 @@ const AUTH_TOKEN = process.env.MEDIA_AUTH_TOKEN || '';
 
 function nowIso() { return new Date().toISOString(); }
 
-function xmlSafe(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;'); }
+
 
 const server = http.createServer((req, res) => {
   const { url } = req;
