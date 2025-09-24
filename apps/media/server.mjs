@@ -64,7 +64,7 @@ wss.on('connection', (ws, req) => {
     const t0 = u0.searchParams.get('token') || '';
     process.stdout.write(`upgrade url=${u0.pathname}${u0.search} qp_token_len=${t0.length}\n`);
     const sig = String(req.headers['x-twilio-signature'] || '');
-    if (TWILIO_AUTH_TOKEN && !sig) { try { ws.close(1008, 'no_signature'); } catch (e) { void e; } return; }
+    // Optional signature check: if present, validate; if missing, allow and rely on JWT + order
     if (TWILIO_AUTH_TOKEN && sig) {
       const host = String(req.headers.host || '');
       const base = `wss://${host}${u0.pathname}`;

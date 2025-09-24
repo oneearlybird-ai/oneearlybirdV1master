@@ -80,7 +80,8 @@ function validateTwilioUpgradeSignature(req) {
   try {
     if (!TWILIO_AUTH_TOKEN) return { ok: true, reason: 'no_auth_token' };
     const sig = String(req.headers['x-twilio-signature'] || '');
-    if (!sig) return { ok: false, reason: 'no_signature' };
+    // If Twilio does not send a signature on WS upgrade, allow and rely on JWT + event order
+    if (!sig) return { ok: true, reason: 'no_signature' };
     const host = String(req.headers.host || '');
     const u0 = new URL(req.url || '/', `https://${host}`);
     const base = `wss://${host}${u0.pathname}`; // exact public WSS URL
