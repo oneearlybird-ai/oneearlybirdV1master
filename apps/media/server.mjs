@@ -1,11 +1,13 @@
 import http from 'http';
-import crypto from 'crypto';
-import { WebSocketServer, WebSocket } from 'ws';
+import { WebSocketServer } from 'ws';
 
 const PORT = Number(process.env.PORT || 8080);
 const WS_PATH = process.env.WS_PATH || '/rtm/voice';
 const AUTH_TOKEN = process.env.MEDIA_AUTH_TOKEN || '';
-const SHARED_SECRET = process.env.MEDIA_SHARED_SECRET || '';
+
+function nowIso() { return new Date().toISOString(); }
+
+
 
 const server = http.createServer((req, res) => {
   const { url } = req;
@@ -15,340 +17,79 @@ const server = http.createServer((req, res) => {
 
   if (pathname === '/') {
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify({ ok: true, service: 'media', wsPath: WS_PATH, time: new Date().toISOString() }));
-    return;
-  }
-  if (pathname === '/health') {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    res.end(JSON.stringify({ ok: true, service: 'media', time: new Date().toISOString() }));
-    return;
-  }
-  if (pathname === '/metrics') {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    const now = Date.now();
-    res.end(JSON.stringify({
-      ok: true,
-      time: new Date(now).toISOString(),
-      fps10s: metrics.fps10s,
-      frames10s: metrics.frames10s,
-      backpressureCount10m: metrics.backpressure10m,
-      lastMsgAgoSec: metrics.lastMsgAt ? Math.round((now - metrics.lastMsgAt)/1000) : null,
-      lastBackpressureAgoSec: metrics.lastBackpressureAt ? Math.round((now - metrics.lastBackpressureAt)/1000) : null,
-    }));
+    res.end(JSON.stringify({ ok: true, service: 'media', wsPath: WS_PATH, time: nowIso() }));
     return;
   }
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ ok: false, error: 'not_found' }));
 });
 
-// Disable perMessageDeflate and cap maxPayload to keep frames predictable and small
-const wss = new WebSocketServer({ server, path: WS_PATH, perMessageDeflate: false, maxPayload: 2 * 1024 * 1024 });
-
-// lightweight metrics for autoscaling decisions (no PHI)
-const metrics = { frames10s: 0, fps10s: 0, lastMsgAt: 0, backpressure10m: 0, lastBackpressureAt: 0 };
-setInterval(() => {
-  metrics.fps10s = Math.round(metrics.frames10s / 10);
-  metrics.frames10s = 0;
-  if (metrics.backpressure10m > 0) metrics.backpressure10m -= 1; // decay over ~10 minutes
-}, 10_000);
-
-function safeJsonParse(buf) {
+// Primary Media Streams endpoint
+const wss = new WebSocketServer({ server, path: WS_PATH, perMessageDeflate: false });
+wss.on('connection', (ws, req) => {
+  // Log upgrade URL and token presence
   try {
-    return JSON.parse(buf.toString());
-  } catch {
-    return null;
-  }
-}
+    const u0 = new URL(req.url || '/', 'http://localhost');
+    const t0 = u0.searchParams.get('token') || '';
+    process.stdout.write(`upgrade url=${u0.pathname}${u0.search} qp_token_len=${t0.length}\n`);
+    if (AUTH_TOKEN && t0 !== AUTH_TOKEN) {
+      try { ws.close(1008, 'policy'); } catch {}
+      return;
+    }
+  } catch {}
 
-function nanoid(n = 10) {
-  return crypto.randomBytes(n).toString('base64url');
-}
+  const connId = Math.random().toString(36).slice(2,10);
+  process.stdout.write(`conn:open id=${connId}\n`);
 
-// Simple µ-law codec + resampling helpers (inlined)
-function decodeMuLawToPCM16(mu) {
-  const out = new Int16Array(mu.length);
-  for (let i = 0; i < mu.length; i++) {
-    const u = mu[i] ^ 0xFF;
-    const sign = u & 0x80;
-    let exponent = (u >> 4) & 0x07;
-    let mantissa = u & 0x0F;
-    let sample = ((mantissa << 3) + 0x84) << exponent;
-    sample -= 0x84;
-    out[i] = sign ? -sample : sample;
-  }
-  return out;
-}
-function upsample8kTo16k(pcm8k) {
-  const out = new Int16Array(pcm8k.length * 2);
-  for (let i = 0; i < pcm8k.length - 1; i++) {
-    const a = pcm8k[i];
-    const b = pcm8k[i + 1];
-    out[i * 2] = a;
-    out[i * 2 + 1] = (a + b) >> 1;
-  }
-  if (pcm8k.length) {
-    out[out.length - 2] = pcm8k[pcm8k.length - 1];
-    out[out.length - 1] = pcm8k[pcm8k.length - 1];
-  }
-  return out;
-}
-function downsample16kTo8k(pcm16k) {
-  const out = new Int16Array(Math.ceil(pcm16k.length / 2));
-  for (let i = 0, j = 0; i < pcm16k.length; i += 2, j++) out[j] = pcm16k[i];
-  return out;
-}
-function pcm16ToMuLaw(pcm) {
-  const out = new Uint8Array(pcm.length);
-  const BIAS = 0x84;
-  const CLIP = 32635;
-  for (let i = 0; i < pcm.length; i++) {
-    let s = pcm[i];
-    let sign = (s >> 8) & 0x80;
-    if (sign !== 0) s = -s;
-    if (s > CLIP) s = CLIP;
-    s = s + BIAS;
-    let exponent = 7;
-  let expMask = 0x4000;
-  while ((s & expMask) === 0 && exponent > 0) { exponent--; expMask >>= 1; }
-    let mantissa = (s >> (exponent + 3)) & 0x0F;
-    let uval = ~(sign | (exponent << 4) | mantissa) & 0xFF;
-    out[i] = uval;
-  }
-  return out;
-}
-function int16ToLEBytes(int16) {
-  const buf = Buffer.allocUnsafe(int16.length * 2);
-  for (let i = 0; i < int16.length; i++) buf.writeInt16LE(int16[i], i * 2);
-  return buf;
-}
-function leBytesToInt16(buf) {
-  return new Int16Array(buf.buffer, buf.byteOffset, buf.byteLength >> 1);
-}
-
-wss.on('connection', async (ws, req) => {
-  // Auth: prefer JWT when SHARED_SECRET is set; else static token
-  if (SHARED_SECRET || AUTH_TOKEN) {
-    let ok = false;
-    try {
-      const u = new URL(req.url || '/', 'http://localhost');
-      const qp = u.searchParams.get('token') || '';
-      if (SHARED_SECRET) {
-        ok = verifyJwtHS256(qp, SHARED_SECRET).ok;
-      } else if (AUTH_TOKEN) {
-        const hdr = (req.headers['x-media-auth'] || '').toString();
-        ok = (qp && qp === AUTH_TOKEN) || (hdr && hdr === AUTH_TOKEN);
-      }
-    } catch (e) { void e; }
-    if (!ok) { try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
-  }
-
-  const connId = nanoid(8);
-  try { process.stdout.write(`conn:open id=${connId}\n`); } catch (e) { void e; }
-  // Enforce Twilio Media Streams message order: connected -> start -> media
   let gotConnected = false;
   let gotStart = false;
-  let frames = 0;
   let streamSid = undefined;
-  let lastMsgAt = Date.now();
-  let keepalive = setInterval(() => {
-    try { ws.ping(); } catch (e) { void e; }
-    if (Date.now() - lastMsgAt > 30000) { try { ws.close(1001, 'idle'); } catch (e) { void e; } }
-    }, 15000);
 
-  // Conversation WS endpoint (per ElevenLabs docs):
-  // wss://api.elevenlabs.io/v1/convai/conversation
-  const EL_URL = process.env.ELEVENLABS_WS_URL || process.env.ELEVEN_WS_URL || 'https://api.elevenlabs.io/v1/convai/conversation/get-signed-url';
-  const EL_API = process.env.ELEVENLABS_API_KEY || process.env.ELEVEN_API_KEY || '';
-  const EL_AGENT = process.env.ELEVENLABS_AGENT_ID || process.env.ELEVEN_AGENT_ID || '';
-  let vendor = null;
-  // vendorReady removed (unused)
-  // Buffer of 16k PCM (LE) chunks to append to vendor conversation WS
-  let pendingChunks = [];
-  let commitTimer = null;
-  function vendorConnect() {
-    if (!EL_API) return;
-    // Resolve the WebSocket URL:
-    // - If EL_URL starts with wss, connect directly (public agent style)
-    // - Else, call the get-signed-url REST endpoint with agent_id to obtain a pre-signed wss URL
-    const connectWithUrl = (wsUrl) => {
-      vendor = new WebSocket(wsUrl, { headers: { 'xi-api-key': EL_API }, perMessageDeflate: false });
-      vendor.on('open', () => {
-        try {
-          vendor.send(JSON.stringify({
-            type: 'session.update',
-            session: {
-              input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
-              output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
-            },
-          }));
-        } catch (e) { void e; }
-      });
-      vendor.on('message', (data, isBinary) => {
-        if (!streamSid) return;
-        try {
-          if (isBinary && data?.length) {
-            const pcm16k = leBytesToInt16(Buffer.from(data));
-            const pcm8k = downsample16kTo8k(pcm16k);
-            const mu = pcm16ToMuLaw(pcm8k);
-            const b64 = Buffer.from(mu).toString('base64');
-            ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
-            return;
-          }
-          const txt = Buffer.isBuffer(data) ? data.toString('utf8') : String(data);
-          const ev = safeJsonParse(txt);
-          if (!ev || typeof ev.type !== 'string') return;
-          if (ev.type === 'response.audio.delta' && typeof ev.delta === 'string') {
-            const buf = Buffer.from(ev.delta, 'base64');
-            const pcm16k = leBytesToInt16(buf);
-            const pcm8k = downsample16kTo8k(pcm16k);
-            const mu = pcm16ToMuLaw(pcm8k);
-            const b64 = Buffer.from(mu).toString('base64');
-            ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload: b64 } }));
-          }
-        } catch (e) { void e; }
-      });
-      vendor.on('close', (code, reason) => {
-        try { process.stdout.write(`vendor:close id=${connId} code=${code} reason=${(reason||'').toString()}\n`); } catch (e) { void e; }
-        vendor = null;
-      });
-      vendor.on('error', (e) => {
-        try { process.stdout.write(`vendor:error id=${connId} ${e?.message || e}\n`); } catch (e) { void e; }
-      });
-    };
-
-    try {
-      if (/^wss:/i.test(EL_URL)) {
-        connectWithUrl(EL_URL);
-      } else {
-        const https = require('https');
-        const base = EL_URL || 'https://api.elevenlabs.io/v1/convai/conversation/get-signed-url';
-        const u = new URL(base);
-        if (!EL_AGENT) { return; }
-        if (!u.searchParams.get('agent_id')) u.searchParams.set('agent_id', EL_AGENT);
-        const opts = { headers: { 'xi-api-key': EL_API } };
-        const req = https.request(u, opts, (res) => {
-          let body = '';
-          res.on('data', (c) => { body += c; });
-          res.on('end', () => {
-            try {
-              const js = JSON.parse(body);
-              const wsUrl = js?.signed_url || js?.url || js?.ws_url || '';
-              if (wsUrl && /^wss:/i.test(wsUrl)) connectWithUrl(wsUrl);
-            } catch (e) { void e; }
-          });
-        });
-        req.on('error', () => { /* noop */ });
-        req.end();
-      }
-    } catch (e) { void e; }
+  // Optional: send a tiny μ-law silence frame periodically after start
+  let echoTimer = null;
+  function startEcho() {
+    if (echoTimer) return;
+    echoTimer = setInterval(() => {
+      if (!gotStart || !streamSid) return;
+      const silence = Buffer.alloc(160, 0xFF); // 20ms @ 8k, μ-law silence-ish
+      const payload = silence.toString('base64');
+      const frame = JSON.stringify({ event: 'media', streamSid, media: { payload } });
+      try { ws.send(frame); } catch {}
+    }, 250);
   }
-  if (EL_API) vendorConnect();
 
-  ws.on('message', async (msg) => {
+  ws.on('message', (msg) => {
     const txt = Buffer.isBuffer(msg) ? msg.toString('utf8') : String(msg);
-    lastMsgAt = Date.now();
-    metrics.lastMsgAt = lastMsgAt;
-    if (txt.toLowerCase() === 'ping') { ws.send('pong'); return; }
-    const ev = safeJsonParse(txt);
-    if (!ev || typeof ev.event !== 'string') return;
+    if (txt.toLowerCase().trim() === 'ping') { ws.send('pong'); return; }
+    let ev = null; try { ev = JSON.parse(txt); } catch {}
+    if (!ev) { if (!gotConnected) gotConnected = true; return; }
+    if (typeof ev.event !== 'string') return;
 
-    switch (ev.event) {
-      case 'connected': {
-        // First frame per Twilio Media Streams
-        gotConnected = true;
-        break;
-      }
-      case 'start': {
-        // Twilio sends 'start' immediately after 'connected'
-        if (!gotConnected) { try { ws.close(1008, 'connected_required'); } catch (e) { void e; } return; }
-        streamSid = ev.start?.streamSid || ev.streamSid || undefined;
-        process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
-        gotStart = true;
-        if (!vendor && EL_API) vendorConnect();
-        break;
-      }
-      case 'media': {
-        if (!gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } return; }
-        frames++;
-        metrics.frames10s++;
-        try {
-          const b = Buffer.from(ev.media?.payload || '', 'base64');
-          if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
-          const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
-          const pcm8k = decodeMuLawToPCM16(mu);
-          const pcm16k = upsample8kTo16k(pcm8k);
-          const le = int16ToLEBytes(pcm16k);
-          // Buffer 16k PCM (LE) chunks for ElevenLabs conversation WS
-          if (vendor && vendor.readyState === WebSocket.OPEN) {
-            // Base64 encode and queue for append events
-            const b64 = Buffer.from(le).toString('base64');
-            pendingChunks.push(b64);
-            if (!commitTimer) {
-              commitTimer = setTimeout(() => {
-                try {
-                  // Send each chunk as an append event
-                  for (const chunk of pendingChunks) {
-                    vendor.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: chunk }));
-                  }
-                  pendingChunks = [];
-                  vendor.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
-                  // Prompt agent to generate a response
-                  vendor.send(JSON.stringify({ type: 'response.create' }));
-                } catch { /* ignore */ }
-                commitTimer = null;
-              }, 250);
-            }
-          }
-        } catch { /* drop frame on error */ }
-        if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; }
-          metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60);
-          metrics.lastBackpressureAt = Date.now();
-        }
-        break;
-      }
-      case 'stop': {
-        process.stdout.write(`media:stop id=${connId} frames=${frames}\n`);
-        try { ws.close(1000, 'normal'); } catch (e) { void e; }
-        try { vendor?.close(); } catch (e) { void e; }
-        break;
-      }
-      default: break;
+    if (ev.event === 'connected') { gotConnected = true; return; }
+    if (ev.event === 'start') {
+      if (!gotConnected) { try { ws.close(1008, 'connected_required'); } catch {} return; }
+      streamSid = ev.start?.streamSid || ev.streamSid || undefined;
+      process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
+      gotStart = true;
+      startEcho();
+      return;
     }
+    if (ev.event === 'media') {
+      if (!gotStart) { try { ws.close(1008, 'start_required'); } catch {} return; }
+      // We accept media frames; no vendor forwarding in this echo path
+      return;
+    }
+    // benign
+    if (ev.event === 'mark' || ev.event === 'stop') return;
   });
 
-  ws.on('close', async (code, reason) => {
-    try { process.stdout.write(`conn:close id=${connId} code=${code} reason=${(reason||'').toString()}\n`); } catch (e) { void e; }
-    clearInterval(keepalive);
-    try { vendor?.close(); } catch (e) { void e; }
+  ws.on('close', (code, reason) => {
+    if (echoTimer) { try { clearInterval(echoTimer); } catch {}
+      echoTimer = null;
+    }
+    try { process.stdout.write(`conn:close id=${connId} code=${code} reason=${(reason||'').toString()}\n`); } catch {}
   });
-
-  ws.on('error', () => { /* ignore */ return; });
 });
-function b64urlToBuf(str) {
-  const pad = str.length % 4 ? '='.repeat(4 - (str.length % 4)) : '';
-  const s = (str + pad).replace(/-/g,'+').replace(/_/g,'/');
-  return Buffer.from(s, 'base64');
-}
-
-function verifyJwtHS256(token, secret) {
-  try {
-    const parts = String(token).split('.');
-    if (parts.length !== 3) return { ok: false };
-    const [h,p,sig] = parts;
-    const header = JSON.parse(b64urlToBuf(h).toString('utf8'));
-    if (header?.alg !== 'HS256') return { ok: false };
-    const data = `${h}.${p}`;
-    const expSig = crypto.createHmac('sha256', secret).update(data).digest();
-    const gotSig = b64urlToBuf(sig);
-    if (expSig.length !== gotSig.length) return { ok: false };
-    if (!crypto.timingSafeEqual(expSig, gotSig)) return { ok: false };
-    const payload = JSON.parse(b64urlToBuf(p).toString('utf8'));
-    const now = Math.floor(Date.now() / 1000);
-    if (!payload?.exp || payload.exp < now) return { ok: false };
-    if (payload?.aud !== 'media') return { ok: false };
-    return { ok: true };
-  } catch { return { ok: false }; }
-}
 
 server.listen(PORT, () => {
   process.stdout.write(`media:listening ${PORT} ${WS_PATH}\n`);
