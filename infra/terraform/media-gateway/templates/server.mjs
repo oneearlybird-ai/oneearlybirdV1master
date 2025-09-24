@@ -111,14 +111,26 @@ function nanoid(n = 10) { return crypto.randomBytes(n).toString('base64url'); }
 class ElevenLabsSession {
   constructor(opts) { this.opts = opts; this.ws = null; this.connected = false; }
   async connect() {
-    const url = process.env.ELEVENLABS_WS_URL || this.opts?.url;
+    let url = process.env.ELEVENLABS_WS_URL || this.opts?.url;
     const apiKey = process.env.ELEVENLABS_API_KEY || this.opts?.apiKey;
+    const agentId = process.env.ELEVENLABS_AGENT_ID || this.opts?.agentId;
     if (!url || !apiKey) return;
+    try {
+      if (/^https?:/i.test(url)) {
+        const u = new URL(url);
+        if (!u.searchParams.get('agent_id') && agentId) u.searchParams.set('agent_id', agentId);
+        const res = await fetch(u.toString(), { headers: { 'xi-api-key': apiKey } });
+        if (!res.ok) throw new Error(`signed_url_http_${res.status}`);
+        const j = await res.json();
+        if (typeof j?.signed_url !== 'string') throw new Error('no_signed_url');
+        url = j.signed_url;
+      }
+    } catch (e) { try { process.stdout.write(`el:signed_url_error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } }
     this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey } });
-    this.ws.on('open', () => { this.connected = true; });
-    this.ws.on('close', () => { this.connected = false; });
+    this.ws.on('open', () => { this.connected = true; try { process.stdout.write('el:open\n'); } catch (e) { void e; } });
+    this.ws.on('close', (code, reason) => { this.connected = false; try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } });
     this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } });
-    this.ws.on('error', () => { this.connected = false; });
+    this.ws.on('error', (e) => { this.connected = false; try { process.stdout.write(`el:error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } });
     this.ws.on('message', (data) => {
       try {
         if (typeof this.onAudio !== 'function') return;
