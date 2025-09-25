@@ -16,11 +16,12 @@ apt-get update -y
 apt-get install -y nodejs
 node -v
 
-# App directory
+# App directory and artifact fetch
 install -d -o root -g root /opt/media-ws
-cat >/opt/media-ws/server.mjs <<'EOF_MWS'
-${server_mjs}
-EOF_MWS
+echo "[user-data] fetching server.mjs from s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY}"
+aws s3 cp "s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY}" /opt/media-ws/server.mjs
+echo "${ARTIFACT_SHA256}  /opt/media-ws/server.mjs" | sha256sum -c -
+chmod 0644 /opt/media-ws/server.mjs
 
 # Install app deps locally so 'require("ws")' resolves
 cd /opt/media-ws
@@ -57,7 +58,7 @@ ELEVENLABS_API_KEY=$${EL_API}
 ELEVENLABS_AGENT_ID=$${EL_AGENT}
 ELEVENLABS_WS_URL=$${EL_WS}
 ELEVENLABS_API_KEY_DEBUG=$${EL_API_DBG}
-VENDOR_SR_HZ=16000
+VENDOR_SR_HZ=${VENDOR_SR_HZ}
 EL_FORWARD_BINARY=true
 LOG_WEBHOOK_URL=https://oneearlybird.ai/api/voice/logs/ingest
 LOG_WEBHOOK_KEY=$${LOG_KEY}

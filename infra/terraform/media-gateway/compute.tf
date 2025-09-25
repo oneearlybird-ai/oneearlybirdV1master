@@ -2,12 +2,15 @@ locals {
   # choose two subnets for ASG from allowed AZs (exclude unsupported AZs)
   asg_subnets = slice(data.aws_subnets.allowed.ids, 0, 2)
   user_data = templatefile("${path.module}/user_data.tpl", {
-    server_mjs         = file("${path.module}/templates/server.mjs")
     PORT               = var.ws_port
     WS_PATH            = var.ws_path
     MEDIA_AUTH_TOKEN   = var.media_auth_token
     ELEVENLABS_API_KEY = var.elevenlabs_api_key
     AWS_REGION         = var.aws_region
+    ARTIFACT_BUCKET    = var.artifact_bucket
+    ARTIFACT_KEY       = var.artifact_key
+    ARTIFACT_SHA256    = var.artifact_sha256
+    VENDOR_SR_HZ       = var.vendor_sr_hz
   })
 }
 

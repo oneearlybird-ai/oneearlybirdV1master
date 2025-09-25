@@ -40,6 +40,13 @@ resource "aws_iam_policy" "media_ssm_read" {
       },
       {
         Effect   = "Allow",
+        Action   = ["s3:GetObject"],
+        Resource = [
+          "arn:aws:s3:::${var.artifact_bucket}/${var.artifact_key}"
+        ]
+      },
+      {
+        Effect   = "Allow",
         Action   = ["kms:Decrypt"],
         Resource = data.aws_kms_alias.ssm.target_key_arn
       }

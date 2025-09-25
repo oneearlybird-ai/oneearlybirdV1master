@@ -68,3 +68,28 @@ variable "allowed_azs" {
   type        = list(string)
   default     = ["us-east-1a", "us-east-1b", "us-east-1c", "us-east-1d", "us-east-1f"]
 }
+
+# Artifact settings for media gateway server file
+variable "artifact_bucket" {
+  description = "S3 bucket name that holds server.mjs artifact"
+  type        = string
+  default     = "oneearlybird-media-artifacts-102732512054-us-east-1"
+}
+
+variable "artifact_key" {
+  description = "S3 object key for server.mjs artifact"
+  type        = string
+  default     = "media/server-cba132ae7b45c03069dc3b3b89876e628969cec29a7f4bbc29c8c16085a0faa3.mjs"
+}
+
+variable "artifact_sha256" {
+  description = "SHA256 (hex) of the server.mjs artifact for verification"
+  type        = string
+  default     = "cba132ae7b45c03069dc3b3b89876e628969cec29a7f4bbc29c8c16085a0faa3"
+}
+
+variable "vendor_sr_hz" {
+  description = "Preferred vendor PCM sample rate (8000 or 16000)."
+  type        = number
+  default     = 16000
+}
