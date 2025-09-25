@@ -342,19 +342,32 @@ wss.on('connection', async (ws, req) => {
 
   // removed legacy downsample16kTo8k (unused)
 
-  function muLawEncodeSample(sample) {
-    const MAX = 32635;
-    let s = Math.max(-MAX, Math.min(MAX, sample));
-    const sign = (s < 0) ? 0x80 : 0x00; if (s < 0) s = -s;
-    let exponent = 7; { let expMask = 0x4000; while ((s & expMask) === 0 && exponent > 0) { exponent--; expMask >>= 1; } }
+  // Reference G.711 μ-law encoder (linear PCM16 -> μ-law 8-bit)
+  function muLawEncodeSampleRef(sample) {
+    // Clip to 16-bit signed range and compute sign
+    let s = sample;
+    if (s > 32767) s = 32767; else if (s < -32768) s = -32768;
+    let sign = 0;
+    if (s < 0) { sign = 0x80; s = -s; }
+    // μ-law bias and clip per G.711
+    const BIAS = 0x84; // 132
+    const CLIP = 32635;
+    if (s > CLIP) s = CLIP;
+    s = s + BIAS;
+    // Determine segment (exponent)
+    let exponent = 7;
+    let expMask = 0x4000;
+    while ((s & expMask) === 0 && exponent > 0) { exponent--; expMask >>= 1; }
+    // Mantissa selection per segment
     const mantissa = (s >> ((exponent === 0) ? 4 : (exponent + 3))) & 0x0F;
-    const mu = ~(sign | (exponent << 4) | mantissa) & 0xFF;
-    return mu;
+    // Compose and complement
+    const ulaw = ~(sign | (exponent << 4) | mantissa) & 0xFF;
+    return ulaw;
   }
 
-  function pcm16ToMuLaw(pcm) {
+  function pcm16ToMuLawRef(pcm) {
     const out = Buffer.allocUnsafe(pcm.length);
-    for (let i = 0; i < pcm.length; i++) out[i] = muLawEncodeSample(pcm[i]);
+    for (let i = 0; i < pcm.length; i++) out[i] = muLawEncodeSampleRef(pcm[i]);
     return out;
   }
 
@@ -405,7 +418,7 @@ wss.on('connection', async (ws, req) => {
           for (let f = 0; f < frames; f++) {
             const pcm = new Int16Array(160);
             for (let i = 0; i < 160; i++) { pcm[i] = (amp * Math.sin(phase)) | 0; phase += phaseStep; }
-            const mu = pcm16ToMuLaw(pcm);
+            const mu = pcm16ToMuLawRef(pcm);
             enqueueMuLawFrame(Buffer.from(mu));
           }
           startTx();
@@ -420,7 +433,7 @@ wss.on('connection', async (ws, req) => {
               const slice = buf.subarray(off, off + BYTES_PER_20MS_16K);
               const pcm16 = new Int16Array(slice.buffer, slice.byteOffset, 320);
               const pcm8k = downsample16kTo8kLP(pcm16);
-              const mulaw = pcm16ToMuLaw(pcm8k);
+              const mulaw = pcm16ToMuLawRef(pcm8k);
               enqueueMuLawFrame(Buffer.from(mulaw));
             }
             startTx();
