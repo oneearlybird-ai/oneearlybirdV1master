@@ -56,6 +56,7 @@ export async function POST(req: Request) {
   const sharedSecret = process.env.MEDIA_SHARED_SECRET || '';
   const sigOptional = process.env.TWILIO_SIGNATURE_OPTIONAL === '1';
   const sigDebug = process.env.TWILIO_SIG_DEBUG === '1';
+  const ringDelayMs = Number(process.env.RING_DELAY_MS || process.env.TWILIO_RING_DELAY_MS || '0');
 
   if (!authToken || !mediaUrl) {
     return new Response('Twilio not configured', {
@@ -97,6 +98,11 @@ export async function POST(req: Request) {
       status: 403,
       headers: { 'Cache-Control': 'no-store' }
     });
+  }
+
+  // Optional: delay returning TwiML so caller hears ringback before answer
+  if (ringDelayMs > 0 && ringDelayMs < 10000) {
+    try { await new Promise(res => setTimeout(res, ringDelayMs)); } catch (_e) { /* noop */ }
   }
 
   // Build token: prefer short-lived JWT when MEDIA_SHARED_SECRET is set; else fallback to static MEDIA_AUTH_TOKEN
