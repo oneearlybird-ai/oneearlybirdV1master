@@ -9,6 +9,7 @@ const AUTH_TOKEN = process.env.MEDIA_AUTH_TOKEN || '';
 const SHARED_SECRET = process.env.MEDIA_SHARED_SECRET || '';
 const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
 const JWT_SKEW_SEC = Number(process.env.JWT_SKEW_SEC || 30);
+const ECHO_BACK = String(process.env.ECHO_BACK || '').toLowerCase() === 'true';
 const LOG_WEBHOOK_URL = process.env.LOG_WEBHOOK_URL || '';
 const LOG_WEBHOOK_KEY = process.env.LOG_WEBHOOK_KEY || '';
 
@@ -281,6 +282,22 @@ wss.on('connection', async (ws, req) => {
   let hadMedia = false;
   let startGraceTimer = null;
   let recorder = null;
+  // Outbound pacing for Twilio media (20ms cadence)
+  const txQueue = [];
+  let txTimer = null;
+  function startTx() {
+    if (txTimer) return;
+    txTimer = setInterval(() => {
+      try {
+        if (!txQueue.length || !ws.__gotStart || !streamSid) return;
+        const payload = txQueue.shift();
+        if (!payload) return;
+        const msg = JSON.stringify({ event: 'media', streamSid, media: { payload } });
+        ws.send(msg);
+      } catch (e) { void e; }
+    }, 20);
+  }
+  function stopTx() { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } }
 
   function decodeMuLawToPCM16(mu) {
     const out = new Int16Array(mu.length);
@@ -337,21 +354,6 @@ wss.on('connection', async (ws, req) => {
         if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
         // Configure back-audio path from ElevenLabs to Twilio
         // Use 20ms pacing and light low-pass + decimation to avoid aliasing/screech
-        const txQueue = [];
-        let txTimer = null;
-        function startTx() {
-          if (txTimer) return;
-          txTimer = setInterval(() => {
-            try {
-              if (!txQueue.length) return;
-              const payload = txQueue.shift();
-              if (!streamSid || !payload) return;
-              const msg = JSON.stringify({ event: 'media', streamSid, media: { payload } });
-              ws.send(msg);
-            } catch (e) { void e; }
-          }, 20);
-        }
-        function stopTx() { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } }
         _stopTx = stopTx;
 
         function downsample16kTo8kLP(pcm16k) {
@@ -434,7 +436,12 @@ wss.on('connection', async (ws, req) => {
         }
         frames++; metrics.frames10s++;
         hadMedia = true;
-        if (el && el.connected) {
+        if (ECHO_BACK) {
+          try {
+            const payload = String(ev.media?.payload || '');
+            if (payload) { txQueue.push(payload); startTx(); }
+          } catch (e) { void e; }
+        } else if (el && el.connected) {
           try {
             const b = Buffer.from(ev.media?.payload || '', 'base64'); if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
             const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
