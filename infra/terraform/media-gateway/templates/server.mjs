@@ -485,16 +485,15 @@ wss.on('connection', async (ws, req) => {
         frames++; metrics.frames10s++;
         hadMedia = true;
         if (ECHO_BACK) {
+          // Echo inbound payloads immediately (no decode/encode, no aggregation)
           try {
             const payload = String(ev.media?.payload || '');
-            if (payload) {
-              try {
-                const b = Buffer.from(payload, 'base64');
-                if (b.length === 160) { enqueueMuLawFrame(b); startTx(); }
-              } catch (e) { void e; }
+            if (payload && streamSid) {
+              ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload } }));
+              try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: 'eb:direct' } })); } catch (e) { void e; }
             }
           } catch (e) { void e; }
-        } else if (el && el.connected) {
+          } else if (el && el.connected) {
           try {
             const b = Buffer.from(ev.media?.payload || '', 'base64'); if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
             const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
