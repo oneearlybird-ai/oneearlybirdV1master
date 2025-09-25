@@ -1,5 +1,5 @@
 import 'server-only'
-import { S3Client, PutObjectCommand, GetObjectCommand } from '@aws-sdk/client-s3'
+import { S3Client, PutObjectCommand, GetObjectCommand, ListObjectsV2Command } from '@aws-sdk/client-s3'
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner'
 
 type PutArgs = { key: string; body: Uint8Array | Buffer | string | ReadableStream<any>; contentType?: string }
@@ -49,4 +49,20 @@ export async function getUploadUrl(opts: { Key: string; ContentType?: string; ex
   const { client, bucket, exp } = cfg()
   const cmd = new PutObjectCommand({ Bucket: bucket, Key: opts.Key, ContentType: opts.ContentType })
   return await getSignedUrl(client, cmd, { expiresIn: Number(opts.expiresIn ?? exp) })
+}
+
+export type ListedObject = { key: string; size?: number; lastModified?: string }
+
+export async function listObjects(prefix = '', maxKeys = 100): Promise<ListedObject[]> {
+  const { client, bucket } = cfg()
+  const cmd = new ListObjectsV2Command({ Bucket: bucket, Prefix: prefix, MaxKeys: maxKeys })
+  const res = await client.send(cmd)
+  const items = (res.Contents || []).map(obj => ({
+    key: obj.Key || '',
+    size: Number(obj.Size || 0),
+    lastModified: obj.LastModified ? new Date(obj.LastModified).toISOString() : undefined,
+  }))
+  // Recent first
+  items.sort((a, b) => (b.lastModified || '').localeCompare(a.lastModified || ''))
+  return items
 }

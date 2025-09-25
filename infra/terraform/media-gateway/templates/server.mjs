@@ -1,6 +1,7 @@
 import http from 'http';
 import crypto from 'crypto';
 import { WebSocketServer, WebSocket } from 'ws';
+let S3Client = null, PutObjectCommand = null;
 
 const PORT = Number(process.env.PORT || 8080);
 const WS_PATH = process.env.WS_PATH || '/rtm/voice';
@@ -10,6 +11,15 @@ const TWILIO_AUTH_TOKEN = process.env.TWILIO_AUTH_TOKEN || '';
 const JWT_SKEW_SEC = Number(process.env.JWT_SKEW_SEC || 30);
 const LOG_WEBHOOK_URL = process.env.LOG_WEBHOOK_URL || '';
 const LOG_WEBHOOK_KEY = process.env.LOG_WEBHOOK_KEY || '';
+
+// Optional object storage (Rumble S3 or AWS S3) for recordings
+const REC_ENABLED = String(process.env.RECORD_CALLS || '').toLowerCase() === 'true';
+const S3_ENDPOINT = process.env.S3_ENDPOINT || process.env.AWS_S3_ENDPOINT || '';
+const S3_REGION = process.env.AWS_REGION || process.env.S3_REGION || 'us-east-1';
+const S3_BUCKET = process.env.S3_BUCKET || process.env.AWS_S3_BUCKET || '';
+const S3_AK = process.env.AWS_ACCESS_KEY_ID || process.env.S3_ACCESS_KEY_ID || '';
+const S3_SK = process.env.AWS_SECRET_ACCESS_KEY || process.env.S3_SECRET_ACCESS_KEY || '';
+const REC_CHUNK_SEC = Number(process.env.RECORD_CHUNK_SEC || 10);
 
 const server = http.createServer((req, res) => {
   const { url } = req;
@@ -109,6 +119,58 @@ setInterval(() => {
 
 function safeJsonParse(buf) { try { return JSON.parse(buf.toString()); } catch { return null; } }
 function nanoid(n = 10) { return crypto.randomBytes(n).toString('base64url'); }
+
+// Lazy init S3 client if recording configured
+function getS3() {
+  try {
+    if (!REC_ENABLED) return null;
+    if (!(S3_BUCKET && S3_AK && S3_SK)) return null;
+    if (!S3Client || !PutObjectCommand) {
+      const sdk = require('@aws-sdk/client-s3');
+      S3Client = sdk.S3Client; PutObjectCommand = sdk.PutObjectCommand;
+    }
+    const cfg = { region: S3_REGION, credentials: { accessKeyId: S3_AK, secretAccessKey: S3_SK } };
+    if (S3_ENDPOINT) { cfg.endpoint = S3_ENDPOINT; cfg.forcePathStyle = true; }
+    return new S3Client(cfg);
+  } catch (e) { try { process.stdout.write(`rec:s3_init_error ${(e&&e.message)||'err'}\n`); } catch(_) { void _; } return null; }
+}
+
+class Recorder {
+  constructor(callSid) {
+    this.callSid = callSid || `call-${Date.now()}`;
+    this.client = getS3();
+    this.bufIn = [];
+    this.bufOut = [];
+    this.lenIn = 0; this.lenOut = 0;
+    this.seqIn = 0; this.seqOut = 0;
+    this.t0 = Date.now();
+    this.timer = null;
+    this.startTimer();
+  }
+  startTimer() { if (this.timer) return; this.timer = setInterval(()=>this.flush(false).catch(()=>{}), Math.max(1000, REC_CHUNK_SEC*1000)); }
+  stopTimer() { if (!this.timer) return; try { clearInterval(this.timer); } catch(e) { void e; } this.timer = null; }
+  addInboundPCM16(le) { try { this.bufIn.push(le); this.lenIn += le.byteLength; } catch(e) { void e; } }
+  addVendorPCM16(le) { try { this.bufOut.push(le); this.lenOut += le.byteLength; } catch(e) { void e; } }
+  async put(key, body, contentType='application/octet-stream') {
+    if (!this.client) return;
+    try { await this.client.send(new PutObjectCommand({ Bucket: S3_BUCKET, Key: key, Body: body, ContentType: contentType })); }
+    catch(e){ try { process.stdout.write(`rec:put_error ${key} ${(e&&e.message)||'err'}\n`);}catch(_){ void _; }}
+  }
+  async flush(force) {
+    if (!this.client) return;
+    const now = Date.now();
+    const base = `${this.callSid}/${new Date(this.t0).toISOString().slice(0,10)}`;
+    if (this.lenIn>0 && (force || (now-this.t0)>=REC_CHUNK_SEC*1000)) {
+      const buf = Buffer.concat(this.bufIn); this.bufIn=[]; const seq=this.seqIn++;
+      await this.put(`${base}/twilio-in-${seq}.pcm16le`, buf, 'audio/L16'); this.lenIn=0;
+    }
+    if (this.lenOut>0 && (force || (now-this.t0)>=REC_CHUNK_SEC*1000)) {
+      const buf = Buffer.concat(this.bufOut); this.bufOut=[]; const seq=this.seqOut++;
+      await this.put(`${base}/vendor-out-${seq}.pcm16le`, buf, 'audio/L16'); this.lenOut=0;
+    }
+  }
+  async close() { try { this.stopTimer(); await this.flush(true); } catch(e) { void e; } }
+}
 
 class ElevenLabsSession {
   constructor(opts) { this.opts = opts||{}; this.ws = null; this.connected = false; this._want=false; this._backoff=500; }
@@ -216,6 +278,7 @@ wss.on('connection', async (ws, req) => {
   let elCommitTimer = null;
   let hadMedia = false;
   let startGraceTimer = null;
+  let recorder = null;
 
   function decodeMuLawToPCM16(mu) {
     const out = new Int16Array(mu.length);
@@ -272,6 +335,8 @@ wss.on('connection', async (ws, req) => {
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
         postLog('start', { connId, streamSid });
         ws.__gotStart = true;
+        // Initialize recorder using callSid if configured
+        try { if (REC_ENABLED) { const cs = ev.start?.callSid || ev.start?.call_id || 'nocall'; recorder = new Recorder(cs); } } catch(e) { void e; }
         if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
         // Configure back-audio path from ElevenLabs to Twilio
         el.onAudio = (buf) => {
@@ -279,6 +344,8 @@ wss.on('connection', async (ws, req) => {
             if (!streamSid) return;
             // Expect buf as PCM16LE 16k; convert → 8k μ-law
             const samples = new Int16Array(buf.buffer, buf.byteOffset, Math.floor(buf.byteLength / 2));
+            // record vendor 16k PCM
+            try { recorder && recorder.addVendorPCM16(Buffer.from(buf)); } catch(e) { void e; }
             const pcm8k = downsample16kTo8k(samples);
             const mulaw = pcm16ToMuLaw(pcm8k);
             const payload = mulaw.toString('base64');
@@ -351,6 +418,8 @@ wss.on('connection', async (ws, req) => {
             // Send JSON audio frame to EL Agents API
             const audio = le.toString('base64');
             try { if (el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio })); } catch (e) { void e; }
+            // record inbound 16k PCM
+            try { recorder && recorder.addInboundPCM16(Buffer.from(le)); } catch(e) { void e; }
           } catch (e) { void e; }
         }
         if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; } metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60); metrics.lastBackpressureAt = Date.now(); }
@@ -360,7 +429,7 @@ wss.on('connection', async (ws, req) => {
     }
   });
 
-  ws.on('close', async (code, reason) => { clearInterval(keepalive); if (elCommitTimer) { try { clearInterval(elCommitTimer); } catch (e) { void e; } elCommitTimer = null; } await el.close().catch((e)=>{ void e; }); postLog('close', { connId, code, reason: (reason||'').toString() }); });
+  ws.on('close', async (code, reason) => { clearInterval(keepalive); if (elCommitTimer) { try { clearInterval(elCommitTimer); } catch (e) { void e; } elCommitTimer = null; } await el.close().catch((e)=>{ void e; }); try { recorder && await recorder.close(); } catch(e) { void e; } postLog('close', { connId, code, reason: (reason||'').toString() }); });
   ws.on('error', (e) => { void e; });
 });
 

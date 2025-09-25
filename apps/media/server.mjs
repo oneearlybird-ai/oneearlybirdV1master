@@ -11,20 +11,19 @@ const JWT_SKEW_SEC = Number(process.env.JWT_SKEW_SEC || 30);
 
 function nowIso() { return new Date().toISOString(); }
 
-
-
+// Lightweight HTTP server for health + landing
 const server = http.createServer((req, res) => {
   const { url } = req;
   const pathname = (() => {
     try { return new URL(url || '/', 'http://localhost').pathname; } catch { return '/'; }
   })();
 
-  if (pathname === '/') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
+  if (pathname === '/' || pathname === '/health') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
     res.end(JSON.stringify({ ok: true, service: 'media', wsPath: WS_PATH, time: nowIso() }));
     return;
   }
-  res.writeHead(404, { 'Content-Type': 'application/json' });
+  res.writeHead(404, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
   res.end(JSON.stringify({ ok: false, error: 'not_found' }));
 });
 
@@ -55,30 +54,58 @@ function verifyJwtHS256(token, secret, { aud, skewSec = 30 } = {}) {
   } catch { return { ok: false, err: 'exception' }; }
 }
 
-// Primary Media Streams endpoint
-const wss = new WebSocketServer({ server, path: WS_PATH, perMessageDeflate: false });
+// Accept WS upgrades for either:
+//  - exact WS_PATH (e.g., /rtm/voice)
+//  - WS_PATH/jwt/<token>
+//  - (legacy) WS_PATH?token=...
+const wss = new WebSocketServer({ noServer: true, perMessageDeflate: false });
+
+server.on('upgrade', (req, socket, head) => {
+  let u0;
+  try { u0 = new URL(req.url || '/', 'http://localhost'); } catch { socket.destroy(); return; }
+  const p = u0.pathname || '/';
+  const base = WS_PATH.endsWith('/') ? WS_PATH.slice(0, -1) : WS_PATH;
+
+  const isExact = p === base || p === `${base}/`;
+  const isJwt = p.startsWith(`${base}/jwt/`) && p.length > (base.length + 5);
+  if (!isExact && !isJwt) { socket.destroy(); return; }
+
+  wss.handleUpgrade(req, socket, head, (ws) => {
+    wss.emit('connection', ws, req);
+  });
+});
+
 wss.on('connection', (ws, req) => {
-  // Log upgrade URL and token presence + validate upgrade signature + auth
   try {
     const u0 = new URL(req.url || '/', 'http://localhost');
-    const t0 = u0.searchParams.get('token') || '';
-    process.stdout.write(`upgrade url=${u0.pathname}${u0.search} qp_token_len=${t0.length}\n`);
+    // Prefer token from /jwt/<token> path segment
+    let token = '';
+    const pathParts = (u0.pathname || '').split('/').filter(Boolean);
+    const jwtIdx = pathParts.findIndex((x) => x === 'jwt');
+    if (jwtIdx >= 0 && pathParts[jwtIdx + 1]) {
+      try { token = decodeURIComponent(pathParts[jwtIdx + 1]); } catch { token = pathParts[jwtIdx + 1]; }
+    } else {
+      token = u0.searchParams.get('token') || '';
+    }
+    process.stdout.write(`upgrade path=${u0.pathname} qp_token_len=${(u0.searchParams.get('token')||'').length} path_token_len=${token ? token.length : 0}\n`);
+
+    // Optional Twilio signature check (handshake request)
     const sig = String(req.headers['x-twilio-signature'] || '');
-    // Optional signature check: if present, validate; if missing, allow and rely on JWT + order
     if (TWILIO_AUTH_TOKEN && sig) {
       const host = String(req.headers.host || '');
-      const base = `wss://${host}${u0.pathname}`;
+      const baseUrl = `wss://${host}${u0.pathname}`;
       const keys = [...u0.searchParams.keys()].sort();
-      let payload = base; for (const k of keys) payload += k + (u0.searchParams.get(k) || '');
+      let payload = baseUrl; for (const k of keys) payload += k + (u0.searchParams.get(k) || '');
       const expected = crypto.createHmac('sha1', TWILIO_AUTH_TOKEN).update(payload, 'utf8').digest('base64');
       if (!timingEqual(Buffer.from(expected), Buffer.from(sig))) { try { ws.close(1008, 'sig_invalid'); } catch (e) { void e; } return; }
     }
-    // Dual-auth: accept JWT (if SHARED_SECRET) or static token
-    if (SHARED_SECRET && t0 && t0.includes('.')) {
-      const v = verifyJwtHS256(t0, SHARED_SECRET, { aud: 'media', skewSec: JWT_SKEW_SEC });
+
+    // Auth: JWT (preferred) or static token
+    if (SHARED_SECRET && token && token.includes('.')) {
+      const v = verifyJwtHS256(token, SHARED_SECRET, { aud: 'media', skewSec: JWT_SKEW_SEC });
       if (!v.ok) { try { ws.close(1008, 'jwt_invalid'); } catch (e) { void e; } return; }
     } else if (AUTH_TOKEN) {
-      if (t0 !== AUTH_TOKEN) { try { ws.close(1008, 'policy'); } catch (e) { void e; } return; }
+      if (token !== AUTH_TOKEN) { try { ws.close(1008, 'policy'); } catch (e) { void e; } return; }
     }
   } catch (e) { void e; }
 
@@ -89,13 +116,12 @@ wss.on('connection', (ws, req) => {
   let gotStart = false;
   let streamSid = undefined;
 
-  // Optional: send a tiny μ-law silence frame periodically after start
   let echoTimer = null;
   function startEcho() {
     if (echoTimer) return;
     echoTimer = setInterval(() => {
       if (!gotStart || !streamSid) return;
-      const silence = Buffer.alloc(160, 0xFF); // 20ms @ 8k, μ-law silence-ish
+      const silence = Buffer.alloc(160, 0xFF);
       const payload = silence.toString('base64');
       const frame = JSON.stringify({ event: 'media', streamSid, media: { payload } });
       try { ws.send(frame); } catch (e) { void e; }
@@ -113,7 +139,6 @@ wss.on('connection', (ws, req) => {
     if (ev.event === 'start') {
       if (!gotConnected) { try { ws.close(1008, 'connected_required'); } catch (e) { void e; } return; }
       streamSid = ev.start?.streamSid || ev.streamSid || undefined;
-      // Enforce Twilio streamSid shape: MS + 32 hex
       if (!/^MS[a-f0-9]{32}$/i.test(String(streamSid || ''))) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } return; }
       process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
       gotStart = true;
@@ -122,10 +147,8 @@ wss.on('connection', (ws, req) => {
     }
     if (ev.event === 'media') {
       if (!gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } return; }
-      // We accept media frames; no vendor forwarding in this echo path
       return;
     }
-    // benign
     if (ev.event === 'mark' || ev.event === 'stop') return;
   });
 
