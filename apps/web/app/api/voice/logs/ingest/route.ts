@@ -1,28 +1,67 @@
-export const runtime = 'nodejs';
-export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
-function ok(body: unknown) {
-  return new Response(JSON.stringify(body), {
-    status: 200,
-    headers: { 'content-type': 'application/json', 'cache-control': 'no-store' },
-  });
+import type { NextRequest } from 'next/server'
+
+type TwilioModule = {
+  validateRequest: (
+    token: string,
+    signature: string,
+    url: string,
+    params: Record<string, string>
+  ) => boolean
+  validateRequestWithBody: (
+    token: string,
+    signature: string,
+    url: string,
+    body: string
+  ) => boolean
 }
 
-export async function POST(req: Request) {
-  const logKey = process.env.VOICE_LOG_KEY || process.env.SMOKE_KEY || '';
-  const key = req.headers.get('x-log-key') || req.headers.get('x-smoke-key') || '';
-  let body: any = {};
-  try { body = await req.json(); } catch { void 0; }
-  // Accept if authenticated OR payload looks like Twilio Event Streams (contains subscribed event types)
-  const looksLikeEventStream = !!(body && (Array.isArray(body) || body?.type || body?.Types || body?.events));
-  if (!looksLikeEventStream && (!logKey || key !== logKey)) return new Response('forbidden', { status: 403 });
+function absoluteUrlFrom(req: NextRequest): string {
+  const u = new URL(req.url)
+  const proto = (req.headers.get('x-forwarded-proto') ?? u.protocol.replace(':',''))
+  const host  = (req.headers.get('x-forwarded-host')  ?? req.headers.get('host') ?? u.host)
+  return `${proto}://${host}${u.pathname}`
+}
+
+export async function POST(req: NextRequest) {
+  const authToken = process.env.TWILIO_AUTH_TOKEN || ''
+  const sig = req.headers.get('x-twilio-signature') || ''
+  const ct = (req.headers.get('content-type') || '').toLowerCase()
+  const body = await req.text()
+
+  let valid = true
+  if (authToken && sig) {
+    try {
+      const mod: any = await import('twilio')
+      const tw = (mod?.default ?? mod) as TwilioModule
+      const url = absoluteUrlFrom(req)
+      if (ct.includes('application/json')) valid = tw.validateRequestWithBody(authToken, sig, url, body)
+      else {
+        const params = Object.fromEntries(new URLSearchParams(body)) as Record<string, string>
+        valid = tw.validateRequest(authToken, sig, url, params)
+      }
+    } catch { valid = false }
+  }
+  if (!valid) return new Response('forbidden', { status: 403, headers: { 'cache-control': 'no-store' } })
+
+  // PHI-safe echo of event type only
+  let event = 'unknown'
   try {
-    const redacted = JSON.parse(JSON.stringify(body));
-    if (redacted?.url && typeof redacted.url === 'string') {
-      redacted.url = String(redacted.url).replace(/token=[^&]+/, 'token=***');
+    if (ct.includes('application/json')) {
+      const obj = JSON.parse(body)
+      event = String(obj?.event || obj?.type || 'unknown')
+    } else {
+      const p = Object.fromEntries(new URLSearchParams(body)) as Record<string, string>
+      event = p['event'] || p['type'] || 'unknown'
     }
-    if (redacted?.qp_token) redacted.qp_token = '***';
-    console.log('[gw-log]', redacted?.type || 'event', redacted);
-  } catch { void 0; }
-  return ok({ status: 'ok' });
+  } catch (_e) { /* noop */ }
+  try { console.info('[twilio:stream-status]', { event, len: body.length }) } catch (_e) { /* noop */ }
+
+  return new Response('ok', { status: 200, headers: { 'cache-control': 'no-store' } })
+}
+
+export async function GET() {
+  return new Response('ok', { status: 200, headers: { 'cache-control': 'no-store' } })
 }
