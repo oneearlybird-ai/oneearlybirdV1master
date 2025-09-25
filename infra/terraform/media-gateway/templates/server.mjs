@@ -109,7 +109,17 @@ function validateTwilioUpgradeSignature(req) {
   }
 }
 
-const wss = new WebSocketServer({ noServer: true, perMessageDeflate: false });
+const wss = new WebSocketServer({
+  noServer: true,
+  perMessageDeflate: false,
+  // Prefer Twilio 'audio' subprotocol if offered
+  handleProtocols: (protocols /*, request */) => {
+    try {
+      if (Array.isArray(protocols) && protocols.includes('audio')) return 'audio';
+      return Array.isArray(protocols) && protocols.length ? protocols[0] : false;
+    } catch { return false; }
+  }
+});
 
 const metrics = { frames10s: 0, fps10s: 0, lastMsgAt: 0, backpressure10m: 0, lastBackpressureAt: 0 };
 setInterval(() => {

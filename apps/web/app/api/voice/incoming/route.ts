@@ -173,7 +173,7 @@ export async function POST(req: Request) {
 
   const xml =
     `<?xml version="1.0" encoding="UTF-8"?>` +
-    `<Response><Connect><Stream track="inbound_track" url="${xmlAttr(wsUrl)}"${scAttrs}/></Connect></Response>`;
+    `<Response><Connect><Stream url="${xmlAttr(wsUrl)}"${scAttrs}/></Connect></Response>`;
 
   if (sigDebug) {
     const safeWsUrl = wsUrl.replace(/token=[^&]+/, 'token=***');
