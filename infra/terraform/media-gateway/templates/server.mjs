@@ -292,7 +292,7 @@ wss.on('connection', async (ws, req) => {
   let hadMedia = false;
   let startGraceTimer = null;
   let recorder = null;
-  // Outbound aggregation to Twilio (target 200ms frames)
+  // Outbound aggregation to Twilio (canonical 20ms frames)
   let txAgg = [];
   let txAggLen = 0;
   let txTimer = null;
@@ -300,7 +300,7 @@ wss.on('connection', async (ws, req) => {
   function flushAgg(force=false) {
     try {
       if (!ws.__gotStart || !streamSid) return;
-      const TARGET = 1600; // 200ms @ 8k mu-law
+      const TARGET = 160; // 20ms @ 8k μ-law (160 bytes)
       if (!force && txAggLen < TARGET) return;
       if (!txAggLen) return;
       const buf = Buffer.concat(txAgg, txAggLen);
@@ -313,16 +313,17 @@ wss.on('connection', async (ws, req) => {
   }
   function startTx() {
     if (txTimer) return;
-    txTimer = setInterval(() => flushAgg(false), 220);
+    // Pace close to frame duration to flush any stragglers
+    txTimer = setInterval(() => flushAgg(false), 20);
   }
   function stopTx() { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } }
 
   function enqueueMuLawFrame(b) {
-    // Accept only exact 160-byte μ-law frames to build 200ms aggregates
+    // Accept only exact 160-byte μ-law frames (20ms)
     if (!b || b.length !== 160) return;
     txAgg.push(b);
     txAggLen += b.length;
-    if (txAggLen >= 1600) flushAgg(true);
+    if (txAggLen >= 160) flushAgg(true);
   }
 
   function decodeMuLawToPCM16(mu) {
@@ -424,18 +425,53 @@ wss.on('connection', async (ws, req) => {
           startTx();
         })();
 
-        el.onAudio = (buf) => {
+        // Robust vendor PCM16 handling: alignment-safe, endianness sniff, carryover between chunks
+        let vendorCarry = Buffer.alloc(0);
+        /** @type {'le'|'be'|null} */
+        let vendorEndian = null;
+        function detectEndian(buf) {
+          try {
+            const samples = Math.min(200, Math.floor(buf.length / 2));
+            if (samples < 20) return 'le'; // default to LE
+            let sumLE = 0, sumBE = 0;
+            for (let i = 0; i < samples; i += 4) {
+              const off = i * 2;
+              sumLE += Math.abs(buf.readInt16LE(off));
+              sumBE += Math.abs(buf.readInt16BE(off));
+            }
+            return (sumLE >= sumBE) ? 'le' : 'be';
+          } catch { return 'le'; }
+        }
+        el.onAudio = (chunk) => {
           try {
             if (!streamSid) return;
-            try { recorder && recorder.addVendorPCM16(Buffer.from(buf)); } catch(e) { void e; }
-            const BYTES_PER_20MS_16K = 320 * 2; // 320 samples of 16k PCM16
-            for (let off = 0; off + BYTES_PER_20MS_16K <= buf.byteLength; off += BYTES_PER_20MS_16K) {
-              const slice = buf.subarray(off, off + BYTES_PER_20MS_16K);
-              const pcm16 = new Int16Array(slice.buffer, slice.byteOffset, 320);
+            try { recorder && recorder.addVendorPCM16(Buffer.from(chunk)); } catch(e) { void e; }
+            const BYTES_PER_20MS_16K = 320 * 2; // 640 bytes
+            let buf = chunk;
+            if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
+            // prepend carryover
+            if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
+            // detect endianness once
+            if (!vendorEndian) {
+              vendorEndian = detectEndian(buf);
+              try { process.stdout.write(`vfmt:${vendorEndian}\n`); } catch (_) { void _; }
+            }
+            let off = 0;
+            // process full 20ms frames
+            while (off + BYTES_PER_20MS_16K <= buf.length) {
+              // Build Int16Array safely regardless of alignment
+              const pcm16 = new Int16Array(320);
+              for (let i = 0; i < 320; i++) {
+                const p = off + (i * 2);
+                pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+              }
               const pcm8k = downsample16kTo8kLP(pcm16);
               const mulaw = pcm16ToMuLawRef(pcm8k);
               enqueueMuLawFrame(Buffer.from(mulaw));
+              off += BYTES_PER_20MS_16K;
             }
+            // Save remainder for next chunk
+            vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
             startTx();
           } catch (e) { void e; }
         };
