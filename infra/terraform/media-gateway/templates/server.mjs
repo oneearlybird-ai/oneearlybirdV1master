@@ -363,6 +363,7 @@ wss.on('connection', async (ws, req) => {
       // Accept any non-empty streamSid to avoid false negatives across environments
       if (!String(streamSid || '').length) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } break; }
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
+        try { const tr = ev.start?.tracks; if (tr) process.stdout.write(`twilio:tracks ${Array.isArray(tr)?tr.join(','):String(tr)}\n`); } catch (e) { void e; }
         postLog('start', { connId, streamSid });
         ws.__gotStart = true;
         startAtMs = Date.now();
@@ -500,6 +501,9 @@ wss.on('connection', async (ws, req) => {
           } catch (e) { void e; }
         }
         if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; } metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60); metrics.lastBackpressureAt = Date.now(); }
+        break; }
+      case 'mark': {
+        try { const name = String(ev?.mark?.name || ''); process.stdout.write(`twilio:mark ${name}\n`); } catch (e) { void e; }
         break; }
       case 'stop': { process.stdout.write(`media:stop id=${connId} frames=${frames}\n`); try { ws.close(1000, 'normal'); } catch (e) { void e; } break; }
       default: break;
