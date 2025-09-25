@@ -398,13 +398,14 @@ wss.on('connection', async (ws, req) => {
         break; }
       case 'media': {
         if (!ws.__gotStart) {
-          // Tolerate out-of-order media; allow a short grace window for 'start' to arrive
+          // Tolerate out-of-order media; allow a longer grace window for 'start' to arrive
           if (!startGraceTimer) {
+            const ms = Number(process.env.START_GRACE_MS || 2500);
             startGraceTimer = setTimeout(() => {
               if (!ws.__gotStart) { try { ws.close(1008, 'start_required_timeout'); } catch (e) { void e; } }
               try { startGraceTimer && clearTimeout(startGraceTimer); } catch (e) { void e; }
               startGraceTimer = null;
-            }, 400);
+            }, ms);
           }
           break;
         }

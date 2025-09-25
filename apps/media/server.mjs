@@ -115,6 +115,7 @@ wss.on('connection', (ws, req) => {
   let gotConnected = false;
   let gotStart = false;
   let streamSid = undefined;
+  let startGraceTimer = null;
 
   let echoTimer = null;
   function startEcho() {
@@ -146,13 +147,23 @@ wss.on('connection', (ws, req) => {
       return;
     }
     if (ev.event === 'media') {
-      if (!gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } return; }
+      if (!gotStart) {
+        if (!startGraceTimer) {
+          startGraceTimer = setTimeout(() => {
+            if (!gotStart) { try { ws.close(1008, 'start_required_timeout'); } catch (e) { void e; } }
+            try { startGraceTimer && clearTimeout(startGraceTimer); } catch (e) { void e; }
+            startGraceTimer = null;
+          }, 2500);
+        }
+        return;
+      }
       return;
     }
     if (ev.event === 'mark' || ev.event === 'stop') return;
   });
 
   ws.on('close', (code, reason) => {
+    if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
     if (echoTimer) { try { clearInterval(echoTimer); } catch (e) { void e; }
       echoTimer = null;
     }
