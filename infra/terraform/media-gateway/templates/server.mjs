@@ -295,8 +295,11 @@ wss.on('connection', async (ws, req) => {
         const payload = txQueue.shift();
         if (!payload) return;
         const ts = String(Math.max(0, Date.now() - startAtMs));
-        const msg = JSON.stringify({ event: 'media', streamSid, media: { track: 'outbound', chunk: String(++txChunk), timestamp: ts, payload } });
+        const ch = String(++txChunk);
+        const msg = JSON.stringify({ event: 'media', streamSid, media: { track: 'outbound', chunk: ch, timestamp: ts, payload } });
         ws.send(msg);
+        // Send mark so Twilio can align playback
+        try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
       } catch (e) { void e; }
     }, 20);
   }
@@ -365,6 +368,29 @@ wss.on('connection', async (ws, req) => {
           for (let i = 0, j = 0; i + 1 < pcm16k.length; i += 2, j++) out[j] = (pcm16k[i] + pcm16k[i + 1]) >> 1;
           return out;
         }
+
+        // Optional: flush Twilio buffer at start to prevent artifact burst
+        try { ws.send(JSON.stringify({ event: 'clear', streamSid })); } catch (e) { void e; }
+
+        // Optional: inject short test tone before vendor audio to validate playback (OUT_TEST_TONE_MS)
+        (function maybeInjectTone(){
+          const ms = Number(process.env.OUT_TEST_TONE_MS || 0);
+          if (!ms || ms < 40) return;
+          const frames = Math.min(500, Math.floor(ms / 20));
+          const TWO_PI = Math.PI * 2;
+          const freq = Number(process.env.OUT_TONE_HZ || 1000);
+          const amp = Number(process.env.OUT_TONE_AMP || 3000);
+          const phaseStep = TWO_PI * freq / 8000;
+          let phase = 0;
+          for (let f = 0; f < frames; f++) {
+            const pcm = new Int16Array(160);
+            for (let i = 0; i < 160; i++) { pcm[i] = (amp * Math.sin(phase)) | 0; phase += phaseStep; }
+            const mu = pcm16ToMuLaw(pcm);
+            const payload = Buffer.from(mu).toString('base64');
+            txQueue.push(payload);
+          }
+          startTx();
+        })();
 
         el.onAudio = (buf) => {
           try {
@@ -443,7 +469,13 @@ wss.on('connection', async (ws, req) => {
         if (ECHO_BACK) {
           try {
             const payload = String(ev.media?.payload || '');
-            if (payload) { txQueue.push(payload); startTx(); }
+            if (payload) {
+              // Strict 160-byte enforcement for μ-law frames
+              try {
+                const b = Buffer.from(payload, 'base64');
+                if (b.length === 160) { txQueue.push(payload); startTx(); }
+              } catch (e) { void e; }
+            }
           } catch (e) { void e; }
         } else if (el && el.connected) {
           try {
