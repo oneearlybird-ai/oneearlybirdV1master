@@ -41,6 +41,8 @@ EL_API="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /earlybir
 if [ -z "$EL_API" ] || [ "$EL_API" = "None" ]; then EL_API="${ELEVENLABS_API_KEY}"; fi
 EL_AGENT="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /earlybird/eleven/agent_id --query Parameter.Value --output text 2>/dev/null || true)"
 EL_WS="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /earlybird/eleven/ws_url --query Parameter.Value --output text 2>/dev/null || true)"
+# Optional debug API key for diagnostics
+EL_API_DBG="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /earlybird/eleven/api_key_debug --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"
 
 # Optional log webhook key
 LOG_KEY="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /earlybird/media/hmac_secret --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"
@@ -54,9 +56,11 @@ TWILIO_AUTH_TOKEN=$${TWILIO_TOKEN}
 ELEVENLABS_API_KEY=$${EL_API}
 ELEVENLABS_AGENT_ID=$${EL_AGENT}
 ELEVENLABS_WS_URL=$${EL_WS}
+ELEVENLABS_API_KEY_DEBUG=$${EL_API_DBG}
 EL_FORWARD_BINARY=true
 LOG_WEBHOOK_URL=https://oneearlybird.ai/api/voice/logs/ingest
 LOG_WEBHOOK_KEY=$${LOG_KEY}
+DIAG_EL_AUTOPROBE=true
 EOF_ENV
 
 cat >/etc/systemd/system/media-ws.service <<'EOF_SVC'

@@ -128,8 +128,17 @@ export async function POST(req: Request) {
         tok = process.env.MEDIA_AUTH_TOKEN;
       }
       if (tok) {
-        if (u.search) u.search += `&token=${encodeURIComponent(tok)}`;
-        else u.search = `?token=${encodeURIComponent(tok)}`;
+        // Prefer path-style token to avoid intermediaries stripping query params on WS upgrade
+        // e.g., wss://host/rtm/voice/jwt/<token>
+        try {
+          const enc = encodeURIComponent(tok);
+          u.pathname = `${u.pathname.replace(/\/$/, '')}/jwt/${enc}`;
+          // do not rely on query param
+        } catch {
+          // fallback to query param if path manipulation fails
+          if (u.search) u.search += `&token=${encodeURIComponent(tok)}`;
+          else u.search = `?token=${encodeURIComponent(tok)}`;
+        }
       }
       return u.toString();
     } catch {

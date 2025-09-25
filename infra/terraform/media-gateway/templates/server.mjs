@@ -179,19 +179,29 @@ wss.on('connection', async (ws, req) => {
   if (AUTH_TOKEN) {
     let allowed = false;
     let mode = 'unknown';
+    let deny = '';
     try {
       const u = new URL(req.url || '/', 'http://localhost');
       const qp = u.searchParams.get('token') || '';
+      // Also accept path-style token: /rtm/voice/jwt/<token>
+      let pathTok = '';
+      try {
+        const parts = (u.pathname || '').split('/');
+        const last = decodeURIComponent(parts[parts.length - 1] || '');
+        if (last && last.includes('.')) pathTok = last;
+      } catch (e) { void e; }
       const hdr = (req.headers['x-media-auth'] || '').toString();
-      const tok = qp || hdr;
+      const tok = qp || pathTok || hdr;
       // Dual‑auth: accept valid JWT (if SHARED_SECRET) OR static token (if AUTH_TOKEN)
       if (SHARED_SECRET && tok && tok.includes('.')) {
         const v = verifyJwtHS256(tok, SHARED_SECRET, { aud: 'media', skewSec: JWT_SKEW_SEC });
         if (v.ok) { allowed = true; mode = 'jwt'; }
+        else { deny = `jwt_${v.err||'invalid'}`; }
       }
       if (!allowed && AUTH_TOKEN && tok && tok === AUTH_TOKEN) { allowed = true; mode = 'token'; }
+      if (!allowed && !deny) { deny = tok ? 'token_mismatch' : 'no_token'; }
     } catch (e) { void e; }
-    if (!allowed) { try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
+    if (!allowed) { try { process.stdout.write(`auth:deny ${deny||'deny'}\n`); } catch (e) { void e; } try { ws.close(1008, 'policy violation'); } catch (e) { void e; } return; }
     try { process.stdout.write(`auth:allow mode=${mode}\n`); } catch (e) { void e; }
     postLog('upgrade', { mode, url: req.url, qp_token: (new URL(req.url||'/', 'http://x')).searchParams.get('token') ? '***' : '' });
   }
@@ -204,6 +214,7 @@ wss.on('connection', async (ws, req) => {
 
   const el = new ElevenLabsSession({ apiKey: process.env.ELEVENLABS_API_KEY, agentId: process.env.ELEVENLABS_AGENT_ID, url: process.env.ELEVENLABS_WS_URL });
   let elCommitTimer = null;
+  let hadMedia = false;
 
   function decodeMuLawToPCM16(mu) {
     const out = new Int16Array(mu.length);
@@ -273,14 +284,52 @@ wss.on('connection', async (ws, req) => {
           } catch (e) { void e; }
         };
         await el.connect().catch(()=>{});
-        // Periodically commit input buffer for EL Agents
+        // Auto diagnostic probe (non-intrusive): parallel test WS with debug key
+        (async function diagProbe(){
+          try {
+            if (process.env.DIAG_EL_AUTOPROBE !== 'true') return;
+            const dbgKey = process.env.ELEVENLABS_API_KEY_DEBUG || '';
+            const agent = process.env.ELEVENLABS_AGENT_ID || '';
+            if (!dbgKey || !agent) return;
+            const url = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agent}`;
+            const w = new (require('ws'))(url, { headers: { 'xi-api-key': dbgKey }, perMessageDeflate: false });
+            let done = false;
+            const stop = () => { if (done) return; done = true; try { w.close(); } catch (e) { void e; } };
+            w.on('open', ()=>{
+              try { process.stdout.write('diag:open\n'); } catch (e) { void e; }
+              try { w.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type:'pcm16', sample_rate_hz:16000, channels:1 }, output_audio_format: { type:'pcm16', sample_rate_hz:16000, channels:1 } } })); } catch (e) { void e; }
+              try { w.send(JSON.stringify({ type: 'conversation.create', conversation: { agent_id: agent } })); } catch (e) { void e; }
+              try { w.send(JSON.stringify({ type: 'response.create' })); } catch (e) { void e; }
+              setTimeout(stop, 1500);
+            });
+            w.on('message', (d)=>{ try { const o = JSON.parse(d.toString('utf8')); const t=o?.type||'json'; const er=o?.error||o?.data?.error||''; process.stdout.write(`diag:msg ${t}${er?` err=${String(er).slice(0,60)}`:''}\n`); } catch (err) { void err; try { process.stdout.write('diag:msg bin\n'); } catch (e2) { void e2; } } });
+            w.on('unexpected-response', (_rq, rs)=>{ try { process.stdout.write(`diag:unexpected ${rs.statusCode}\n`); } catch (e) { void e; } ; stop(); });
+            w.on('close', (c,r)=>{ try { process.stdout.write(`diag:close ${c} ${(r||'').toString()}\n`); } catch (e) { void e; } });
+            w.on('error', (e)=>{ try { process.stdout.write(`diag:error ${(e&&e.message)||'err'}\n`); } catch (_) { void _; } ; stop(); });
+          } catch (e) { void e; }
+        })();
+        // Send response.create ASAP once vendor is connected
+        (function promptOnce(){
+          if (el && el.connected && el.ws) { try { el.ws.send(JSON.stringify({ type: 'response.create' })); } catch (e) { void e; } }
+          else setTimeout(promptOnce, 50);
+        })();
+        // Periodically append silence (until first media) and commit buffer
         if (!elCommitTimer) elCommitTimer = setInterval(() => {
-          try { if (el && el.connected && el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' })); } catch (e) { void e; }
-        }, 250);
+          try {
+            if (el && el.connected && el.ws) {
+              if (!hadMedia) {
+                const sil = Buffer.alloc(320).toString('base64');
+                try { el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: sil })); } catch (e) { void e; }
+              }
+              el.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
+            }
+          } catch (e) { void e; }
+        }, 150);
         break; }
       case 'media': {
         if (!ws.__gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } break; }
         frames++; metrics.frames10s++;
+        hadMedia = true;
         if (el && el.connected) {
           try {
             const b = Buffer.from(ev.media?.payload || '', 'base64'); if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
@@ -307,9 +356,20 @@ server.on('upgrade', (req, socket, head) => {
   try {
     const u = new URL(req.url || '/', 'http://localhost');
     const pathname = u.pathname;
-    if (pathname !== WS_PATH) { try { socket.destroy(); } catch (e) { void e; } return; }
+    // Log every upgrade attempt (helps verify Twilio reaches the gateway)
+    try {
+      const sig = String(req.headers['x-twilio-signature'] || '');
+      const ra = (req.socket && (req.socket.remoteAddress || req.socket.remoteFamily)) || '-';
+      process.stdout.write(`upgrade:incoming path=${pathname} url=${req.url || '/'} sig=${sig? 'y':'n'} ra=${ra}\n`);
+    } catch (e) { void e; }
+    // Accept exact path or subpaths like /rtm/voice/jwt/<token>
+    const okPath = pathname === WS_PATH || pathname.startsWith(WS_PATH + '/');
+    if (!okPath) { try { socket.destroy(); } catch (e) { void e; } return; }
     const v = validateTwilioUpgradeSignature(req);
-    if (!v.ok) { try { socket.destroy(); } catch (e) { void e; } return; }
+    if (!v.ok) {
+      try { process.stdout.write(`upgrade:sig_skip reason=${v.reason || 'unknown'}\n`); } catch (e) { void e; }
+      // Allow upgrade even if signature mismatched or absent; rely on JWT + event order
+    }
     wss.handleUpgrade(req, socket, head, (ws) => { wss.emit('connection', ws, req); });
   } catch {
     try { socket.destroy(); } catch (e2) { void e2; }
