@@ -1,5 +1,6 @@
 "use client";
 
+import "@/components/plasmic.registry"; // registers our code components for Plasmic Studio
 import { PlasmicCanvasHost } from "@plasmicapp/host";
 
 // Plasmic Studio loads this page in an iframe to discover/register components
@@ -8,4 +9,3 @@ import { PlasmicCanvasHost } from "@plasmicapp/host";
 export default function PlasmicHostPage() {
   return <PlasmicCanvasHost />;
 }
-
