@@ -296,7 +296,6 @@ wss.on('connection', async (ws, req) => {
   const txQueue = [];
   let txTimer = null;
   let txChunk = 0;
-  let startAtMs = Date.now();
   function startTx() {
     if (txTimer) return;
     txTimer = setInterval(() => {
@@ -304,10 +303,9 @@ wss.on('connection', async (ws, req) => {
         if (!txQueue.length || !ws.__gotStart || !streamSid) return;
         const payload = txQueue.shift();
         if (!payload) return;
-        const ts = String(Math.max(0, Date.now() - startAtMs));
         const ch = String(++txChunk);
-        const msg = JSON.stringify({ event: 'media', streamSid, media: { track: 'outbound', chunk: ch, timestamp: ts, payload } });
-        ws.send(msg);
+        // Send minimal media payload per Twilio spec (server -> Twilio)
+        ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload } }));
         // Send mark so Twilio can align playback
         try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
       } catch (e) { void e; }
@@ -366,7 +364,6 @@ wss.on('connection', async (ws, req) => {
         try { const tr = ev.start?.tracks; if (tr) process.stdout.write(`twilio:tracks ${Array.isArray(tr)?tr.join(','):String(tr)}\n`); } catch (e) { void e; }
         postLog('start', { connId, streamSid });
         ws.__gotStart = true;
-        startAtMs = Date.now();
         // Initialize recorder using callSid if configured
         try { if (REC_ENABLED) { const cs = ev.start?.callSid || ev.start?.call_id || 'nocall'; recorder = new Recorder(cs); } } catch(e) { void e; }
         if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
