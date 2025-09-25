@@ -329,9 +329,9 @@ wss.on('connection', async (ws, req) => {
       case 'start': {
         // Tolerate missing 'connected' by inferring it
         if (!ws.__gotConnected) { ws.__gotConnected = true; }
-        streamSid = ev.start?.streamSid || ev.streamSid || undefined;
-        // Enforce Twilio streamSid shape: MS + 32 hex
-        if (!/^MS[a-f0-9]{32}$/i.test(String(streamSid || ''))) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } break; }
+      streamSid = ev.start?.streamSid || ev.streamSid || undefined;
+      // Accept any non-empty streamSid to avoid false negatives across environments
+      if (!String(streamSid || '').length) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } break; }
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
         postLog('start', { connId, streamSid });
         ws.__gotStart = true;

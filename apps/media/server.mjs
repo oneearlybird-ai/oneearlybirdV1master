@@ -140,7 +140,8 @@ wss.on('connection', (ws, req) => {
     if (ev.event === 'start') {
       if (!gotConnected) { try { ws.close(1008, 'connected_required'); } catch (e) { void e; } return; }
       streamSid = ev.start?.streamSid || ev.streamSid || undefined;
-      if (!/^MS[a-f0-9]{32}$/i.test(String(streamSid || ''))) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } return; }
+      // Accept any non-empty streamSid to avoid false negatives across environments
+      if (!String(streamSid || '').length) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } return; }
       process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
       gotStart = true;
       startEcho();
