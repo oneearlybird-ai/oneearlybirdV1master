@@ -12,6 +12,8 @@ const JWT_SKEW_SEC = Number(process.env.JWT_SKEW_SEC || 30);
 const ECHO_BACK = String(process.env.ECHO_BACK || '').toLowerCase() === 'true';
 const LOG_WEBHOOK_URL = process.env.LOG_WEBHOOK_URL || '';
 const LOG_WEBHOOK_KEY = process.env.LOG_WEBHOOK_KEY || '';
+// Preferred vendor (ElevenLabs) PCM sample rate for input/output
+const VENDOR_SR_HZ = Number(process.env.VENDOR_SR_HZ || 16000);
 
 // Optional object storage (Rumble S3 or AWS S3) for recordings
 const REC_ENABLED = String(process.env.RECORD_CALLS || '').toLowerCase() === 'true';
@@ -217,7 +219,7 @@ class ElevenLabsSession {
       try { process.stdout.write('el:open\n'); } catch (e) { void e; }
       // Send a minimal session/update to declare audio formats
       try {
-        this.ws.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 }, output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 } } }));
+        this.ws.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type: 'pcm16', sample_rate_hz: VENDOR_SR_HZ, channels: 1 }, output_audio_format: { type: 'pcm16', sample_rate_hz: VENDOR_SR_HZ, channels: 1 } } }));
         const agentId = process.env.ELEVENLABS_AGENT_ID || this.opts?.agentId;
         if (agentId) this.ws.send(JSON.stringify({ type: 'conversation.create', conversation: { agent_id: agentId } }));
       } catch (e) { void e; }
@@ -446,7 +448,7 @@ wss.on('connection', async (ws, req) => {
           try {
             if (!streamSid) return;
             try { recorder && recorder.addVendorPCM16(Buffer.from(chunk)); } catch(e) { void e; }
-            const BYTES_PER_20MS_16K = 320 * 2; // 640 bytes
+            const BYTES_PER_20MS = (VENDOR_SR_HZ === 16000 ? 320 * 2 : 160 * 2);
             let buf = chunk;
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
             // prepend carryover
@@ -458,17 +460,28 @@ wss.on('connection', async (ws, req) => {
             }
             let off = 0;
             // process full 20ms frames
-            while (off + BYTES_PER_20MS_16K <= buf.length) {
+            while (off + BYTES_PER_20MS <= buf.length) {
               // Build Int16Array safely regardless of alignment
-              const pcm16 = new Int16Array(320);
-              for (let i = 0; i < 320; i++) {
-                const p = off + (i * 2);
-                pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+              if (VENDOR_SR_HZ === 16000) {
+                const pcm16 = new Int16Array(320);
+                for (let i = 0; i < 320; i++) {
+                  const p = off + (i * 2);
+                  pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+                }
+                const pcm8k = downsample16kTo8kLP(pcm16);
+                const mulaw = pcm16ToMuLawRef(pcm8k);
+                enqueueMuLawFrame(Buffer.from(mulaw));
+              } else {
+                // VENDOR_SR_HZ === 8000
+                const pcm8 = new Int16Array(160);
+                for (let i = 0; i < 160; i++) {
+                  const p = off + (i * 2);
+                  pcm8[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+                }
+                const mulaw = pcm16ToMuLawRef(pcm8);
+                enqueueMuLawFrame(Buffer.from(mulaw));
               }
-              const pcm8k = downsample16kTo8kLP(pcm16);
-              const mulaw = pcm16ToMuLawRef(pcm8k);
-              enqueueMuLawFrame(Buffer.from(mulaw));
-              off += BYTES_PER_20MS_16K;
+              off += BYTES_PER_20MS;
             }
             // Save remainder for next chunk
             vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
@@ -489,7 +502,7 @@ wss.on('connection', async (ws, req) => {
             const stop = () => { if (done) return; done = true; try { w.close(); } catch (e) { void e; } };
             w.on('open', ()=>{
               try { process.stdout.write('diag:open\n'); } catch (e) { void e; }
-              try { w.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type:'pcm16', sample_rate_hz:16000, channels:1 }, output_audio_format: { type:'pcm16', sample_rate_hz:16000, channels:1 } } })); } catch (e) { void e; }
+              try { w.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type:'pcm16', sample_rate_hz:VENDOR_SR_HZ, channels:1 }, output_audio_format: { type:'pcm16', sample_rate_hz:VENDOR_SR_HZ, channels:1 } } })); } catch (e) { void e; }
               try { w.send(JSON.stringify({ type: 'conversation.create', conversation: { agent_id: agent } })); } catch (e) { void e; }
               try { w.send(JSON.stringify({ type: 'response.create' })); } catch (e) { void e; }
               setTimeout(stop, 1500);
@@ -546,12 +559,19 @@ wss.on('connection', async (ws, req) => {
           try {
             const b = Buffer.from(ev.media?.payload || '', 'base64'); if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
             const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
-            const pcm8k = decodeMuLawToPCM16(mu); const pcm16k = upsample8kTo16k(pcm8k); const le = int16ToLEBytes(pcm16k);
-            // Send JSON audio frame to EL Agents API
-            const audio = le.toString('base64');
-            try { if (el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio })); } catch (e) { void e; }
-            // record inbound 16k PCM
-            try { recorder && recorder.addInboundPCM16(Buffer.from(le)); } catch(e) { void e; }
+            const pcm8k = decodeMuLawToPCM16(mu);
+            if (VENDOR_SR_HZ === 16000) {
+              const pcm16k = upsample8kTo16k(pcm8k);
+              const le = int16ToLEBytes(pcm16k);
+              const audio = le.toString('base64');
+              try { if (el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio })); } catch (e) { void e; }
+              try { recorder && recorder.addInboundPCM16(Buffer.from(le)); } catch(e) { void e; }
+            } else {
+              const le8 = int16ToLEBytes(pcm8k);
+              const audio8 = le8.toString('base64');
+              try { if (el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: audio8 })); } catch (e) { void e; }
+              try { recorder && recorder.addInboundPCM16(Buffer.from(le8)); } catch(e) { void e; }
+            }
           } catch (e) { void e; }
         }
         if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; } metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60); metrics.lastBackpressureAt = Date.now(); }
