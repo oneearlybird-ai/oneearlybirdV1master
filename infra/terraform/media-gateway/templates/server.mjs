@@ -111,13 +111,19 @@ function safeJsonParse(buf) { try { return JSON.parse(buf.toString()); } catch {
 function nanoid(n = 10) { return crypto.randomBytes(n).toString('base64url'); }
 
 class ElevenLabsSession {
-  constructor(opts) { this.opts = opts; this.ws = null; this.connected = false; }
+  constructor(opts) { this.opts = opts||{}; this.ws = null; this.connected = false; this._want=false; this._backoff=500; }
   async connect() {
+    this._want = true;
     let url = process.env.ELEVENLABS_WS_URL || this.opts?.url;
     const apiKey = process.env.ELEVENLABS_API_KEY || this.opts?.apiKey;
     const origin = process.env.ELEVENLABS_ORIGIN || 'https://oneearlybird.ai';
     const agentId = process.env.ELEVENLABS_AGENT_ID || this.opts?.agentId;
-    if (!url || !apiKey) return;
+    if ((!url && !agentId) || !apiKey) return;
+    try {
+      if (process.env.EL_USE_DIRECT === 'true') {
+        url = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId || ''}`;
+      }
+    } catch (e) { void e; }
     try {
       if (/^https?:/i.test(url)) {
         const u = new URL(url);
@@ -129,41 +135,33 @@ class ElevenLabsSession {
         url = j.signed_url;
       }
     } catch (e) { try { process.stdout.write(`el:signed_url_error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } }
-    this.ws = new WebSocket(url, { headers: { 'xi-api-key': apiKey, 'Origin': origin } });
+    // Build headers: for signed URLs, omit xi-api-key; otherwise include it
+    const hdrs = { 'Origin': origin };
+    try { if (!/conversation_signature=/.test(String(url))) { hdrs['xi-api-key'] = apiKey; } } catch (e) { void e; }
+    this.ws = new WebSocket(url, { headers: hdrs });
     this.ws.on('open', () => { 
-      this.connected = true; 
+      this.connected = true; this._backoff=500;
       try { process.stdout.write('el:open\n'); } catch (e) { void e; }
       // Send a minimal session/update to declare audio formats
       try {
-        const msg = {
-          type: 'session.update',
-          session: {
-            input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 },
-            output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 }
-          }
-        };
-        this.ws.send(JSON.stringify(msg));
+        this.ws.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 }, output_audio_format: { type: 'pcm16', sample_rate_hz: 16000, channels: 1 } } }));
+        const agentId = process.env.ELEVENLABS_AGENT_ID || this.opts?.agentId;
+        if (agentId) this.ws.send(JSON.stringify({ type: 'conversation.create', conversation: { agent_id: agentId } }));
       } catch (e) { void e; }
     });
-    this.ws.on('close', (code, reason) => { this.connected = false; try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } });
-    this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } });
+    this.ws.on('close', (code, reason) => { this.connected = false; try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
+    this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
     this.ws.on('error', (e) => { this.connected = false; try { process.stdout.write(`el:error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } });
     this.ws.on('message', (data) => {
       try {
         if (typeof this.onAudio !== 'function') return;
-        if (Buffer.isBuffer(data)) {
-          // Assume raw PCM16LE 16k from EL; forward to handler
-          this.onAudio(data);
-        } else {
+        if (Buffer.isBuffer(data)) { this.onAudio(data); }
+        else {
           const txt = data.toString('utf8');
-          // Try to parse JSON and extract base64 audio if present
           try {
             const obj = JSON.parse(txt);
-            const b64 = obj?.audio || obj?.data?.audio;
-            if (b64 && typeof b64 === 'string') {
-              const buf = Buffer.from(b64, 'base64');
-              this.onAudio(buf);
-            }
+            try { const t = obj?.type || obj?.event || 'json'; const err = obj?.error || obj?.data?.error; if (t||err) process.stdout.write(`el:msg type=${t}${err?` err=${String(err).slice(0,80)}`:''}\n`); } catch (e) { void e; }
+            const b64 = obj?.audio || obj?.data?.audio; if (b64 && typeof b64==='string') this.onAudio(Buffer.from(b64,'base64'));
           } catch (e) { void e; }
         }
       } catch (e) { void e; }
@@ -173,7 +171,8 @@ class ElevenLabsSession {
     if (!this.connected || !this.ws) return;
     if (process.env.EL_FORWARD_BINARY === 'true') { try { this.ws.send(pcm16leBuffer); } catch (e) { void e; } }
   }
-  async close() { if (this.ws) { try { this.ws.close(); } catch (e) { void e; } } this.connected = false; }
+  async close() { this._want=false; if (this.ws) { try { this.ws.close(); } catch (e) { void e; } } this.connected = false; }
+  _reconnect(){ const d=Math.min(this._backoff,5000); this._backoff=Math.min(this._backoff*2,5000); setTimeout(()=>{ if(this._want) this.connect().catch(()=>{}); }, d); }
 }
 
 wss.on('connection', async (ws, req) => {
@@ -204,6 +203,7 @@ wss.on('connection', async (ws, req) => {
   let keepalive = setInterval(() => { try { ws.ping(); } catch (e) { void e; } if (Date.now() - lastMsgAt > 30000) { try { ws.close(1001, 'idle'); } catch (e) { void e; } } }, 15000);
 
   const el = new ElevenLabsSession({ apiKey: process.env.ELEVENLABS_API_KEY, agentId: process.env.ELEVENLABS_AGENT_ID, url: process.env.ELEVENLABS_WS_URL });
+  let elCommitTimer = null;
 
   function decodeMuLawToPCM16(mu) {
     const out = new Int16Array(mu.length);
@@ -273,16 +273,22 @@ wss.on('connection', async (ws, req) => {
           } catch (e) { void e; }
         };
         await el.connect().catch(()=>{});
+        // Periodically commit input buffer for EL Agents
+        if (!elCommitTimer) elCommitTimer = setInterval(() => {
+          try { if (el && el.connected && el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' })); } catch (e) { void e; }
+        }, 250);
         break; }
       case 'media': {
         if (!ws.__gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } break; }
         frames++; metrics.frames10s++;
-        if (el.connected) {
+        if (el && el.connected) {
           try {
             const b = Buffer.from(ev.media?.payload || '', 'base64'); if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
             const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
             const pcm8k = decodeMuLawToPCM16(mu); const pcm16k = upsample8kTo16k(pcm8k); const le = int16ToLEBytes(pcm16k);
-            await el.sendAudio(le);
+            // Send JSON audio frame to EL Agents API
+            const audio = le.toString('base64');
+            try { if (el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio })); } catch (e) { void e; }
           } catch (e) { void e; }
         }
         if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; } metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60); metrics.lastBackpressureAt = Date.now(); }
@@ -292,7 +298,7 @@ wss.on('connection', async (ws, req) => {
     }
   });
 
-  ws.on('close', async (code, reason) => { clearInterval(keepalive); await el.close().catch((e)=>{ void e; }); postLog('close', { connId, code, reason: (reason||'').toString() }); });
+  ws.on('close', async (code, reason) => { clearInterval(keepalive); if (elCommitTimer) { try { clearInterval(elCommitTimer); } catch (e) { void e; } elCommitTimer = null; } await el.close().catch((e)=>{ void e; }); postLog('close', { connId, code, reason: (reason||'').toString() }); });
   ws.on('error', (e) => { void e; });
 });
 

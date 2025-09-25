@@ -153,7 +153,7 @@ export async function POST(req: Request) {
   })();
 
   const scAttrs = cbUrl
-    ? ` statusCallback="${xmlAttr(cbUrl)}" statusCallbackMethod="POST" statusCallbackEvent="start stop"`
+    ? ` statusCallback="${xmlAttr(cbUrl)}" statusCallbackMethod="POST"`
     : '';
 
   const xml =
