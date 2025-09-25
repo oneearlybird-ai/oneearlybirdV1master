@@ -12,7 +12,8 @@ Runtime
 Env Vars
 - `PORT` (default 8080)
 - `WS_PATH` (default `/rtm/voice`)
-- `MEDIA_AUTH_TOKEN` (optional): if set, requires query param `?token=...` on WS connect (header `x-media-auth` also accepted)
+- `MEDIA_AUTH_TOKEN` (optional): if set, requires an auth token on WS connect. Preferred form is path-style `/rtm/voice/jwt/<token>` (JWT when `MEDIA_SHARED_SECRET` is set, or raw token). Query param `?token=...` and header `x-media-auth` are also accepted for legacy clients.
+- `MEDIA_SHARED_SECRET` (optional): when set, expects an HS256 JWT token; payload may include `aud=media`, `iat`, `exp`.
 - `ELEVENLABS_API_KEY` (optional): realtime integration key (header `xi-api-key`)
 - `ELEVENLABS_AGENT_ID` (optional): reserved for session config
 - `ELEVENLABS_WS_URL` (optional): realtime WS URL; connect on Twilio `start`
@@ -31,8 +32,8 @@ npx -y wscat@6 -c ws://localhost:8080/rtm/voice
 ```
 
 Auth (optional)
-- Set `MEDIA_AUTH_TOKEN=...` and ensure your TwiML `<Stream url>` includes `?token=...`.
-- The web voice handler now appends `?token=$MEDIA_AUTH_TOKEN` automatically if set.
+- Set `MEDIA_SHARED_SECRET` to enable JWT auth, or `MEDIA_AUTH_TOKEN` for a static token.
+- TwiML `<Connect><Stream>` should point to `wss://<host>/rtm/voice/jwt/<token>` (preferred). Note: Twilio does not support query strings in `<Stream url>`; path-style tokens are compatible.
 
 Guards
 - Idle timeout (30s without messages) closes the WS
@@ -53,7 +54,8 @@ Twilio Media Streams
 
 Endpoints
 - `GET /` → `{ ok:true, service:'media', wsPath, time }`
-- `WS /rtm/voice` → upgrades; responds to text `ping` with `pong`
+- `GET /health` → `{ ok:true, service:'media', time }`
+- `WS /rtm/voice` and `WS /rtm/voice/jwt/<token>` → upgrades; responds to text `ping` with `pong`
 
 Security posture
 - No PHI in logs (only minimal structured events)
