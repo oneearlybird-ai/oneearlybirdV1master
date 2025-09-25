@@ -292,26 +292,38 @@ wss.on('connection', async (ws, req) => {
   let hadMedia = false;
   let startGraceTimer = null;
   let recorder = null;
-  // Outbound pacing for Twilio media (20ms cadence)
-  const txQueue = [];
+  // Outbound aggregation to Twilio (target 200ms frames)
+  let txAgg = [];
+  let txAggLen = 0;
   let txTimer = null;
   let txChunk = 0;
+  function flushAgg(force=false) {
+    try {
+      if (!ws.__gotStart || !streamSid) return;
+      const TARGET = 1600; // 200ms @ 8k mu-law
+      if (!force && txAggLen < TARGET) return;
+      if (!txAggLen) return;
+      const buf = Buffer.concat(txAgg, txAggLen);
+      txAgg = []; txAggLen = 0;
+      const payload = buf.toString('base64');
+      const ch = String(++txChunk);
+      ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload } }));
+      try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
+    } catch (e) { void e; }
+  }
   function startTx() {
     if (txTimer) return;
-    txTimer = setInterval(() => {
-      try {
-        if (!txQueue.length || !ws.__gotStart || !streamSid) return;
-        const payload = txQueue.shift();
-        if (!payload) return;
-        const ch = String(++txChunk);
-        // Send minimal media payload per Twilio spec (server -> Twilio)
-        ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload } }));
-        // Send mark so Twilio can align playback
-        try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
-      } catch (e) { void e; }
-    }, 20);
+    txTimer = setInterval(() => flushAgg(false), 220);
   }
   function stopTx() { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } }
+
+  function enqueueMuLawFrame(b) {
+    // Accept only exact 160-byte μ-law frames to build 200ms aggregates
+    if (!b || b.length !== 160) return;
+    txAgg.push(b);
+    txAggLen += b.length;
+    if (txAggLen >= 1600) flushAgg(true);
+  }
 
   function decodeMuLawToPCM16(mu) {
     const out = new Int16Array(mu.length);
@@ -394,8 +406,7 @@ wss.on('connection', async (ws, req) => {
             const pcm = new Int16Array(160);
             for (let i = 0; i < 160; i++) { pcm[i] = (amp * Math.sin(phase)) | 0; phase += phaseStep; }
             const mu = pcm16ToMuLaw(pcm);
-            const payload = Buffer.from(mu).toString('base64');
-            txQueue.push(payload);
+            enqueueMuLawFrame(Buffer.from(mu));
           }
           startTx();
         })();
@@ -410,8 +421,7 @@ wss.on('connection', async (ws, req) => {
               const pcm16 = new Int16Array(slice.buffer, slice.byteOffset, 320);
               const pcm8k = downsample16kTo8kLP(pcm16);
               const mulaw = pcm16ToMuLaw(pcm8k);
-              const payload = Buffer.from(mulaw).toString('base64');
-              txQueue.push(payload);
+              enqueueMuLawFrame(Buffer.from(mulaw));
             }
             startTx();
           } catch (e) { void e; }
@@ -478,10 +488,9 @@ wss.on('connection', async (ws, req) => {
           try {
             const payload = String(ev.media?.payload || '');
             if (payload) {
-              // Strict 160-byte enforcement for μ-law frames
               try {
                 const b = Buffer.from(payload, 'base64');
-                if (b.length === 160) { txQueue.push(payload); startTx(); }
+                if (b.length === 160) { enqueueMuLawFrame(b); startTx(); }
               } catch (e) { void e; }
             }
           } catch (e) { void e; }
