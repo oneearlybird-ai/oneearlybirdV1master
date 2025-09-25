@@ -8,6 +8,7 @@ export const runtime = "nodejs";
 export default async function PlasmicCatchallPage({ params }: { params: { slug?: string[] } }) {
   const slug = (params.slug && params.slug.length > 0) ? params.slug.join("/") : "homepage";
   try {
+    if (!PLASMIC) return notFound();
     const plasmicData = await PLASMIC.fetchComponentData(slug);
     if (!plasmicData) return notFound();
     return (

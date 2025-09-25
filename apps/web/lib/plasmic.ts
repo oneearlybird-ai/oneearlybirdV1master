@@ -1,15 +1,13 @@
 import { initPlasmicLoader } from "@plasmicapp/loader-nextjs";
 
-// Plasmic loader singleton
-export const PLASMIC = initPlasmicLoader({
-  projects: [
-    {
-      id: process.env.PLASMIC_PROJECT_ID || "",
-      token: process.env.PLASMIC_PUBLIC_TOKEN || "",
-    },
-  ],
-  // Enable design-time previews when not in production.
-  // You can also toggle with a cookie via Plasmic Studio.
-  preview: process.env.NODE_ENV !== "production",
-});
+const projectId = process.env.PLASMIC_PROJECT_ID;
+const publicToken = process.env.PLASMIC_PUBLIC_TOKEN;
 
+// If env vars are missing, export a null loader to avoid build-time crashes.
+// Pages can guard and return 404 / hint until Plasmic is configured.
+export const PLASMIC = (projectId && publicToken)
+  ? initPlasmicLoader({
+      projects: [{ id: projectId, token: publicToken }],
+      preview: process.env.NODE_ENV !== "production",
+    })
+  : null as unknown as ReturnType<typeof initPlasmicLoader>;
