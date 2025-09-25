@@ -238,6 +238,8 @@ class ElevenLabsSession {
 }
 
 wss.on('connection', async (ws, req) => {
+  // Outbound pacing stop handle in outer scope
+  let _stopTx = () => {};
   if (AUTH_TOKEN) {
     let allowed = false;
     let mode = 'unknown';
@@ -295,12 +297,7 @@ wss.on('connection', async (ws, req) => {
   }
   function int16ToLEBytes(int16) { const buf = Buffer.allocUnsafe(int16.length * 2); for (let i = 0; i < int16.length; i++) buf.writeInt16LE(int16[i], i * 2); return buf; }
 
-  function downsample16kTo8k(pcm16k) {
-    // simple 2:1 decimation
-    const out = new Int16Array(Math.floor(pcm16k.length / 2));
-    for (let i = 0, j = 0; i + 1 < pcm16k.length; i += 2, j++) out[j] = pcm16k[i];
-    return out;
-  }
+  // removed legacy downsample16kTo8k (unused)
 
   function muLawEncodeSample(sample) {
     const MAX = 32635;
@@ -339,18 +336,44 @@ wss.on('connection', async (ws, req) => {
         try { if (REC_ENABLED) { const cs = ev.start?.callSid || ev.start?.call_id || 'nocall'; recorder = new Recorder(cs); } } catch(e) { void e; }
         if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
         // Configure back-audio path from ElevenLabs to Twilio
+        // Use 20ms pacing and light low-pass + decimation to avoid aliasing/screech
+        const txQueue = [];
+        let txTimer = null;
+        function startTx() {
+          if (txTimer) return;
+          txTimer = setInterval(() => {
+            try {
+              if (!txQueue.length) return;
+              const payload = txQueue.shift();
+              if (!streamSid || !payload) return;
+              const msg = JSON.stringify({ event: 'media', streamSid, media: { payload } });
+              ws.send(msg);
+            } catch (e) { void e; }
+          }, 20);
+        }
+        function stopTx() { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } }
+        _stopTx = stopTx;
+
+        function downsample16kTo8kLP(pcm16k) {
+          const out = new Int16Array(Math.floor(pcm16k.length / 2));
+          for (let i = 0, j = 0; i + 1 < pcm16k.length; i += 2, j++) out[j] = (pcm16k[i] + pcm16k[i + 1]) >> 1;
+          return out;
+        }
+
         el.onAudio = (buf) => {
           try {
             if (!streamSid) return;
-            // Expect buf as PCM16LE 16k; convert → 8k μ-law
-            const samples = new Int16Array(buf.buffer, buf.byteOffset, Math.floor(buf.byteLength / 2));
-            // record vendor 16k PCM
             try { recorder && recorder.addVendorPCM16(Buffer.from(buf)); } catch(e) { void e; }
-            const pcm8k = downsample16kTo8k(samples);
-            const mulaw = pcm16ToMuLaw(pcm8k);
-            const payload = mulaw.toString('base64');
-            const msg = JSON.stringify({ event: 'media', streamSid, media: { payload } });
-            ws.send(msg);
+            const BYTES_PER_20MS_16K = 320 * 2; // 320 samples of 16k PCM16
+            for (let off = 0; off + BYTES_PER_20MS_16K <= buf.byteLength; off += BYTES_PER_20MS_16K) {
+              const slice = buf.subarray(off, off + BYTES_PER_20MS_16K);
+              const pcm16 = new Int16Array(slice.buffer, slice.byteOffset, 320);
+              const pcm8k = downsample16kTo8kLP(pcm16);
+              const mulaw = pcm16ToMuLaw(pcm8k);
+              const payload = Buffer.from(mulaw).toString('base64');
+              txQueue.push(payload);
+            }
+            startTx();
           } catch (e) { void e; }
         };
         await el.connect().catch(()=>{});
@@ -430,7 +453,7 @@ wss.on('connection', async (ws, req) => {
     }
   });
 
-  ws.on('close', async (code, reason) => { clearInterval(keepalive); if (elCommitTimer) { try { clearInterval(elCommitTimer); } catch (e) { void e; } elCommitTimer = null; } await el.close().catch((e)=>{ void e; }); try { recorder && await recorder.close(); } catch(e) { void e; } postLog('close', { connId, code, reason: (reason||'').toString() }); });
+  ws.on('close', async (code, reason) => { clearInterval(keepalive); try { _stopTx(); } catch (e) { void e; } if (elCommitTimer) { try { clearInterval(elCommitTimer); } catch (e) { void e; } elCommitTimer = null; } await el.close().catch((e)=>{ void e; }); try { recorder && await recorder.close(); } catch(e) { void e; } postLog('close', { connId, code, reason: (reason||'').toString() }); });
   ws.on('error', (e) => { void e; });
 });
 
