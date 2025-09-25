@@ -215,6 +215,7 @@ wss.on('connection', async (ws, req) => {
   const el = new ElevenLabsSession({ apiKey: process.env.ELEVENLABS_API_KEY, agentId: process.env.ELEVENLABS_AGENT_ID, url: process.env.ELEVENLABS_WS_URL });
   let elCommitTimer = null;
   let hadMedia = false;
+  let startGraceTimer = null;
 
   function decodeMuLawToPCM16(mu) {
     const out = new Int16Array(mu.length);
@@ -259,17 +260,19 @@ wss.on('connection', async (ws, req) => {
     lastMsgAt = Date.now(); metrics.lastMsgAt = lastMsgAt;
     if (txt.toLowerCase() === 'ping') { ws.send('pong'); return; }
     const ev = safeJsonParse(txt); if (!ev || typeof ev.event !== 'string') return;
-    // Enforce Media Streams order: connected -> start -> media
+    // Enforce Media Streams order with tolerance: accept start even if 'connected' not seen.
     if (ev.event === 'connected') { ws.__gotConnected = true; return; }
     switch (ev.event) {
       case 'start': {
-        if (!ws.__gotConnected) { try { ws.close(1008, 'connected_required'); } catch (e) { void e; } break; }
+        // Tolerate missing 'connected' by inferring it
+        if (!ws.__gotConnected) { ws.__gotConnected = true; }
         streamSid = ev.start?.streamSid || ev.streamSid || undefined;
         // Enforce Twilio streamSid shape: MS + 32 hex
         if (!/^MS[a-f0-9]{32}$/i.test(String(streamSid || ''))) { try { ws.close(1008, 'invalid_streamSid'); } catch (e) { void e; } break; }
         process.stdout.write(`media:start id=${connId} sid=${streamSid || '-'}\n`);
         postLog('start', { connId, streamSid });
         ws.__gotStart = true;
+        if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
         // Configure back-audio path from ElevenLabs to Twilio
         el.onAudio = (buf) => {
           try {
@@ -327,7 +330,17 @@ wss.on('connection', async (ws, req) => {
         }, 150);
         break; }
       case 'media': {
-        if (!ws.__gotStart) { try { ws.close(1008, 'start_required'); } catch (e) { void e; } break; }
+        if (!ws.__gotStart) {
+          // Tolerate out-of-order media; allow a short grace window for 'start' to arrive
+          if (!startGraceTimer) {
+            startGraceTimer = setTimeout(() => {
+              if (!ws.__gotStart) { try { ws.close(1008, 'start_required_timeout'); } catch (e) { void e; } }
+              try { startGraceTimer && clearTimeout(startGraceTimer); } catch (e) { void e; }
+              startGraceTimer = null;
+            }, 400);
+          }
+          break;
+        }
         frames++; metrics.frames10s++;
         hadMedia = true;
         if (el && el.connected) {
