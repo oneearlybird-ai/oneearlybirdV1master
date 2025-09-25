@@ -14,6 +14,9 @@
     "headers:check": "node scripts/check-headers.js"
   },
   "dependencies": {
+    "@plasmicapp/host": "latest",
+    "@plasmicapp/loader-nextjs": "latest",
+    "@plasmicapp/react-web": "latest",
     "@aws-sdk/client-s3": "^3.884.0",
     "@aws-sdk/s3-request-presigner": "^3.884.0",
     "@tailwindcss/typography": "0.5.13",

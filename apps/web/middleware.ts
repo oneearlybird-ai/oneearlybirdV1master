@@ -15,17 +15,26 @@ export function middleware(req: NextRequest) {
   const bytes = crypto.getRandomValues(new Uint8Array(16));
   const nonce = btoa(String.fromCharCode(...bytes)).replace(/=+$/, '');
   res.headers.set('x-nonce', nonce);
+  // Path-scoped CSP: allow Plasmic Studio to frame only the /plasmic-host page
+  const isPlasmicHost = p === '/plasmic-host';
+  const isPlasmicRoute = isPlasmicHost || p === '/plasmic' || p.startsWith('/plasmic/');
+  const frameAncestors = isPlasmicHost ? "frame-ancestors https://studio.plasmic.app" : "frame-ancestors 'none'";
+  const coepValue = isPlasmicHost ? 'unsafe-none' : 'require-corp';
+  const styleSrc = isPlasmicRoute
+    ? `style-src 'self' 'nonce-${nonce}' 'unsafe-inline'`
+    : `style-src 'self' 'nonce-${nonce}'`;
+  const styleSrcElem = isPlasmicRoute
+    ? `style-src-elem 'self' 'nonce-${nonce}' 'unsafe-inline'`
+    : `style-src-elem 'self' 'nonce-${nonce}'`;
   const csp = [
     "default-src 'self'",
     `script-src 'self' 'nonce-${nonce}'`,
-    // Allow external styles from this origin and nonced inline <style> blocks
-    `style-src 'self' 'nonce-${nonce}'`,
-    // Some UAs support -elem specific directives; mirror allowance explicitly
-    `style-src-elem 'self' 'nonce-${nonce}'`,
+    styleSrc,
+    styleSrcElem,
     "img-src 'self' data: blob:",
     "font-src 'self' data:",
     "connect-src 'self' https: wss:",
-    "frame-ancestors 'none'",
+    frameAncestors,
     "base-uri 'self'",
     "form-action 'self'",
     "object-src 'none'",
@@ -35,8 +44,8 @@ export function middleware(req: NextRequest) {
   res.headers.set('Content-Security-Policy', csp);
   res.headers.set('Strict-Transport-Security','max-age=63072000; includeSubDomains; preload');
   res.headers.set('Permissions-Policy','geolocation=(), camera=(), microphone=(), encrypted-media=(), fullscreen=(), payment=(), usb=(), xr-spatial-tracking=(), picture-in-picture=(), publickey-credentials-get=()');
-  res.headers.set('Cross-Origin-Opener-Policy','same-origin');
-  res.headers.set('Cross-Origin-Embedder-Policy','require-corp');
+  res.headers.set('Cross-Origin-Opener-Policy', isPlasmicHost ? 'unsafe-none' : 'same-origin');
+  res.headers.set('Cross-Origin-Embedder-Policy', coepValue);
   res.headers.set('X-Content-Type-Options','nosniff');
   res.headers.set('Referrer-Policy','strict-origin-when-cross-origin');
   res.headers.set('X-XSS-Protection','0');
