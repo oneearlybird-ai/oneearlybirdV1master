@@ -58,6 +58,8 @@ export function ProviderLogo({ id, label }: { id: string; label?: string }) {
 // Register components for Plasmic Studio
 registerComponent(EbSection, {
   name: "EbSection",
+  importPath: "@/components/plasmic.registry",
+  importName: "EbSection",
   props: {
     id: { type: "string", displayName: "Anchor id" },
     title: { type: "string" },
@@ -67,6 +69,8 @@ registerComponent(EbSection, {
 
 registerComponent(EbCard, {
   name: "EbCard",
+  importPath: "@/components/plasmic.registry",
+  importName: "EbCard",
   props: {
     className: { type: "string" },
     children: { type: "slot" },
@@ -75,6 +79,8 @@ registerComponent(EbCard, {
 
 registerComponent(EbButton, {
   name: "EbButton",
+  importPath: "@/components/plasmic.registry",
+  importName: "EbButton",
   props: {
     href: { type: "string" },
     variant: { type: "choice", options: ["primary", "outline"], defaultValue: "primary" },
@@ -84,6 +90,8 @@ registerComponent(EbButton, {
 
 registerComponent(ProviderLogo, {
   name: "ProviderLogo",
+  importPath: "@/components/plasmic.registry",
+  importName: "ProviderLogo",
   props: {
     id: { type: "string", defaultValue: "google-calendar" },
     label: { type: "string" },
@@ -92,6 +100,8 @@ registerComponent(ProviderLogo, {
 
 registerComponent(Marquee as any, {
   name: "Marquee",
+  importPath: "@/components/Marquee",
+  importName: "Marquee",
   props: {
     speedSec: { type: "number", defaultValue: 16 },
     ariaLabel: { type: "string", defaultValue: "Integrations logos" },
@@ -101,6 +111,8 @@ registerComponent(Marquee as any, {
 
 registerComponent(TestimonialsCarousel as any, {
   name: "TestimonialsCarousel",
+  importPath: "@/components/TestimonialsCarousel",
+  importName: "default",
   props: {
     interval: { type: "number", defaultValue: 5000 },
     items: {
@@ -120,4 +132,3 @@ registerComponent(TestimonialsCarousel as any, {
     },
   },
 });
-
