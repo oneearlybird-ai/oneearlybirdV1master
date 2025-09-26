@@ -16,6 +16,17 @@ apt-get update -y
 apt-get install -y nodejs
 node -v
 
+# Ensure SSM Agent is installed and running (so instance shows as Managed)
+ARCH=$(uname -m)
+if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+  AGENT_URL="https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb"
+else
+  AGENT_URL="https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb"
+fi
+curl -fsSL "$AGENT_URL" -o /tmp/amazon-ssm-agent.deb
+dpkg -i /tmp/amazon-ssm-agent.deb || apt-get install -f -y
+systemctl enable --now amazon-ssm-agent || systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+
 # App directory and artifact fetch
 install -d -o root -g root /opt/media-ws
 echo "[user-data] fetching server.mjs from s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY}"

@@ -93,3 +93,9 @@ variable "vendor_sr_hz" {
   type        = number
   default     = 16000
 }
+
+variable "ssh_key_name" {
+  description = "EC2 key pair name to attach to instances for SSH access"
+  type        = string
+  default     = "oneearlybird"
+}

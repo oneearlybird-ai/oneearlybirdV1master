@@ -18,6 +18,7 @@ resource "aws_launch_template" "media_lt" {
   name_prefix   = "media-ws-lt-"
   image_id      = data.aws_ami.debian12_arm64.id
   instance_type = var.instance_type
+  key_name      = var.ssh_key_name
   iam_instance_profile { name = aws_iam_instance_profile.ec2_media_profile.name }
   vpc_security_group_ids = [aws_security_group.instance_sg.id]
   update_default_version  = true
