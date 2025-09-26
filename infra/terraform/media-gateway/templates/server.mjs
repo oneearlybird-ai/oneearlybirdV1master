@@ -429,8 +429,48 @@ wss.on('connection', async (ws, req) => {
 
         // Robust vendor PCM16 handling: alignment-safe, endianness sniff, carryover between chunks
         let vendorCarry = Buffer.alloc(0);
+        let vendorWavChecked = false;
+        let vendorWavDataOffset = 0;
+        let vendorWavBits = 16;
+        let vendorWavFmt = 1; // 1=PCM, 3=IEEE float
+        let vendorWavSr = VENDOR_SR_HZ;
         /** @type {'le'|'be'|null} */
         let vendorEndian = null;
+        function sniffWav(buf) {
+          try {
+            if (buf.length < 44) return null;
+            if (buf.toString('ascii', 0, 4) !== 'RIFF') return null;
+            if (buf.toString('ascii', 8, 12) !== 'WAVE') return null;
+            let off = 12;
+            let fmtFound = false;
+            let dataOff = -1, dataLen = 0, audioFmt = 1, chans = 1, sr = 16000, bits = 16;
+            while (off + 8 <= buf.length) {
+              const chunkId = buf.toString('ascii', off, off + 4);
+              const chunkSize = buf.readUInt32LE(off + 4);
+              const next = off + 8 + chunkSize;
+              if (chunkId === 'fmt ') {
+                if (chunkSize >= 16) {
+                  audioFmt = buf.readUInt16LE(off + 8);
+                  chans = buf.readUInt16LE(off + 10);
+                  sr = buf.readUInt32LE(off + 12);
+                  bits = buf.readUInt16LE(off + 22);
+                  fmtFound = true;
+                }
+              } else if (chunkId === 'data') {
+                dataOff = off + 8;
+                dataLen = chunkSize;
+                break;
+              }
+              off = next;
+            }
+            if (!fmtFound || dataOff < 0) return null;
+            return { dataOff, dataLen, audioFmt, chans, sr, bits };
+          } catch { return null; }
+        }
+        function f32ToI16Sample(f) {
+          let x = Math.max(-1, Math.min(1, f));
+          return (x < 0 ? x * 32768 : x * 32767) | 0;
+        }
         function detectEndian(buf) {
           try {
             const samples = Math.min(200, Math.floor(buf.length / 2));
@@ -453,6 +493,22 @@ wss.on('connection', async (ws, req) => {
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
             // prepend carryover
             if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
+            // One-time WAV sniff: strip header and adopt sample rate/format if present
+            if (!vendorWavChecked) {
+              vendorWavChecked = true;
+              const wav = sniffWav(buf);
+              if (wav) {
+                vendorWavDataOffset = wav.dataOff;
+                vendorWavBits = wav.bits;
+                vendorWavFmt = wav.audioFmt; // 1=PCM, 3=float
+                vendorWavSr = wav.sr;
+                vendorEndian = 'le'; // WAV PCM is LE
+                try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
+                if (vendorWavDataOffset > 0) {
+                  buf = buf.subarray(vendorWavDataOffset);
+                }
+              }
+            }
             // detect endianness once
             if (!vendorEndian) {
               vendorEndian = detectEndian(buf);
@@ -464,9 +520,20 @@ wss.on('connection', async (ws, req) => {
               // Build Int16Array safely regardless of alignment
               if (VENDOR_SR_HZ === 16000) {
                 const pcm16 = new Int16Array(320);
-                for (let i = 0; i < 320; i++) {
-                  const p = off + (i * 2);
-                  pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+                if (vendorWavFmt === 3 && vendorWavBits === 32) {
+                  // Float32 WAV
+                  for (let i = 0; i < 320; i++) {
+                    const p = off + (i * 4);
+                    const f = buf.readFloatLE(p);
+                    pcm16[i] = f32ToI16Sample(f);
+                  }
+                  off += 320 * 4;
+                } else {
+                  for (let i = 0; i < 320; i++) {
+                    const p = off + (i * 2);
+                    pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+                  }
+                  off += 320 * 2;
                 }
                 const pcm8k = downsample16kTo8kLP(pcm16);
                 const mulaw = pcm16ToMuLawRef(pcm8k);
@@ -474,14 +541,23 @@ wss.on('connection', async (ws, req) => {
               } else {
                 // VENDOR_SR_HZ === 8000
                 const pcm8 = new Int16Array(160);
-                for (let i = 0; i < 160; i++) {
-                  const p = off + (i * 2);
-                  pcm8[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+                if (vendorWavFmt === 3 && vendorWavBits === 32) {
+                  for (let i = 0; i < 160; i++) {
+                    const p = off + (i * 4);
+                    const f = buf.readFloatLE(p);
+                    pcm8[i] = f32ToI16Sample(f);
+                  }
+                  off += 160 * 4;
+                } else {
+                  for (let i = 0; i < 160; i++) {
+                    const p = off + (i * 2);
+                    pcm8[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
+                  }
+                  off += 160 * 2;
                 }
                 const mulaw = pcm16ToMuLawRef(pcm8);
                 enqueueMuLawFrame(Buffer.from(mulaw));
               }
-              off += BYTES_PER_20MS;
             }
             // Save remainder for next chunk
             vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
