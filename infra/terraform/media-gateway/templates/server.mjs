@@ -14,6 +14,11 @@ const LOG_WEBHOOK_URL = process.env.LOG_WEBHOOK_URL || '';
 const LOG_WEBHOOK_KEY = process.env.LOG_WEBHOOK_KEY || '';
 // Preferred vendor (ElevenLabs) PCM sample rate for input/output
 const VENDOR_SR_HZ = Number(process.env.VENDOR_SR_HZ || 16000);
+const EL_OUTPUT_FORMAT = (() => {
+  const envFmt = String(process.env.ELEVENLABS_OUTPUT_FORMAT || '').trim();
+  if (envFmt) return envFmt; // e.g., 'pcm_16000' or vendor-specific token
+  return VENDOR_SR_HZ >= 16000 ? 'pcm_16000' : 'pcm_8000';
+})();
 
 // Optional object storage (Rumble S3 or AWS S3) for recordings
 const REC_ENABLED = String(process.env.RECORD_CALLS || '').toLowerCase() === 'true';
@@ -196,13 +201,18 @@ class ElevenLabsSession {
     if ((!url && !agentId) || !apiKey) return;
     try {
       if (process.env.EL_USE_DIRECT === 'true') {
-        url = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agentId || ''}`;
+        // Build direct ConvAI WS URL and pin output_format via query
+        const u = new URL(`wss://api.elevenlabs.io/v1/convai/conversation`);
+        if (agentId) u.searchParams.set('agent_id', agentId);
+        u.searchParams.set('output_format', EL_OUTPUT_FORMAT);
+        url = u.toString();
       }
     } catch (e) { void e; }
     try {
       if (/^https?:/i.test(url)) {
         const u = new URL(url);
         if (!u.searchParams.get('agent_id') && agentId) u.searchParams.set('agent_id', agentId);
+        if (!u.searchParams.get('output_format')) u.searchParams.set('output_format', EL_OUTPUT_FORMAT);
         const res = await fetch(u.toString(), { headers: { 'xi-api-key': apiKey } });
         if (!res.ok) throw new Error(`signed_url_http_${res.status}`);
         const j = await res.json();
@@ -590,7 +600,7 @@ wss.on('connection', async (ws, req) => {
             const dbgKey = process.env.ELEVENLABS_API_KEY_DEBUG || '';
             const agent = process.env.ELEVENLABS_AGENT_ID || '';
             if (!dbgKey || !agent) return;
-            const url = `wss://api.elevenlabs.io/v1/convai/conversation?agent_id=${agent}`;
+            const url = (()=>{ const u=new URL('wss://api.elevenlabs.io/v1/convai/conversation'); u.searchParams.set('agent_id', agent); u.searchParams.set('output_format', EL_OUTPUT_FORMAT); return u.toString(); })();
             const w = new (require('ws'))(url, { headers: { 'xi-api-key': dbgKey }, perMessageDeflate: false });
             let done = false;
             const stop = () => { if (done) return; done = true; try { w.close(); } catch (e) { void e; } };
