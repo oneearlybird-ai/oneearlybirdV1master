@@ -27,24 +27,43 @@ function absoluteUrlFrom(req: NextRequest): string {
 
 export async function POST(req: NextRequest) {
   const authToken = process.env.TWILIO_AUTH_TOKEN || ''
+  const logKey = process.env.VOICE_LOG_KEY || process.env.SMOKE_KEY || ''
+  const bearer = (process.env.VOICE_LOG_BEARER || '').trim()
   const sig = req.headers.get('x-twilio-signature') || ''
+  const hdrKey = req.headers.get('x-log-key') || req.headers.get('x-smoke-key') || ''
+  const auth = req.headers.get('authorization') || ''
   const ct = (req.headers.get('content-type') || '').toLowerCase()
   const body = await req.text()
 
-  let valid = true
+  // Accept if (in order):
+  // 1) Twilio classic webhook signature validates (for status callbacks, etc.)
+  // 2) x-log-key matches configured VOICE_LOG_KEY/SMOKE_KEY
+  // 3) Authorization: Bearer <VOICE_LOG_BEARER>
+  let accepted = false
+
+  // 1) Twilio signature (optional)
   if (authToken && sig) {
     try {
       const mod: any = await import('twilio')
       const tw = (mod?.default ?? mod) as TwilioModule
       const url = absoluteUrlFrom(req)
-      if (ct.includes('application/json')) valid = tw.validateRequestWithBody(authToken, sig, url, body)
-      else {
-        const params = Object.fromEntries(new URLSearchParams(body)) as Record<string, string>
-        valid = tw.validateRequest(authToken, sig, url, params)
-      }
-    } catch { valid = false }
+      const ok = ct.includes('application/json')
+        ? tw.validateRequestWithBody(authToken, sig, url, body)
+        : tw.validateRequest(authToken, sig, url, Object.fromEntries(new URLSearchParams(body)))
+      if (ok) accepted = true
+    } catch { /* fallthrough */ }
   }
-  if (!valid) return new Response('forbidden', { status: 403, headers: { 'cache-control': 'no-store' } })
+
+  // 2) x-log-key header
+  if (!accepted && logKey && hdrKey === logKey) accepted = true
+
+  // 3) Authorization: Bearer <token>
+  if (!accepted && bearer && auth.toLowerCase().startsWith('bearer ')) {
+    const tok = auth.slice(7).trim()
+    if (tok && tok === bearer) accepted = true
+  }
+
+  if (!accepted) return new Response('forbidden', { status: 403, headers: { 'cache-control': 'no-store' } })
 
   // PHI-safe echo of event type only
   let event = 'unknown'
@@ -57,7 +76,7 @@ export async function POST(req: NextRequest) {
       event = p['event'] || p['type'] || 'unknown'
     }
   } catch (_e) { /* noop */ }
-  try { console.info('[twilio:stream-status]', { event, len: body.length }) } catch (_e) { /* noop */ }
+  try { console.info('[gw-log]', { event, len: body.length }) } catch (_e) { /* noop */ }
 
   return new Response('ok', { status: 200, headers: { 'cache-control': 'no-store' } })
 }
