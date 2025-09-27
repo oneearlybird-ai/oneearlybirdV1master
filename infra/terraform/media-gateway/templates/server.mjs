@@ -499,7 +499,6 @@ wss.on('connection', async (ws, req) => {
                 const hlen = Math.min(16, buf.length);
                 const hex = buf.subarray(0, hlen).toString('hex');
                 process.stdout.write(`el:head0 len=${buf.length} hex=${hex}\n`);
-                postLog('vendor_head', { stage: 0, len: buf.length, hex });
               } catch (_) { void _; }
             }
             // prepend carryover
@@ -515,14 +514,12 @@ wss.on('connection', async (ws, req) => {
                 vendorWavSr = wav.sr;
                 vendorEndian = 'le'; // WAV PCM is LE
                 try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
-                try { postLog('vendor_wav', { sr: vendorWavSr, bits: vendorWavBits, fmt: vendorWavFmt, off: vendorWavDataOffset }); } catch (_) { void _; }
                 if (vendorWavDataOffset > 0) {
                   buf = buf.subarray(vendorWavDataOffset);
                   try {
                     const hlen = Math.min(16, buf.length);
                     const hex = buf.subarray(0, hlen).toString('hex');
                     process.stdout.write(`el:head1 len=${buf.length} hex=${hex}\n`);
-                    postLog('vendor_head', { stage: 1, len: buf.length, hex });
                   } catch (_) { void _; }
                 }
               }
