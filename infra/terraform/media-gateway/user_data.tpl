@@ -71,6 +71,7 @@ ELEVENLABS_WS_URL=$${EL_WS}
 ELEVENLABS_API_KEY_DEBUG=$${EL_API_DBG}
 VENDOR_SR_HZ=${VENDOR_SR_HZ}
 EL_FORWARD_BINARY=true
+EL_ACCEPT_BINARY=true
 LOG_WEBHOOK_URL=https://oneearlybird.ai/api/voice/logs/ingest
 LOG_WEBHOOK_KEY=$${LOG_KEY}
 # ConvAI vendor output format. Keep pcm_16000 unless agent is set to ulaw_8000.

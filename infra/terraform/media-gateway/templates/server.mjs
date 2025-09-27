@@ -186,7 +186,14 @@ class Recorder {
 }
 
 class ElevenLabsSession {
-  constructor(opts) { this.opts = opts||{}; this.ws = null; this.connected = false; this._want=false; this._backoff=500; }
+  constructor(opts) {
+    this.opts = opts||{};
+    this.ws = null;
+    this.connected = false;
+    this._want = false;
+    this._backoff = 500;
+    this._binLogged = false; // log binary acceptance once per session
+  }
   async connect() {
     this._want = true;
     let url = process.env.ELEVENLABS_WS_URL || this.opts?.url;
@@ -228,7 +235,11 @@ class ElevenLabsSession {
           // Binary acceptance is opt-in; default to JSON path to avoid container/preview noise
           const acceptBin = String(process.env.EL_ACCEPT_BINARY || 'false').toLowerCase() === 'true';
           if (acceptBin && typeof this.onAudio === 'function' && data && data.length) {
-            try { this._lastSrc = 'bin'; this.onAudio(Buffer.from(data)); } catch (_) { void _; }
+            try {
+              if (!this._binLogged) { try { process.stdout.write(`el:bin n=${data.length}\n`); } catch(_) { void _; } this._binLogged = true; }
+              this._lastSrc = 'bin';
+              this.onAudio(Buffer.from(data));
+            } catch (_) { void _; }
           } // else ignore binary frames
         } else {
           const txt = data.toString('utf8');
