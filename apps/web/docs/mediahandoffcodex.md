@@ -27,6 +27,7 @@
   - If computed frame < 160 → pad with `0xFF` (μ-law silence). If > 160 → split into 160B slices. Always emit 160B.
 - ElevenLabs ingestion:
   - After `el:open`, send `conversation_initiation_client_data` to request `client_events` `["audio","user_transcript","agent_response"]`.
+  - Post-open nudge (added): send `session.update` with `modalities:['audio']` immediately after open; if no vendor activity (no metadata/audio) within ~700 ms, send a minimal `response.create` with a benign instruction (PHI-safe) to trigger outbound audio. Both are logged (`el:kick ...`) and can be controlled via env (`EL_KICK_DELAY_MS`, `EL_SEND_RESPONSE_CREATE_ON_OPEN`, `EL_INITIAL_GREETING`).
   - Accept both JSON (`type:"audio"` with `audio_event.audio_base_64`) and binary frames. `EL_ACCEPT_BINARY=true`.
   - Metadata latch (sr + format) and robust fallback:
     - `agentOutFmt=ulaw_8000` → `mode=pass`; `agentOutFmt=pcm_16000/pcm_8000` → `mode=encode`.
@@ -35,6 +36,8 @@
 - Observability (Event Streams):
   - `/api/voice/logs/ingest` now accepts Twilio Event Streams posts and supports HMAC-SHA256 verification if `TWILIO_EVENT_STREAMS_SECRET` is set and sink signing is enabled.
   - Twilio CLI sink test was submitted for the sink (see Sink SID below).
+  - ALB access logs enabled to S3 `oneearlybird-media-alb-logs-<account>-<region>` with 90d retention; bucket policy grants `logdelivery.elasticloadbalancing.amazonaws.com` write.
+  - CloudWatch Logs groups created: `/media-ws/syslog`, `/media-ws/user-data`. CloudWatch Agent installed and started via user-data; IAM attached for logs.
 - IAM S3 permission fixed:
   - Added `s3:HeadObject` (and `s3:GetObject`) for `media/server-*.mjs` so instances can fetch the artifact without 403 errors.
 - Launch Template updated as artifacts changed; ASG instance refresh used with `MinHealthy=100`.
@@ -58,6 +61,14 @@
   - Artifact key format: `media/server-<sha256>.mjs`
 - IAM policy (instances): allows `s3:GetObject` + `s3:HeadObject` for `media/server-*.mjs` keys.
 - ASG: `media-ws-asg`; Launch Template updated to latest artifact and env; instance refresh used to roll out changes.
+  - Latest artifact key/sha:
+    - Key: `media/server-55be23e7b2d6b827a259bbc02a6ff0603836566fe1d3ad7f7338bb4d85f41d4b.mjs`
+    - SHA256: `55be23e7b2d6b827a259bbc02a6ff0603836566fe1d3ad7f7338bb4d85f41d4b`
+
+## DNS (Route 53)
+- Existing public DNS remains active; for permanent AWS-managed DNS we created a public hosted zone for `media.oneearlybird.ai`. Delegate these NS at the parent zone to activate:
+  - See Terraform output `media_zone_ns` for the four NS records.
+  - After delegation, we can manage `media.oneearlybird.ai` ALIAS to ALB entirely in Terraform.
 
 ## Twilio Sink (Event Streams)
 - Sink SID: `DGd22aaa6f1337509195803b6392e4b417` (destination: `https://oneearlybird.ai/api/voice/logs/ingest`)
@@ -80,7 +91,7 @@
 
 ## Open Items (Prioritized)
 - P0: Ensure ElevenLabs actually streams agent audio to our WS:
-  - We already send `conversation_initiation_client_data`; if still silent, add the minimal EL post-open message (e.g., session/update or response/create) documented for your agent to start streaming audio out.
+  - Implemented: post-open `session.update` + timed `response.create` fallback to trigger EL outbound audio streaming.
 - P1: Observability finalization:
   - If account supports Event Streams request signing, enable it and set `TWILIO_EVENT_STREAMS_SECRET` in Vercel to stop 93101 and get reliable Twilio marks.
 - P1: Confirm `streamSid`/`track` correctness in outbound frames (we already send `track:"outbound"` and current Twilio `streamSid`; look for Twilio “mark” ACKs).
@@ -100,4 +111,3 @@
 - Twilio: use `<Connect><Stream>` only; outbound JSON must include `track:"outbound"` with correct `streamSid`.
 
 END — Next codex: do not re-implement the above. Focus on (1) ensuring EL WS actually streams to our client (add required post-open message if needed), and (2) confirming Twilio “mark” ACKs once Event Streams sink auth is aligned.
-

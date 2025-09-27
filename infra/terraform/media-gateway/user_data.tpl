@@ -5,7 +5,7 @@ echo "[user-data] begin $(date -Is)"
 
 export DEBIAN_FRONTEND=noninteractive
 apt-get update -y
-apt-get install -y ca-certificates curl gnupg git awscli
+apt-get install -y ca-certificates curl gnupg git awscli amazon-cloudwatch-agent
 
 # Install Node.js 20 (NodeSource)
 mkdir -p /etc/apt/keyrings
@@ -78,6 +78,9 @@ LOG_WEBHOOK_KEY=$${LOG_KEY}
 VENDOR_OUT_FORMAT=pcm_16000
 # Disable autoprobe by default (ConvAI-only when enabled)
 DIAG_EL_AUTOPROBE=false
+EL_KICK_DELAY_MS=700
+EL_SEND_RESPONSE_CREATE_ON_OPEN=true
+EL_INITIAL_GREETING=Connected.
 EOF_ENV
 
 cat >/etc/systemd/system/media-ws.service <<'EOF_SVC'
@@ -100,4 +103,47 @@ EOF_SVC
 
 systemctl daemon-reload
 systemctl enable --now media-ws.service
+
+# Configure CloudWatch Agent to ship system logs
+cat >/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json <<'EOF_CWA'
+{
+  "metrics": {
+    "namespace": "media-ws",
+    "append_dimensions": {
+      "AutoScalingGroupName": "$${aws:AutoScalingGroupName}",
+      "InstanceId": "$${aws:InstanceId}"
+    },
+    "aggregation_dimensions": [["AutoScalingGroupName"]],
+    "metrics_collected": {
+      "cpu": { "measurement": ["cpu_usage_idle","cpu_usage_user","cpu_usage_system"], "resources": ["*"], "totalcpu": true },
+      "mem": { "measurement": ["mem_used_percent"], "resources": ["*"] },
+      "disk": { "measurement": ["used_percent"], "resources": ["/","/opt"] },
+      "netstat": { "measurement": ["tcp_established","tcp_time_wait"] }
+    }
+  },
+  "logs": {
+    "logs_collected": {
+      "files": {
+        "collect_list": [
+          {
+            "file_path": "/var/log/syslog",
+            "log_group_name": "/media-ws/syslog",
+            "log_stream_name": "{instance_id}",
+            "timezone": "UTC"
+          },
+          {
+            "file_path": "/var/log/user-data.log",
+            "log_group_name": "/media-ws/user-data",
+            "log_stream_name": "{instance_id}",
+            "timezone": "UTC"
+          }
+        ]
+      }
+    }
+  }
+}
+EOF_CWA
+
+systemctl enable amazon-cloudwatch-agent || true
+/opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s || true
 echo "[user-data] completed $(date -Is)"

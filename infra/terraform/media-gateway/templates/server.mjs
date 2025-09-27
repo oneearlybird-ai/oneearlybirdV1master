@@ -193,6 +193,8 @@ class ElevenLabsSession {
     this._want = false;
     this._backoff = 500;
     this._binLogged = false; // log binary acceptance once per session
+    this._kickTimer = null;   // post-open nudge timer
+    this._gotVendorActivity = false; // metadata or audio observed
   }
   async connect() {
     this._want = true;
@@ -234,10 +236,31 @@ class ElevenLabsSession {
         };
         this.ws.send(JSON.stringify(msg));
       } catch (_) { void _; }
+      // Minimal additional post-open nudge for ConvAI: enable audio modality
+      try {
+        const upd = { type: 'session.update', session: { modalities: ['audio'] } };
+        this.ws.send(JSON.stringify(upd));
+        try { process.stdout.write('el:kick session.update\n'); } catch(_) { void _; }
+      } catch (_) { void _; }
+      // If no metadata/audio shortly after open, optionally send a tiny response.create to trigger audio
+      try { if (this._kickTimer) clearTimeout(this._kickTimer); } catch(e) { void e; }
+      const kickDelay = Math.max(200, Math.min(3000, Number(process.env.EL_KICK_DELAY_MS || 700)));
+      const allowRespCreate = String(process.env.EL_SEND_RESPONSE_CREATE_ON_OPEN || 'true').toLowerCase() === 'true';
+      this._gotVendorActivity = false;
+      this._kickTimer = setTimeout(() => {
+        try {
+          if (!this._gotVendorActivity && allowRespCreate && this.ws && this.connected) {
+            const greet = String(process.env.EL_INITIAL_GREETING || 'Connected.');
+            const resp = { type: 'response.create', response: { instructions: greet, modalities: ['audio'] } };
+            try { this.ws.send(JSON.stringify(resp)); } catch (e) { void e; }
+            try { process.stdout.write('el:kick response.create\n'); } catch(_) { void _; }
+          }
+        } catch (_) { void _; }
+      }, kickDelay);
     });
-    this.ws.on('close', (code, reason) => { this.connected = false; try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
-    this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
-    this.ws.on('error', (e) => { this.connected = false; try { process.stdout.write(`el:error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } });
+    this.ws.on('close', (code, reason) => { this.connected = false; try { if (this._kickTimer) clearTimeout(this._kickTimer); } catch(_) { void _; } try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
+    this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { if (this._kickTimer) clearTimeout(this._kickTimer); } catch(_) { void _; } try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
+    this.ws.on('error', (e) => { this.connected = false; try { if (this._kickTimer) clearTimeout(this._kickTimer); } catch(_) { void _; } try { process.stdout.write(`el:error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } });
     this.ws.on('message', (data) => {
       try {
         if (Buffer.isBuffer(data)) {
@@ -248,6 +271,8 @@ class ElevenLabsSession {
               if (!this._binLogged) { try { process.stdout.write(`el:bin n=${data.length}\n`); } catch(_) { void _; } this._binLogged = true; }
               this._lastSrc = 'bin';
               this.onAudio(Buffer.from(data));
+              this._gotVendorActivity = true;
+              try { if (this._kickTimer) { clearTimeout(this._kickTimer); this._kickTimer = null; } } catch(_) { void _; }
             } catch (_) { void _; }
           } // else ignore binary frames
         } else {
@@ -269,11 +294,20 @@ class ElevenLabsSession {
                     if (sr) { this.streamSr = sr; try { process.stdout.write(`vmeta:sr=${sr}\n`);} catch(_) { void _; } }
                     this.agentOutFmt = String(ao||'');
                   } catch(_) { void _; }
+                  this._gotVendorActivity = true;
+                  try { if (this._kickTimer) { clearTimeout(this._kickTimer); this._kickTimer = null; } } catch(_) { void _; }
                 }
             } catch (e) { void e; }
             // ConvAI audio event
             const b64 = obj?.audio_event?.audio_base_64;
-            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') { try { this._lastSrc = 'json'; this.preferJson = true; this.onAudio(Buffer.from(b64,'base64')); } catch(_) { void _; } }
+            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') {
+              try {
+                this._lastSrc = 'json'; this.preferJson = true;
+                this.onAudio(Buffer.from(b64,'base64'));
+                this._gotVendorActivity = true;
+                try { if (this._kickTimer) { clearTimeout(this._kickTimer); this._kickTimer = null; } } catch(_) { void _; }
+              } catch(_) { void _; }
+            }
           } catch (e) { void e; }
         }
       } catch (e) { void e; }
