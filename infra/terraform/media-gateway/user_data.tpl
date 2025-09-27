@@ -73,7 +73,10 @@ VENDOR_SR_HZ=${VENDOR_SR_HZ}
 EL_FORWARD_BINARY=true
 LOG_WEBHOOK_URL=https://oneearlybird.ai/api/voice/logs/ingest
 LOG_WEBHOOK_KEY=$${LOG_KEY}
-DIAG_EL_AUTOPROBE=true
+# ConvAI vendor output format. Keep pcm_16000 unless agent is set to ulaw_8000.
+VENDOR_OUT_FORMAT=pcm_16000
+# Disable autoprobe by default (ConvAI-only when enabled)
+DIAG_EL_AUTOPROBE=false
 EOF_ENV
 
 cat >/etc/systemd/system/media-ws.service <<'EOF_SVC'
