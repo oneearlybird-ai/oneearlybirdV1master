@@ -40,9 +40,15 @@ resource "aws_iam_policy" "media_ssm_read" {
       },
       {
         Effect   = "Allow",
-        Action   = ["s3:GetObject"],
+        Action   = [
+          "s3:GetObject",
+          "s3:HeadObject"
+        ],
         Resource = [
-          "arn:aws:s3:::${var.artifact_bucket}/${var.artifact_key}"
+          // exact current artifact
+          "arn:aws:s3:::${var.artifact_bucket}/${var.artifact_key}",
+          // allow future server artifacts without further IAM churn
+          "arn:aws:s3:::${var.artifact_bucket}/media/server-*.mjs"
         ]
       },
       {
