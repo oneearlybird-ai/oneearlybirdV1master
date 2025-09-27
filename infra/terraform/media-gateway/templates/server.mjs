@@ -213,30 +213,26 @@ class ElevenLabsSession {
     // Build headers: for signed URLs, omit xi-api-key; otherwise include it
     const hdrs = { 'Origin': origin };
     try { if (!/conversation_signature=/.test(String(url))) { hdrs['xi-api-key'] = apiKey; } } catch (e) { void e; }
-    this.ws = new WebSocket(url, { headers: hdrs });
+    this.ws = new WebSocket(url, { headers: hdrs, perMessageDeflate: false });
     this.ws.on('open', () => { 
       this.connected = true; this._backoff=500;
       try { process.stdout.write('el:open\n'); } catch (e) { void e; }
-      // Send a minimal session/update to declare audio formats
-      try {
-        this.ws.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type: 'pcm16', sample_rate_hz: VENDOR_SR_HZ, channels: 1 }, output_audio_format: { type: 'pcm16', sample_rate_hz: VENDOR_SR_HZ, channels: 1 } } }));
-        const agentId = process.env.ELEVENLABS_AGENT_ID || this.opts?.agentId;
-        if (agentId) this.ws.send(JSON.stringify({ type: 'conversation.create', conversation: { agent_id: agentId } }));
-      } catch (e) { void e; }
+      // ConvAI: no session.update / conversation.create needed here.
     });
     this.ws.on('close', (code, reason) => { this.connected = false; try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
     this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
     this.ws.on('error', (e) => { this.connected = false; try { process.stdout.write(`el:error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } });
     this.ws.on('message', (data) => {
       try {
-        if (typeof this.onAudio !== 'function') return;
-        if (Buffer.isBuffer(data)) { this.onAudio(data); }
+        if (Buffer.isBuffer(data)) { /* ConvAI typically JSON; ignore binary */ }
         else {
           const txt = data.toString('utf8');
           try {
             const obj = JSON.parse(txt);
             try { const t = obj?.type || obj?.event || 'json'; const err = obj?.error || obj?.data?.error; if (t||err) process.stdout.write(`el:msg type=${t}${err?` err=${String(err).slice(0,80)}`:''}\n`); } catch (e) { void e; }
-            const b64 = obj?.audio || obj?.data?.audio; if (b64 && typeof b64==='string') this.onAudio(Buffer.from(b64,'base64'));
+            // ConvAI audio event
+            const b64 = obj?.audio_event?.audio_base_64;
+            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') this.onAudio(Buffer.from(b64,'base64'));
           } catch (e) { void e; }
         }
       } catch (e) { void e; }
@@ -594,18 +590,8 @@ wss.on('connection', async (ws, req) => {
           if (el && el.connected && el.ws) { try { el.ws.send(JSON.stringify({ type: 'response.create' })); } catch (e) { void e; } }
           else setTimeout(promptOnce, 50);
         })();
-        // Periodically append silence (until first media) and commit buffer
-        if (!elCommitTimer) elCommitTimer = setInterval(() => {
-          try {
-            if (el && el.connected && el.ws) {
-              if (!hadMedia) {
-                const sil = Buffer.alloc(320).toString('base64');
-                try { el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: sil })); } catch (e) { void e; }
-              }
-              el.ws.send(JSON.stringify({ type: 'input_audio_buffer.commit' }));
-            }
-          } catch (e) { void e; }
-        }, 150);
+        // No periodic append/commit for ConvAI; continuous user_audio_chunk is used
+        if (elCommitTimer) { try { clearInterval(elCommitTimer); } catch(_) { void _; } elCommitTimer = null; }
         break; }
       case 'media': {
         if (!ws.__gotStart) {
@@ -636,18 +622,12 @@ wss.on('connection', async (ws, req) => {
             const b = Buffer.from(ev.media?.payload || '', 'base64'); if (b.byteLength > 16384) { try { ws.close(1009, 'payload too large'); } catch (e) { void e; } return; }
             const mu = new Uint8Array(b.buffer, b.byteOffset, b.byteLength);
             const pcm8k = decodeMuLawToPCM16(mu);
-            if (VENDOR_SR_HZ === 16000) {
-              const pcm16k = upsample8kTo16k(pcm8k);
-              const le = int16ToLEBytes(pcm16k);
-              const audio = le.toString('base64');
-              try { if (el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio })); } catch (e) { void e; }
-              try { recorder && recorder.addInboundPCM16(Buffer.from(le)); } catch(e) { void e; }
-            } else {
-              const le8 = int16ToLEBytes(pcm8k);
-              const audio8 = le8.toString('base64');
-              try { if (el.ws) el.ws.send(JSON.stringify({ type: 'input_audio_buffer.append', audio: audio8 })); } catch (e) { void e; }
-              try { recorder && recorder.addInboundPCM16(Buffer.from(le8)); } catch(e) { void e; }
-            }
+            // ConvAI: send user_audio_chunk at 16k PCM
+            const pcm16k = upsample8kTo16k(pcm8k);
+            const le = int16ToLEBytes(pcm16k);
+            const audio = le.toString('base64');
+            try { if (el.ws) el.ws.send(JSON.stringify({ user_audio_chunk: audio })); } catch (e) { void e; }
+            try { recorder && recorder.addInboundPCM16(Buffer.from(le)); } catch(e) { void e; }
           } catch (e) { void e; }
         }
         if (ws.bufferedAmount > 2_000_000) { try { ws.close(1009, 'backpressure'); } catch (e) { void e; } metrics.backpressure10m = Math.min(metrics.backpressure10m + 3, 60); metrics.lastBackpressureAt = Date.now(); }
