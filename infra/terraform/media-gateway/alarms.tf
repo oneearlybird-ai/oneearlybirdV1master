@@ -12,6 +12,8 @@ resource "aws_cloudwatch_metric_alarm" "alb_5xx" {
   dimensions = {
     LoadBalancer = aws_lb.media_alb.arn_suffix
   }
+  alarm_actions = [aws_sns_topic.media_alarms.arn]
+  ok_actions    = [aws_sns_topic.media_alarms.arn]
   tags = var.tags
 }
 
@@ -30,6 +32,8 @@ resource "aws_cloudwatch_metric_alarm" "tg_unhealthy" {
     TargetGroup = aws_lb_target_group.media_tg.arn_suffix
     LoadBalancer = aws_lb.media_alb.arn_suffix
   }
+  alarm_actions = [aws_sns_topic.media_alarms.arn]
+  ok_actions    = [aws_sns_topic.media_alarms.arn]
   tags = var.tags
 }
 
@@ -47,6 +51,7 @@ resource "aws_cloudwatch_metric_alarm" "alb_p95_latency" {
   dimensions = {
     LoadBalancer = aws_lb.media_alb.arn_suffix
   }
+  alarm_actions = [aws_sns_topic.media_alarms.arn]
+  ok_actions    = [aws_sns_topic.media_alarms.arn]
   tags = var.tags
 }
-
