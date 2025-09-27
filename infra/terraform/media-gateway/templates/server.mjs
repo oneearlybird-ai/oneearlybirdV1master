@@ -551,21 +551,40 @@ wss.on('connection', async (ws, req) => {
           let x = Math.max(-1, Math.min(1, f));
           return (x < 0 ? x * 32768 : x * 32767) | 0;
         }
+        // Latch which vendor source we use (json vs bin) to avoid double mixing
+        let vendorSrc = null; // 'json' | 'bin'
+        function acceptVendorChunk(src) {
+          if (!vendorSrc) { vendorSrc = src; try { process.stdout.write(`vsrc:${src}\n`); } catch(_) { void _; } return true; }
+          return vendorSrc === src;
+        }
+
         el.onAudio = (chunk) => {
           try {
             if (!streamSid) return;
             try { recorder && recorder.addVendorPCM16(Buffer.from(chunk)); } catch(e) { void e; }
             const OUT_FMT = String(process.env.VENDOR_OUT_FORMAT || '').toLowerCase();
-            if (OUT_FMT === 'ulaw_8000' || OUT_FMT === 'ulaw' || OUT_FMT === 'pcmu' || OUT_FMT === 'mulaw') {
-              // Pass-through μ-law 8k: frame into 160-byte chunks and send
-              let buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
-              if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
-              let off = 0;
-              while (off + 160 <= buf.length) { enqueueMuLawFrame(buf.subarray(off, off + 160)); off += 160; }
-              vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
-              startTx();
-              return;
-            }
+             if (OUT_FMT === 'ulaw_8000' || OUT_FMT === 'ulaw' || OUT_FMT === 'pcmu' || OUT_FMT === 'mulaw') {
+               // Pass-through μ-law 8k: frame into 160-byte chunks and send
+               if (!acceptVendorChunk('bin')) return; // ignore other source once latched
+               let buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+               if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
+               // Strip WAV header if present (μ-law fmt=7)
+               if (!vendorWavChecked) {
+                 vendorWavChecked = true;
+                 const wav = sniffWav(buf);
+                 if (wav) {
+                   try { process.stdout.write(`wav:sr=${wav.sr} bits=${wav.bits} fmt=${wav.audioFmt} off=${wav.dataOff}\n`); } catch(_) { void _; }
+                   if (wav.audioFmt === 7 && wav.sr === 8000 && wav.dataOff > 0) {
+                     buf = buf.subarray(wav.dataOff);
+                   }
+                 }
+               }
+               let off = 0;
+               while (off + 160 <= buf.length) { enqueueMuLawFrame(buf.subarray(off, off + 160)); off += 160; }
+               vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
+               startTx();
+               return;
+             }
             // bytes per 20ms depends on detected format; computed inline below
             let buf = chunk;
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
@@ -604,6 +623,7 @@ wss.on('connection', async (ws, req) => {
               }
             }
             let off = 0;
+            if (!acceptVendorChunk('bin')) return;
             // process full 20ms frames
             while (true) {
               // Determine bytes needed for one 20ms frame
