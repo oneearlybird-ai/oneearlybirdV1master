@@ -276,18 +276,12 @@ wss.on('connection', async (ws, req) => {
     try {
       const u = new URL(req.url || '/', 'http://localhost');
       const qp = u.searchParams.get('token') || '';
-      // Accept path-style token: /rtm/voice/jwt/<token> (JWT or static)
+      // Also accept path-style token: /rtm/voice/jwt/<token>
       let pathTok = '';
       try {
-        const parts = (u.pathname || '').split('/').filter(Boolean);
-        const jwtIdx = parts.findIndex((x) => x === 'jwt');
-        if (jwtIdx >= 0 && parts[jwtIdx + 1]) {
-          try { pathTok = decodeURIComponent(parts[jwtIdx + 1]); } catch { pathTok = parts[jwtIdx + 1]; }
-        } else {
-          // fallback to last segment if present
-          const last = decodeURIComponent(parts[parts.length - 1] || '');
-          if (last) pathTok = last;
-        }
+        const parts = (u.pathname || '').split('/');
+        const last = decodeURIComponent(parts[parts.length - 1] || '');
+        if (last && last.includes('.')) pathTok = last;
       } catch (e) { void e; }
       const hdr = (req.headers['x-media-auth'] || '').toString();
       const tok = qp || pathTok || hdr;
@@ -316,24 +310,39 @@ wss.on('connection', async (ws, req) => {
   let hadMedia = false;
   let startGraceTimer = null;
   let recorder = null;
-  // Immediate 20ms frame send to Twilio (no aggregation)
+  // Outbound aggregation to Twilio (canonical 20ms frames)
+  let txAgg = [];
+  let txAggLen = 0;
+  let txTimer = null;
   let txChunk = 0;
-  function sendMuLawFrameImmediate(b) {
+  function flushAgg(force=false) {
     try {
       if (!ws.__gotStart || !streamSid) return;
-      if (!b || b.length !== 160) return;
-      const payload = b.toString('base64');
+      const TARGET = 160; // 20ms @ 8k μ-law (160 bytes)
+      if (!force && txAggLen < TARGET) return;
+      if (!txAggLen) return;
+      const buf = Buffer.concat(txAgg, txAggLen);
+      txAgg = []; txAggLen = 0;
+      const payload = buf.toString('base64');
       const ch = String(++txChunk);
-      try { diag.sendCount++; diag.lastSendAt = Date.now(); (diag.sendSizes.length>50)&&diag.sendSizes.shift(); diag.sendSizes.push(b.length); } catch(e){ void e; }
+      try { diag.sendCount++; diag.lastSendAt = Date.now(); (diag.sendSizes.length>50)&&diag.sendSizes.shift(); diag.sendSizes.push(buf.length); } catch(e){ void e; }
       ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload } }));
-      try { if ((txChunk % 50) === 0) ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
+      try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
     } catch (e) { void e; }
   }
+  function startTx() {
+    if (txTimer) return;
+    // Pace close to frame duration to flush any stragglers
+    txTimer = setInterval(() => flushAgg(false), 20);
+  }
+  function stopTx() { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } }
 
   function enqueueMuLawFrame(b) {
-    // Accept only exact 160-byte μ-law frames (20ms) and send immediately
+    // Accept only exact 160-byte μ-law frames (20ms)
     if (!b || b.length !== 160) return;
-    sendMuLawFrameImmediate(b);
+    txAgg.push(b);
+    txAggLen += b.length;
+    if (txAggLen >= 160) flushAgg(true);
   }
 
   function decodeMuLawToPCM16(mu) {
@@ -405,7 +414,7 @@ wss.on('connection', async (ws, req) => {
         if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
         // Configure back-audio path from ElevenLabs to Twilio
         // Use 20ms pacing and light low-pass + decimation to avoid aliasing/screech
-        _stopTx = () => {};
+        _stopTx = stopTx;
 
         function downsample16kTo8kLP(pcm16k) {
           const out = new Int16Array(Math.floor(pcm16k.length / 2));
@@ -432,7 +441,7 @@ wss.on('connection', async (ws, req) => {
             const mu = pcm16ToMuLawRef(pcm);
             enqueueMuLawFrame(Buffer.from(mu));
           }
-          // begin sending immediately on enqueueMuLawFrame
+          startTx();
         })();
 
         // Robust vendor PCM16 handling: alignment-safe, endianness sniff, carryover between chunks
@@ -591,7 +600,7 @@ wss.on('connection', async (ws, req) => {
             }
             // Save remainder for next chunk
             vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
-            // immediate send path; no scheduler
+            startTx();
           } catch (e) { void e; }
         };
         await el.connect().catch(()=>{});

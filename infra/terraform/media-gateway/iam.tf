@@ -42,8 +42,7 @@ resource "aws_iam_policy" "media_ssm_read" {
         Effect   = "Allow",
         Action   = ["s3:GetObject"],
         Resource = [
-          "arn:aws:s3:::${var.artifact_bucket}/${var.artifact_key}",
-          "arn:aws:s3:::${var.artifact_bucket}/media/server-*.mjs"
+          "arn:aws:s3:::${var.artifact_bucket}/${var.artifact_key}"
         ]
       },
       {
