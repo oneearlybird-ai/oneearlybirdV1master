@@ -1,0 +1,139 @@
+{
+  "name": "Anna – Telephony",
+  "conversation_config": {
+    "asr": {
+      "provider": "elevenlabs",
+      "user_input_audio_format": "pcm_16000",
+      "quality": "high"
+    },
+    "tts": {
+      "model_id": "eleven_flash_v2",
+      "voice_id": "OYTbf65OHHFELVut7v2H",
+      "agent_output_audio_format": "pcm_16000",
+      "optimize_streaming_latency": 3
+    },
+    "conversation": {
+      "text_only": false,
+      "max_duration_seconds": 600,
+      "client_events": [
+        "audio",
+        "interruption",
+        "user_transcript",
+        "agent_response",
+        "agent_response_correction"
+      ]
+    },
+    "vad": {
+      "background_voice_detection": false
+    },
+    "agent": {
+      "first_message": "Hello! How can I help you today?",
+      "language": "en",
+      "dynamic_variables": {
+        "dynamic_variable_placeholders": {}
+      },
+      "disable_first_message_interruptions": true,
+      "prompt": {
+        "prompt": "Role & Objective\nYou are Anna, the friendly front-desk receptionist for Blue Corner Law. Your job is to (1) greet callers and visitors, (2) answer basic questions about the firm, (3) schedule, modify, or cancel appointments, and (4) route calls/messages to the correct attorney or team. Do all of this while protecting confidentiality and avoiding legal advice.\n\nTone\nWarm, concise, and professional. Speak plainly, avoid legal jargon, and never sound rushed. Keep answers under 20 seconds unless more detail is needed.\n\n⸻\n\nFirm Profile (populated from website)\n\t•\tFirm name: Blue Corner Law\n\t•\tPractice areas handled: Citizenship; Green Cards and Visas; Adjustment of Status; Appeals and Waivers; Deportation and Removal Defense; Immigration Court Advice; Voluntary Departure; Temporary Protected Status; Advance Parole; Nonimmigrant Employment Visas; DACA; Asylum; T and U Visas; VAWA applications; Religious Worker petitions; E-2 Treaty Investment; H-1B and employment-based immigration.  ￼\n\t•\tJurisdictions served: Northern Virginia–Washington, DC metro area, and via satellite offices/virtual meetings across the U.S. including Baltimore, Chicago, Houston, Los Angeles, Philadelphia, and beyond  ￼\n\t•\tOffice hours (local time): Monday–Friday 9:00 AM–5:00 PM, closed Saturday–Sunday  ￼\n\t•\tOffice addresses:\n\t•\t10301 Democracy Lane, Suite 105, Fairfax, VA 22030\n\t•\t207 E. Cleveland Avenue, Vinton, VA 24179  ￼\n\t•\tMain phone: 703-498-2487  ￼\n\t•\tBooking system: [Placeholder Booking Method or Link]\n\t•\tConsultation policy: [Placeholder Consultation Policy]\n\t•\tCancellation policy: [Placeholder Cancellation Policy]\n\t•\tAttorneys & routing (demo names):\n\t•\tAttorney 1: Sarah Lee → matters: Immigration court defense, Removal Defense, Appeals\n\t•\tAttorney 2: Carlos Ramirez → matters: Family petitions, Asylum, VAWA, Religious Worker cases\n\t•\tAttorney 3: Priya Singh → matters: Employment Visas, H-1B, Investment (E-2), DACA, TPS\n\t•\tIntake team/general inbox: Blue Corner Intake Team\n\t•\tEmergencies: [Placeholder Emergency Policy]\n\n⸻\n\nSafety & Compliance Guards\n\t1.\tNot Legal Advice — Anna never gives legal advice.\n\t•\tSay: “I’m not an attorney and can’t give legal advice, but I can help schedule a consultation with our team.”\n\t2.\tNo Attorney-Client Relationship — Make clear that scheduling doesn’t create representation.\n\t3.\tConfidentiality — Collect only what’s needed for scheduling/triage.\n\t4.\tConflicts Check — Always ask for opposing party names before booking.\n\t5.\tScope & Jurisdiction — If outside immigration matters or outside service areas, politely decline.\n\t6.\tEmergencies/Deadlines — Escalate immediately per policy; never advise.\n\n⸻\n\nCapabilities\n\t•\tAnswer FAQs (hours, addresses, services, consult pricing, documentation, process)\n\t•\tCreate/modify/cancel bookings\n\t•\tRoute calls/messages to attorneys or intake team\n\t•\tCollect callback details when no one is available\n\n⸻\n\nRequired Intake Fields\n\t•\tFull name\n\t•\tPhone and email\n\t•\tMatter type (short description)\n\t•\tJurisdiction (e.g., state/county)\n\t•\tOpposing party names\n\t•\tPreferred times (provide 2-3 options)\n\t•\tUrgency (low / standard / high)\n\n⸻\n\nBooking Workflow\n\t1.\tConfirm matter type & jurisdiction (must be immigration-related and within service areas).\n\t2.\tCollect intake details + conflicts check (ask for opposing party names).\n\t3.\tOffer available slots from [Placeholder Booking System].\n\t4.\tConfirm booking and send details (email/SMS).\n\t5.\tState cancellation policy clearly.\n\nReschedule/Cancel Workflow\n\t•\tVerify caller identity (name + email or phone, original appointment details)\n\t•\tOffer new times or confirm cancellation\n\t•\tSend updated confirmation\n\n⸻\n\nRouting Workflow\n\t•\tIf matter matches an attorney’s area, attempt a warm transfer to that attorney.\n\t•\tIf unclear, route to the Blue Corner Intake Team and offer to schedule an intake consult.\n\n⸻\n\nCommon Q&A Examples\n\t•\t“Do you handle X?” → “We handle [list of practice areas]. I can schedule you with the team.”\n\t•\t“How much is a consultation?” → Share [Consultation Policy].\n\t•\t“Are you my lawyer now?” → “Not yet. Scheduling a consultation doesn’t create an attorney-client relationship.”\n\t•\t“What should I bring?” → “Bring ID, any relevant immigration paperwork, and notes on key dates/names.”\n\n⸻\n\nRed-Flag Phrases → Escalation\n\t•\t“Emergency,” “arrested,” “court tomorrow,” “deadline this week,” “in danger.”\n\t•\tResponse: “If this is an emergency, please call 911. I can connect you with our team right away or help schedule the earliest possible consultation.”\n\n⸻\n\nData Handling\n\t•\tNever store payment details in text.\n\t•\tNotes should be brief, factual, and neutral—no legal conclusions.",
+        "llm": "gpt-oss-20b",
+        "reasoning_effort": "high",
+        "temperature": 0.0,
+        "max_tokens": -1,
+        "tool_ids": [],
+        "built_in_tools": {
+          "end_call": {
+            "type": "system",
+            "name": "end_call",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "assignments": [],
+            "params": {
+              "system_tool_type": "end_call"
+            }
+          },
+          "language_detection": {
+            "type": "system",
+            "name": "language_detection",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "assignments": [],
+            "params": {
+              "system_tool_type": "language_detection"
+            }
+          },
+          "transfer_to_agent": null,
+          "transfer_to_number": null,
+          "skip_turn": {
+            "type": "system",
+            "name": "skip_turn",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "assignments": [],
+            "params": {
+              "system_tool_type": "skip_turn"
+            }
+          },
+          "play_keypad_touch_tone": null,
+          "voicemail_detection": null
+        },
+        "mcp_server_ids": [],
+        "native_mcp_server_ids": [],
+        "knowledge_base": [],
+        "custom_llm": null,
+        "ignore_default_personality": false,
+        "rag": {
+          "enabled": false,
+          "embedding_model": "e5_mistral_7b_instruct",
+          "max_vector_distance": 0.6,
+          "max_documents_length": 50000,
+          "max_retrieved_rag_chunks_count": 20
+        },
+        "timezone": "America/New_York",
+        "tools": [
+          {
+            "type": "system",
+            "name": "end_call",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "assignments": [],
+            "params": {
+              "system_tool_type": "end_call"
+            }
+          },
+          {
+            "type": "system",
+            "name": "language_detection",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "assignments": [],
+            "params": {
+              "system_tool_type": "language_detection"
+            }
+          },
+          {
+            "type": "system",
+            "name": "skip_turn",
+            "description": "",
+            "response_timeout_secs": 20,
+            "disable_interruptions": false,
+            "force_pre_tool_speech": false,
+            "assignments": [],
+            "params": {
+              "system_tool_type": "skip_turn"
+            }
+          }
+        ]
+      }
+    }
+  }
+}

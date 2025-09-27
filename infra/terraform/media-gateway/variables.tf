@@ -79,13 +79,13 @@ variable "artifact_bucket" {
 variable "artifact_key" {
   description = "S3 object key for server.mjs artifact"
   type        = string
-  default     = "media/server-73d981b1fd9f84bc0862a9e0a22de3caf0537f3c153eb2c676f969c46e4f90ec.mjs"
+  default     = "media/server-$(shasum -a 256 ../../infra/terraform/media-gateway/templates/server.mjs | awk '{print $1}').mjs"
 }
 
 variable "artifact_sha256" {
   description = "SHA256 (hex) of the server.mjs artifact for verification"
   type        = string
-  default     = "73d981b1fd9f84bc0862a9e0a22de3caf0537f3c153eb2c676f969c46e4f90ec"
+  default     = "$(shasum -a 256 ../../infra/terraform/media-gateway/templates/server.mjs | awk '{print $1}')"
 }
 
 variable "vendor_sr_hz" {

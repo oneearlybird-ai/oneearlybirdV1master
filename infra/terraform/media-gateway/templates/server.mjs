@@ -224,8 +224,12 @@ class ElevenLabsSession {
     this.ws.on('error', (e) => { this.connected = false; try { process.stdout.write(`el:error ${(e&&e.message)||'err'}\n`); } catch (e2) { void e2; } });
     this.ws.on('message', (data) => {
       try {
-        if (Buffer.isBuffer(data)) { /* ConvAI typically JSON; ignore binary */ }
-        else {
+        if (Buffer.isBuffer(data)) {
+          // ElevenLabs ConvAI may deliver vendor audio as raw binary frames (PCM/μ-law)
+          if (typeof this.onAudio === 'function' && data && data.length) {
+            try { this.onAudio(Buffer.from(data)); } catch (_) { void _; }
+          }
+        } else {
           const txt = data.toString('utf8');
           try {
             const obj = JSON.parse(txt);
