@@ -28,7 +28,6 @@ function absoluteUrlFrom(req: NextRequest): string {
 export async function POST(req: NextRequest) {
   const authToken = process.env.TWILIO_AUTH_TOKEN || ''
   const logKey = process.env.VOICE_LOG_KEY || process.env.SMOKE_KEY || ''
-  const altKey = process.env.LOG_WEBHOOK_KEY || ''
   const bearer = (process.env.VOICE_LOG_BEARER || '').trim()
   const sig = req.headers.get('x-twilio-signature') || ''
   const hdrKey = req.headers.get('x-log-key') || req.headers.get('x-smoke-key') || ''
@@ -55,8 +54,8 @@ export async function POST(req: NextRequest) {
     } catch { /* fallthrough */ }
   }
 
-  // 2) x-log-key header (accept VOICE_LOG_KEY/SMOKE_KEY or LOG_WEBHOOK_KEY)
-  if (!accepted && hdrKey && (hdrKey === logKey || (altKey && hdrKey === altKey))) accepted = true
+  // 2) x-log-key header
+  if (!accepted && logKey && hdrKey === logKey) accepted = true
 
   // 3) Authorization: Bearer <token>
   if (!accepted && bearer && auth.toLowerCase().startsWith('bearer ')) {
