@@ -247,7 +247,7 @@ class ElevenLabsSession {
             } catch (e) { void e; }
             // ConvAI audio event
             const b64 = obj?.audio_event?.audio_base_64;
-            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') { try { this._lastSrc = 'json'; this.onAudio(Buffer.from(b64,'base64')); } catch(_) { void _; } }
+            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') { try { this._lastSrc = 'json'; this._seenJsonAudio = true; this.onAudio(Buffer.from(b64,'base64')); } catch(_) { void _; } }
           } catch (e) { void e; }
         }
       } catch (e) { void e; }
@@ -554,7 +554,12 @@ wss.on('connection', async (ws, req) => {
         // Latch which vendor source we use (json vs bin) to avoid double mixing
         let vendorSrc = null; // 'json' | 'bin'
         function acceptVendorChunk(src) {
-          if (!vendorSrc) { vendorSrc = src; try { process.stdout.write(`vsrc:${src}\n`); } catch(_) { void _; } return true; }
+          if (!vendorSrc) {
+            const choice = (this && this._seenJsonAudio === true) ? 'json' : src;
+            vendorSrc = choice;
+            try { process.stdout.write(`vsrc:${vendorSrc}\n`); } catch(_) { void _; }
+            return vendorSrc === src;
+          }
           return vendorSrc === src;
         }
 
