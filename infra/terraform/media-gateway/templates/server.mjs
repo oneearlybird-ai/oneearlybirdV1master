@@ -430,7 +430,6 @@ wss.on('connection', async (ws, req) => {
         // Robust vendor PCM16 handling: alignment-safe, endianness sniff, carryover between chunks
         let vendorCarry = Buffer.alloc(0);
         let vendorWavChecked = false;
-        let vendorLoggedHead = false;
         let vendorWavDataOffset = 0;
         let vendorWavBits = 16;
         let vendorWavFmt = 1; // 1=PCM, 3=IEEE float
@@ -492,15 +491,6 @@ wss.on('connection', async (ws, req) => {
             const BYTES_PER_20MS = (VENDOR_SR_HZ === 16000 ? 320 * 2 : 160 * 2);
             let buf = chunk;
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
-            // Log first bytes of the very first vendor chunk (PHI-safe hex only)
-            if (!vendorLoggedHead) {
-              vendorLoggedHead = true;
-              try {
-                const hlen = Math.min(16, buf.length);
-                const hex = buf.subarray(0, hlen).toString('hex');
-                process.stdout.write(`el:head0 len=${buf.length} hex=${hex}\n`);
-              } catch (_) { void _; }
-            }
             // prepend carryover
             if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
             // One-time WAV sniff: strip header and adopt sample rate/format if present
@@ -516,11 +506,6 @@ wss.on('connection', async (ws, req) => {
                 try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
                 if (vendorWavDataOffset > 0) {
                   buf = buf.subarray(vendorWavDataOffset);
-                  try {
-                    const hlen = Math.min(16, buf.length);
-                    const hex = buf.subarray(0, hlen).toString('hex');
-                    process.stdout.write(`el:head1 len=${buf.length} hex=${hex}\n`);
-                  } catch (_) { void _; }
                 }
               }
             }
