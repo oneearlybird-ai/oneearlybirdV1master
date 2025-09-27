@@ -331,44 +331,37 @@ wss.on('connection', async (ws, req) => {
   // Vendor stream metadata/preferences (held on el session instead)
   let startGraceTimer = null;
   let recorder = null;
-  // Outbound aggregation to Twilio (canonical 20ms frames)
-  let txAgg = [];
-  let txAggLen = 0;
+  // Outbound pacing to Twilio — send exactly one 160B frame per tick (~25ms)
+  let txQueue = [];
   let txTimer = null;
   let txChunk = 0;
   let __diagSendObsLeft = 3;
   // One-time diagnostics per connection
   let __passDiagLogged = false;
   let __encodeDiagLogged = false;
-  function flushAgg(force=false) {
+  function tickSend() {
     try {
       if (!ws.__gotStart || !streamSid) return;
-      const TARGET = 160; // 20ms @ 8k μ-law (160 bytes)
-      if (!force && txAggLen < TARGET) return;
-      if (!txAggLen) return;
-      const buf = Buffer.concat(txAgg, txAggLen);
-      txAgg = []; txAggLen = 0;
+      if (!txQueue.length) return;
+      const buf = txQueue.shift(); // one 160B frame
       if (__diagSendObsLeft > 0) { try { process.stdout.write(`sendBytes:${buf.length}\n`); } catch(_) { void _; } __diagSendObsLeft--; }
       const payload = buf.toString('base64');
       const ch = String(++txChunk);
-      // Twilio requires outbound track for bidirectional playback
       ws.send(JSON.stringify({ event: 'media', streamSid, media: { track: 'outbound', payload } }));
       try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
     } catch (e) { void e; }
   }
   function startTx() {
     if (txTimer) return;
-    // Pace close to frame duration to flush any stragglers
-    txTimer = setInterval(() => flushAgg(false), 20);
+    // Pace slightly slower than 20ms to avoid Twilio drops on bursts
+    txTimer = setInterval(() => tickSend(), 25);
   }
   // stopTx inlined into _stopTx assignment inside 'start' handler
 
   function enqueueMuLawFrame(b) {
     // Accept only exact 160-byte μ-law frames (20ms)
     if (!b || b.length !== 160) return;
-    txAgg.push(b);
-    txAggLen += b.length;
-    if (txAggLen >= 160) flushAgg(true);
+    txQueue.push(b);
   }
 
   function decodeMuLawToPCM16(mu) {
@@ -763,7 +756,14 @@ wss.on('connection', async (ws, req) => {
                 } catch(_) { void _; }
                 __encodeDiagLogged = true;
               }
-              enqueueMuLawFrame(mulawBuf);
+              if (mulawBuf.length === 160) enqueueMuLawFrame(mulawBuf);
+              else if (mulawBuf.length < 160) {
+                const pad = Buffer.alloc(160 - mulawBuf.length, 0xFF);
+                enqueueMuLawFrame(Buffer.concat([mulawBuf, pad], 160));
+              } else {
+                let o = 0;
+                while (o + 160 <= mulawBuf.length) { enqueueMuLawFrame(mulawBuf.subarray(o, o + 160)); o += 160; }
+              }
             }
             // Save remainder for next chunk
             vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
