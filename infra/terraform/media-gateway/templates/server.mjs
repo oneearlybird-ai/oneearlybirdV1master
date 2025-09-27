@@ -317,6 +317,9 @@ wss.on('connection', async (ws, req) => {
   let txTimer = null;
   let txChunk = 0;
   let __diagSendObsLeft = 3;
+  // One-time diagnostics per connection
+  let __passDiagLogged = false;
+  let __encodeDiagLogged = false;
   function flushAgg(force=false) {
     try {
       if (!ws.__gotStart || !streamSid) return;
@@ -619,12 +622,23 @@ wss.on('connection', async (ws, req) => {
                    }
                  }
                }
+               // One-time proof of correct pass-through bytes
+               if (!__passDiagLogged) {
+                 try {
+                   process.stdout.write(`pass: chunk_in=${buf.length}\n`);
+                   const one = buf.subarray(0, Math.min(160, buf.length));
+                   process.stdout.write(`pass: first160 hex=${one.toString('hex').slice(0,64)}\n`);
+                 } catch(_) { void _; }
+                 __passDiagLogged = true;
+               }
                let off = 0;
                while (off + 160 <= buf.length) { enqueueMuLawFrame(buf.subarray(off, off + 160)); off += 160; }
                vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
                startTx();
                return;
              }
+            // Only proceed with encode path; otherwise drop unsupported
+            if (mode !== 'encode') { try { process.stdout.write(`DROP_UNSUPPORTED_FMT vendor_fmt=${fmt}\n`); } catch(_) { void _; } return; }
             // bytes per 20ms depends on detected format; computed inline below
             let buf = chunk;
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
@@ -669,6 +683,13 @@ wss.on('connection', async (ws, req) => {
             }
             let off = 0;
             if (!acceptVendorChunk(src)) return;
+            // Require that sample rate has been latched from metadata before encoding
+            if (!el.streamSr) {
+              try { process.stdout.write('NO_SR_LATCHED; DROPPING_AUDIO\n'); } catch(_) { void _; }
+              vendorCarry = buf;
+              startTx();
+              return;
+            }
             // process full 20ms frames
             while (true) {
               // Generic 20ms window by negotiated sample rate and sample width
@@ -706,8 +727,15 @@ wss.on('connection', async (ws, req) => {
               if (sr === 8000) pcm8k = pcmIn16;
               else if (sr === 16000) pcm8k = hbDecimator.pushBlock(pcmIn16);
               else pcm8k = linearResampleTo8k(pcmIn16, sr);
-              const mulaw = pcm16ToMuLawRef(pcm8k);
-              enqueueMuLawFrame(Buffer.from(mulaw));
+              const mulawBuf = pcm16ToMuLawRef(pcm8k);
+              if (!__encodeDiagLogged) {
+                try {
+                  process.stdout.write(`pcmu: n=${mulawBuf.length}\n`);
+                  if (mulawBuf.length !== 160) process.stdout.write(`BAD_PCMU_LEN=${mulawBuf.length}\n`);
+                } catch(_) { void _; }
+                __encodeDiagLogged = true;
+              }
+              enqueueMuLawFrame(mulawBuf);
             }
             // Save remainder for next chunk
             vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
