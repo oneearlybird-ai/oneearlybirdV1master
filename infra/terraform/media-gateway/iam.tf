@@ -64,3 +64,30 @@ resource "aws_iam_role_policy_attachment" "media_ssm_read_attach" {
   role       = aws_iam_role.ec2_media_role.name
   policy_arn = aws_iam_policy.media_ssm_read.arn
 }
+
+# Allow CloudWatch Agent to create streams and put logs
+resource "aws_iam_policy" "media_cw_logs" {
+  name        = "media-gateway-cloudwatch-logs"
+  description = "Allow instances to put logs to CloudWatch Logs"
+  policy      = jsonencode({
+    Version = "2012-10-17",
+    Statement = [
+      {
+        Effect: "Allow",
+        Action: [
+          "logs:CreateLogGroup",
+          "logs:CreateLogStream",
+          "logs:PutLogEvents",
+          "logs:DescribeLogGroups",
+          "logs:DescribeLogStreams"
+        ],
+        Resource: "*"
+      }
+    ]
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "media_cw_logs_attach" {
+  role       = aws_iam_role.ec2_media_role.name
+  policy_arn = aws_iam_policy.media_cw_logs.arn
+}

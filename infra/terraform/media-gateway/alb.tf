@@ -6,6 +6,12 @@ resource "aws_lb" "media_alb" {
   subnets            = slice(data.aws_subnets.allowed.ids, 0, 2)
   idle_timeout       = 600
   tags               = var.tags
+
+  access_logs {
+    bucket  = aws_s3_bucket.alb_logs.bucket
+    prefix  = "alb"
+    enabled = true
+  }
 }
 
 resource "aws_lb_target_group" "media_tg" {
