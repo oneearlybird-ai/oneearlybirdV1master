@@ -576,11 +576,17 @@ wss.on('connection', async (ws, req) => {
           try {
             if (!streamSid) return;
             try { recorder && recorder.addVendorPCM16(Buffer.from(chunk)); } catch(e) { void e; }
-            const OUT_FMT = String(process.env.VENDOR_OUT_FORMAT || '').toLowerCase();
+            // OUT_FMT is for our Twilio target (always PCMU@8k); vendor format is from metadata
             const src = (typeof el._lastSrc === 'string') ? el._lastSrc : 'bin';
-            const agentFmt = String(el && el.agentOutFmt || '');
-            const passUlaw = agentFmt.includes('ulaw_8000') || OUT_FMT === 'ulaw_8000' || OUT_FMT === 'ulaw' || OUT_FMT === 'pcmu' || OUT_FMT === 'mulaw';
-            if (passUlaw) {
+            const fmt = String(el && el.agentOutFmt || '').toLowerCase();
+            const vendorIsUlaw   = /\bulaw_8000\b/.test(fmt);
+            const vendorIsPcm16k = /^pcm_16000$/.test(fmt);
+            const vendorIsPcm8k  = /^pcm_8000$/.test(fmt);
+            let mode = 'unsupported';
+            if (vendorIsUlaw) mode = 'pass';
+            else if (vendorIsPcm16k || vendorIsPcm8k) mode = 'encode';
+            try { process.stdout.write(`mode=${mode} vendor_fmt=${fmt}\n`); } catch(_) { void _; }
+            if (mode === 'pass') {
                // Pass-through μ-law 8k: frame into 160-byte chunks and send
                if (!acceptVendorChunk(src)) return; // ignore other source once latched
                let buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
