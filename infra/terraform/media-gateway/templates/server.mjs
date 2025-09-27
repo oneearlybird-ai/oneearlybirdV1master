@@ -224,7 +224,16 @@ class ElevenLabsSession {
     this.ws.on('open', () => { 
       this.connected = true; this._backoff=500;
       try { process.stdout.write('el:open\n'); } catch (e) { void e; }
-      // ConvAI: no session.update / conversation.create needed here.
+      // Request outbound events explicitly so agent audio streams back
+      try {
+        const msg = {
+          type: 'conversation_initiation_client_data',
+          conversation_config_override: {
+            conversation: { client_events: ['audio','user_transcript','agent_response'] }
+          }
+        };
+        this.ws.send(JSON.stringify(msg));
+      } catch (_) { void _; }
     });
     this.ws.on('close', (code, reason) => { this.connected = false; try { process.stdout.write(`el:close ${code} ${(reason||'').toString()}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
     this.ws.on('unexpected-response', (_req, res) => { this.connected = false; try { process.stdout.write(`el:unexpected ${res.statusCode}\n`); } catch (e) { void e; } if (this._want) this._reconnect(); });
@@ -255,9 +264,9 @@ class ElevenLabsSession {
                   const ao = m?.agent_output_audio_format || m?.agent_output_format || m?.agent_audio_format || '';
                   try { process.stdout.write(`el:formats user_in=${String(ui)} agent_out=${String(ao)}\n`); } catch (_) { void _; }
                   try {
-                    const pickSr = (fmt) => { const s = String(fmt||''); const mm = s.match(/(pcm|ulaw)_(\d{4,5})/i); return mm ? Number(mm[2]) : null; };
+                    const pickSr = (fmt) => { const s = String(fmt||''); const mm = s.match(/(pcm|u?law)_(\d{4,5})/i); return mm ? Number(mm[2]) : null; };
                     const sr = pickSr(ao) || pickSr(ui);
-                    if (sr && (sr === 8000 || sr === 16000)) { this.streamSr = sr; try { process.stdout.write(`vmeta:sr=${sr}\n`);} catch(_) { void _; } }
+                    if (sr) { this.streamSr = sr; try { process.stdout.write(`vmeta:sr=${sr}\n`);} catch(_) { void _; } }
                     this.agentOutFmt = String(ao||'');
                   } catch(_) { void _; }
                 }
