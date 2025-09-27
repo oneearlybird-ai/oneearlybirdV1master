@@ -501,7 +501,7 @@ wss.on('connection', async (ws, req) => {
           startTx();
         })();
 
-        // Robust vendor PCM16 handling: alignment-safe, endianness sniff, carryover between chunks
+        // Robust vendor PCM16/Float32 handling: alignment-safe, carryover between chunks
         let vendorCarry = Buffer.alloc(0);
         let vendorWavChecked = false;
         let vendorWavDataOffset = 0;
@@ -510,6 +510,11 @@ wss.on('connection', async (ws, req) => {
         let vendorWavSr = VENDOR_SR_HZ;
         /** @type {'le'|'be'|null} */
         let vendorEndian = null;
+        /** @type {'PCM16'|'F32'|null} */
+        let vendorRawFormat = null;
+        // Optional gentle fade-in to mask any TTS warmup artifacts (ms)
+        const OUT_FADE_MS = Math.max(0, Number(process.env.OUT_FADE_MS || 150));
+        let fadeFramesLeft = Math.min(50, Math.floor(OUT_FADE_MS / 20));
         function sniffWav(buf) {
           try {
             if (buf.length < 44) return null;
@@ -560,7 +565,7 @@ wss.on('connection', async (ws, req) => {
               startTx();
               return;
             }
-            const BYTES_PER_20MS = (VENDOR_SR_HZ === 16000 ? 320 * 2 : 160 * 2);
+            // bytes per 20ms depends on detected format; computed inline below
             let buf = chunk;
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
             // prepend carryover
@@ -578,14 +583,33 @@ wss.on('connection', async (ws, req) => {
                 try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
                 if (vendorWavDataOffset > 0) buf = buf.subarray(vendorWavDataOffset);
               } else {
-                // ConvAI binary frames: force PCM16LE by spec; no endianness detection
-                vendorWavFmt = 1; vendorWavBits = 16; vendorEndian = 'le';
-                try { process.stdout.write('vfmt:le(forced)\n'); } catch (_) { void _; }
+                // ConvAI binary frames: guess Float32LE vs PCM16LE once, then lock
+                vendorEndian = 'le';
+                // Heuristic: sample a few values as Float32LE; if most are finite within [-1.2,1.2], assume F32
+                (function decideRaw(){
+                  try {
+                    const fCount = Math.min(24, Math.floor(buf.length / 4));
+                    let okF = 0;
+                    for (let i=0;i<fCount;i++) {
+                      const f = buf.readFloatLE(i*4);
+                      if (Number.isFinite(f) && Math.abs(f) <= 1.2) okF++;
+                    }
+                    vendorRawFormat = (okF >= Math.max(8, Math.floor(fCount*0.7))) ? 'F32' : 'PCM16';
+                  } catch { vendorRawFormat = 'PCM16'; }
+                })();
+                try { process.stdout.write(`vraw:${vendorRawFormat||'PCM16'}\n`); } catch (_) { void _; }
+                vendorWavFmt = (vendorRawFormat === 'F32') ? 3 : 1;
+                vendorWavBits = (vendorRawFormat === 'F32') ? 32 : 16;
               }
             }
             let off = 0;
             // process full 20ms frames
-            while (off + BYTES_PER_20MS <= buf.length) {
+            while (true) {
+              // Determine bytes needed for one 20ms frame
+              const need = (VENDOR_SR_HZ === 16000)
+                ? ((vendorWavFmt === 3 && vendorWavBits === 32) ? 320*4 : 320*2)
+                : ((vendorWavFmt === 3 && vendorWavBits === 32) ? 160*4 : 160*2);
+              if (off + need > buf.length) break;
               // Build Int16Array safely regardless of alignment
               if (VENDOR_SR_HZ === 16000) {
                 const pcm16 = new Int16Array(320);
@@ -604,6 +628,13 @@ wss.on('connection', async (ws, req) => {
                     pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
                   }
                   off += 320 * 2;
+                }
+                // Optional fade-in ramp
+                if (fadeFramesLeft > 0) {
+                  const steps = Math.max(1, Math.min(10, fadeFramesLeft));
+                  const kNum = (steps - 1) / steps; // simple step down
+                  for (let i=0;i<pcm16.length;i++) pcm16[i] = (pcm16[i] * kNum) | 0;
+                  fadeFramesLeft--;
                 }
                 const pcm8k = hbDecimator.pushBlock(pcm16);
                 const mulaw = pcm16ToMuLawRef(pcm8k);
@@ -624,6 +655,12 @@ wss.on('connection', async (ws, req) => {
                     pcm8[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
                   }
                   off += 160 * 2;
+                }
+                if (fadeFramesLeft > 0) {
+                  const steps = Math.max(1, Math.min(10, fadeFramesLeft));
+                  const kNum = (steps - 1) / steps;
+                  for (let i=0;i<pcm8.length;i++) pcm8[i] = (pcm8[i] * kNum) | 0;
+                  fadeFramesLeft--;
                 }
                 const mulaw = pcm16ToMuLawRef(pcm8);
                 enqueueMuLawFrame(Buffer.from(mulaw));
