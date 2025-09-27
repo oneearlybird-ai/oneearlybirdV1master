@@ -578,7 +578,9 @@ wss.on('connection', async (ws, req) => {
             try { recorder && recorder.addVendorPCM16(Buffer.from(chunk)); } catch(e) { void e; }
             const OUT_FMT = String(process.env.VENDOR_OUT_FORMAT || '').toLowerCase();
             const src = (typeof el._lastSrc === 'string') ? el._lastSrc : 'bin';
-             if (OUT_FMT === 'ulaw_8000' || OUT_FMT === 'ulaw' || OUT_FMT === 'pcmu' || OUT_FMT === 'mulaw') {
+            const agentFmt = String(el && el.agentOutFmt || '');
+            const passUlaw = agentFmt.includes('ulaw_8000') || OUT_FMT === 'ulaw_8000' || OUT_FMT === 'ulaw' || OUT_FMT === 'pcmu' || OUT_FMT === 'mulaw';
+            if (passUlaw) {
                // Pass-through μ-law 8k: frame into 160-byte chunks and send
                if (!acceptVendorChunk(src)) return; // ignore other source once latched
                let buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
