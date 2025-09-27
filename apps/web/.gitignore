@@ -2,3 +2,7 @@
 
 *.tsbuildinfo
 .env*.local
+
+# Terraform plans (local artifacts, never commit)
+infra/terraform/**/tfplan_*
+*.tfplan
