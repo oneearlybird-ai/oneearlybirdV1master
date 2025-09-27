@@ -351,7 +351,8 @@ wss.on('connection', async (ws, req) => {
       if (__diagSendObsLeft > 0) { try { process.stdout.write(`sendBytes:${buf.length}\n`); } catch(_) { void _; } __diagSendObsLeft--; }
       const payload = buf.toString('base64');
       const ch = String(++txChunk);
-      ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload } }));
+      // Twilio requires outbound track for bidirectional playback
+      ws.send(JSON.stringify({ event: 'media', streamSid, media: { track: 'outbound', payload } }));
       try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
     } catch (e) { void e; }
   }
