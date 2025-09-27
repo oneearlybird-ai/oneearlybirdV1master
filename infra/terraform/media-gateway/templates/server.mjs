@@ -228,7 +228,7 @@ class ElevenLabsSession {
           // Binary acceptance is opt-in; default to JSON path to avoid container/preview noise
           const acceptBin = String(process.env.EL_ACCEPT_BINARY || 'false').toLowerCase() === 'true';
           if (acceptBin && typeof this.onAudio === 'function' && data && data.length) {
-            try { this.onAudio(Buffer.from(data)); } catch (_) { void _; }
+            try { this._lastSrc = 'bin'; this.onAudio(Buffer.from(data)); } catch (_) { void _; }
           } // else ignore binary frames
         } else {
           const txt = data.toString('utf8');
@@ -247,7 +247,7 @@ class ElevenLabsSession {
             } catch (e) { void e; }
             // ConvAI audio event
             const b64 = obj?.audio_event?.audio_base_64;
-            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') this.onAudio(Buffer.from(b64,'base64'));
+            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') { try { this._lastSrc = 'json'; this.onAudio(Buffer.from(b64,'base64')); } catch(_) { void _; } }
           } catch (e) { void e; }
         }
       } catch (e) { void e; }
@@ -563,9 +563,10 @@ wss.on('connection', async (ws, req) => {
             if (!streamSid) return;
             try { recorder && recorder.addVendorPCM16(Buffer.from(chunk)); } catch(e) { void e; }
             const OUT_FMT = String(process.env.VENDOR_OUT_FORMAT || '').toLowerCase();
+            const src = (typeof el._lastSrc === 'string') ? el._lastSrc : 'bin';
              if (OUT_FMT === 'ulaw_8000' || OUT_FMT === 'ulaw' || OUT_FMT === 'pcmu' || OUT_FMT === 'mulaw') {
                // Pass-through μ-law 8k: frame into 160-byte chunks and send
-               if (!acceptVendorChunk('bin')) return; // ignore other source once latched
+               if (!acceptVendorChunk(src)) return; // ignore other source once latched
                let buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
                if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
                // Strip WAV header if present (μ-law fmt=7)
@@ -590,40 +591,45 @@ wss.on('connection', async (ws, req) => {
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
             // prepend carryover
             if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
-            // One-time format decision: prefer forced PCM16LE for ConvAI; sniff WAV if present
+            // One-time format decision per source
             if (!vendorWavChecked) {
               vendorWavChecked = true;
-              const wav = sniffWav(buf);
-              if (wav) {
-                vendorWavDataOffset = wav.dataOff;
-                vendorWavBits = wav.bits;
-                vendorWavFmt = wav.audioFmt; // 1=PCM, 3=float
-                vendorWavSr = wav.sr;
-                vendorEndian = 'le'; // WAV PCM is LE
-                try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
-                if (vendorWavDataOffset > 0) buf = buf.subarray(vendorWavDataOffset);
+              if (src === 'bin') {
+                const wav = sniffWav(buf);
+                if (wav) {
+                  vendorWavDataOffset = wav.dataOff;
+                  vendorWavBits = wav.bits;
+                  vendorWavFmt = wav.audioFmt; // 1=PCM, 3=float
+                  vendorWavSr = wav.sr;
+                  vendorEndian = 'le'; // WAV PCM is LE
+                  try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
+                  if (vendorWavDataOffset > 0) buf = buf.subarray(vendorWavDataOffset);
+                } else {
+                  // ConvAI binary frames: guess Float32LE vs PCM16LE once, then lock
+                  vendorEndian = 'le';
+                  (function decideRaw(){
+                    try {
+                      const fCount = Math.min(24, Math.floor(buf.length / 4));
+                      let okF = 0;
+                      for (let i=0;i<fCount;i++) {
+                        const f = buf.readFloatLE(i*4);
+                        if (Number.isFinite(f) && Math.abs(f) <= 1.2) okF++;
+                      }
+                      vendorRawFormat = (okF >= Math.max(8, Math.floor(fCount*0.7))) ? 'F32' : 'PCM16';
+                    } catch { vendorRawFormat = 'PCM16'; }
+                  })();
+                  try { process.stdout.write(`vraw:${vendorRawFormat||'PCM16'}\n`); } catch (_) { void _; }
+                  vendorWavFmt = (vendorRawFormat === 'F32') ? 3 : 1;
+                  vendorWavBits = (vendorRawFormat === 'F32') ? 32 : 16;
+                }
               } else {
-                // ConvAI binary frames: guess Float32LE vs PCM16LE once, then lock
-                vendorEndian = 'le';
-                // Heuristic: sample a few values as Float32LE; if most are finite within [-1.2,1.2], assume F32
-                (function decideRaw(){
-                  try {
-                    const fCount = Math.min(24, Math.floor(buf.length / 4));
-                    let okF = 0;
-                    for (let i=0;i<fCount;i++) {
-                      const f = buf.readFloatLE(i*4);
-                      if (Number.isFinite(f) && Math.abs(f) <= 1.2) okF++;
-                    }
-                    vendorRawFormat = (okF >= Math.max(8, Math.floor(fCount*0.7))) ? 'F32' : 'PCM16';
-                  } catch { vendorRawFormat = 'PCM16'; }
-                })();
-                try { process.stdout.write(`vraw:${vendorRawFormat||'PCM16'}\n`); } catch (_) { void _; }
-                vendorWavFmt = (vendorRawFormat === 'F32') ? 3 : 1;
-                vendorWavBits = (vendorRawFormat === 'F32') ? 32 : 16;
+                // JSON audio_event is raw PCM16LE by contract
+                vendorWavFmt = 1; vendorWavBits = 16; vendorEndian = 'le';
+                try { process.stdout.write('vraw:JSON_PCM16\n'); } catch(_) { void _; }
               }
             }
             let off = 0;
-            if (!acceptVendorChunk('bin')) return;
+            if (!acceptVendorChunk(src)) return;
             // process full 20ms frames
             while (true) {
               // Determine bytes needed for one 20ms frame
