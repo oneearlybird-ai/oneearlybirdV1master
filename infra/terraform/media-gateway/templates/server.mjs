@@ -59,11 +59,6 @@ const server = http.createServer((req, res) => {
     }));
     return;
   }
-  if (pathname === '/diag') {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' });
-    res.end(JSON.stringify({ ok: true, diag }));
-    return;
-  }
   res.writeHead(404, { 'Content-Type': 'application/json' });
   res.end(JSON.stringify({ ok: false, error: 'not_found' }));
 });
@@ -134,7 +129,6 @@ const wss = new WebSocketServer({
 });
 
 const metrics = { frames10s: 0, fps10s: 0, lastMsgAt: 0, backpressure10m: 0, lastBackpressureAt: 0 };
-const diag = { head0Hex: '', head1Hex: '', wav: null, vfmt: '', sendSizes: [], sendCount: 0, lastSendAt: 0 };
 setInterval(() => {
   metrics.fps10s = Math.round(metrics.frames10s / 10);
   metrics.frames10s = 0;
@@ -325,7 +319,6 @@ wss.on('connection', async (ws, req) => {
       txAgg = []; txAggLen = 0;
       const payload = buf.toString('base64');
       const ch = String(++txChunk);
-      try { diag.sendCount++; diag.lastSendAt = Date.now(); (diag.sendSizes.length>50)&&diag.sendSizes.shift(); diag.sendSizes.push(buf.length); } catch(e){ void e; }
       ws.send(JSON.stringify({ event: 'media', streamSid, media: { payload } }));
       try { ws.send(JSON.stringify({ event: 'mark', streamSid, mark: { name: `eb:${ch}` } })); } catch (e) { void e; }
     } catch (e) { void e; }
@@ -517,7 +510,6 @@ wss.on('connection', async (ws, req) => {
                 const hex = buf.subarray(0, hlen).toString('hex');
                 process.stdout.write(`el:head0 len=${buf.length} hex=${hex}\n`);
                 postLog('vendor_head', { stage: 0, len: buf.length, hex });
-                try { diag.head0Hex = hex; } catch(_) { void _; }
               } catch (_) { void _; }
             }
             // prepend carryover
@@ -534,7 +526,6 @@ wss.on('connection', async (ws, req) => {
                 vendorEndian = 'le'; // WAV PCM is LE
                 try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
                 try { postLog('vendor_wav', { sr: vendorWavSr, bits: vendorWavBits, fmt: vendorWavFmt, off: vendorWavDataOffset }); } catch (_) { void _; }
-                try { diag.wav = { sr: vendorWavSr, bits: vendorWavBits, fmt: vendorWavFmt, off: vendorWavDataOffset }; } catch(_) { void _; }
                 if (vendorWavDataOffset > 0) {
                   buf = buf.subarray(vendorWavDataOffset);
                   try {
@@ -542,7 +533,6 @@ wss.on('connection', async (ws, req) => {
                     const hex = buf.subarray(0, hlen).toString('hex');
                     process.stdout.write(`el:head1 len=${buf.length} hex=${hex}\n`);
                     postLog('vendor_head', { stage: 1, len: buf.length, hex });
-                    try { diag.head1Hex = hex; } catch(_) { void _; }
                   } catch (_) { void _; }
                 }
               }
@@ -551,7 +541,6 @@ wss.on('connection', async (ws, req) => {
             if (!vendorEndian) {
               vendorEndian = detectEndian(buf);
               try { process.stdout.write(`vfmt:${vendorEndian}\n`); } catch (_) { void _; }
-              try { diag.vfmt = vendorEndian; } catch(_) { void _; }
             }
             let off = 0;
             // process full 20ms frames
