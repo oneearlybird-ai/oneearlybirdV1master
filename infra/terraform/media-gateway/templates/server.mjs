@@ -401,14 +401,79 @@ wss.on('connection', async (ws, req) => {
         try { if (REC_ENABLED) { const cs = ev.start?.callSid || ev.start?.call_id || 'nocall'; recorder = new Recorder(cs); } } catch(e) { void e; }
         if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
         // Configure back-audio path from ElevenLabs to Twilio
-        // Use 20ms pacing and light low-pass + decimation to avoid aliasing/screech
+        // High-fidelity DSP: 16k → 8k decimation using high-order FIR low-pass, then μ-law encode
         _stopTx = () => { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } };
 
-        function downsample16kTo8kLP(pcm16k) {
-          const out = new Int16Array(Math.floor(pcm16k.length / 2));
-          for (let i = 0, j = 0; i + 1 < pcm16k.length; i += 2, j++) out[j] = (pcm16k[i] + pcm16k[i + 1]) >> 1;
-          return out;
+        // --- Elite resampler: windowed-sinc FIR decimator (by 2) ---
+        // Design parameters
+        const HB_TAPS = Number(process.env.HB_TAPS || 127);  // odd length, e.g., 127
+        const HB_CUTOFF = Number(process.env.HB_CUTOFF || 0.225); // normalized to fs (0..0.5)
+        // Blackman-Harris window
+        function blackmanHarris(M, n) {
+          const a0 = 0.35875, a1 = 0.48829, a2 = 0.14128, a3 = 0.01168;
+          const twoPi = Math.PI * 2;
+          return a0
+            - a1 * Math.cos(twoPi * n / (M - 1))
+            + a2 * Math.cos(2 * twoPi * n / (M - 1))
+            - a3 * Math.cos(3 * twoPi * n / (M - 1));
         }
+        function designLowpassSinc(taps, cutoff) {
+          const M = taps;
+          const mid = (M - 1) / 2;
+          const h = new Float64Array(M);
+          let sum = 0;
+          for (let n = 0; n < M; n++) {
+            const k = n - mid;
+            const x = k === 0 ? 2 * cutoff : Math.sin(2 * Math.PI * cutoff * k) / (Math.PI * k);
+            const w = blackmanHarris(M, n);
+            const v = x * w;
+            h[n] = v; sum += v;
+          }
+          // Normalize DC gain to 1
+          for (let n = 0; n < M; n++) h[n] /= sum || 1;
+          return h;
+        }
+        function createDecimatorBy2(h) {
+          const M = h.length; const mid = (M - 1) / 2;
+          const state = new Float64Array(M - 1);
+          return {
+            pushBlock(int16) {
+              const inLen = int16.length;
+              // Build contiguous buffer of state + input (float)
+              const buf = new Float64Array(state.length + inLen);
+              for (let i = 0; i < state.length; i++) buf[i] = state[i];
+              for (let i = 0; i < inLen; i++) buf[state.length + i] = int16[i];
+              // Number of output samples (decimate by 2): floor(inLen/2)
+              const outLen = Math.floor(inLen / 2);
+              const out = new Int16Array(outLen);
+              // Convolution at even phases: y[m] = sum_k h[k] x[2m + k]
+              // We center-align impulse at mid.
+              let outIdx = 0;
+              // Start index in buf to align first output so that we consume exactly 2 samples per out
+              // Choose base = mid to keep linear phase
+              for (let base = mid; base + (M - 1 - mid) < buf.length && outIdx < outLen; base += 2) {
+                let acc = 0;
+                // h is symmetric: exploit symmetry to halve MACs
+                for (let k = 0; k < mid; k++) {
+                  const a = h[k]; const b = h[M - 1 - k];
+                  const xl = buf[base - k]; const xr = buf[base + k];
+                  acc += a * xl + b * xr;
+                }
+                acc += h[mid] * buf[base];
+                // Clip, convert to int16
+                let s = Math.round(acc);
+                if (s > 32767) s = 32767; else if (s < -32768) s = -32768;
+                out[outIdx++] = s;
+              }
+              // Update state: last M-1 samples of buf (the tail window)
+              const tailStart = buf.length - (M - 1);
+              for (let i = 0; i < M - 1; i++) state[i] = buf[tailStart + i];
+              return out;
+            }
+          };
+        }
+        const hbCoefs = designLowpassSinc(HB_TAPS|0, Math.max(0.15, Math.min(0.245, HB_CUTOFF)));
+        const hbDecimator = createDecimatorBy2(hbCoefs);
 
         // Optional: flush Twilio buffer at start to prevent artifact burst
         try { ws.send(JSON.stringify({ event: 'clear', streamSid })); } catch (e) { void e; }
@@ -534,7 +599,7 @@ wss.on('connection', async (ws, req) => {
             // process full 20ms frames
             while (off + BYTES_PER_20MS <= buf.length) {
               // Build Int16Array safely regardless of alignment
-              if (VENDOR_SR_HZ === 16000) {
+            if (VENDOR_SR_HZ === 16000) {
                 const pcm16 = new Int16Array(320);
                 if (vendorWavFmt === 3 && vendorWavBits === 32) {
                   // Float32 WAV
@@ -551,7 +616,7 @@ wss.on('connection', async (ws, req) => {
                   }
                   off += 320 * 2;
                 }
-                const pcm8k = downsample16kTo8kLP(pcm16);
+                const pcm8k = hbDecimator.pushBlock(pcm16);
                 const mulaw = pcm16ToMuLawRef(pcm8k);
                 enqueueMuLawFrame(Buffer.from(mulaw));
               } else {
