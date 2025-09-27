@@ -79,13 +79,13 @@ variable "artifact_bucket" {
 variable "artifact_key" {
   description = "S3 object key for server.mjs artifact"
   type        = string
-  default     = "media/server-cba132ae7b45c03069dc3b3b89876e628969cec29a7f4bbc29c8c16085a0faa3.mjs"
+  default     = "media/server-885c49298a1d0abec07e762e3dff9f054ef6e2a7b3ba06e946fed937abc188b5.mjs"
 }
 
 variable "artifact_sha256" {
   description = "SHA256 (hex) of the server.mjs artifact for verification"
   type        = string
-  default     = "cba132ae7b45c03069dc3b3b89876e628969cec29a7f4bbc29c8c16085a0faa3"
+  default     = "885c49298a1d0abec07e762e3dff9f054ef6e2a7b3ba06e946fed937abc188b5"
 }
 
 variable "vendor_sr_hz" {

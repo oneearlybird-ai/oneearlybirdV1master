@@ -229,7 +229,17 @@ class ElevenLabsSession {
           const txt = data.toString('utf8');
           try {
             const obj = JSON.parse(txt);
-            try { const t = obj?.type || obj?.event || 'json'; const err = obj?.error || obj?.data?.error; if (t||err) process.stdout.write(`el:msg type=${t}${err?` err=${String(err).slice(0,80)}`:''}\n`); } catch (e) { void e; }
+            try {
+              const t = obj?.type || obj?.event || 'json';
+              const err = obj?.error || obj?.data?.error;
+              if (t||err) process.stdout.write(`el:msg type=${t}${err?` err=${String(err).slice(0,80)}`:''}\n`);
+              if (t === 'conversation_initiation_metadata') {
+                const m = obj?.conversation_initiation_metadata || obj?.conversation_initiation_metadata_event || {};
+                const ui = m?.user_input_audio_format || m?.user_audio_format || m?.user_input_format || '';
+                const ao = m?.agent_output_audio_format || m?.agent_audio_format || m?.agent_output_format || '';
+                try { process.stdout.write(`el:formats user_in=${String(ui)} agent_out=${String(ao)}\n`); } catch (_) { void _; }
+              }
+            } catch (e) { void e; }
             // ConvAI audio event
             const b64 = obj?.audio_event?.audio_base_64;
             if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') this.onAudio(Buffer.from(b64,'base64'));
@@ -253,18 +263,18 @@ wss.on('connection', async (ws, req) => {
     let allowed = false;
     let mode = 'unknown';
     let deny = '';
-    try {
-      const u = new URL(req.url || '/', 'http://localhost');
-      const qp = u.searchParams.get('token') || '';
-      // Also accept path-style token: /rtm/voice/jwt/<token>
-      let pathTok = '';
       try {
-        const parts = (u.pathname || '').split('/');
-        const last = decodeURIComponent(parts[parts.length - 1] || '');
-        if (last && last.includes('.')) pathTok = last;
-      } catch (e) { void e; }
-      const hdr = (req.headers['x-media-auth'] || '').toString();
-      const tok = qp || pathTok || hdr;
+        const u = new URL(req.url || '/', 'http://localhost');
+        const qp = u.searchParams.get('token') || '';
+        // Also accept path-style token: /rtm/voice/jwt/<token> (JWT or static)
+        let pathTok = '';
+        try {
+          const parts = (u.pathname || '').split('/');
+          const last = decodeURIComponent(parts[parts.length - 1] || '');
+          if (last) pathTok = last;
+        } catch (e) { void e; }
+        const hdr = (req.headers['x-media-auth'] || '').toString();
+        const tok = qp || pathTok || hdr;
       // Dual‑auth: accept valid JWT (if SHARED_SECRET) OR static token (if AUTH_TOKEN)
       if (SHARED_SECRET && tok && tok.includes('.')) {
         const v = verifyJwtHS256(tok, SHARED_SECRET, { aud: 'media', skewSec: JWT_SKEW_SEC });
@@ -287,7 +297,6 @@ wss.on('connection', async (ws, req) => {
 
   const el = new ElevenLabsSession({ apiKey: process.env.ELEVENLABS_API_KEY, agentId: process.env.ELEVENLABS_AGENT_ID, url: process.env.ELEVENLABS_WS_URL });
   let elCommitTimer = null;
-  let hadMedia = false;
   let startGraceTimer = null;
   let recorder = null;
   // Outbound aggregation to Twilio (canonical 20ms frames)
@@ -484,6 +493,17 @@ wss.on('connection', async (ws, req) => {
           try {
             if (!streamSid) return;
             try { recorder && recorder.addVendorPCM16(Buffer.from(chunk)); } catch(e) { void e; }
+            const OUT_FMT = String(process.env.VENDOR_OUT_FORMAT || '').toLowerCase();
+            if (OUT_FMT === 'ulaw_8000' || OUT_FMT === 'ulaw' || OUT_FMT === 'pcmu' || OUT_FMT === 'mulaw') {
+              // Pass-through μ-law 8k: frame into 160-byte chunks and send
+              let buf = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+              if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
+              let off = 0;
+              while (off + 160 <= buf.length) { enqueueMuLawFrame(buf.subarray(off, off + 160)); off += 160; }
+              vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
+              startTx();
+              return;
+            }
             const BYTES_PER_20MS = (VENDOR_SR_HZ === 16000 ? 320 * 2 : 160 * 2);
             let buf = chunk;
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
@@ -574,22 +594,15 @@ wss.on('connection', async (ws, req) => {
             const stop = () => { if (done) return; done = true; try { w.close(); } catch (e) { void e; } };
             w.on('open', ()=>{
               try { process.stdout.write('diag:open\n'); } catch (e) { void e; }
-              try { w.send(JSON.stringify({ type: 'session.update', session: { input_audio_format: { type:'pcm16', sample_rate_hz:VENDOR_SR_HZ, channels:1 }, output_audio_format: { type:'pcm16', sample_rate_hz:VENDOR_SR_HZ, channels:1 } } })); } catch (e) { void e; }
-              try { w.send(JSON.stringify({ type: 'conversation.create', conversation: { agent_id: agent } })); } catch (e) { void e; }
-              try { w.send(JSON.stringify({ type: 'response.create' })); } catch (e) { void e; }
               setTimeout(stop, 1500);
             });
-            w.on('message', (d)=>{ try { const o = JSON.parse(d.toString('utf8')); const t=o?.type||'json'; const er=o?.error||o?.data?.error||''; process.stdout.write(`diag:msg ${t}${er?` err=${String(er).slice(0,60)}`:''}\n`); } catch (err) { void err; try { process.stdout.write('diag:msg bin\n'); } catch (e2) { void e2; } } });
+            w.on('message', (d)=>{ try { const o = JSON.parse(d.toString('utf8')); const t=o?.type||'json'; process.stdout.write(`diag:msg ${t}\n`); } catch (err) { void err; } });
             w.on('unexpected-response', (_rq, rs)=>{ try { process.stdout.write(`diag:unexpected ${rs.statusCode}\n`); } catch (e) { void e; } ; stop(); });
             w.on('close', (c,r)=>{ try { process.stdout.write(`diag:close ${c} ${(r||'').toString()}\n`); } catch (e) { void e; } });
             w.on('error', (e)=>{ try { process.stdout.write(`diag:error ${(e&&e.message)||'err'}\n`); } catch (_) { void _; } ; stop(); });
           } catch (e) { void e; }
         })();
-        // Send response.create ASAP once vendor is connected
-        (function promptOnce(){
-          if (el && el.connected && el.ws) { try { el.ws.send(JSON.stringify({ type: 'response.create' })); } catch (e) { void e; } }
-          else setTimeout(promptOnce, 50);
-        })();
+        // No response.create for ConvAI
         // No periodic append/commit for ConvAI; continuous user_audio_chunk is used
         if (elCommitTimer) { try { clearInterval(elCommitTimer); } catch(_) { void _; } elCommitTimer = null; }
         break; }
@@ -607,7 +620,6 @@ wss.on('connection', async (ws, req) => {
           break;
         }
         frames++; metrics.frames10s++;
-        hadMedia = true;
         if (ECHO_BACK) {
           // Echo inbound payloads immediately (no decode/encode, no aggregation)
           try {
