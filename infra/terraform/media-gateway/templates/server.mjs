@@ -545,19 +545,6 @@ wss.on('connection', async (ws, req) => {
           let x = Math.max(-1, Math.min(1, f));
           return (x < 0 ? x * 32768 : x * 32767) | 0;
         }
-        function detectEndian(buf) {
-          try {
-            const samples = Math.min(200, Math.floor(buf.length / 2));
-            if (samples < 20) return 'le'; // default to LE
-            let sumLE = 0, sumBE = 0;
-            for (let i = 0; i < samples; i += 4) {
-              const off = i * 2;
-              sumLE += Math.abs(buf.readInt16LE(off));
-              sumBE += Math.abs(buf.readInt16BE(off));
-            }
-            return (sumLE >= sumBE) ? 'le' : 'be';
-          } catch { return 'le'; }
-        }
         el.onAudio = (chunk) => {
           try {
             if (!streamSid) return;
@@ -578,7 +565,7 @@ wss.on('connection', async (ws, req) => {
             if (!Buffer.isBuffer(buf)) buf = Buffer.from(buf);
             // prepend carryover
             if (vendorCarry.length) buf = Buffer.concat([vendorCarry, buf]);
-            // One-time WAV sniff: strip header and adopt sample rate/format if present
+            // One-time format decision: prefer forced PCM16LE for ConvAI; sniff WAV if present
             if (!vendorWavChecked) {
               vendorWavChecked = true;
               const wav = sniffWav(buf);
@@ -589,21 +576,18 @@ wss.on('connection', async (ws, req) => {
                 vendorWavSr = wav.sr;
                 vendorEndian = 'le'; // WAV PCM is LE
                 try { process.stdout.write(`wav:sr=${vendorWavSr} bits=${vendorWavBits} fmt=${vendorWavFmt} off=${vendorWavDataOffset}\n`); } catch (_) { void _; }
-                if (vendorWavDataOffset > 0) {
-                  buf = buf.subarray(vendorWavDataOffset);
-                }
+                if (vendorWavDataOffset > 0) buf = buf.subarray(vendorWavDataOffset);
+              } else {
+                // ConvAI binary frames: force PCM16LE by spec; no endianness detection
+                vendorWavFmt = 1; vendorWavBits = 16; vendorEndian = 'le';
+                try { process.stdout.write('vfmt:le(forced)\n'); } catch (_) { void _; }
               }
-            }
-            // detect endianness once
-            if (!vendorEndian) {
-              vendorEndian = detectEndian(buf);
-              try { process.stdout.write(`vfmt:${vendorEndian}\n`); } catch (_) { void _; }
             }
             let off = 0;
             // process full 20ms frames
             while (off + BYTES_PER_20MS <= buf.length) {
               // Build Int16Array safely regardless of alignment
-            if (VENDOR_SR_HZ === 16000) {
+              if (VENDOR_SR_HZ === 16000) {
                 const pcm16 = new Int16Array(320);
                 if (vendorWavFmt === 3 && vendorWavBits === 32) {
                   // Float32 WAV
@@ -616,6 +600,7 @@ wss.on('connection', async (ws, req) => {
                 } else {
                   for (let i = 0; i < 320; i++) {
                     const p = off + (i * 2);
+                    // Force LE for ConvAI unless explicit WAV dictates otherwise
                     pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
                   }
                   off += 320 * 2;
