@@ -238,16 +238,21 @@ class ElevenLabsSession {
               const t = obj?.type || obj?.event || 'json';
               const err = obj?.error || obj?.data?.error;
               if (t||err) process.stdout.write(`el:msg type=${t}${err?` err=${String(err).slice(0,80)}`:''}\n`);
-              if (t === 'conversation_initiation_metadata') {
-                const m = obj?.conversation_initiation_metadata || obj?.conversation_initiation_metadata_event || {};
-                const ui = m?.user_input_audio_format || m?.user_audio_format || m?.user_input_format || '';
-                const ao = m?.agent_output_audio_format || m?.agent_audio_format || m?.agent_output_format || '';
-                try { process.stdout.write(`el:formats user_in=${String(ui)} agent_out=${String(ao)}\n`); } catch (_) { void _; }
-              }
+                if (t === 'conversation_initiation_metadata') {
+                  const m = obj?.conversation_initiation_metadata || obj?.conversation_initiation_metadata_event || {};
+                  const ui = m?.user_input_audio_format || m?.user_audio_format || m?.user_input_format || '';
+                  const ao = m?.agent_output_audio_format || m?.agent_audio_format || m?.agent_output_format || '';
+                  try { process.stdout.write(`el:formats user_in=${String(ui)} agent_out=${String(ao)}\n`); } catch (_) { void _; }
+                  try {
+                    const pickSr = (fmt) => { const s = String(fmt||''); const mm = s.match(/(pcm|ulaw)_(\d{4,5})/i); return mm ? Number(mm[2]) : null; };
+                    const sr = pickSr(ao) || pickSr(ui);
+                    if (sr && (sr === 8000 || sr === 16000)) { this.streamSr = sr; try { process.stdout.write(`vmeta:sr=${sr}\n`);} catch(_) { void _; } }
+                  } catch(_) { void _; }
+                }
             } catch (e) { void e; }
             // ConvAI audio event
             const b64 = obj?.audio_event?.audio_base_64;
-            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') { try { this._lastSrc = 'json'; this._seenJsonAudio = true; this.onAudio(Buffer.from(b64,'base64')); } catch(_) { void _; } }
+            if (b64 && typeof b64==='string' && typeof this.onAudio === 'function') { try { this._lastSrc = 'json'; this.preferJson = true; this.onAudio(Buffer.from(b64,'base64')); } catch(_) { void _; } }
           } catch (e) { void e; }
         }
       } catch (e) { void e; }
@@ -302,6 +307,7 @@ wss.on('connection', async (ws, req) => {
 
   const el = new ElevenLabsSession({ apiKey: process.env.ELEVENLABS_API_KEY, agentId: process.env.ELEVENLABS_AGENT_ID, url: process.env.ELEVENLABS_WS_URL });
   let elCommitTimer = null;
+  // Vendor stream metadata/preferences (held on el session instead)
   let startGraceTimer = null;
   let recorder = null;
   // Outbound aggregation to Twilio (canonical 20ms frames)
@@ -557,7 +563,7 @@ wss.on('connection', async (ws, req) => {
         let vendorSrc = null; // 'json' | 'bin'
         function acceptVendorChunk(src) {
           if (!vendorSrc) {
-            const choice = (this && this._seenJsonAudio === true) ? 'json' : src;
+            const choice = (el && el.preferJson === true) ? 'json' : src;
             vendorSrc = choice;
             try { process.stdout.write(`vsrc:${vendorSrc}\n`); } catch(_) { void _; }
             return vendorSrc === src;
@@ -639,13 +645,13 @@ wss.on('connection', async (ws, req) => {
             if (!acceptVendorChunk(src)) return;
             // process full 20ms frames
             while (true) {
-              // Determine bytes needed for one 20ms frame
-              const need = (VENDOR_SR_HZ === 16000)
+              // Determine bytes needed for one 20ms frame based on vendorStreamSr
+              const need = (el.streamSr === 16000)
                 ? ((vendorWavFmt === 3 && vendorWavBits === 32) ? 320*4 : 320*2)
                 : ((vendorWavFmt === 3 && vendorWavBits === 32) ? 160*4 : 160*2);
               if (off + need > buf.length) break;
               // Build Int16Array safely regardless of alignment
-              if (VENDOR_SR_HZ === 16000) {
+              if (el.streamSr === 16000) {
                 const pcm16 = new Int16Array(320);
                 if (vendorWavFmt === 3 && vendorWavBits === 32) {
                   // Float32 WAV
