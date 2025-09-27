@@ -29,7 +29,12 @@ systemctl enable --now amazon-ssm-agent || systemctl enable --now snap.amazon-ss
 
 # App directory and artifact fetch
 install -d -o root -g root /opt/media-ws
-echo "[user-data] fetching server.mjs from s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY}"
+# Allow artifact key/sha to be overridden via SSM for effortless rollouts
+ART_KEY_SSM="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/media/ARTIFACT_KEY --query Parameter.Value --output text 2>/dev/null || true)"
+ART_SHA_SSM="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/media/ARTIFACT_SHA256 --query Parameter.Value --output text 2>/dev/null || true)"
+if [ -n "$ART_KEY_SSM" ] && [ "$ART_KEY_SSM" != "None" ]; then ARTIFACT_KEY="$ART_KEY_SSM"; fi
+if [ -n "$ART_SHA_SSM" ] && [ "$ART_SHA_SSM" != "None" ]; then ARTIFACT_SHA256="$ART_SHA_SSM"; fi
+echo "[user-data] fetching server.mjs from s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY} (sha256=${ARTIFACT_SHA256})"
 aws s3 cp "s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY}" /opt/media-ws/server.mjs
 echo "${ARTIFACT_SHA256}  /opt/media-ws/server.mjs" | sha256sum -c -
 chmod 0644 /opt/media-ws/server.mjs
