@@ -225,10 +225,11 @@ class ElevenLabsSession {
     this.ws.on('message', (data) => {
       try {
         if (Buffer.isBuffer(data)) {
-          // ElevenLabs ConvAI may deliver vendor audio as raw binary frames (PCM/μ-law)
-          if (typeof this.onAudio === 'function' && data && data.length) {
+          // Binary acceptance is opt-in; default to JSON path to avoid container/preview noise
+          const acceptBin = String(process.env.EL_ACCEPT_BINARY || 'false').toLowerCase() === 'true';
+          if (acceptBin && typeof this.onAudio === 'function' && data && data.length) {
             try { this.onAudio(Buffer.from(data)); } catch (_) { void _; }
-          }
+          } // else ignore binary frames
         } else {
           const txt = data.toString('utf8');
           try {
