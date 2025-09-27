@@ -560,6 +560,23 @@ wss.on('connection', async (ws, req) => {
           let x = Math.max(-1, Math.min(1, f));
           return (x < 0 ? x * 32768 : x * 32767) | 0;
         }
+        function linearResampleTo8k(pcmIn, inSr) {
+          try {
+            const inLen = pcmIn.length; if (!inLen || inSr <= 0) return new Int16Array(0);
+            const outLen = Math.max(1, Math.round(inLen * 8000 / inSr));
+            const out = new Int16Array(outLen);
+            const scale = (inLen - 1) / (outLen - 1);
+            for (let i = 0; i < outLen; i++) {
+              const pos = i * scale;
+              const idx = Math.floor(pos);
+              const frac = pos - idx;
+              const a = pcmIn[idx];
+              const b = (idx + 1 < inLen) ? pcmIn[idx + 1] : a;
+              out[i] = ((a * (1 - frac)) + (b * frac)) | 0;
+            }
+            return out;
+          } catch { return new Int16Array(0); }
+        }
         // Latch which vendor source we use (json vs bin) to avoid double mixing
         let vendorSrc = null; // 'json' | 'bin'
         function acceptVendorChunk(src) {
@@ -654,66 +671,43 @@ wss.on('connection', async (ws, req) => {
             if (!acceptVendorChunk(src)) return;
             // process full 20ms frames
             while (true) {
-              // Determine bytes needed for one 20ms frame based on vendorStreamSr
-              const need = (el.streamSr === 16000)
-                ? ((vendorWavFmt === 3 && vendorWavBits === 32) ? 320*4 : 320*2)
-                : ((vendorWavFmt === 3 && vendorWavBits === 32) ? 160*4 : 160*2);
+              // Generic 20ms window by negotiated sample rate and sample width
+              const bytesPerSample = (vendorWavFmt === 3 && vendorWavBits === 32) ? 4 : 2;
+              const sr = el.streamSr || 16000;
+              const sampPer20ms = Math.round(sr * 0.02);
+              const need = sampPer20ms * bytesPerSample;
               if (off + need > buf.length) break;
-              // Build Int16Array safely regardless of alignment
-              if (el.streamSr === 16000) {
-                const pcm16 = new Int16Array(320);
-                if (vendorWavFmt === 3 && vendorWavBits === 32) {
-                  // Float32 WAV
-                  for (let i = 0; i < 320; i++) {
-                    const p = off + (i * 4);
-                    const f = buf.readFloatLE(p);
-                    pcm16[i] = f32ToI16Sample(f);
-                  }
-                  off += 320 * 4;
-                } else {
-                  for (let i = 0; i < 320; i++) {
-                    const p = off + (i * 2);
-                    // Force LE for ConvAI unless explicit WAV dictates otherwise
-                    pcm16[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
-                  }
-                  off += 320 * 2;
+              const N = sampPer20ms;
+              let pcmIn16;
+              if (vendorWavFmt === 3 && vendorWavBits === 32) {
+                // Float32LE → Int16
+                pcmIn16 = new Int16Array(N);
+                for (let i = 0, o = off; i < N; i++, o += 4) {
+                  const f = buf.readFloatLE(o);
+                  pcmIn16[i] = f32ToI16Sample(f);
                 }
-                // Optional fade-in ramp
-                if (fadeFramesLeft > 0) {
-                  const steps = Math.max(1, Math.min(10, fadeFramesLeft));
-                  const kNum = (steps - 1) / steps; // simple step down
-                  for (let i=0;i<pcm16.length;i++) pcm16[i] = (pcm16[i] * kNum) | 0;
-                  fadeFramesLeft--;
-                }
-                const pcm8k = hbDecimator.pushBlock(pcm16);
-                const mulaw = pcm16ToMuLawRef(pcm8k);
-                enqueueMuLawFrame(Buffer.from(mulaw));
               } else {
-                // VENDOR_SR_HZ === 8000
-                const pcm8 = new Int16Array(160);
-                if (vendorWavFmt === 3 && vendorWavBits === 32) {
-                  for (let i = 0; i < 160; i++) {
-                    const p = off + (i * 4);
-                    const f = buf.readFloatLE(p);
-                    pcm8[i] = f32ToI16Sample(f);
-                  }
-                  off += 160 * 4;
-                } else {
-                  for (let i = 0; i < 160; i++) {
-                    const p = off + (i * 2);
-                    pcm8[i] = vendorEndian === 'be' ? buf.readInt16BE(p) : buf.readInt16LE(p);
-                  }
-                  off += 160 * 2;
+                // S16LE
+                pcmIn16 = new Int16Array(N);
+                for (let i = 0, o = off; i < N; i++, o += 2) {
+                  pcmIn16[i] = vendorEndian === 'be' ? buf.readInt16BE(o) : buf.readInt16LE(o);
                 }
-                if (fadeFramesLeft > 0) {
-                  const steps = Math.max(1, Math.min(10, fadeFramesLeft));
-                  const kNum = (steps - 1) / steps;
-                  for (let i=0;i<pcm8.length;i++) pcm8[i] = (pcm8[i] * kNum) | 0;
-                  fadeFramesLeft--;
-                }
-                const mulaw = pcm16ToMuLawRef(pcm8);
-                enqueueMuLawFrame(Buffer.from(mulaw));
               }
+              off += need;
+              // Optional fade-in ramp
+              if (fadeFramesLeft > 0) {
+                const steps = Math.max(1, Math.min(10, fadeFramesLeft));
+                const kNum = (steps - 1) / steps;
+                for (let i=0;i<pcmIn16.length;i++) pcmIn16[i] = (pcmIn16[i] * kNum) | 0;
+                fadeFramesLeft--;
+              }
+              // Resample to 8k as required
+              let pcm8k;
+              if (sr === 8000) pcm8k = pcmIn16;
+              else if (sr === 16000) pcm8k = hbDecimator.pushBlock(pcmIn16);
+              else pcm8k = linearResampleTo8k(pcmIn16, sr);
+              const mulaw = pcm16ToMuLawRef(pcm8k);
+              enqueueMuLawFrame(Buffer.from(mulaw));
             }
             // Save remainder for next chunk
             vendorCarry = (off < buf.length) ? buf.subarray(off) : Buffer.alloc(0);
