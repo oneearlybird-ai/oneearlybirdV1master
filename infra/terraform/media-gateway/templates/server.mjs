@@ -241,12 +241,13 @@ class ElevenLabsSession {
                 if (t === 'conversation_initiation_metadata') {
                   const m = obj?.conversation_initiation_metadata || obj?.conversation_initiation_metadata_event || {};
                   const ui = m?.user_input_audio_format || m?.user_audio_format || m?.user_input_format || '';
-                  const ao = m?.agent_output_audio_format || m?.agent_audio_format || m?.agent_output_format || '';
+                  const ao = m?.agent_output_audio_format || m?.agent_output_format || m?.agent_audio_format || '';
                   try { process.stdout.write(`el:formats user_in=${String(ui)} agent_out=${String(ao)}\n`); } catch (_) { void _; }
                   try {
                     const pickSr = (fmt) => { const s = String(fmt||''); const mm = s.match(/(pcm|ulaw)_(\d{4,5})/i); return mm ? Number(mm[2]) : null; };
                     const sr = pickSr(ao) || pickSr(ui);
                     if (sr && (sr === 8000 || sr === 16000)) { this.streamSr = sr; try { process.stdout.write(`vmeta:sr=${sr}\n`);} catch(_) { void _; } }
+                    this.agentOutFmt = String(ao||'');
                   } catch(_) { void _; }
                 }
             } catch (e) { void e; }
