@@ -599,7 +599,7 @@ wss.on('connection', async (ws, req) => {
             // OUT_FMT is for our Twilio target (always PCMU@8k); vendor format is from metadata
             const src = (typeof el._lastSrc === 'string') ? el._lastSrc : 'bin';
             const fmt = String(el && el.agentOutFmt || '').toLowerCase();
-            const vendorIsUlaw   = /\bulaw_8000\b/.test(fmt);
+            const vendorIsUlaw   = /\b(mu|u)law_8000\b/.test(fmt);
             const vendorIsPcm16k = /^pcm_16000$/.test(fmt);
             const vendorIsPcm8k  = /^pcm_8000$/.test(fmt);
             let mode = 'unsupported';
@@ -683,13 +683,6 @@ wss.on('connection', async (ws, req) => {
             }
             let off = 0;
             if (!acceptVendorChunk(src)) return;
-            // Require that sample rate has been latched from metadata before encoding
-            if (!el.streamSr) {
-              try { process.stdout.write('NO_SR_LATCHED; DROPPING_AUDIO\n'); } catch(_) { void _; }
-              vendorCarry = buf;
-              startTx();
-              return;
-            }
             // process full 20ms frames
             while (true) {
               // Generic 20ms window by negotiated sample rate and sample width
