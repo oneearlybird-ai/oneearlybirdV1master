@@ -626,6 +626,20 @@ wss.on('connection', async (ws, req) => {
             let mode = 'unsupported';
             if (vendorIsUlaw) mode = 'pass';
             else if (vendorIsPcm16k || vendorIsPcm8k) mode = 'encode';
+            // If metadata not yet latched, try to infer from container/raw format
+            if (mode === 'unsupported') {
+              // If WAV header shows μ-law @8k, pass-through
+              if (vendorWavChecked && vendorWavFmt === 7 && vendorWavSr === 8000) {
+                mode = 'pass';
+              } else if (vendorWavChecked && (vendorWavFmt === 1 || vendorWavFmt === 3)) {
+                // PCM16 or Float32 → encode
+                mode = 'encode';
+              } else {
+                // No header yet; prefer encode fallback until metadata arrives
+                mode = 'encode';
+              }
+              try { process.stdout.write(`mode_fallback=${mode} vendor_fmt=${fmt}\n`); } catch(_) { void _; }
+            }
             try { process.stdout.write(`mode=${mode} vendor_fmt=${fmt}\n`); } catch(_) { void _; }
             if (mode === 'pass') {
                // Pass-through μ-law 8k: frame into 160-byte chunks and send
