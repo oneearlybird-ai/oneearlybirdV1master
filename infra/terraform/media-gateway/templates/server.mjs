@@ -323,7 +323,7 @@ wss.on('connection', async (ws, req) => {
     // Pace close to frame duration to flush any stragglers
     txTimer = setInterval(() => flushAgg(false), 20);
   }
-  function stopTx() { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } }
+  // stopTx inlined into _stopTx assignment inside 'start' handler
 
   function enqueueMuLawFrame(b) {
     // Accept only exact 160-byte μ-law frames (20ms)
@@ -402,7 +402,7 @@ wss.on('connection', async (ws, req) => {
         if (startGraceTimer) { try { clearTimeout(startGraceTimer); } catch (e) { void e; } startGraceTimer = null; }
         // Configure back-audio path from ElevenLabs to Twilio
         // Use 20ms pacing and light low-pass + decimation to avoid aliasing/screech
-        _stopTx = stopTx;
+        _stopTx = () => { if (txTimer) { try { clearInterval(txTimer); } catch (e) { void e; } txTimer = null; } };
 
         function downsample16kTo8kLP(pcm16k) {
           const out = new Int16Array(Math.floor(pcm16k.length / 2));
