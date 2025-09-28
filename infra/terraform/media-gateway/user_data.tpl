@@ -4,28 +4,48 @@ exec > /var/log/user-data.log 2>&1
 echo "[user-data] begin $(date -Is)"
 
 export DEBIAN_FRONTEND=noninteractive
-apt-get update -y
-apt-get install -y ca-certificates curl gnupg git awscli amazon-cloudwatch-agent
+retry() { n=0; until [ $n -ge 5 ]; do "$@" && break; n=$((n+1)); echo "[retry] attempt $n failed: $*"; sleep 3; done; [ $n -lt 5 ]; }
+retry apt-get update -y
+retry apt-get install -y ca-certificates curl gnupg git awscli amazon-cloudwatch-agent
 
-# Install Node.js 20 (NodeSource)
+# Install Node.js 20 (robust)
+set +e
 mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg
+curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg || true
 NODE_MAJOR=20
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$${NODE_MAJOR}.x nodistro main" > /etc/apt/sources.list.d/nodesource.list
-apt-get update -y
-apt-get install -y nodejs
-node -v
+echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$${NODE_MAJOR}.x nodistro main" > /etc/apt/sources.list.d/nodesource.list || true
+apt-get update -y || true
+apt-get install -y nodejs || true
+if ! command -v node >/dev/null 2>&1; then
+  echo "[user-data] NodeSource install failed, attempting Debian nodejs"
+  apt-get update -y || true
+  apt-get install -y nodejs npm || true
+fi
+if ! command -v node >/dev/null 2>&1; then
+  echo "[user-data] Debian nodejs failed, fetching Node tarball"
+  ARCH=$(uname -m)
+  if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then NODE_PKG=node-v20.16.0-linux-arm64; else NODE_PKG=node-v20.16.0-linux-x64; fi
+  curl -fsSL "https://nodejs.org/dist/v20.16.0/$NODE_PKG.tar.xz" -o /tmp/node.tar.xz && mkdir -p /opt/node && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 && ln -sf /opt/node/bin/node /usr/bin/node && ln -sf /opt/node/bin/npm /usr/bin/npm || true
+fi
+node -v || echo "[user-data] node not found"
+set -e
 
 # Ensure SSM Agent is installed and running (so instance shows as Managed)
+set +e
 ARCH=$(uname -m)
 if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
   AGENT_URL="https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb"
 else
   AGENT_URL="https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb"
 fi
-curl -fsSL "$AGENT_URL" -o /tmp/amazon-ssm-agent.deb
-dpkg -i /tmp/amazon-ssm-agent.deb || apt-get install -f -y
-systemctl enable --now amazon-ssm-agent || systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+retry curl -fsSL "$AGENT_URL" -o /tmp/amazon-ssm-agent.deb || echo "[user-data] SSM download failed"
+if [ -s /tmp/amazon-ssm-agent.deb ]; then
+  dpkg -i /tmp/amazon-ssm-agent.deb || apt-get install -f -y || true
+  systemctl enable --now amazon-ssm-agent || systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service || true
+else
+  echo "[user-data] SSM agent package missing; continuing without SSM"
+fi
+set -e
 
 # App directory and artifact fetch
 install -d -o root -g root /opt/media-ws
@@ -95,6 +115,7 @@ After=network.target
 
 [Service]
 EnvironmentFile=/etc/default/media-ws
+ExecStartPre=/bin/sh -c 'cd /opt/media-ws && [ -d node_modules/ws ] || npm install --no-audit --omit=dev ws@^8'
 ExecStart=/usr/bin/node /opt/media-ws/server.mjs
 WorkingDirectory=/opt/media-ws
 Restart=always

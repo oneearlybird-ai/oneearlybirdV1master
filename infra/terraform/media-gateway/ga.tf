@@ -22,7 +22,7 @@ resource "aws_globalaccelerator_endpoint_group" "media" {
   listener_arn          = aws_globalaccelerator_listener.media.id
   endpoint_group_region = data.aws_region.current.name
   health_check_protocol = "TCP"
-  health_check_port     = var.ws_port
+  health_check_port     = 443
   threshold_count       = 2
   traffic_dial_percentage = 100
 
@@ -33,4 +33,3 @@ resource "aws_globalaccelerator_endpoint_group" "media" {
 }
 
 output "global_accelerator_dns" { value = aws_globalaccelerator_accelerator.media.dns_name }
-

@@ -42,6 +42,7 @@ resource "aws_autoscaling_group" "media_asg" {
   max_size            = var.max_size
   desired_capacity    = var.desired_capacity
   vpc_zone_identifier = local.asg_subnets
+  health_check_grace_period = 600
 
   launch_template {
     id      = aws_launch_template.media_lt.id
