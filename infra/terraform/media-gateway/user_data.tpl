@@ -172,4 +172,64 @@ EOF_CWA
 
 systemctl enable amazon-cloudwatch-agent || true
 /opt/aws/amazon-cloudwatch-agent/bin/amazon-cloudwatch-agent-ctl -a fetch-config -m ec2 -c file:/opt/aws/amazon-cloudwatch-agent/etc/amazon-cloudwatch-agent.json -s || true
+
+# Persistent SSM Agent retry (non-blocking): keep trying in background until active
+cat >/usr/local/bin/ssm-agent-retry.sh <<'EOF_SSMR'
+#!/bin/bash
+set -euo pipefail
+log() { echo "[ssm-retry] $*"; }
+is_active() {
+  systemctl is-active --quiet amazon-ssm-agent || systemctl is-active --quiet snap.amazon-ssm-agent.amazon-ssm-agent.service
+}
+if is_active; then log "agent already active"; exit 0; fi
+ARCH=$(uname -m)
+if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then
+  AGENT_URL="https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_arm64/amazon-ssm-agent.deb"
+else
+  AGENT_URL="https://s3.amazonaws.com/ec2-downloads-windows/SSMAgent/latest/debian_amd64/amazon-ssm-agent.deb"
+fi
+set +e
+log "attempt deb install"
+curl -fsSL "$AGENT_URL" -o /tmp/amazon-ssm-agent.deb && dpkg -i /tmp/amazon-ssm-agent.deb && systemctl enable --now amazon-ssm-agent
+is_active && { log "deb path ok"; exit 0; }
+log "attempt apt install"
+apt-get update -y && apt-get install -y amazon-ssm-agent && systemctl enable --now amazon-ssm-agent
+is_active && { log "apt path ok"; exit 0; }
+log "attempt snap install"
+if command -v snap >/dev/null 2>&1; then
+  snap install amazon-ssm-agent && systemctl enable --now snap.amazon-ssm-agent.amazon-ssm-agent.service
+fi
+is_active && { log "snap path ok"; exit 0; }
+log "still not active"; exit 1
+EOF_SSMR
+chmod +x /usr/local/bin/ssm-agent-retry.sh
+
+cat >/etc/systemd/system/ssm-agent-retry.service <<'EOF_SVC2'
+[Unit]
+Description=Retry install/start of Amazon SSM Agent
+After=network-online.target
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ssm-agent-retry.sh
+
+[Install]
+WantedBy=multi-user.target
+EOF_SVC2
+
+cat >/etc/systemd/system/ssm-agent-retry.timer <<'EOF_TIM'
+[Unit]
+Description=Retry SSM Agent install/start periodically
+
+[Timer]
+OnBootSec=60
+OnUnitActiveSec=300
+Unit=ssm-agent-retry.service
+
+[Install]
+WantedBy=timers.target
+EOF_TIM
+
+systemctl daemon-reload
+systemctl enable --now ssm-agent-retry.timer || true
 echo "[user-data] completed $(date -Is)"
