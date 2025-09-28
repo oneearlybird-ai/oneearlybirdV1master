@@ -3,3 +3,12 @@
 
 # Lint all code; fail on warnings
 npm run lint
+
+# Prevent committing Terraform plan files
+TP=$(git ls-files --cached | grep -E '(^|/)(tfplan(_[A-Za-z0-9._-]+)?|.*\.tfplan)$' || true)
+if [ -n "$TP" ]; then
+  echo "Error: Terraform plan files are tracked and must not be committed:" >&2
+  echo "$TP" >&2
+  echo "Run: git rm --cached <file>  (plans should be ignored)" >&2
+  exit 1
+fi

@@ -7,6 +7,14 @@ if command -v node >/dev/null 2>&1; then
   [ -f package.json ] && npm run -s lint || true
 fi
 # Security scans (read-only; fail on findings)
+echo "== pre-push: checking for tracked Terraform plan files =="
+TP=$(git ls-files --cached | grep -E '(^|/)(tfplan(_[A-Za-z0-9._-]+)?|.*\.tfplan)$' || true)
+if [ -n "$TP" ]; then
+  echo "Error: Terraform plan files are tracked and must not be committed:" >&2
+  echo "$TP" >&2
+  echo "Run: git rm --cached <file>  (plans should be ignored)" >&2
+  exit 1
+fi
 if command -v gitleaks >/dev/null 2>&1; then gitleaks detect --no-git --exit-code 1; fi
 if command -v osv-scanner >/dev/null 2>&1; then osv-scanner -r .; fi
 if command -v semgrep >/dev/null 2>&1; then semgrep scan --config p/ci --error; fi
