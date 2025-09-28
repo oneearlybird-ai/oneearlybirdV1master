@@ -8,27 +8,48 @@ retry() { n=0; until [ $n -ge 5 ]; do "$@" && break; n=$((n+1)); echo "[retry] a
 retry apt-get update -y
 retry apt-get install -y ca-certificates curl gnupg git awscli amazon-cloudwatch-agent
 
-# Install Node.js 20 (robust)
-set +e
-mkdir -p /etc/apt/keyrings
-curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg || true
-NODE_MAJOR=20
-echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$${NODE_MAJOR}.x nodistro main" > /etc/apt/sources.list.d/nodesource.list || true
-apt-get update -y || true
-apt-get install -y nodejs || true
-if ! command -v node >/dev/null 2>&1; then
-  echo "[user-data] NodeSource install failed, attempting Debian nodejs"
+# Optional pre-baked media bundle from S3 (preferred)
+BUNDLE_KEY_SSM="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/media/BUNDLE_KEY --query Parameter.Value --output text 2>/dev/null || true)"
+BUNDLE_SHA_SSM="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/media/BUNDLE_SHA256 --query Parameter.Value --output text 2>/dev/null || true)"
+USE_BUNDLE=0
+if [ -n "$BUNDLE_KEY_SSM" ] && [ "$BUNDLE_KEY_SSM" != "None" ] && [ -n "$BUNDLE_SHA_SSM" ] && [ "$BUNDLE_SHA_SSM" != "None" ]; then
+  echo "[user-data] fetching bundle from s3://${ARTIFACT_BUCKET}/${BUNDLE_KEY_SSM} (sha256=${BUNDLE_SHA_SSM})"
+  if aws s3 cp "s3://${ARTIFACT_BUCKET}/${BUNDLE_KEY_SSM}" /tmp/media-bundle.tgz; then
+    echo "${BUNDLE_SHA_SSM}  /tmp/media-bundle.tgz" | sha256sum -c - && USE_BUNDLE=1 || echo "[user-data] bundle sha256 mismatch"
+  else
+    echo "[user-data] bundle download failed"
+  fi
+fi
+
+if [ "$USE_BUNDLE" -eq 1 ]; then
+  install -d -o root -g root /opt/media-ws
+  tar -xzf /tmp/media-bundle.tgz -C /opt/media-ws
+  if [ -x /opt/media-ws/bin/node ]; then ln -sf /opt/media-ws/bin/node /usr/bin/node; fi
+  if [ -x /opt/media-ws/bin/npm ]; then ln -sf /opt/media-ws/bin/npm /usr/bin/npm; fi
+  echo "[user-data] bundle extracted"
+else
+  # Install Node.js 20 (robust)
+  set +e
+  mkdir -p /etc/apt/keyrings
+  curl -fsSL https://deb.nodesource.com/gpgkey/nodesource-repo.gpg.key | gpg --dearmor -o /etc/apt/keyrings/nodesource.gpg || true
+  NODE_MAJOR=20
+  echo "deb [signed-by=/etc/apt/keyrings/nodesource.gpg] https://deb.nodesource.com/node_$${NODE_MAJOR}.x nodistro main" > /etc/apt/sources.list.d/nodesource.list || true
   apt-get update -y || true
-  apt-get install -y nodejs npm || true
+  apt-get install -y nodejs || true
+  if ! command -v node >/dev/null 2>&1; then
+    echo "[user-data] NodeSource install failed, attempting Debian nodejs"
+    apt-get update -y || true
+    apt-get install -y nodejs npm || true
+  fi
+  if ! command -v node >/dev/null 2>&1; then
+    echo "[user-data] Debian nodejs failed, fetching Node tarball"
+    ARCH=$(uname -m)
+    if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then NODE_PKG=node-v20.16.0-linux-arm64; else NODE_PKG=node-v20.16.0-linux-x64; fi
+    curl -fsSL "https://nodejs.org/dist/v20.16.0/$NODE_PKG.tar.xz" -o /tmp/node.tar.xz && mkdir -p /opt/node && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 && ln -sf /opt/node/bin/node /usr/bin/node && ln -sf /opt/node/bin/npm /usr/bin/npm || true
+  fi
+  node -v || echo "[user-data] node not found"
+  set -e
 fi
-if ! command -v node >/dev/null 2>&1; then
-  echo "[user-data] Debian nodejs failed, fetching Node tarball"
-  ARCH=$(uname -m)
-  if [ "$ARCH" = "aarch64" ] || [ "$ARCH" = "arm64" ]; then NODE_PKG=node-v20.16.0-linux-arm64; else NODE_PKG=node-v20.16.0-linux-x64; fi
-  curl -fsSL "https://nodejs.org/dist/v20.16.0/$NODE_PKG.tar.xz" -o /tmp/node.tar.xz && mkdir -p /opt/node && tar -xJf /tmp/node.tar.xz -C /opt/node --strip-components=1 && ln -sf /opt/node/bin/node /usr/bin/node && ln -sf /opt/node/bin/npm /usr/bin/npm || true
-fi
-node -v || echo "[user-data] node not found"
-set -e
 
 # Ensure SSM Agent is installed and running (so instance shows as Managed)
 set +e
@@ -59,11 +80,13 @@ aws s3 cp "s3://${ARTIFACT_BUCKET}/${ARTIFACT_KEY}" /opt/media-ws/server.mjs
 echo "${ARTIFACT_SHA256}  /opt/media-ws/server.mjs" | sha256sum -c -
 chmod 0644 /opt/media-ws/server.mjs
 
-# Install app deps locally so 'require("ws")' resolves
-cd /opt/media-ws
-npm init -y >/dev/null 2>&1 || true
-npm install --no-audit --omit=dev ws@^8 >/dev/null 2>&1 || true
-cd /
+# Install app deps only if bundle did not include them
+if [ "$USE_BUNDLE" -ne 1 ]; then
+  cd /opt/media-ws
+  npm init -y >/dev/null 2>&1 || true
+  npm install --no-audit --omit=dev ws@^8 >/dev/null 2>&1 || true
+  cd /
+fi
 
 # Fetch MEDIA_AUTH_TOKEN from SSM Parameter Store (fallback to baked value if unavailable)
 TOKEN="$($${AWS:-aws} ssm get-parameter --region ${AWS_REGION} --name /oneearlybird/media/MEDIA_AUTH_TOKEN --with-decryption --query Parameter.Value --output text 2>/dev/null || true)"
