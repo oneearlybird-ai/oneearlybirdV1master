@@ -50,7 +50,8 @@ resource "aws_autoscaling_group" "media_asg" {
   }
 
   target_group_arns = [aws_lb_target_group.media_tg.arn]
-  health_check_type = "ELB"
+  # Use EC2 health for ASG so ELB health does not cause instance replacement
+  health_check_type = "EC2"
   tag {
     key                 = "Name"
     value               = "media-ws"
