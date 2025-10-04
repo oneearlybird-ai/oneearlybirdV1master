@@ -29,7 +29,8 @@ export default function AuthClient({
 
   function switchTab(next: "login" | "signup") {
     setTab(next);
-    const q = new URLSearchParams(Array.from(sp.entries()));
+    const entries = typeof (sp as any)?.entries === 'function' ? Array.from((sp as any).entries()) : [];
+    const q = new URLSearchParams(entries as any);
     if (next === "signup") q.set("tab", "signup"); else q.delete("tab");
     router.replace(`/login${q.toString() ? `?${q.toString()}` : ""}`);
     // Move focus to the first field of the target panel for better a11y
