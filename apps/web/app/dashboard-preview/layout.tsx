@@ -7,7 +7,7 @@ import { useEffect, useState, type ReactNode } from "react";
 export const dynamic = "force-dynamic";
 
 function NavLink({ href, label }: { href: string; label: string }) {
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const isActive = pathname === href || (href !== "/dashboard-preview" && pathname.startsWith(href));
   return (
     <Link
