@@ -34,7 +34,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', onKey);
     return () => { cancelled = true };
   }, []);
-  const pathname = usePathname();
+  const pathname = usePathname() || "";
   const NavLink = ({ href, label }: { href: string; label: string }) => {
     const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
     return (
