@@ -101,7 +101,7 @@ export default function Page() {
         <div className="mt-10 grid gap-4 md:grid-cols-3">
           <Tier
             name="Starter"
-            price="$0 + usage"
+            price="$149/mo (200 min)"
             blurb="Perfect for testing and small teams"
             ctaHref="/signup"
             features={[
@@ -113,7 +113,7 @@ export default function Page() {
           />
           <Tier
             name="Growth"
-            price="$99/mo + usage"
+            price="$399/mo (800 min)"
             blurb="Best for growing businesses"
             ctaHref="/signup"
             popular
@@ -127,9 +127,9 @@ export default function Page() {
           />
           <Tier
             name="Enterprise"
-            price="Talk to us"
+            price="$899/mo (2000 min)"
             blurb="Compliance, SSO, and onboarding"
-            ctaHref="/support"
+            ctaHref="/signup"
             features={[
               "SLA, SSO, audit logs",
               "Custom integrations",
