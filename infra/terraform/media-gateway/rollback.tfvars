@@ -1,3 +1,0 @@
-artifact_key   = "media/server-e4b6b96c9f69f52c22e01f8ddcdb8d3bad1a5ec75aa28935ddaae8c096c7b4b6.mjs"
-artifact_sha256 = "e4b6b96c9f69f52c22e01f8ddcdb8d3bad1a5ec75aa28935ddaae8c096c7b4b6"
-
