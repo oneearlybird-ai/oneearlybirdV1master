@@ -28,7 +28,7 @@
     "sec:gitleaks": "gitleaks detect --no-git --exit-code 1",
     "sec:semgrep": "semgrep scan --config p/ci --error",
     "sec:trivy": "trivy fs --exit-code 1 --severity HIGH,CRITICAL .",
-    "prepare": "husky install"
+    "prepare": "husky install || true"
   },
   "devDependencies": {
     "@babel/parser": "^7.28.4",

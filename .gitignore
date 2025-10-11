@@ -79,3 +79,6 @@ apps/web/.env.vercel
 *.tar
 *.tar.gz
 .vercel
+.vercel/.env.local
+apps/web/.vercel/.env.local
+infra/terraform/**/tfplan*

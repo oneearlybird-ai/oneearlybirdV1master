@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/http";
 
 import { useEffect, useState } from "react";
 import { toast } from "@/components/Toasts";
@@ -40,7 +41,7 @@ export default function IntegrationsPage() {
   const [providers, setProviders] = useState<Record<string, Provider>>({});
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/integrations/status', { cache: 'no-store' })
+    apiFetch('/integrations/status', { cache: 'no-store' })
       .then(r => r.json())
       .then((j) => {
         if (cancelled) return;
@@ -73,7 +74,7 @@ export default function IntegrationsPage() {
     if (it.oauth && it.connectId) {
       const onConnect = async () => {
         try {
-          const res = await fetch(`/api/integrations/oauth/start?provider=${encodeURIComponent(it.connectId!)}`, { method: 'POST' });
+          const res = await apiFetch('/integrations/oauth/start?provider=' + encodeURIComponent(it.connectId!), { method: 'POST' });
           if (res.status === 501) { toast('Linking not available yet', 'error'); return; }
           if (!res.ok) { toast('Connect failed', 'error'); return; }
           const body = await res.json().catch(() => ({} as any));
