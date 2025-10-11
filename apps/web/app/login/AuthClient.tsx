@@ -4,6 +4,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { signIn } from "next-auth/react";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import Link from "next/link";
+import { API_BASE } from "@/lib/config";
 
 type Providers = Record<string, { id: string; name: string }>;
 
@@ -24,6 +25,13 @@ export default function AuthClient({
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+
+  // Signup-specific state
+  const [suEmail, setSuEmail] = useState("");
+  const [suPassword, setSuPassword] = useState("");
+  const [suConfirm, setSuConfirm] = useState("");
+  const [suErr, setSuErr] = useState<string | null>(null);
+  const [suLoading, setSuLoading] = useState(false);
 
   const googleEnabled = useMemo(() => !!providers && !!providers["google"], [providers]);
 
@@ -49,6 +57,46 @@ export default function AuthClient({
     if (!res) return setErr("unavailable");
     if (res.error) return setErr(res.error || "invalid");
     if (res.ok && res.url) window.location.href = res.url;
+  }
+
+  function apiUrl(path: string) {
+    const base = (API_BASE || "").replace(/\/+$/, "");
+    if (base) return `${base}${path}`;
+    return `/api/upstream${path}`; // preview/proxy path
+  }
+
+  async function onSignup(e: React.FormEvent) {
+    e.preventDefault();
+    setSuErr(null);
+    if (!suEmail || !suPassword) { setSuErr("missing_fields"); return; }
+    if (suPassword !== suConfirm) { setSuErr("passwords_do_not_match"); return; }
+    setSuLoading(true);
+    try {
+      // 1) Create account — accept 200/201 or 409 (already exists)
+      const signRes = await fetch(apiUrl('/auth/signup'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: suEmail, password: suPassword })
+      });
+      if (!(signRes.status === 200 || signRes.status === 201 || signRes.status === 409)) {
+        setSuErr('signup_failed'); setSuLoading(false); return;
+      }
+      // 2) Login to set cookies (three httpOnly cookies set by backend)
+      const logRes = await fetch(apiUrl('/auth/login'), {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ email: suEmail, password: suPassword })
+      });
+      if (!logRes.ok) { setSuErr('login_failed'); setSuLoading(false); return; }
+      // 3) Redirect to authenticated area
+      router.push('/dashboard');
+    } catch (_e) {
+      setSuErr('unavailable');
+    } finally {
+      setSuLoading(false);
+    }
   }
 
   const GoogleBtn = ({ label }: { label: string }) => (
@@ -163,7 +211,7 @@ export default function AuthClient({
             <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">Create your account</h1>
             <p className="mt-2 text-white/70">Set your email and password to get started.</p>
 
-            <form className="mt-8 space-y-4" onSubmit={(e)=>e.preventDefault()} aria-label="Create account">
+            <form className="mt-8 space-y-4" onSubmit={onSignup} aria-label="Create account">
               <input
                 name="email"
                 type="email"
@@ -173,6 +221,8 @@ export default function AuthClient({
                 autoComplete="email"
                 aria-label="Email"
                 ref={signupEmailRef}
+                value={suEmail}
+                onChange={e => setSuEmail(e.target.value)}
               />
               <input
                 name="password"
@@ -182,6 +232,8 @@ export default function AuthClient({
                 className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 outline-none placeholder-white/40 text-white"
                 autoComplete="new-password"
                 aria-label="Password"
+                value={suPassword}
+                onChange={e => setSuPassword(e.target.value)}
               />
               <input
                 name="confirm"
@@ -191,15 +243,18 @@ export default function AuthClient({
                 className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 outline-none placeholder-white/40 text-white"
                 autoComplete="new-password"
                 aria-label="Confirm password"
+                value={suConfirm}
+                onChange={e => setSuConfirm(e.target.value)}
               />
               <button
                 type="submit"
-                disabled
-                className="w-full rounded-xl bg-white/30 px-4 py-3 font-medium text-white/80 cursor-not-allowed"
-                aria-disabled="true"
+                disabled={suLoading}
+                className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-60"
+                aria-busy={suLoading}
               >
-                Create account (coming soon)
+                {suLoading ? "Creating account…" : "Create account"}
               </button>
+              {suErr && <p className="text-sm text-red-300">Error: {suErr}</p>}
             </form>
 
             {googleEnabled && (
