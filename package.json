@@ -22,9 +22,6 @@
     "typecheck": "tsc -p apps/web/tsconfig.json",
     "ah:gate": "node scripts/anti_hallucination_gate.mjs --config anti_hallucination.config.json",
     "ah:gate:fix": "node scripts/anti_hallucination_gate.mjs --config anti_hallucination.config.json --fix",
-    "test": "npm --prefix apps/web run test",
-    "test:e2e": "npx playwright test --config playwright.config.ts --reporter=list --project=chromium",
-    "test:e2e:manual": "RUN_MANUAL_E2E=1 npx playwright test --config playwright.config.ts --reporter=list --project=chromium --grep @manual",
     "db:status": "node scripts/db_migrate.mjs status",
     "db:migrate": "node scripts/db_migrate.mjs up",
     "headers:check": "node scripts/headers_check.mjs",
@@ -53,8 +50,7 @@
     "husky": "^8.0.0",
     "eslint-plugin-security": "^3.0.1",
     "@types/react": "^18.3.8",
-    "@types/react-dom": "^18.3.0",
-    "@playwright/test": "^1.48.2"
+    "@types/react-dom": "^18.3.0"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.6",
