@@ -11,7 +11,7 @@ import BackToTop from "@/components/BackToTop";
 import NavMainLinks from "@/components/NavMainLinks";
 import FooterLinks from "@/components/FooterLinks";
 import MobileNav from "@/components/MobileNav";
-import { Analytics } from "@vercel/analytics/next";
+import { Analytics } from "@vercel/analytics/react";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
