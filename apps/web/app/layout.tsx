@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import Link from "next/link";
-import { cookies } from "next/headers";
 import AuthControls from "@/components/AuthControls";
 import SupportDrawer from "@/components/SupportDrawer";
 import RevealOnScroll from "@/components/RevealOnScroll";
@@ -23,8 +22,6 @@ export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
-  const cookieStore = cookies();
-  const hasSession = !!(cookieStore.get("id_token") || cookieStore.get("access_token"));
   return (
     <html lang="en">
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
@@ -45,7 +42,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <NavMainLinks />
             <div className="flex items-center gap-3">
               <SupportDrawer />
-              <AuthControls hasSession={hasSession} />
+              <AuthControls />
               <MobileNav />
             </div>
           </nav>

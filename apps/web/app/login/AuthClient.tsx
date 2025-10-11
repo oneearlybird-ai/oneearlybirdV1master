@@ -6,6 +6,8 @@ import Link from "next/link";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
 
+const LOGIN_EVENT_KEY = "__ob_login";
+
 export default function AuthClient({
   initialTab
 }: {
@@ -47,21 +49,26 @@ export default function AuthClient({
     setErr(null);
     setLoading(true);
     try {
-      const res = await fetch(apiUrl("/auth/login"), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password })
-      });
-      if (!res.ok) {
-        setErr(res.status === 400 || res.status === 401 ? "login_failed" : "unavailable");
-        return;
-      }
-      redirectTo("/dashboard");
-    } catch (_err) {
-      setErr("unavailable");
-    } finally {
-      setLoading(false);
+    const res = await fetch(apiUrl("/auth/login"), {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      credentials: "include",
+      body: JSON.stringify({ email, password })
+    });
+    if (!res.ok) {
+      setErr(res.status === 400 || res.status === 401 ? "login_failed" : "unavailable");
+      return;
+    }
+    try {
+      localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
+    } catch (error) {
+      console.warn("login_storage_failed", { message: (error as Error)?.message });
+    }
+    redirectTo("/dashboard");
+  } catch (_err) {
+    setErr("unavailable");
+  } finally {
+    setLoading(false);
     }
   }
 
@@ -89,19 +96,24 @@ export default function AuthClient({
         setSuErr('signup_failed'); setSuLoading(false); return;
       }
       // 2) Login to set cookies (three httpOnly cookies set by backend)
-      const logRes = await fetch(apiUrl('/auth/login'), {
-        method: 'POST',
-        headers: { 'content-type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({ email: suEmail, password: suPassword })
-      });
-      if (!logRes.ok) { setSuErr('login_failed'); setSuLoading(false); return; }
-      // 3) Redirect to authenticated area
-      redirectTo('/dashboard');
-    } catch (_e) {
-      setSuErr('unavailable');
-    } finally {
-      setSuLoading(false);
+    const logRes = await fetch(apiUrl('/auth/login'), {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      credentials: 'include',
+      body: JSON.stringify({ email: suEmail, password: suPassword })
+    });
+    if (!logRes.ok) { setSuErr('login_failed'); setSuLoading(false); return; }
+    // 3) Redirect to authenticated area
+    try {
+      localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
+    } catch (error) {
+      console.warn("signup_login_storage_failed", { message: (error as Error)?.message });
+    }
+    redirectTo('/dashboard');
+  } catch (_e) {
+    setSuErr('unavailable');
+  } finally {
+    setSuLoading(false);
     }
   }
 
