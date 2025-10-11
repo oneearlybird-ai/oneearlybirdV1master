@@ -1,4 +1,5 @@
 "use client";
+import { apiFetch } from "@/lib/http";
 import { useEffect, useState } from "react";
 
 type ApiCall = {
@@ -32,7 +33,7 @@ export default function CallsTableClient({ rows }: { rows: ApiCall[] }) {
       setLoading(true);
       setDetail(null);
       try {
-        const res = await fetch(`/api/recordings/item?id=${encodeURIComponent(id)}`, { cache: 'no-store' });
+        const res = await apiFetch('/recordings/item?id=' + encodeURIComponent(id), { cache: 'no-store' });
         const data = await res.json();
         if (!cancelled && res.ok && data?.ok) setDetail({ id: data.id, startedAt: data.startedAt, durationSec: data.durationSec, transcript: data.transcript || '' });
       } catch (_e) { /* ignore */ void 0 }
