@@ -82,3 +82,5 @@ apps/web/.env.vercel
 .vercel/.env.local
 apps/web/.vercel/.env.local
 infra/terraform/**/tfplan*
+backend/
+test-results/

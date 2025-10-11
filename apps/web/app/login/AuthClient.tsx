@@ -1,18 +1,14 @@
 "use client";
-import { useMemo, useRef, useState } from "react";
+import { useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { signIn } from "next-auth/react";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import Link from "next/link";
 import { API_BASE } from "@/lib/config";
-
-type Providers = Record<string, { id: string; name: string }>;
+import { redirectTo } from "@/lib/clientNavigation";
 
 export default function AuthClient({
-  providers,
   initialTab
 }: {
-  providers: Providers;
   initialTab: "login" | "signup";
 }) {
   const router = useRouter();
@@ -33,8 +29,6 @@ export default function AuthClient({
   const [suErr, setSuErr] = useState<string | null>(null);
   const [suLoading, setSuLoading] = useState(false);
 
-  const googleEnabled = useMemo(() => !!providers && !!providers["google"], [providers]);
-
   function switchTab(next: "login" | "signup") {
     setTab(next);
     const entries = typeof (sp as any)?.entries === 'function' ? Array.from((sp as any).entries()) : [];
@@ -52,11 +46,23 @@ export default function AuthClient({
     e.preventDefault();
     setErr(null);
     setLoading(true);
-    const res = await signIn("credentials", { email, password, redirect: false, callbackUrl: "/dashboard" });
-    setLoading(false);
-    if (!res) return setErr("unavailable");
-    if (res.error) return setErr(res.error || "invalid");
-    if (res.ok && res.url) window.location.href = res.url;
+    try {
+      const res = await fetch(apiUrl("/auth/login"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email, password })
+      });
+      if (!res.ok) {
+        setErr(res.status === 400 || res.status === 401 ? "login_failed" : "unavailable");
+        return;
+      }
+      redirectTo("/dashboard");
+    } catch (_err) {
+      setErr("unavailable");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function apiUrl(path: string) {
@@ -91,7 +97,7 @@ export default function AuthClient({
       });
       if (!logRes.ok) { setSuErr('login_failed'); setSuLoading(false); return; }
       // 3) Redirect to authenticated area
-      router.push('/dashboard');
+      redirectTo('/dashboard');
     } catch (_e) {
       setSuErr('unavailable');
     } finally {
@@ -101,7 +107,9 @@ export default function AuthClient({
 
   const GoogleBtn = ({ label }: { label: string }) => (
     <button
-      onClick={() => signIn("google", {callbackUrl: "/dashboard",prompt: "select_account"})}
+      onClick={() => {
+        window.location.href = apiUrl("/oauth/google/start");
+      }}
       className="w-full h-11 rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] font-medium flex items-center justify-center gap-2 hover:bg-white/90 hover:shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4]"
       aria-label={label}
       type="button"
@@ -183,11 +191,9 @@ export default function AuthClient({
               </button>
             </form>
 
-            {googleEnabled && (
-              <div className="mt-4">
-                <GoogleBtn label="Continue with Google" />
-              </div>
-            )}
+            <div className="mt-4">
+              <GoogleBtn label="Continue with Google" />
+            </div>
 
             <div className="mt-3 text-xs text-white/60">
               <span>Forgot your password? </span>
@@ -257,11 +263,9 @@ export default function AuthClient({
               {suErr && <p className="text-sm text-red-300">Error: {suErr}</p>}
             </form>
 
-            {googleEnabled && (
-              <div className="mt-4">
-                <GoogleBtn label="Continue with Google" />
-              </div>
-            )}
+            <div className="mt-4">
+              <GoogleBtn label="Continue with Google" />
+            </div>
             </>
           )}
         </div>

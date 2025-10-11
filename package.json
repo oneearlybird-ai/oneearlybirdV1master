@@ -4,7 +4,9 @@
   "version": "1.0.1",
   "packageManager": "npm@10",
   "overrides": {
-    "ws": "8.17.1"
+    "ws": "8.17.1",
+    "react": "18.3.1",
+    "react-dom": "18.3.1"
   },
   "scripts": {
     "check:inline": "bash scripts/security/inline_check.sh .",
@@ -20,7 +22,9 @@
     "typecheck": "tsc -p apps/web/tsconfig.json",
     "ah:gate": "node scripts/anti_hallucination_gate.mjs --config anti_hallucination.config.json",
     "ah:gate:fix": "node scripts/anti_hallucination_gate.mjs --config anti_hallucination.config.json --fix",
-    "test": "echo \"(no tests)\"",
+    "test": "npm --prefix apps/web run test",
+    "test:e2e": "npx playwright test --config playwright.config.ts --reporter=list --project=chromium",
+    "test:e2e:manual": "RUN_MANUAL_E2E=1 npx playwright test --config playwright.config.ts --reporter=list --project=chromium --grep @manual",
     "db:status": "node scripts/db_migrate.mjs status",
     "db:migrate": "node scripts/db_migrate.mjs up",
     "headers:check": "node scripts/headers_check.mjs",
@@ -49,12 +53,12 @@
     "husky": "^8.0.0",
     "eslint-plugin-security": "^3.0.1",
     "@types/react": "^18.3.8",
-    "@types/react-dom": "^18.3.0"
+    "@types/react-dom": "^18.3.0",
+    "@playwright/test": "^1.48.2"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
-    "next-auth": "^4.24.11",
     "zod": "^4.1.5"
   },
   "workspaces": [

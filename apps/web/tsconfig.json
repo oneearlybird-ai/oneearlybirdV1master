@@ -38,6 +38,7 @@
     "app/plasmic/**",
     "app/plasmic-host/**",
     "components/plasmic.registry.tsx",
-    "app/layout.tsx"
+    "app/layout.tsx",
+    "tests/**"
   ]
 }

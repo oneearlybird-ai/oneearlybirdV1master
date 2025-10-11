@@ -24,7 +24,7 @@ export const revalidate = 0;
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   const cookieStore = cookies();
-  const hasSession = !!(cookieStore.get("__Secure-next-auth.session-token") || cookieStore.get("next-auth.session-token"));
+  const hasSession = !!(cookieStore.get("id_token") || cookieStore.get("access_token"));
   return (
     <html lang="en">
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
