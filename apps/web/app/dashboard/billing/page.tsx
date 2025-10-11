@@ -1,9 +1,10 @@
 export const dynamic = 'force-dynamic';
+import { apiFetch } from "@/lib/http";
 import ManageBillingButton from "@/components/ManageBillingButton";
 
 async function getDemo() {
   try {
-    const r = await fetch('/api/usage/demo', { cache: 'no-store' });
+    const r = await apiFetch('/usage/demo', { cache: 'no-store' });
     if (!r.ok) return null;
     return await r.json();
   } catch { return null; }
@@ -11,7 +12,7 @@ async function getDemo() {
 
 async function getStripeUsage() {
   try {
-    const r = await fetch('/api/stripe/usage', { cache: 'no-store' });
+    const r = await apiFetch('/stripe/usage', { cache: 'no-store' });
     if (!r.ok) return null;
     return await r.json();
   } catch { return null; }

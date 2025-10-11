@@ -1,5 +1,7 @@
 "use client";
 
+import { apiFetch } from "@/lib/http";
+
 import { useState } from "react";
 
 export default function ManageBillingButton({ className = "" }: { className?: string }) {
@@ -11,7 +13,7 @@ export default function ManageBillingButton({ className = "" }: { className?: st
     setErr(null);
     setLoading(true);
     try {
-      const res = await fetch("/api/billing/portal", { method: "POST", cache: "no-store" });
+      const res = await apiFetch('/billing/portal', { method: 'POST', cache: 'no-store' });
       if (!res.ok) {
         const data = await res.json().catch(() => ({}));
         const code = (data && (data.code || data.error)) || "request_failed";

@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/http";
 import Link from "next/link";
 import Toasts from "@/components/Toasts";
 import { usePathname } from "next/navigation";
@@ -12,7 +13,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const searchRef = useRef<HTMLInputElement | null>(null);
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/usage/summary', { cache: 'no-store' })
+    apiFetch('/usage/summary', { cache: 'no-store' })
       .then(async r => r.ok ? (await r.json()) : null)
       .then((j) => { if (!cancelled && j?.version) setBuild(String(j.version).slice(0,7)); })
       .catch(() => { return; });

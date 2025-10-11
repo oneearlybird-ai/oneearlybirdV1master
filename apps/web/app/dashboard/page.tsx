@@ -1,5 +1,6 @@
 export const dynamic = 'force-dynamic';
 
+import { apiFetch } from "@/lib/http";
 import { LiveStatusBadge, RecentCallsPreview } from '@/components/RecentCallsPreview';
 import NextDynamic from 'next/dynamic';
 const PortingBanner = NextDynamic(() => import('@/components/PortingBanner'), { ssr: false });
@@ -24,7 +25,7 @@ function Kpi({ label, value, hint, progress }: { label: string; value: string; h
 
 async function getDemo() {
   try {
-    const res = await fetch('/api/usage/demo', { cache: 'no-store' });
+    const res = await apiFetch('/usage/demo', { cache: 'no-store' });
     if (!res.ok) return null;
     return (await res.json()) as {
       plan: string; renewal: string;

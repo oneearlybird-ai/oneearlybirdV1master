@@ -1,8 +1,9 @@
+import { apiFetch } from "@/lib/http";
 export const dynamic = "force-dynamic";
 
 async function getSummary() {
   try {
-    const res = await fetch("/api/usage/summary", { cache: "no-store" });
+    const res = await apiFetch('/usage/summary', { cache: 'no-store' });
     if (!res.ok) return { ok: false };
     return await res.json();
   } catch {

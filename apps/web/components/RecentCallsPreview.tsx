@@ -1,5 +1,6 @@
 "use client";
 
+import { apiFetch } from "@/lib/http";
 import React, { useEffect, useState } from "react";
 
 export type CallItem = {
@@ -182,7 +183,7 @@ export function LiveStatusBadge() {
   const [status, setStatus] = useState<null | { ok: boolean; version?: string }>(null);
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/usage/summary', { cache: 'no-store' })
+    apiFetch('/usage/summary', { cache: 'no-store' })
       .then(async r => ({ ok: r.ok, body: r.ok ? await r.json() : null }))
       .then(({ ok, body }) => {
         if (!cancelled) setStatus({ ok, version: body?.version });
