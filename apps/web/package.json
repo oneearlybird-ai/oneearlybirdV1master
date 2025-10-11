@@ -16,7 +16,8 @@
     "next-auth": "^4.24.11",
     "zod": "^4.1.5",
     "@plasmicapp/host": "^1.0.226",
-    "@plasmicapp/loader-nextjs": "^1.0.441"
+    "@plasmicapp/loader-nextjs": "^1.0.441",
+    "@vercel/analytics": "^1.5.0"
   },
   "devDependencies": {
     "typescript": "^5.9.2",
