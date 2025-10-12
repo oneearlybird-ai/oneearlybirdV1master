@@ -13,15 +13,18 @@ export default function ManageBillingButton({ className = "" }: { className?: st
     setErr(null);
     setLoading(true);
     try {
-      const res = await apiFetch('/billing/portal', { method: 'POST', cache: 'no-store' });
+      const res = await apiFetch("/billing/portal", {
+        method: "POST",
+        cache: "no-store",
+      });
+      const data = await res.json().catch(() => ({}));
       if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        const code = (data && (data.code || data.error)) || "request_failed";
+        const code = (data && (data.error || data.code)) || res.statusText || "request_failed";
         throw new Error(String(code));
       }
-      const data = (await res.json()) as { ok?: boolean; url?: string };
-      if (data?.ok && data?.url) {
-        window.location.href = data.url;
+      const url = data?.url;
+      if (typeof url === "string" && url.startsWith("http")) {
+        window.location.href = url;
         return;
       }
       throw new Error("invalid_response");
@@ -49,4 +52,3 @@ export default function ManageBillingButton({ className = "" }: { className?: st
     </div>
   );
 }
-
