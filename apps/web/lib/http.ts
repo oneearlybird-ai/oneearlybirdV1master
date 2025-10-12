@@ -1,3 +1,5 @@
+import { API_BASE } from "@/lib/config";
+
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 export interface HttpJson<T> { ok: boolean; data?: T; error?: string; }
 
@@ -8,18 +10,38 @@ export function isProdEnv(): boolean {
   return v === "production";
 }
 
+function resolveBase(): string {
+  if (API_BASE) return API_BASE.replace(/\/+$/, "");
+  if (isProdEnv()) return API_BASE_PROD;
+  return API_BASE_PROD;
+}
+
+function normalisePath(path: string): string {
+  if (!path) return "/";
+  if (/^https?:\/\//i.test(path)) return path;
+  const prefixed = path.startsWith("/") ? path : `/${path}`;
+  return prefixed.replace(/^\/api\//, "/");
+}
+
 export function toApiUrl(path: string): string {
-  const rel = (path || "/").replace(/^\/?api\//, "/");
-  return isProdEnv() ? `${API_BASE_PROD}${rel}` : `/api/upstream${rel}`;
+  if (/^https?:\/\//i.test(path)) return path;
+  const base = resolveBase();
+  return `${base}${normalisePath(path)}`;
 }
 
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const url = toApiUrl(path);
   const headers = new Headers(init.headers as HeadersInit | undefined);
-  if (!headers.has("content-type") && (init.method || "GET").toUpperCase() !== "GET") {
+  const method = (init.method || "GET").toUpperCase();
+  if (!headers.has("content-type") && method !== "GET" && method !== "HEAD") {
     headers.set("content-type", "application/json");
   }
-  const merged: RequestInit = { ...init, credentials: "include", headers };
+  const merged: RequestInit = {
+    ...init,
+    credentials: "include",
+    cache: init.cache ?? "no-store",
+    headers,
+  };
   return fetch(url, merged);
 }
 
