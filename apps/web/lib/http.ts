@@ -1,3 +1,5 @@
+import { API_BASE } from "@/lib/config";
+
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 export interface HttpJson<T> { ok: boolean; data?: T; error?: string; }
 
@@ -10,7 +12,8 @@ export function isProdEnv(): boolean {
 
 export function toApiUrl(path: string): string {
   const rel = (path || "/").replace(/^\/?api\//, "/");
-  return isProdEnv() ? `${API_BASE_PROD}${rel}` : `/api/upstream${rel}`;
+  const base = API_BASE || (isProdEnv() ? API_BASE_PROD : "");
+  return base ? `${base}${rel}` : `/api/upstream${rel}`;
 }
 
 export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
