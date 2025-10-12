@@ -1,6 +1,7 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
+import reactHooks from 'eslint-plugin-react-hooks';
 
 export default [
   {
@@ -11,7 +12,8 @@ export default [
       'dist/**',
       'build/**',
       '**/*.d.ts',
-      'reference_snapshot/**'
+      'reference_snapshot/**',
+      'apps/web/app/api/voice/**'
     ]
   },
   js.configs.recommended,
@@ -61,5 +63,13 @@ export default [
       globals: { ...globals.node }
     },
     rules: js.configs.recommended.rules
+  },
+  {
+    files: ['apps/web/**/*.{js,jsx,ts,tsx}'],
+    plugins: { 'react-hooks': reactHooks },
+    rules: {
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'off'
+    }
   }
 ];
