@@ -43,6 +43,14 @@ export default function AuthControls() {
   }, [refreshSessionState]);
 
   useEffect(() => {
+    const handlePageShow = () => {
+      refreshSessionState();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, [refreshSessionState]);
+
+  useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key === LOGOUT_EVENT_KEY) {
         setStatus("unauthenticated");
@@ -88,6 +96,14 @@ export default function AuthControls() {
     setStatus("unauthenticated");
     redirectTo("/");
   }, [apiUrl, signingOut]);
+
+  if (status === "loading") {
+    return (
+      <div className="flex items-center gap-3">
+        <span className="text-sm text-white/60">Checking session…</span>
+      </div>
+    );
+  }
 
   if (status === "authenticated") {
     return (
