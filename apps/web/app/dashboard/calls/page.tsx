@@ -1,140 +1,106 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
-import { RecentCallsPreview, SAMPLE_CALLS, type CallItem, CallDrawer } from "@/components/RecentCallsPreview";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { CallDrawer, type CallItem } from "@/components/RecentCallsPreview";
+import { apiFetch } from "@/lib/http";
+import { formatCallDuration, formatCallTimestamp, normalisePhone, outcomeLabel } from "@/lib/call-format";
+
+type CallsFilters = {
+  search: string;
+  outcome: string;
+  from: string;
+  to: string;
+};
+
+type CallsResponse = {
+  items: CallItem[];
+  nextCursor: string | null;
+};
+
+const PAGE_SIZE = 25;
+
+function toIsoDate(date: string): string | undefined {
+  if (!date) return undefined;
+  const composed = `${date}T00:00:00.000Z`;
+  const dt = new Date(composed);
+  if (!Number.isFinite(dt.getTime())) return undefined;
+  return dt.toISOString();
+}
+
+async function requestCalls(payload: Record<string, unknown>): Promise<CallsResponse> {
+  const res = await apiFetch("/calls/list", {
+    method: "POST",
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || `calls_list_${res.status}`);
+  }
+  const json = (await res.json()) as CallsResponse;
+  return {
+    items: Array.isArray(json.items) ? json.items : [],
+    nextCursor: json.nextCursor || null,
+  };
+}
 
 export default function CallsPage() {
-  const [query, setQuery] = useState("");
-  const [outcome, setOutcome] = useState("all");
-  const [start, setStart] = useState<string>("");
-  const [end, setEnd] = useState<string>("");
-  const [minDur, setMinDur] = useState<string>("");
-  const [maxDur, setMaxDur] = useState<string>("");
+  const [filters, setFilters] = useState<CallsFilters>({ search: "", outcome: "all", from: "", to: "" });
+  const [items, setItems] = useState<CallItem[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [openId, setOpenId] = useState<string | null>(null);
-  const [tab, setTab] = useState<'list'|'analytics'>('list');
-  const [reviewed, setReviewed] = useState<Record<string, boolean>>({});
-  const [busy, setBusy] = useState(false);
-  const filterTimer = useRef<number | null>(null);
-  // URL state sync
+  const fetchSeq = useRef(0);
+
+  const buildPayload = useCallback(
+    (cursor?: string | null) => {
+      const payload: Record<string, unknown> = { limit: PAGE_SIZE };
+      if (cursor) payload.cursor = cursor;
+      if (filters.search.trim()) payload.search = filters.search.trim();
+      if (filters.outcome && filters.outcome !== "all") payload.outcome = filters.outcome;
+      const fromIso = toIsoDate(filters.from);
+      if (fromIso) payload.from = fromIso;
+      const toIsoValue = toIsoDate(filters.to);
+      if (toIsoValue) payload.to = toIsoValue;
+      return payload;
+    },
+    [filters],
+  );
+
+  const fetchCalls = useCallback(
+    async (mode: "replace" | "append", cursor?: string | null) => {
+      const seq = ++fetchSeq.current;
+      setLoading(true);
+      setError(null);
+      try {
+        const res = await requestCalls(buildPayload(cursor));
+        if (fetchSeq.current !== seq) return; // stale
+        setItems((prev) => (mode === "replace" ? res.items : [...prev, ...res.items]));
+        setNextCursor(res.nextCursor ?? null);
+        if (mode === "replace") setOpenId(null);
+      } catch (err) {
+        if (fetchSeq.current !== seq) return;
+        setError(err instanceof Error ? err.message : "failed_to_fetch_calls");
+      } finally {
+        if (fetchSeq.current === seq) setLoading(false);
+      }
+    },
+    [buildPayload],
+  );
+
   useEffect(() => {
-    try {
-      const sp = new URLSearchParams(window.location.search);
-      const q = sp.get('q'); if (q) setQuery(q);
-      const o = sp.get('o'); if (o) setOutcome(o);
-      const s = sp.get('s'); if (s) setStart(s);
-      const e = sp.get('e'); if (e) setEnd(e);
-      const mi = sp.get('mi'); if (mi) setMinDur(mi);
-      const ma = sp.get('ma'); if (ma) setMaxDur(ma);
-      const t = sp.get('tab'); if (t === 'analytics') setTab('analytics');
-      const sb = sp.get('sb'); const sd = sp.get('sd');
-      if (sb === 'duration' || sb === 'outcome' || sb === 'time') setSortBy(sb);
-      if (sd === 'asc' || sd === 'desc') setSortDir(sd);
-      const p = Number(sp.get('p') || '1'); if (Number.isFinite(p) && p > 0) setPage(p);
-    } catch { /* ignore malformed query */ }
-  }, []);
+    const timeout = setTimeout(() => {
+      void fetchCalls("replace");
+    }, 250);
+    return () => clearTimeout(timeout);
+  }, [filters, fetchCalls]);
 
-  const bumpBusy = () => {
-    setBusy(true);
-    if (filterTimer.current) window.clearTimeout(filterTimer.current);
-    filterTimer.current = window.setTimeout(() => setBusy(false), 250);
-  };
-
-  const ps = (s:string) => { const [m,sec] = s.split(':').map(Number); return (m||0)*60 + (sec||0); };
-  const filtered: CallItem[] = useMemo(() => {
-    return SAMPLE_CALLS.filter((c) => {
-      const q = query.trim().toLowerCase();
-      const okQ = !q || c.caller.toLowerCase().includes(q) || c.outcome.toLowerCase().includes(q);
-      const okO = outcome === "all" || c.outcome.toLowerCase().includes(outcome);
-      let okD = true;
-      if (start) okD = okD && new Date(c.ts) >= new Date(start + 'T00:00:00Z');
-      if (end) okD = okD && new Date(c.ts) <= new Date(end + 'T23:59:59Z');
-      let okT = true;
-      const secs = ps(c.duration);
-      if (minDur) okT = okT && secs >= Number(minDur);
-      if (maxDur) okT = okT && secs <= Number(maxDur);
-      return okQ && okO && okD && okT;
-    });
-  }, [query, outcome, start, end, minDur, maxDur]);
-
-  const pageSize = 10;
-  const [page, setPage] = useState(1);
-  const pageCount = Math.max(1, Math.ceil(filtered.length / pageSize));
-  const [sortBy, setSortBy] = useState<'time'|'duration'|'outcome'>('time');
-  const [sortDir, setSortDir] = useState<'asc'|'desc'>('desc');
-  const [focusedIndex, setFocusedIndex] = useState<number>(-1);
-  const listRef = useRef<HTMLDivElement | null>(null);
-  const sorted = useMemo(() => {
-    const arr = filtered.slice();
-    arr.sort((a,b) => {
-      if (sortBy === 'time') {
-        const da = new Date(a.ts).getTime();
-        const db = new Date(b.ts).getTime();
-        return sortDir === 'asc' ? da - db : db - da;
-      }
-      if (sortBy === 'outcome') {
-        const oa = a.outcome.toLowerCase();
-        const ob = b.outcome.toLowerCase();
-        if (oa === ob) return 0;
-        return sortDir === 'asc' ? (oa < ob ? -1 : 1) : (oa < ob ? 1 : -1);
-      }
-      const da = ps(a.duration), db = ps(b.duration);
-      return sortDir === 'asc' ? da - db : db - da;
-    });
-    return arr;
-  }, [filtered, sortBy, sortDir]);
-  const pageRows = sorted.slice((page - 1) * pageSize, page * pageSize);
-  const setSort = (key: 'time'|'duration'|'outcome') => {
-    if (sortBy === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
-    else { setSortBy(key); setSortDir('desc'); }
-  };
-
-  // Persist state to URL (replaceState)
-  useEffect(() => {
-    try {
-      const sp = new URLSearchParams();
-      if (query) sp.set('q', query);
-      if (outcome !== 'all') sp.set('o', outcome);
-      if (start) sp.set('s', start);
-      if (end) sp.set('e', end);
-      if (minDur) sp.set('mi', String(minDur));
-      if (maxDur) sp.set('ma', String(maxDur));
-      if (tab !== 'list') sp.set('tab', tab);
-      if (sortBy !== 'time') sp.set('sb', sortBy);
-      if (sortDir !== 'desc') sp.set('sd', sortDir);
-      if (page !== 1) sp.set('p', String(page));
-      const qs = sp.toString();
-      const url = qs ? `${location.pathname}?${qs}` : location.pathname;
-      window.history.replaceState({}, '', url);
-    } catch { /* ignore */ }
-  }, [query, outcome, start, end, minDur, maxDur, tab, sortBy, sortDir, page]);
-
-  // Keyboard navigation for rows
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (target && target.closest('input,select,textarea,button,[role="dialog"]')) return;
-      if (tab !== 'list') return;
-      if (e.key === 'ArrowDown' || e.key.toLowerCase() === 'j') { e.preventDefault(); setFocusedIndex(i => Math.min((i < 0 ? 0 : i + 1), pageRows.length - 1)); }
-      if (e.key === 'ArrowUp' || e.key.toLowerCase() === 'k') { e.preventDefault(); setFocusedIndex(i => Math.max((i <= 0 ? 0 : i - 1), 0)); }
-      if ((e.key === 'Enter' || e.key.toLowerCase() === 'o') && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault(); setOpenId(pageRows[focusedIndex].id); }
-      if (e.key.toLowerCase() === 'c' && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault();
-        const row = pageRows[focusedIndex];
-        navigator.clipboard?.writeText(row.caller).then(
-          () => window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Caller copied', kind: 'success' } })),
-          () => window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Copy failed', kind: 'error' } }))
-        );
-      }
-      if (e.key.toLowerCase() === 'r' && focusedIndex >= 0 && focusedIndex < pageRows.length) { e.preventDefault();
-        const row = pageRows[focusedIndex];
-        setReviewed(r => ({ ...r, [row.id]: !r[row.id] }));
-        const isNow = !reviewed[row.id];
-        window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: isNow ? 'Marked reviewed' : 'Marked unreviewed' } }));
-      }
-      if (e.key === 'Escape') { setOpenId(null); }
-    };
-    window.addEventListener('keydown', onKey);
-    return () => window.removeEventListener('keydown', onKey);
-  }, [tab, pageRows, focusedIndex]);
+  const activeCall = useMemo(() => items.find((item) => item.id === openId) ?? null, [items, openId]);
+  const callIds = items.map((call) => call.id);
+  const openIndex = openId ? callIds.indexOf(openId) : -1;
+  const prevCall = openIndex > 0 ? items[openIndex - 1] : null;
+  const nextCallItem = openIndex >= 0 && openIndex < items.length - 1 ? items[openIndex + 1] : null;
 
   return (
     <section>
@@ -144,299 +110,131 @@ export default function CallsPage() {
           type="search"
           placeholder="Search by caller or outcome"
           aria-label="Search calls"
-          value={query}
-          onChange={(e) => { setQuery(e.target.value); setPage(1); bumpBusy(); }}
+          value={filters.search}
+          onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
           className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
         />
-        <div className="pill-group" role="group" aria-label="Outcome filter">
-          {[
-            { key: 'all', label: 'All' },
-            { key: 'appointment', label: 'Booked' },
-            { key: 'info', label: 'Info' },
-            { key: 'voicemail', label: 'Voicemail' },
-          ].map(p => (
-            <button key={p.key} type="button" className="pill" aria-pressed={outcome===p.key}
-              onClick={() => { setOutcome(p.key); setPage(1); bumpBusy(); }}>
-              {p.label}
-            </button>
-          ))}
-        </div>
-        <input type="date" value={start} onChange={(e) => { setStart(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Start date" />
-        <input type="date" value={end} onChange={(e) => { setEnd(e.target.value); setPage(1); bumpBusy(); }} className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="End date" />
-        <div className="pill-group" role="group" aria-label="Date range quick picks">
-          <button type="button" className="pill" onClick={() => { const d=new Date(); const iso=d.toISOString().slice(0,10); setStart(iso); setEnd(iso); setPage(1); bumpBusy(); }}>Today</button>
-          <button type="button" className="pill" onClick={() => { const d=new Date(); const endIso=d.toISOString().slice(0,10); const d2=new Date(Date.now()-6*24*3600*1000); const startIso=d2.toISOString().slice(0,10); setStart(startIso); setEnd(endIso); setPage(1); bumpBusy(); }}>7d</button>
-          <button type="button" className="pill" onClick={() => { const d=new Date(); const endIso=d.toISOString().slice(0,10); const d2=new Date(Date.now()-29*24*3600*1000); const startIso=d2.toISOString().slice(0,10); setStart(startIso); setEnd(endIso); setPage(1); bumpBusy(); }}>30d</button>
-        </div>
-        <input type="number" placeholder="Min sec" value={minDur} onChange={(e) => { setMinDur(e.target.value); setPage(1); bumpBusy(); }} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Min duration (seconds)" />
-        <input type="number" placeholder="Max sec" value={maxDur} onChange={(e) => { setMaxDur(e.target.value); setPage(1); bumpBusy(); }} className="w-24 bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20" aria-label="Max duration (seconds)" />
+        <select
+          aria-label="Outcome filter"
+          value={filters.outcome}
+          onChange={(e) => setFilters((prev) => ({ ...prev, outcome: e.target.value }))}
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
+        >
+          <option value="all">All outcomes</option>
+          <option value="answered">Answered</option>
+          <option value="appointmentBooked">Booked</option>
+          <option value="voicemail">Voicemail deflected</option>
+          <option value="missed">Missed</option>
+        </select>
+        <input
+          type="date"
+          value={filters.from}
+          onChange={(e) => setFilters((prev) => ({ ...prev, from: e.target.value }))}
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
+          aria-label="Start date"
+        />
+        <input
+          type="date"
+          value={filters.to}
+          onChange={(e) => setFilters((prev) => ({ ...prev, to: e.target.value }))}
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
+          aria-label="End date"
+        />
         <button
-          onClick={() => { setQuery(""); setOutcome("all"); setStart(""); setEnd(""); setMinDur(""); setMaxDur(""); setPage(1); bumpBusy(); }}
-          className="ml-auto rounded-md border border-white/20 px-3 py-2 text-sm text-white/80 hover:text-white"
+          className="rounded-md border border-white/20 px-3 py-2 text-sm text-white/80 hover:text-white"
+          onClick={() => setFilters({ search: "", outcome: "all", from: "", to: "" })}
         >
           Clear filters
         </button>
-        <span className="text-xs text-white/60">Tip: filter by outcome or date; use Min/Max sec for duration.</span>
       </div>
 
-      {/* Loading skeleton during filtering */}
-      {busy ? (
-        <SkeletonCalls />
-      ) : query === '' && outcome === 'all' && !start && !end && !minDur && !maxDur ? (
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <h2 className="font-medium">Recent calls</h2>
-              <div className="ml-4 rounded bg-white/10 p-1 text-xs">
-                <button onClick={() => setTab('list')} className={`px-2 py-1 rounded ${tab === 'list' ? 'bg-white text-black' : 'text-white/80'}`}>List</button>
-                <button onClick={() => setTab('analytics')} className={`px-2 py-1 rounded ${tab !== 'list' ? 'bg-white text-black' : 'text-white/80'}`}>Analytics</button>
-              </div>
-            </div>
-          </div>
-          <RecentCallsPreview />
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
+        <div className="flex items-center justify-between p-4">
+          <h2 className="font-medium">Recent calls</h2>
+          <span className="text-xs text-white/60">
+            {items.length} results{loading ? " (loading…)" : ""}
+          </span>
         </div>
-      ) : tab === 'list' ? (
-        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
-          <div className="flex items-center justify-between p-4">
-            <div className="flex items-center gap-3">
-              <h2 className="font-medium">Filtered calls</h2>
-              <div className="ml-4 rounded bg-white/10 p-1 text-xs">
-                <button onClick={() => setTab('list')} className={`px-2 py-1 rounded ${tab === 'list' ? 'bg-white text-black' : 'text-white/80'}`}>List</button>
-                <button onClick={() => setTab('analytics')} className={`px-2 py-1 rounded ${tab !== 'list' ? 'bg-white text-black' : 'text-white/80'}`}>Analytics</button>
-              </div>
-            </div>
-            <div>
-              <button onClick={() => { setQuery(''); setOutcome('all'); setStart(''); setEnd(''); setMinDur(''); setMaxDur(''); setSortBy('time'); setSortDir('desc'); setPage(1); }} className="mr-2 rounded border border-white/20 px-3 py-1.5 text-xs text-white/80 hover:text-white">Reset</button>
-              <button disabled className="rounded border border-white/20 px-3 py-1.5 text-xs text-white/60 cursor-not-allowed" aria-disabled="true" aria-label="Download CSV (coming soon)">
-                Download CSV (soon)
-              </button>
-            </div>
+        <div className="px-4 pb-4">
+          <div className="grid grid-cols-[1.2fr,1fr,0.6fr,0.9fr,0.8fr] gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
+            <div>Time</div>
+            <div>Caller</div>
+            <div>Duration</div>
+            <div>Outcome</div>
+            <div>Recording</div>
           </div>
-          <div className="px-4 pb-4" ref={listRef}>
-            <div className="grid grid-cols-5 gap-3 text-xs text-white/60 border-b border-white/10 pb-2 sticky-head">
-              <button onClick={() => setSort('time')} className="text-left hover:text-white flex items-center gap-1">
-                <span>Time</span>
-                <span className={`${sortBy==='time' ? 'text-white/80' : 'text-white/30'}`}>{sortBy==='time' ? (sortDir==='asc'?'↑':'↓') : '↕'}</span>
-              </button>
-              <div>Caller</div>
-              <button onClick={() => setSort('duration')} className="text-left hover:text-white flex items-center gap-1">
-                <span>Duration</span>
-                <span className={`${sortBy==='duration' ? 'text-white/80' : 'text-white/30'}`}>{sortBy==='duration' ? (sortDir==='asc'?'↑':'↓') : '↕'}</span>
-              </button>
-              <button onClick={() => setSort('outcome')} className="text-left hover:text-white flex items-center gap-1">
-                <span>Outcome</span>
-                <span className={`${sortBy==='outcome' ? 'text-white/80' : 'text-white/30'}`}>{sortBy==='outcome' ? (sortDir==='asc'?'↑':'↓') : '↕'}</span>
-              </button>
-              <div>Actions</div>
-            </div>
-            {pageRows.map((call, i) => {
-              const isRecent = Date.now() - new Date(call.ts).getTime() < 24*60*60*1000;
-              const isNew = isRecent && !reviewed[call.id];
-              const isFocused = i === focusedIndex;
-              return (
-                <div key={call.id} className={`grid grid-cols-5 items-center gap-3 py-3 hover:bg-white/[0.03] ${isFocused ? 'outline outline-2 outline-white/40 rounded-md' : ''}`} tabIndex={isFocused ? 0 : -1}
-                  onClick={() => setFocusedIndex(i)} onFocus={() => setFocusedIndex(i)}>
-                  <button onClick={() => setOpenId(call.id)} className="text-left text-sm text-white/80 flex items-center gap-2">
-                    {call.time}
-                    {isNew ? <span className="rounded-full bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 text-[10px] px-1.5 py-0.5">NEW</span> : null}
-                  </button>
-                  <div className="text-sm text-white/80">{call.caller}</div>
-                  <div className="text-sm text-white/60">{call.duration}</div>
-                  <div className="text-sm"><OutcomeBadge text={call.outcome} /></div>
-                  <RowActions caller={call.caller} id={call.id} onOpen={() => setOpenId(call.id)} onReviewed={() => setReviewed(r=>({...r,[call.id]:true}))} reviewed={!!reviewed[call.id]} />
+          {loading && items.length === 0 ? (
+            <div className="mt-3 space-y-2" aria-hidden>
+              {Array.from({ length: 8 }).map((_, idx) => (
+                <div key={idx} className="grid grid-cols-[1.2fr,1fr,0.6fr,0.9fr,0.8fr] items-center gap-3 py-3">
+                  <div className="skeleton skeleton-line w-36" />
+                  <div className="skeleton skeleton-line w-32" />
+                  <div className="skeleton skeleton-line w-16" />
+                  <div className="skeleton skeleton-badge" />
+                  <div className="skeleton skeleton-line w-20" />
                 </div>
-              );
-            })}
-            {filtered.length === 0 ? (
-              <div className="text-sm text-white/60 py-6">No calls match your filters.</div>
-            ) : null}
+              ))}
+            </div>
+          ) : error ? (
+            <div className="mt-3 rounded border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">
+              Failed to load calls. {error}
+              <button className="ml-3 underline" onClick={() => void fetchCalls("replace")}>
+                Retry
+              </button>
+            </div>
+          ) : items.length === 0 ? (
+            <div className="mt-3 text-sm text-white/60">No calls found for the selected filters.</div>
+          ) : (
+            <div className="mt-2 divide-y divide-white/10">
+              {items.map((call) => (
+                <button
+                  key={call.id}
+                  className="grid w-full grid-cols-[1.2fr,1fr,0.6fr,0.9fr,0.8fr] items-center gap-3 py-3 text-left hover:bg-white/[0.03] motion-safe:transition-colors"
+                  onClick={() => setOpenId(call.id)}
+                  aria-haspopup="dialog"
+                >
+                  <div className="text-sm text-white/80">{formatCallTimestamp(call.ts)}</div>
+                  <div className="text-sm text-white/80 truncate">{normalisePhone(call.from)}</div>
+                  <div className="text-sm text-white/60">{formatCallDuration(call.durationSec)}</div>
+                  <div className="text-sm">
+                    <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-white/80">
+                      {outcomeLabel(call.outcome)}
+                    </span>
+                  </div>
+                  <div className="text-sm text-white/70">{call.hasRecording ? "Available" : "—"}</div>
+                </button>
+              ))}
+            </div>
+          )}
+          <div className="mt-4 flex items-center justify-between">
+            <button
+              type="button"
+              className="rounded border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:text-white disabled:opacity-40"
+              onClick={() => void fetchCalls("replace")}
+              disabled={loading}
+            >
+              Refresh
+            </button>
+            <button
+              type="button"
+              className="rounded border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:text-white disabled:opacity-40"
+              onClick={() => void fetchCalls("append", nextCursor ?? undefined)}
+              disabled={loading || !nextCursor}
+            >
+              {nextCursor ? (loading ? "Loading…" : "Load next page") : "No more pages"}
+            </button>
           </div>
-        </div>
-      ) : (
-        <CallsAnalytics />
-      )}
-      <div className="mt-3 flex items-center justify-between text-sm text-white/60">
-        <div aria-live="polite">
-          Showing {filtered.length === 0 ? 0 : (page - 1) * pageSize + 1}–{Math.min(page * pageSize, filtered.length)} of {filtered.length}
-        </div>
-        <div className="flex items-center gap-2">
-          <label className="hidden md:flex items-center gap-2">
-            <span>Rows per page</span>
-            <select disabled className="rounded border border-white/20 bg-white/5 px-2 py-1 text-white/60 cursor-not-allowed" aria-disabled="true" aria-label="Rows per page (coming soon)">
-              <option>10</option>
-              <option>25</option>
-              <option>50</option>
-            </select>
-          </label>
-          <button onClick={() => setReviewed(r => ({...r, ...Object.fromEntries(pageRows.map(c=>[c.id,true]))}))} className="rounded border border-white/20 px-2 py-1">Mark all reviewed</button>
-          <button disabled={page<=1} onClick={() => setPage(p => Math.max(1, p-1))} className="rounded border border-white/20 px-2 py-1 disabled:opacity-50">Prev</button>
-          <span>Page {page} / {pageCount}</span>
-          <button disabled={page>=pageCount} onClick={() => setPage(p => Math.min(pageCount, p+1))} className="rounded border border-white/20 px-2 py-1 disabled:opacity-50">Next</button>
         </div>
       </div>
-      {openId ? (
+
+      {activeCall ? (
         <CallDrawer
-          call={filtered.find(c => c.id === openId) ?? SAMPLE_CALLS[0]}
+          call={activeCall}
           onClose={() => setOpenId(null)}
-          onPrev={() => {
-            const idx = pageRows.findIndex(c => c.id === openId);
-            const prevIdx = Math.max(0, idx - 1);
-            const id = pageRows[prevIdx]?.id ?? openId;
-            setOpenId(id); setFocusedIndex(prevIdx);
-          }}
-          onNext={() => {
-            const idx = pageRows.findIndex(c => c.id === openId);
-            const nextIdx = Math.min(pageRows.length - 1, idx + 1);
-            const id = pageRows[nextIdx]?.id ?? openId;
-            setOpenId(id); setFocusedIndex(nextIdx);
-          }}
+          onPrev={prevCall ? () => setOpenId(prevCall.id) : undefined}
+          onNext={nextCallItem ? () => setOpenId(nextCallItem.id) : undefined}
         />
       ) : null}
     </section>
-  );
-}
-
-
-
-function SkeletonCalls() {
-  return (
-    <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 animate-pulse">
-      <div className="flex items-center justify-between p-4">
-        <div className="h-4 w-24 bg-white/10 rounded" />
-        <div className="h-6 w-32 bg-white/10 rounded" />
-      </div>
-      <div className="px-4 pb-4">
-        <div className="h-5 bg-white/10 rounded mb-3" />
-        {[...Array(6)].map((_, i) => (
-          <div key={i} className="h-10 bg-white/5 rounded mb-2 border border-white/10" />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-function OutcomeBadge({ text }: { text: string }) {
-  const t = text.toLowerCase();
-  let cls = "border-white/15 bg-white/5 text-white/80";
-  if (t.includes("appointment")) cls = "border-emerald-500/30 bg-emerald-500/10 text-emerald-300";
-  else if (t.includes("info")) cls = "border-indigo-500/30 bg-indigo-500/10 text-indigo-300";
-  else if (t.includes("voicemail")) cls = "border-yellow-500/30 bg-yellow-500/10 text-yellow-300";
-  return <span className={`inline-flex items-center rounded-full border px-2 py-0.5 ${cls}`}>{text}</span>;
-}
-
-function RowActions({ caller, id, onOpen, onReviewed, reviewed }: { caller: string; id: string; onOpen: () => void; onReviewed: () => void; reviewed: boolean }) {
-  const [menuOpen, setMenuOpen] = useState(false);
-  const btnRef = useRef<HTMLButtonElement | null>(null);
-  const menuRef = useRef<HTMLDivElement | null>(null);
-  const copy = async () => {
-    try { await navigator.clipboard.writeText(caller); window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Caller copied', kind: 'success' } })); } catch { window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: 'Copy failed', kind: 'error' } })); }
-  };
-  const toggle = () => setMenuOpen(v => !v);
-  useEffect(() => {
-    if (!menuOpen) return;
-    const onDoc = (e: MouseEvent) => {
-      const t = e.target as Node; if (!menuRef.current?.contains(t) && !btnRef.current?.contains(t)) setMenuOpen(false);
-    };
-    const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setMenuOpen(false); };
-    document.addEventListener('mousedown', onDoc);
-    document.addEventListener('keydown', onKey);
-    return () => { document.removeEventListener('mousedown', onDoc); document.removeEventListener('keydown', onKey); };
-  }, [menuOpen]);
-  return (
-    <div className="relative">
-      <button ref={btnRef} onClick={toggle} aria-haspopup="menu" aria-expanded={menuOpen} aria-controls={`menu-${id}`} className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white" aria-label={`Actions for ${id}`}>⋯</button>
-      {menuOpen ? (
-        <div ref={menuRef} id={`menu-${id}`} role="menu" className="absolute right-0 mt-2 min-w-[160px] rounded-md border border-white/10 bg-neutral-950 shadow-lg z-10">
-          <button role="menuitem" className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5" onClick={() => { onOpen(); setMenuOpen(false); }}>Open</button>
-          <button role="menuitem" className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5" onClick={() => { copy(); setMenuOpen(false); }}>Copy caller</button>
-          <button role="menuitem" className="block w-full text-left px-3 py-2 text-sm hover:bg-white/5" onClick={() => { onReviewed(); setMenuOpen(false); window.dispatchEvent(new CustomEvent('eb_toast' as any, { detail: { message: reviewed ? 'Marked unreviewed' : 'Marked reviewed' } })); }}>{reviewed ? 'Mark unreviewed' : 'Mark reviewed'}</button>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function CallsAnalytics() {
-  const outcomes = [
-    { label: 'Appointment', value: 48, color: '#10B981' },
-    { label: 'Info', value: 32, color: '#6366F1' },
-    { label: 'Voicemail', value: 20, color: '#EAB308' },
-  ];
-  const total = outcomes.reduce((a,b)=>a+b.value,0);
-  const perDay = [6,8,7,9,5,10,8];
-  return (
-    <div className="mt-6 grid gap-4 md:grid-cols-3">
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-center">
-        <Donut parts={outcomes} />
-      </div>
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
-        <div className="font-medium">Outcome distribution</div>
-        <ul className="mt-3 text-sm text-white/80 space-y-2">
-          {outcomes.map(p => (
-            <li key={p.label} className="flex items-center gap-2">
-              <svg width="8" height="8" aria-hidden><circle cx="4" cy="4" r="4" fill={p.color} /></svg>
-              <span className="w-28">{p.label}</span>
-              <svg viewBox="0 0 100 6" className="flex-1 h-2">
-                <rect x="0" y="0" height="6" width={(p.value/total)*100} fill={p.color} />
-              </svg>
-              <span className="w-10 text-right">{p.value}%</span>
-            </li>
-          ))}
-        </ul>
-      </div>
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-3">
-        <div className="font-medium">Calls per day</div>
-        <Bars data={perDay} />
-      </div>
-    </div>
-  );
-}
-
-function Donut({ parts }: { parts: { label: string; value: number; color: string }[] }) {
-  const total = parts.reduce((a,b)=>a+b.value,0) || 1;
-  let startAngle = -Math.PI/2;
-  const radius = 60; const cx = 80; const cy = 80; const thickness = 20;
-  const rings = parts.map((p, idx) => {
-    const angle = (p.value/total) * Math.PI * 2;
-    const end = startAngle + angle;
-    const path = arcPath(cx, cy, radius, startAngle, end);
-    startAngle = end;
-    return <path key={idx} d={path} fill={p.color} />;
-  });
-  return (
-    <svg viewBox="0 0 160 160" width="160" height="160" aria-label="Outcomes donut">
-      <g transform={`translate(0,0)`}>{rings}</g>
-      <circle cx={cx} cy={cy} r={radius - thickness} fill="#0F1117" stroke="rgba(255,255,255,0.1)" />
-      <text x={cx} y={cy} fill="#FFFFFF" opacity="0.8" fontSize="10" textAnchor="middle" dominantBaseline="middle">Outcomes</text>
-    </svg>
-  );
-}
-
-function arcPath(cx: number, cy: number, r: number, start: number, end: number) {
-  const x1 = cx + r * Math.cos(start);
-  const y1 = cy + r * Math.sin(start);
-  const x2 = cx + r * Math.cos(end);
-  const y2 = cy + r * Math.sin(end);
-  const largeArc = end - start > Math.PI ? 1 : 0;
-  return `M ${cx} ${cy} L ${x1} ${y1} A ${r} ${r} 0 ${largeArc} 1 ${x2} ${y2} Z`;
-}
-
-function Bars({ data }: { data: number[] }) {
-  const max = Math.max(...data, 1);
-  const width = data.length * 14 + 6;
-  const height = 100;
-  let x = 3;
-  const rects = data.map((v, i) => {
-    const h = Math.round((v / max) * height);
-    const y = height - h;
-    const r = <rect key={i} x={x} y={y} width={12} height={h} fill="rgba(255,255,255,0.6)" />;
-    x += 14;
-    return r;
-  });
-  return (
-    <svg viewBox={`0 0 ${width} ${height}`} className="mt-3 w-full h-28" aria-label="Calls per day">
-      <rect x="0" y="0" width={width} height={height} fill="none" />
-      {rects}
-    </svg>
   );
 }
