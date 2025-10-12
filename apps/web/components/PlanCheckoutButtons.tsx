@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { toApiUrl } from "@/lib/http";
 
 type ActionKind = "trial" | "purchase";
 
@@ -19,10 +20,8 @@ type ActionState = {
 
 async function submitAction(kind: ActionKind, priceId: string): Promise<string> {
   const path =
-    kind === "trial"
-      ? "/api/billing/trial/start"
-      : "/api/billing/checkout/start";
-  const res = await fetch(path, {
+    kind === "trial" ? "/billing/trial/start" : "/billing/checkout/start";
+  const res = await fetch(toApiUrl(path), {
     method: "POST",
     credentials: "include",
     body: JSON.stringify({ priceId }),
