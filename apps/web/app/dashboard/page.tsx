@@ -1,12 +1,13 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
 import { apiFetch } from "@/lib/http";
 import { LiveStatusBadge, RecentCallsPreview } from "@/components/RecentCallsPreview";
 import CopyDiagnostics from "@/components/CopyDiagnostics";
 import CopyOrgIdButton from "@/components/CopyOrgIdButton";
 import CopyPageLinkButton from "@/components/CopyPageLinkButton";
+import { derivePlanDisplay } from "@/lib/billing";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
 
@@ -15,10 +16,23 @@ type TenantProfile = {
   tenantId: string;
   planKey?: string | null;
   planPriceId?: string | null;
+  status?: string | null;
   minutesCap?: number | null;
   concurrencyCap?: number | null;
   did?: string | null;
   conversionAt?: string | null;
+};
+
+type BillingSummary = {
+  status: "none" | "trial-active" | "active";
+  planKey: string | null;
+  planPriceId: string | null;
+  planMinutes: number | null;
+  minutesCap: number | null;
+  concurrencyCap: number | null;
+  trialEnd: string | null;
+  currentPeriodEnd: string | null;
+  hasPaymentMethod: boolean;
 };
 
 type UsagePeriod = {
@@ -51,14 +65,6 @@ const initialState = <T,>(): FetchState<T> => ({
   error: null,
 });
 
-function planLabel(planKey: string | null | undefined): string {
-  if (!planKey) return "—";
-  const key = planKey.toLowerCase();
-  if (key.includes("enterprise")) return "Enterprise";
-  if (key.includes("pro")) return "Pro";
-  if (key.includes("basic")) return "Basic";
-  return planKey.replace(/([A-Z])/g, " $1").replace(/^\w/, (c) => c.toUpperCase());
-}
 
 function formatMinutes(value: number | null | undefined): string {
   if (!Number.isFinite(value as number)) return "—";
@@ -135,66 +141,102 @@ function Kpi({ label, value, hint, progress }: { label: string; value: string; h
 }
 
 export default function DashboardPage() {
-  const [profileState, setProfileState] = useState<FetchState<TenantProfile>>(initialState);
-  const [usageState, setUsageState] = useState<FetchState<UsageSummary>>(initialState);
+  const mountedRef = useRef(true);
+  const [profileState, setProfileState] = useState<FetchState<TenantProfile>>(() => initialState<TenantProfile>());
+  const [usageState, setUsageState] = useState<FetchState<UsageSummary>>(() => initialState<UsageSummary>());
+  const [summaryState, setSummaryState] = useState<FetchState<BillingSummary>>(() => initialState<BillingSummary>());
 
   useEffect(() => {
-    let cancelled = false;
-    const fetchAll = async () => {
-      setProfileState((prev) => ({ ...prev, loading: true, error: null }));
-      setUsageState((prev) => ({ ...prev, loading: true, error: null }));
-      try {
-        const [profileRes, usageRes] = await Promise.all([
-          apiFetch("/tenants/profile", { cache: "no-store" }),
-          apiFetch("/usage/summary?window=week", { cache: "no-store" }),
-        ]);
-        if (!cancelled) {
-          if (profileRes.ok) {
-            const json = (await profileRes.json()) as TenantProfile;
-            setProfileState({ data: json, loading: false, error: null });
-          } else {
-            setProfileState({
-              data: null,
-              loading: false,
-              error: `profile_${profileRes.status}`,
-            });
-          }
-          if (usageRes.ok) {
-            const json = (await usageRes.json()) as UsageSummary;
-            setUsageState({ data: json, loading: false, error: null });
-          } else {
-            setUsageState({
-              data: null,
-              loading: false,
-              error: `usage_${usageRes.status}`,
-            });
-          }
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setProfileState({ data: null, loading: false, error: err instanceof Error ? err.message : "profile_failed" });
-          setUsageState({ data: null, loading: false, error: err instanceof Error ? err.message : "usage_failed" });
-        }
-      }
-    };
-
-    void fetchAll();
     return () => {
-      cancelled = true;
+      mountedRef.current = false;
     };
   }, []);
 
+  const fetchAll = useCallback(async () => {
+    setProfileState((prev) => ({ ...prev, loading: true, error: null }));
+    setUsageState((prev) => ({ ...prev, loading: true, error: null }));
+    setSummaryState((prev) => ({ ...prev, loading: true, error: null }));
+    try {
+      const [profileRes, usageRes, summaryRes] = await Promise.all([
+        apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/usage/summary?window=week", { cache: "no-store" }),
+        apiFetch("/billing/summary", { cache: "no-store" }),
+      ]);
+      if (!mountedRef.current) return;
+
+      if (profileRes.ok) {
+        const json = (await profileRes.json()) as TenantProfile;
+        setProfileState({ data: json, loading: false, error: null });
+      } else {
+        setProfileState({
+          data: null,
+          loading: false,
+          error: `profile_${profileRes.status}`,
+        });
+      }
+
+      if (usageRes.ok) {
+        const json = (await usageRes.json()) as UsageSummary;
+        setUsageState({ data: json, loading: false, error: null });
+      } else {
+        setUsageState({
+          data: null,
+          loading: false,
+          error: `usage_${usageRes.status}`,
+        });
+      }
+
+      if (summaryRes.ok) {
+        const json = (await summaryRes.json()) as BillingSummary;
+        setSummaryState({ data: json, loading: false, error: null });
+      } else {
+        setSummaryState({
+          data: null,
+          loading: false,
+          error: `summary_${summaryRes.status}`,
+        });
+      }
+    } catch (err) {
+      if (!mountedRef.current) return;
+      const message = err instanceof Error ? err.message : "fetch_failed";
+      setProfileState({ data: null, loading: false, error: message });
+      setUsageState({ data: null, loading: false, error: message });
+      setSummaryState({ data: null, loading: false, error: message });
+    }
+  }, []);
+
+  useEffect(() => {
+    void fetchAll();
+  }, [fetchAll]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const handlePageShow = () => {
+      void fetchAll();
+    };
+    window.addEventListener("pageshow", handlePageShow);
+    return () => {
+      window.removeEventListener("pageshow", handlePageShow);
+    };
+  }, [fetchAll]);
+
   const profile = profileState.data;
   const usage = usageState.data;
+  const summary = summaryState.data;
 
-  const minutesCap = profile?.minutesCap ?? usage?.minutesCap ?? null;
-  const concurrencyCap = profile?.concurrencyCap ?? usage?.concurrencyCap ?? null;
+  const planDisplay = useMemo(() => derivePlanDisplay(summary ?? null, profile ?? null), [summary, profile]);
+
+  const minutesCap = summary?.minutesCap ?? profile?.minutesCap ?? usage?.minutesCap ?? null;
+  const concurrencyCap = summary?.concurrencyCap ?? profile?.concurrencyCap ?? usage?.concurrencyCap ?? null;
 
   const periodTotals = useMemo(() => aggregatePeriods(usage?.periods ?? []), [usage?.periods]);
   const sparklineSeries = useMemo(() => (usage?.periods ?? []).map((period) => Number(period.answered ?? 0)), [usage?.periods]);
   const sparklinePoints = useMemo(() => computeSparklinePoints(sparklineSeries), [sparklineSeries]);
 
-  const minutesLabel = formatMinutesWithCap(usage?.monthlyMinutes ?? usage?.usedMinutes ?? null, minutesCap);
+  const minutesLabel = formatMinutesWithCap(
+    usage?.monthlyMinutes ?? usage?.usedMinutes ?? null,
+    summary?.planMinutes ?? minutesCap,
+  );
 
   const avgDurationLabel = secondsToDurationLabel(periodTotals.avgDuration);
   const answeredLabel = String(periodTotals.answered || 0);
@@ -248,7 +290,7 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-        <Kpi label="Current plan" value={planLabel(profile?.planKey)} hint={profile?.planPriceId ? `Price: ${profile.planPriceId}` : undefined} />
+        <Kpi label="Current plan" value={planDisplay.value} hint={planDisplay.hint} />
         <Kpi
           label="Minutes (month)"
           value={minutesLabel.label}
