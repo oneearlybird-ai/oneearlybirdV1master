@@ -14,6 +14,14 @@ apps/web/.env.production.local
 apps/web/.env.vercel
 apps/web/.vercel/.env.*
 
+# Backend artifacts (keep FE repo pure UX)
+oneearlybird-backend/
+stripe-webhook-src/
+usage-overage-reporter/
+ob-provisioner-step/
+\{ns*vendorReady
+*.zip
+
 # Backup/audit artifacts (do not track)
 *.bak
 *_audit*.txt
@@ -79,3 +87,25 @@ apps/web/.env.vercel
 *.tar
 *.tar.gz
 .vercel
+# Backend/scratch artifacts archived by Codex A
+apps/media/lib/
+agents.json
+aws/
+convai.lock
+full_terminal_history.txt
+gitleaks.sarif
+modafork_deploy*
+models/
+run_checks.sh
+scripts/authorize_media_ingress_8080.sh
+scripts/scan_repo.sh
+serial_console*
+tools.json
+oneearlybird-backend/
+docs/2025-09-22-twilio-token-rotation.md
+docs/architecture/2025-09-21-managed-nodes-fix.md
+docs/plansofrebuildaws.txt
+docs/security-review-2025-09-14.md
+docs/security-review-2025-09-16.md
+roadmap super diamond updated.txt
+Desktop/earlbirdmiscallaneous/
