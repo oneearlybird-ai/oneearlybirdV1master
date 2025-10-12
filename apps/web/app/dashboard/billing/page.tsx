@@ -79,14 +79,49 @@ function formatDateTime(value: string | null): string | null {
 function PlanTile({
   plan,
   isCurrent,
-  disableTrial,
-  disablePurchase,
+  summaryStatus,
+  trialEligible,
 }: {
   plan: PlanDefinition;
   isCurrent: boolean;
-  disableTrial: boolean;
-  disablePurchase: boolean;
+  summaryStatus: string;
+  trialEligible: boolean;
 }) {
+  const normalizedStatus = (summaryStatus || "none").toLowerCase();
+  const showPortal = ["active", "trial-active", "trial-pending", "activating"].includes(normalizedStatus);
+  let actions: React.ReactNode = null;
+
+  if (showPortal) {
+    const label = isCurrent ? "Manage plan" : "Upgrade via portal";
+    const variant = isCurrent ? "primary" : "secondary";
+    actions = <ManageBillingButton className="mt-4 inline-flex" label={label} variant={variant} />;
+  } else if (["none", "trial-expired", "canceled"].includes(normalizedStatus)) {
+    const allowTrial = trialEligible && normalizedStatus === "none";
+    actions = (
+      <PlanCheckoutButtons
+        className="mt-4"
+        priceId={plan.priceId}
+        planName={plan.name}
+        allowTrial={allowTrial}
+        disableTrial={!allowTrial}
+        disablePurchase={isCurrent}
+        purchaseLabel="Purchase"
+      />
+    );
+  } else {
+    actions = (
+      <PlanCheckoutButtons
+        className="mt-4"
+        priceId={plan.priceId}
+        planName={plan.name}
+        allowTrial={false}
+        disableTrial
+        disablePurchase={isCurrent}
+        purchaseLabel="Purchase"
+      />
+    );
+  }
+
   return (
     <div className={`rounded-2xl border ${isCurrent ? "border-white/30" : "border-white/10"} bg-white/5 p-4`}>
       <div className="flex items-center justify-between">
@@ -104,13 +139,7 @@ function PlanTile({
           </li>
         ))}
       </ul>
-      <PlanCheckoutButtons
-        className="mt-4"
-        priceId={plan.priceId}
-        planName={plan.name}
-        disableTrial={disableTrial}
-        disablePurchase={disablePurchase || isCurrent}
-      />
+      {actions}
     </div>
   );
 }
@@ -237,8 +266,7 @@ export default function BillingPage() {
   );
   const activePlanSlug = planDefinition?.slug ?? null;
   const summaryStatus = summary?.status ?? (summary?.planKey || profile?.planKey ? "active" : "none");
-  const disableTrial = summaryStatus === "trial-active" || summaryStatus === "active";
-  const disablePurchase = summaryStatus === "active" && Boolean(activePlanSlug);
+  const trialEligible = summary?.trialEligible ?? false;
 
   const planMinutes = summary?.planMinutes ?? summary?.minutesCap ?? profile?.minutesCap ?? null;
   const concurrencyCap = summary?.concurrencyCap ?? profile?.concurrencyCap ?? null;
@@ -279,7 +307,7 @@ export default function BillingPage() {
             </div>
           </dl>
           <div className="mt-4 flex flex-wrap gap-3">
-            <ManageBillingButton className="shrink-0" />
+            <ManageBillingButton className="shrink-0" label="Manage plan" />
             <a
               href="/pricing"
               className="shrink-0 rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white"
@@ -297,8 +325,8 @@ export default function BillingPage() {
                 key={plan.slug}
                 plan={plan}
                 isCurrent={activePlanSlug === plan.slug}
-                disableTrial={disableTrial}
-                disablePurchase={disablePurchase}
+                summaryStatus={summaryStatus}
+                trialEligible={trialEligible}
               />
             ))}
           </div>

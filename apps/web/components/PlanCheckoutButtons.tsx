@@ -8,8 +8,11 @@ type ActionKind = "trial" | "purchase";
 interface PlanCheckoutButtonsProps {
   priceId: string;
   planName: string;
+  allowTrial?: boolean;
   disableTrial?: boolean;
   disablePurchase?: boolean;
+  purchaseLabel?: string;
+  trialLabel?: string;
   className?: string;
 }
 
@@ -52,8 +55,11 @@ async function submitAction(kind: ActionKind, priceId: string): Promise<string> 
 export function PlanCheckoutButtons({
   priceId,
   planName,
+  allowTrial = true,
   disableTrial = false,
   disablePurchase = false,
+  purchaseLabel = "Purchase",
+  trialLabel = "Start Free Trial",
   className = "",
 }: PlanCheckoutButtonsProps) {
   const [state, setState] = useState<ActionState>({ kind: null, error: null });
@@ -72,27 +78,33 @@ export function PlanCheckoutButtons({
   };
 
   const busy = state.kind !== null;
+  const showTrial = allowTrial && !disableTrial;
+  const canPurchase = !disablePurchase;
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
-      <button
-        type="button"
-        onClick={() => run("trial")}
-        disabled={busy || disableTrial}
-        className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-black/40"
-        aria-label={`Start free trial for ${planName}`}
-      >
-        {state.kind === "trial" ? "Starting trial…" : "Start Free Trial"}
-      </button>
-      <button
-        type="button"
-        onClick={() => run("purchase")}
-        disabled={busy || disablePurchase}
-        className="inline-flex items-center justify-center rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30 disabled:border-white/10"
-        aria-label={`Purchase ${planName}`}
-      >
-        {state.kind === "purchase" ? "Redirecting…" : "Purchase"}
-      </button>
+      {showTrial ? (
+        <button
+          type="button"
+          onClick={() => run("trial")}
+          disabled={busy || disableTrial}
+          className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-black/40"
+          aria-label={`Start free trial for ${planName}`}
+        >
+          {state.kind === "trial" ? "Starting trial…" : trialLabel}
+        </button>
+      ) : null}
+      {canPurchase ? (
+        <button
+          type="button"
+          onClick={() => run("purchase")}
+          disabled={busy || disablePurchase}
+          className="inline-flex items-center justify-center rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30 disabled:border-white/10"
+          aria-label={`Purchase ${planName}`}
+        >
+          {state.kind === "purchase" ? "Redirecting…" : purchaseLabel}
+        </button>
+      ) : null}
       {state.error ? (
         <p className="text-xs text-rose-300" role="alert">
           {state.error}
