@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { apiFetch } from "@/lib/http";
 
 type ActionKind = "trial" | "purchase";
 
@@ -20,16 +19,26 @@ type ActionState = {
 
 async function submitAction(kind: ActionKind, priceId: string): Promise<string> {
   const path =
-    kind === "trial" ? "/billing/trial/start" : "/billing/checkout/start";
-  const res = await apiFetch(path, {
+    kind === "trial"
+      ? "/api/billing/trial/start"
+      : "/api/billing/checkout/start";
+  const res = await fetch(path, {
     method: "POST",
+    credentials: "include",
     body: JSON.stringify({ priceId }),
+    headers: {
+      "content-type": "application/json",
+      "cache-control": "no-store",
+    },
   });
   let body: any = null;
   try {
     body = await res.json();
   } catch {
     body = null;
+  }
+  if (res.status === 401) {
+    throw new Error("Please sign in to continue.");
   }
   if (!res.ok || !body?.url) {
     const message =
