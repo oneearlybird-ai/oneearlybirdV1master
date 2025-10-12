@@ -26,6 +26,7 @@ type BillingSummary = {
   trialEnd: string | null;
   currentPeriodEnd: string | null;
   hasPaymentMethod: boolean;
+  trialEligible: boolean;
 };
 
 type BillingHistoryItem = {
