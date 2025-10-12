@@ -1,7 +1,13 @@
 export const dynamic = 'force-dynamic';
+
 import { apiFetch } from "@/lib/http";
 import ManageBillingButton from "@/components/ManageBillingButton";
-import { PLANS, formatPrice, type MinutePlan } from "@/lib/plans";
+import {
+  PLAN_DEFINITIONS,
+  PLAN_BY_PRICE_ID,
+  type PlanDefinition,
+} from "@/lib/plans";
+import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 
 async function getDemo() {
   try {
@@ -41,44 +47,48 @@ function BarSvg({ used, total }: { used: number; total: number }) {
   );
 }
 
-function PlanTile({ name, price, tag, features, current }: { name: string; price: string; tag?: string; features: string[]; current?: boolean; }) {
+function PlanTile({
+  plan,
+  isCurrent,
+  disableTrial,
+  disablePurchase,
+}: {
+  plan: PlanDefinition;
+  isCurrent: boolean;
+  disableTrial: boolean;
+  disablePurchase: boolean;
+}) {
+  const { name, priceLabel, tag, features, priceId } = plan;
   return (
-    <div className={`rounded-2xl border ${current ? 'border-white/30' : 'border-white/10'} bg-white/5 p-4`}>
+    <div className={`rounded-2xl border ${isCurrent ? 'border-white/30' : 'border-white/10'} bg-white/5 p-4`}>
       <div className="flex items-center justify-between">
         <div className="text-lg font-semibold">{name}</div>
         {tag ? <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{tag}</span> : null}
       </div>
-      <div className="mt-1 text-white/90">{price}</div>
+      <div className="mt-1 text-white/90">{priceLabel}</div>
       <ul className="mt-3 text-sm text-white/80 space-y-1">
-        {features.map((f) => (<li key={f} className="flex items-start gap-2"><span aria-hidden>•</span><span>{f}</span></li>))}
+        {features.map((f) => (
+          <li key={f} className="flex items-start gap-2">
+            <span aria-hidden>•</span>
+            <span>{f}</span>
+          </li>
+        ))}
       </ul>
-      <div className="mt-4">
-        {current ? (
-          <span className="inline-flex items-center rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/60">Current plan</span>
-        ) : (
-          <a href="/dashboard/billing" className="inline-flex items-center rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">Select</a>
-        )}
-      </div>
+        <PlanCheckoutButtons
+        className="mt-4"
+        priceId={priceId}
+        planName={name}
+        disableTrial={disableTrial}
+        disablePurchase={disablePurchase || isCurrent}
+        />
     </div>
   );
-}
-
-function resolvePlan(raw: string | undefined | null): MinutePlan {
-  if (!raw) return PLANS[2];
-  const lowered = raw.toLowerCase();
-  const matched = PLANS.find((p) => p.name.toLowerCase() === lowered);
-  if (matched) return matched;
-  // legacy names from earlier iterations
-  if (lowered.startsWith("pro")) return PLANS.find((p) => p.slug === "growth")!;
-  if (lowered.startsWith("basic") || lowered.startsWith("starter")) return PLANS.find((p) => p.slug === "starter")!;
-  if (lowered.startsWith("elite")) return PLANS.find((p) => p.slug === "enterprise")!;
-  return PLANS[2];
 }
 
 export default async function BillingPage() {
   const demo = await getDemo();
   const stripe = await getStripeUsage();
-  const currentPlan = resolvePlan(demo?.plan ?? undefined);
+  const plan = demo?.plan ?? 'Pro';
   const renewal = demo?.renewal ?? '—';
   const calls = demo?.calls ?? 0;
   const cQuota = demo?.quota?.calls ?? 1;
@@ -92,13 +102,33 @@ export default async function BillingPage() {
     if (!ts) return null;
     try { return new Date(ts * 1000).toLocaleString(); } catch { return null; }
   })();
+
+  const planStatus: string | null =
+    (stripe?.plan?.status as string | null) ||
+    (typeof demo?.status === "string" ? demo.status : null) ||
+    null;
+
+  const priceId = typeof sPlan?.price_id === "string" ? sPlan.price_id : null;
+  const planSlugFromPrice =
+    (priceId && PLAN_BY_PRICE_ID.get(priceId)?.slug) || null;
+  const planSlugFromName =
+    PLAN_DEFINITIONS.find(
+      (p) => p.name.toLowerCase() === String(plan).toLowerCase()
+    )?.slug || null;
+  const activePlanSlug = planSlugFromPrice || planSlugFromName;
+
+  const disableTrial =
+    planStatus === "trial-active" ||
+    planStatus === "active" ||
+    planStatus === "trialing";
+
   return (
     <section>
       <h1 className="text-xl font-semibold tracking-tight">Billing & plan</h1>
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="text-sm text-white/60">Current plan</div>
-          <div className="mt-1 text-2xl font-semibold">{currentPlan.name}</div>
+          <div className="mt-1 text-2xl font-semibold">{plan}</div>
           <div className="mt-1 text-sm text-white/60">Renews {renewal}</div>
           {sPlan ? (
             <div className="mt-3 text-sm text-white/80">
@@ -109,22 +139,16 @@ export default async function BillingPage() {
               </div>
             </div>
           ) : null}
-          {!sPlan ? (
-            <div className="mt-3 text-sm text-white/80">
-              <div>Plan price: {formatPrice(currentPlan.monthlyPrice, currentPlan.includedMinutes)}</div>
-            </div>
-          ) : null}
           {upcomingAmt ? (
             <div className="mt-2 text-sm text-white/80">
               <div>Next invoice: {upcomingAmt}{nextWhen ? ` on ${nextWhen}` : ''}</div>
             </div>
           ) : null}
-          <div className="mt-4 text-sm">Minutes: {mins} / {mQuota}</div>
-          <BarSvg used={mins} total={mQuota} />
-          <div className="mt-3 text-sm text-white/60">Calls (legacy): {calls} / {cQuota}</div>
+          <div className="mt-4 text-sm">Calls: {calls} / {cQuota}</div>
           <BarSvg used={calls} total={cQuota} />
+          <div className="mt-3 text-sm">Minutes: {mins} / {mQuota}</div>
+          <BarSvg used={mins} total={mQuota} />
           <div className="mt-4 flex gap-3 items-center">
-            {/* Opens Stripe Billing Portal (server validates session + keys) */}
             <ManageBillingButton />
             <a href="/pricing" className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">View pricing</a>
           </div>
@@ -133,16 +157,18 @@ export default async function BillingPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
           <div className="font-medium">Compare plans</div>
           <div className="mt-3 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-            {PLANS.map((planOption) => (
-              <PlanTile
-                key={planOption.slug}
-                name={planOption.name}
-                price={formatPrice(planOption.monthlyPrice, planOption.includedMinutes)}
-                tag={planOption.slug === 'growth' ? 'Most popular' : undefined}
-                features={planOption.features.slice(0, 3)}
-                current={planOption.slug === currentPlan.slug}
-              />
-            ))}
+            {PLAN_DEFINITIONS.map((p) => {
+              const isCurrent = activePlanSlug === p.slug;
+              return (
+                <PlanTile
+                  key={p.slug}
+                  plan={p}
+                  isCurrent={Boolean(isCurrent)}
+                  disableTrial={disableTrial}
+                  disablePurchase={Boolean(isCurrent)}
+                />
+              );
+            })}
           </div>
         </div>
 

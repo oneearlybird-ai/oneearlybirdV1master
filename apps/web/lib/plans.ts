@@ -1,80 +1,77 @@
-export type PlanSlug = 'starter' | 'professional' | 'growth' | 'enterprise';
-export type MinutePlan = {
-  slug: PlanSlug;
+export type PlanDefinition = {
+  slug: string;
   name: string;
-  monthlyPrice: number; // dollars
-  includedMinutes: number;
-  priceNickname?: string;
-  stripePriceId?: string;
-  summary: string;
+  priceLabel: string;
+  blurb?: string;
   features: string[];
-  ctaHref: string;
+  priceId: string;
+  tag?: string;
+  popular?: boolean;
 };
 
-export const PLANS: MinutePlan[] = [
+export const PLAN_DEFINITIONS: PlanDefinition[] = [
   {
-    slug: 'starter',
-    name: 'Starter',
-    monthlyPrice: 149,
-    includedMinutes: 200,
-    priceNickname: 'Starter / 200 min',
-    summary: 'Perfect for testing and small teams',
+    slug: "starter",
+    name: "Starter",
+    priceLabel: "$0 + usage",
+    blurb: "Perfect for testing and small teams",
+    priceId: "price_1SGUCfBKEf4BPnHSYDX9Onnt",
     features: [
-      '200 minutes included',
-      'Up to 2 numbers connected',
-      'Basic routing & FAQs',
-      'Email transcripts',
+      "Up to 2 numbers connected",
+      "Basic routing & FAQs",
+      "Email transcripts",
+      "Community support",
     ],
-    ctaHref: '/signup',
   },
   {
-    slug: 'professional',
-    name: 'Professional',
-    monthlyPrice: 249,
-    includedMinutes: 400,
-    priceNickname: 'Professional / 400 min',
-    summary: 'For teams scaling beyond pilot phase',
+    slug: "growth",
+    name: "Growth",
+    priceLabel: "$99/mo + usage",
+    blurb: "Best for growing businesses",
+    popular: true,
+    priceId: "price_1SGUCfBKEf4BPnHSidXOA9Cr",
     features: [
-      '400 minutes included',
-      'Up to 5 numbers connected',
-      'Improved routing & transfers',
-      'Email summaries & transcripts',
+      "Up to 10 numbers connected",
+      "Scheduling across Google/Microsoft",
+      "Advanced routing & transfers",
+      "Dashboard, recordings, analytics",
+      "Priority support",
     ],
-    ctaHref: '/signup',
   },
   {
-    slug: 'growth',
-    name: 'Growth',
-    monthlyPrice: 399,
-    includedMinutes: 800,
-    priceNickname: 'Growth / 800 min',
-    summary: 'Best for growing businesses',
+    slug: "professional",
+    name: "Professional",
+    priceLabel: "$199/mo + usage",
+    blurb: "For teams scaling to high volume",
+    tag: "Most popular",
+    priceId: "price_1SHGeiBKEf4BPnHSO0LwltzU",
     features: [
-      '800 minutes included',
-      'Up to 10 numbers connected',
-      'Scheduling across Google/Microsoft',
-      'Dashboard recordings & analytics',
+      "Up to 25 numbers connected",
+      "Premium voice & routing",
+      "Calendar booking across teams",
+      "CRM sync & advanced analytics",
+      "Priority support",
     ],
-    ctaHref: '/signup',
   },
   {
-    slug: 'enterprise',
-    name: 'Enterprise',
-    monthlyPrice: 899,
-    includedMinutes: 2000,
-    priceNickname: 'Enterprise / 2000 min',
-    summary: 'Compliance, SSO, and onboarding',
+    slug: "enterprise",
+    name: "Enterprise",
+    priceLabel: "Talk to us",
+    blurb: "Compliance, SSO, and onboarding",
+    priceId: "price_1SGUCfBKEf4BPnHS6h7JLl0t",
     features: [
-      '2000 minutes included (custom overages)',
-      'Unlimited numbers & custom routing',
-      'SLA, SSO, audit logs',
-      'Dedicated success manager',
+      "SLA, SSO, audit logs",
+      "Custom integrations",
+      "DPA/SOC 2 readiness",
+      "Dedicated success manager",
     ],
-    ctaHref: '/signup',
   },
 ];
 
-export function formatPrice(dollars: number, minutes: number): string {
-  const price = new Intl.NumberFormat(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(dollars);
-  return `${price}/mo (${minutes.toLocaleString()} min)`;
-}
+export const PLAN_BY_PRICE_ID = new Map(
+  PLAN_DEFINITIONS.map((plan) => [plan.priceId, plan])
+);
+
+export const PLAN_BY_SLUG = new Map(
+  PLAN_DEFINITIONS.map((plan) => [plan.slug, plan])
+);
