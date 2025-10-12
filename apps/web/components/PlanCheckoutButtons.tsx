@@ -1,0 +1,100 @@
+"use client";
+
+import { useState } from "react";
+
+type ActionKind = "trial" | "purchase";
+
+interface PlanCheckoutButtonsProps {
+  priceId: string;
+  planName: string;
+  disableTrial?: boolean;
+  disablePurchase?: boolean;
+  className?: string;
+}
+
+type ActionState = {
+  kind: ActionKind | null;
+  error: string | null;
+};
+
+async function submitAction(kind: ActionKind, priceId: string): Promise<string> {
+  const path =
+    kind === "trial" ? "/billing/trial/start" : "/billing/checkout/start";
+  const res = await fetch(path, {
+    method: "POST",
+    credentials: "include",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({ priceId }),
+  });
+  let body: any = null;
+  try {
+    body = await res.json();
+  } catch {
+    body = null;
+  }
+  if (!res.ok || !body?.url) {
+    const message =
+      body?.error ||
+      body?.message ||
+      `Unable to ${kind === "trial" ? "start trial" : "start checkout"}.`;
+    throw new Error(message);
+  }
+  return String(body.url);
+}
+
+export function PlanCheckoutButtons({
+  priceId,
+  planName,
+  disableTrial = false,
+  disablePurchase = false,
+  className = "",
+}: PlanCheckoutButtonsProps) {
+  const [state, setState] = useState<ActionState>({ kind: null, error: null });
+
+  const run = async (kind: ActionKind) => {
+    setState({ kind, error: null });
+    try {
+      const url = await submitAction(kind, priceId);
+      window.location.assign(url);
+    } catch (err: any) {
+      setState({
+        kind: null,
+        error: err?.message || "Something went wrong. Please try again.",
+      });
+    }
+  };
+
+  const busy = state.kind !== null;
+
+  return (
+    <div className={`flex flex-col gap-2 ${className}`}>
+      <button
+        type="button"
+        onClick={() => run("trial")}
+        disabled={busy || disableTrial}
+        className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:cursor-not-allowed disabled:bg-white/40 disabled:text-black/40"
+        aria-label={`Start free trial for ${planName}`}
+      >
+        {state.kind === "trial" ? "Starting trial…" : "Start Free Trial"}
+      </button>
+      <button
+        type="button"
+        onClick={() => run("purchase")}
+        disabled={busy || disablePurchase}
+        className="inline-flex items-center justify-center rounded-xl border border-white/20 px-4 py-2 text-sm font-medium text-white hover:bg-white/5 disabled:cursor-not-allowed disabled:text-white/30 disabled:border-white/10"
+        aria-label={`Purchase ${planName}`}
+      >
+        {state.kind === "purchase" ? "Redirecting…" : "Purchase"}
+      </button>
+      {state.error ? (
+        <p className="text-xs text-rose-300" role="alert">
+          {state.error}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
+export default PlanCheckoutButtons;
