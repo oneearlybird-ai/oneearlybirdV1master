@@ -4,9 +4,7 @@
   "version": "1.0.1",
   "packageManager": "npm@10",
   "overrides": {
-    "ws": "8.17.1",
-    "react": "18.3.1",
-    "react-dom": "18.3.1"
+    "ws": "8.17.1"
   },
   "scripts": {
     "check:inline": "bash scripts/security/inline_check.sh .",
@@ -19,9 +17,10 @@
     "dev": "concurrently -n api,web -c yellow,cyan \"pnpm -C apps/api dev\" \"pnpm -C apps/web dev\"",
     "lint": "eslint . --max-warnings=0",
     "format": "prettier -w .",
-    "typecheck": "tsc -p apps/web/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json",
     "ah:gate": "node scripts/anti_hallucination_gate.mjs --config anti_hallucination.config.json",
     "ah:gate:fix": "node scripts/anti_hallucination_gate.mjs --config anti_hallucination.config.json --fix",
+    "test": "echo \"(no tests)\"",
     "db:status": "node scripts/db_migrate.mjs status",
     "db:migrate": "node scripts/db_migrate.mjs up",
     "headers:check": "node scripts/headers_check.mjs",
@@ -29,7 +28,7 @@
     "sec:gitleaks": "gitleaks detect --no-git --exit-code 1",
     "sec:semgrep": "semgrep scan --config p/ci --error",
     "sec:trivy": "trivy fs --exit-code 1 --severity HIGH,CRITICAL .",
-    "prepare": "husky install || true"
+    "prepare": "husky install"
   },
   "devDependencies": {
     "@babel/parser": "^7.28.4",
@@ -39,25 +38,21 @@
     "concurrently": "9.2.1",
     "dotenv": "^17.2.2",
     "eslint": "^9.35.0",
+    "eslint-plugin-security": "^3.0.1",
     "glob": "^11.0.3",
     "globals": "^16.3.0",
+    "husky": "^8.0.0",
     "minimatch": "^10.0.3",
     "pg": "^8.16.3",
     "prettier": "3.3.3",
     "typescript": "^5.9.2",
     "typescript-eslint": "^8.42.0",
-    "yaml": "^2.8.1",
-    "husky": "^8.0.0",
-    "eslint-plugin-security": "^3.0.1",
-    "@types/react": "^18.3.8",
-    "@types/react-dom": "^18.3.0"
+    "yaml": "^2.8.1"
   },
   "dependencies": {
     "@upstash/ratelimit": "^2.0.6",
     "@upstash/redis": "^1.35.3",
+    "next-auth": "^4.24.11",
     "zod": "^4.1.5"
-  },
-  "workspaces": [
-    "apps/web"
-  ]
+  }
 }
