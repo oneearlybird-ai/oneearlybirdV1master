@@ -1,6 +1,7 @@
 export const dynamic = 'force-dynamic';
 import { apiFetch } from "@/lib/http";
 import ManageBillingButton from "@/components/ManageBillingButton";
+import { PLANS, formatPrice, type MinutePlan } from "@/lib/plans";
 
 async function getDemo() {
   try {
@@ -62,10 +63,22 @@ function PlanTile({ name, price, tag, features, current }: { name: string; price
   );
 }
 
+function resolvePlan(raw: string | undefined | null): MinutePlan {
+  if (!raw) return PLANS[2];
+  const lowered = raw.toLowerCase();
+  const matched = PLANS.find((p) => p.name.toLowerCase() === lowered);
+  if (matched) return matched;
+  // legacy names from earlier iterations
+  if (lowered.startsWith("pro")) return PLANS.find((p) => p.slug === "growth")!;
+  if (lowered.startsWith("basic") || lowered.startsWith("starter")) return PLANS.find((p) => p.slug === "starter")!;
+  if (lowered.startsWith("elite")) return PLANS.find((p) => p.slug === "enterprise")!;
+  return PLANS[2];
+}
+
 export default async function BillingPage() {
   const demo = await getDemo();
   const stripe = await getStripeUsage();
-  const plan = demo?.plan ?? 'Pro';
+  const currentPlan = resolvePlan(demo?.plan ?? undefined);
   const renewal = demo?.renewal ?? '—';
   const calls = demo?.calls ?? 0;
   const cQuota = demo?.quota?.calls ?? 1;
@@ -85,7 +98,7 @@ export default async function BillingPage() {
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="text-sm text-white/60">Current plan</div>
-          <div className="mt-1 text-2xl font-semibold">{plan}</div>
+          <div className="mt-1 text-2xl font-semibold">{currentPlan.name}</div>
           <div className="mt-1 text-sm text-white/60">Renews {renewal}</div>
           {sPlan ? (
             <div className="mt-3 text-sm text-white/80">
@@ -96,15 +109,20 @@ export default async function BillingPage() {
               </div>
             </div>
           ) : null}
+          {!sPlan ? (
+            <div className="mt-3 text-sm text-white/80">
+              <div>Plan price: {formatPrice(currentPlan.monthlyPrice, currentPlan.includedMinutes)}</div>
+            </div>
+          ) : null}
           {upcomingAmt ? (
             <div className="mt-2 text-sm text-white/80">
               <div>Next invoice: {upcomingAmt}{nextWhen ? ` on ${nextWhen}` : ''}</div>
             </div>
           ) : null}
-          <div className="mt-4 text-sm">Calls: {calls} / {cQuota}</div>
-          <BarSvg used={calls} total={cQuota} />
-          <div className="mt-3 text-sm">Minutes: {mins} / {mQuota}</div>
+          <div className="mt-4 text-sm">Minutes: {mins} / {mQuota}</div>
           <BarSvg used={mins} total={mQuota} />
+          <div className="mt-3 text-sm text-white/60">Calls (legacy): {calls} / {cQuota}</div>
+          <BarSvg used={calls} total={cQuota} />
           <div className="mt-4 flex gap-3 items-center">
             {/* Opens Stripe Billing Portal (server validates session + keys) */}
             <ManageBillingButton />
@@ -115,10 +133,16 @@ export default async function BillingPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
           <div className="font-medium">Compare plans</div>
           <div className="mt-3 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-            <PlanTile name="Basic" price="$99/mo" features={["Up to 200 calls","Standard voice","Email summaries"]} />
-            <PlanTile name="Pro" price="$199/mo" tag="Most popular" features={["Up to 500 calls","Premium voice","Calendar booking","CRM logging"]} current={plan==='Pro'} />
-            <PlanTile name="Elite" price="$399/mo" features={["Up to 1200 calls","Priority routing","Advanced analytics"]} />
-            <PlanTile name="Enterprise" price="Custom" features={["Unlimited volume","SLA & SSO","Dedicated support"]} />
+            {PLANS.map((planOption) => (
+              <PlanTile
+                key={planOption.slug}
+                name={planOption.name}
+                price={formatPrice(planOption.monthlyPrice, planOption.includedMinutes)}
+                tag={planOption.slug === 'growth' ? 'Most popular' : undefined}
+                features={planOption.features.slice(0, 3)}
+                current={planOption.slug === currentPlan.slug}
+              />
+            ))}
           </div>
         </div>
 

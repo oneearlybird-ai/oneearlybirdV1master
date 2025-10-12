@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { PLANS, formatPrice } from "@/lib/plans";
 
 export const metadata: Metadata = {
   title: "Pricing – EarlyBird",
@@ -99,44 +100,17 @@ export default function Page() {
         </p>
 
         <div className="mt-10 grid gap-4 md:grid-cols-3">
-          <Tier
-            name="Starter"
-            price="$149/mo (200 min)"
-            blurb="Perfect for testing and small teams"
-            ctaHref="/signup"
-            features={[
-              "Up to 2 numbers connected",
-              "Basic routing & FAQs",
-              "Email transcripts",
-              "Community support",
-            ]}
-          />
-          <Tier
-            name="Growth"
-            price="$399/mo (800 min)"
-            blurb="Best for growing businesses"
-            ctaHref="/signup"
-            popular
-            features={[
-              "Up to 10 numbers connected",
-              "Scheduling across Google/Microsoft",
-              "Advanced routing & transfers",
-              "Dashboard, recordings, analytics",
-              "Priority support",
-            ]}
-          />
-          <Tier
-            name="Enterprise"
-            price="$899/mo (2000 min)"
-            blurb="Compliance, SSO, and onboarding"
-            ctaHref="/signup"
-            features={[
-              "SLA, SSO, audit logs",
-              "Custom integrations",
-              "DPA/SOC 2 readiness",
-              "Dedicated success manager",
-            ]}
-          />
+          {PLANS.map((plan) => (
+            <Tier
+              key={plan.slug}
+              name={plan.name}
+              price={formatPrice(plan.monthlyPrice, plan.includedMinutes)}
+              blurb={plan.summary}
+              ctaHref={plan.ctaHref}
+              features={plan.features}
+              popular={plan.slug === 'growth'}
+            />
+          ))}
         </div>
 
         <div className="mt-12 rounded-2xl border border-white/10 bg-white/5 p-6">
