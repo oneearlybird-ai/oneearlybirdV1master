@@ -32,6 +32,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
   const [audioUrl, setAudioUrl] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [signingError, setSigningError] = useState<string | null>(null);
+  const call = state.call;
 
   useEffect(() => {
     let cancelled = false;
@@ -102,18 +103,18 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
         </div>
       ) : state.error ? (
         <div className="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">{state.error}</div>
-      ) : state.call ? (
+      ) : call ? (
         <div className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-3">
           <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
             <div className="text-sm text-white/70">
-              {formatCallTimestamp(state.call.ts)} — {normalisePhone(state.call.from)} — {formatCallDuration(state.call.durationSec)}
+              {formatCallTimestamp(call.ts)} — {normalisePhone(call.from)} — {formatCallDuration(call.durationSec)}
             </div>
             <div className="rounded-lg border border-white/10 p-3 space-y-2">
               <div className="flex items-center justify-between">
                 <div className="font-medium">Recording</div>
                 <button
                   disabled={signing}
-                  onClick={() => void requestSignedUrl(state.call.recordingKey)}
+                  onClick={() => void requestSignedUrl(call.recordingKey)}
                   className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white disabled:opacity-40"
                 >
                   {signing ? "Requesting…" : "Get signed URL"}
@@ -127,7 +128,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
                 </audio>
               ) : (
                 <p className="text-xs text-white/60">
-                  {state.call.hasRecording
+                  {call.hasRecording
                     ? "Click to request a presigned URL. Audio streams securely from CloudFront."
                     : "No recording attached to this call."}
                 </p>
@@ -136,7 +137,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
             <div>
               <div className="font-medium">Transcript</div>
               <p className="mt-2 text-sm text-white/70">
-                {state.call.hasTranscript
+                {call.hasTranscript
                   ? "Transcript is available in your CRM or will sync shortly."
                   : "No transcript captured for this call."}
               </p>
@@ -145,13 +146,13 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
           <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
             <div className="font-medium">Summary</div>
             <ul className="mt-2 text-sm text-white/80 space-y-1">
-              <li>Outcome: {outcomeLabel(state.call.outcome)}</li>
-              <li>Caller: {normalisePhone(state.call.from)}</li>
-              <li>When: {formatCallTimestamp(state.call.ts)}</li>
-              <li>Duration: {formatCallDuration(state.call.durationSec)}</li>
-              <li>Recording: {state.call.hasRecording ? "Available" : "—"}</li>
-              <li>Transcript: {state.call.hasTranscript ? "Available" : "—"}</li>
-              <li>To: {normalisePhone(state.call.to)}</li>
+              <li>Outcome: {outcomeLabel(call.outcome)}</li>
+              <li>Caller: {normalisePhone(call.from)}</li>
+              <li>When: {formatCallTimestamp(call.ts)}</li>
+              <li>Duration: {formatCallDuration(call.durationSec)}</li>
+              <li>Recording: {call.hasRecording ? "Available" : "—"}</li>
+              <li>Transcript: {call.hasTranscript ? "Available" : "—"}</li>
+              <li>To: {normalisePhone(call.to)}</li>
             </ul>
           </div>
         </div>

@@ -1,11 +1,7 @@
 "use client";
 
 import { useState } from "react";
-const API_BASE =
-  (process.env.NEXT_PUBLIC_API_BASE ?? "https://api.oneearlybird.ai").replace(
-    /\/+$/,
-    "",
-  );
+import { toApiUrl } from "@/lib/http";
 
 type ActionKind = "trial" | "purchase";
 
@@ -25,7 +21,7 @@ type ActionState = {
 async function submitAction(kind: ActionKind, priceId: string): Promise<string> {
   const path =
     kind === "trial" ? "/billing/trial/start" : "/billing/checkout/start";
-  const res = await fetch(`${API_BASE}${path}`, {
+  const res = await fetch(toApiUrl(path), {
     method: "POST",
     credentials: "include",
     body: JSON.stringify({ priceId }),
