@@ -16,6 +16,7 @@ apps/web/.vercel/.env.*
 
 # Backend artifacts (keep FE repo pure UX)
 oneearlybird-backend/
+backend/
 stripe-webhook-src/
 usage-overage-reporter/
 ob-provisioner-step/
