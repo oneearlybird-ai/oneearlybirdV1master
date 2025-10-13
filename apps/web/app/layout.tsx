@@ -12,6 +12,7 @@ import NavMainLinks from "@/components/NavMainLinks";
 import FooterLinks from "@/components/FooterLinks";
 import MobileNav from "@/components/MobileNav";
 import { Analytics } from "@vercel/analytics/react";
+import LogoLockup from "@/public/logo-lockup-supercrisp-clean.png";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -25,9 +26,6 @@ export const revalidate = 0;
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
-      <head>
-        <link rel="icon" href="/favicon.png" sizes="any" />
-      </head>
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
         <a href="#content" className="skip-link">Skip to content</a>
         <RevealOnScroll />
@@ -40,7 +38,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               className="flex items-center gap-2 font-semibold tracking-tight text-white"
               aria-label="EarlyBird home"
             >
-              <Image src="/logo-lockup-supercrisp-clean.png" alt="EarlyBird" priority width={168} height={54} className="h-9 w-auto" />
+              <Image src={LogoLockup} alt="EarlyBird" priority width={168} height={54} className="h-9 w-auto" />
               <span className="text-lg">EarlyBird</span>
             </Link>
             <NavMainLinks />
