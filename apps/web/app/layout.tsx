@@ -31,13 +31,19 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <ScrollHeaderElevator />
         <header id="eb-header" className="eb-header sticky top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
           <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-0.5 md:py-1">
-            <Link href="/" className="flex items-center gap-2 font-semibold tracking-tight" aria-label="EarlyBird home">
+            <Link
+              href="/"
+              className="flex items-center gap-2 font-semibold tracking-tight text-white"
+              aria-label="EarlyBird home"
+            >
               <img
-                srcSet="/brand/logo.png 1x, /brand/logo@2x.png 2x, /brand/logo@3x.png 3x"
-                src="/brand/logo.png"
-                alt="EarlyBird"
-                className="h-[3em] w-auto"
+                srcSet="/brand/bird.png 1x, /brand/bird@2x.png 2x, /brand/bird@3x.png 3x"
+                src="/brand/bird.png"
+                alt=""
+                className="h-9 w-auto"
+                aria-hidden="true"
               />
+              <span className="text-lg">EarlyBird</span>
             </Link>
             <NavMainLinks />
             <div className="flex items-center gap-3">
