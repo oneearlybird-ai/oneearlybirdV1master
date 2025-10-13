@@ -2,6 +2,7 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import AuthControls from "@/components/AuthControls";
 import SupportDrawer from "@/components/SupportDrawer";
 import RevealOnScroll from "@/components/RevealOnScroll";
@@ -11,6 +12,7 @@ import NavMainLinks from "@/components/NavMainLinks";
 import FooterLinks from "@/components/FooterLinks";
 import MobileNav from "@/components/MobileNav";
 import { Analytics } from "@vercel/analytics/react";
+import LogoLockup from "@/public/logo-lockup-supercrisp-clean.png";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -24,6 +26,9 @@ export const revalidate = 0;
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="icon" href="/favicon.png" sizes="any" />
+      </head>
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
         <a href="#content" className="skip-link">Skip to content</a>
         <RevealOnScroll />
@@ -36,12 +41,11 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               className="flex items-center gap-2 font-semibold tracking-tight text-white"
               aria-label="EarlyBird home"
             >
-              <img
-                srcSet="/brand/bird.png 1x, /brand/bird@2x.png 2x, /brand/bird@3x.png 3x"
-                src="/brand/bird.png"
-                alt=""
+              <Image
+                src={LogoLockup}
+                alt="EarlyBird"
+                priority
                 className="h-9 w-auto"
-                aria-hidden="true"
               />
               <span className="text-lg">EarlyBird</span>
             </Link>
