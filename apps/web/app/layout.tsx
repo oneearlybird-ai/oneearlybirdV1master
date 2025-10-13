@@ -12,7 +12,7 @@ import NavMainLinks from "@/components/NavMainLinks";
 import FooterLinks from "@/components/FooterLinks";
 import MobileNav from "@/components/MobileNav";
 import { Analytics } from "@vercel/analytics/react";
-import LogoLockup from "../public/logo-lockup-supercrisp-clean.png";
+import LogoLockup from "@/public/logo-lockup-supercrisp-clean.png";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
