@@ -39,7 +39,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               aria-label="EarlyBird home"
             >
               <Image src={LogoLockup} alt="EarlyBird" priority width={168} height={54} className="h-9 w-auto" />
-              <span className="text-lg">EarlyBird</span>
+              <span className="sr-only">EarlyBird</span>
             </Link>
             <NavMainLinks />
             <div className="flex items-center gap-3">
