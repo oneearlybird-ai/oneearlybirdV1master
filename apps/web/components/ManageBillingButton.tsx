@@ -9,9 +9,17 @@ type ManageBillingButtonProps = {
   className?: string;
   label?: string;
   variant?: "primary" | "secondary";
+  disabled?: boolean;
+  tooltip?: string;
 };
 
-export default function ManageBillingButton({ className = "", label = "Manage billing", variant = "primary" }: ManageBillingButtonProps) {
+export default function ManageBillingButton({
+  className = "",
+  label = "Manage billing",
+  variant = "primary",
+  disabled = false,
+  tooltip,
+}: ManageBillingButtonProps) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   useEffect(() => {
@@ -38,7 +46,7 @@ export default function ManageBillingButton({ className = "", label = "Manage bi
   }, []);
 
   async function openPortal() {
-    if (loading) return;
+    if (loading || disabled) return;
     setErr(null);
     setLoading(true);
     try {
@@ -80,8 +88,9 @@ export default function ManageBillingButton({ className = "", label = "Manage bi
     <div className={className}>
       <button
         onClick={openPortal}
-        disabled={loading}
+        disabled={loading || disabled}
         aria-busy={loading}
+        title={disabled ? tooltip : undefined}
         className={buttonClasses}
       >
         {loading ? "Opening…" : label}
