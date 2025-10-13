@@ -260,22 +260,33 @@ export default function PhoneAndAgentPage() {
 
       <SectionCard title="Status">
         <dl className="space-y-2">
-          <div className="flex items-center justify-between">
-            <dt className="text-white/60">Caller ID (DID)</dt>
-            <dd className="text-white">{maskPhone(profile.did)}</dd>
-          </div>
-          <div className="flex items-center justify-between">
-            <dt className="text-white/60">Routing mode</dt>
-            <dd className="text-white">{profile.routingMode ? (profile.routingMode === "agent" ? "AI Agent" : "Passthrough") : "—"}</dd>
-          </div>
-          <div className="flex items-center justify-between">
-            <dt className="text-white/60">Agent status</dt>
-            <dd className="text-white">{typeof profile.agentEnabled === "boolean" ? (profile.agentEnabled ? "Enabled" : "Paused") : "—"}</dd>
-          </div>
-          <div className="flex items-center justify-between">
-            <dt className="text-white/60">Verification</dt>
-            <dd className="text-white">{verifiedLabel}</dd>
-          </div>
+          {profile.did ? (
+            <div className="flex items-center justify-between">
+              <dt className="text-white/60">Caller ID (DID)</dt>
+              <dd className="text-white">{maskPhone(profile.did)}</dd>
+            </div>
+          ) : null}
+          {profile.routingMode ? (
+            <div className="flex items-center justify-between">
+              <dt className="text-white/60">Routing mode</dt>
+              <dd className="text-white">{profile.routingMode === "agent" ? "AI Agent" : "Passthrough"}</dd>
+            </div>
+          ) : null}
+          {typeof profile.agentEnabled === "boolean" ? (
+            <div className="flex items-center justify-between">
+              <dt className="text-white/60">Agent status</dt>
+              <dd className="text-white">{profile.agentEnabled ? "Enabled" : "Paused"}</dd>
+            </div>
+          ) : null}
+          {profile.phoneVerifiedAt ? (
+            <div className="flex items-center justify-between">
+              <dt className="text-white/60">Verification</dt>
+              <dd className="text-white">{verifiedLabel}</dd>
+            </div>
+          ) : null}
+          {!profile.did && !profile.routingMode && typeof profile.agentEnabled !== "boolean" && !profile.phoneVerifiedAt ? (
+            <p className="text-xs text-white/50">No phone setup detected yet.</p>
+          ) : null}
         </dl>
         {loading ? <p className="text-xs text-white/50">Loading status…</p> : null}
         {error ? <p className="text-xs text-rose-300">{error}</p> : null}

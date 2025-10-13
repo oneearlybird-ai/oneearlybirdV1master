@@ -13,6 +13,7 @@ type PlanSummaryInput = {
   planKey?: string | null;
   planPriceId?: string | null;
   trialEligible?: boolean | null;
+  hasPaymentMethod?: boolean | null;
 };
 
 type PlanProfileInput = {
@@ -61,6 +62,7 @@ export default function PlanActionButtons({
   }
 
   const trialEligible = Boolean(summary?.trialEligible);
+  const hasPaymentMethod = Boolean(summary?.hasPaymentMethod);
   const showTrialCta = status === "none" && trialEligible;
   const showPurchaseCta = status === "none" && !trialEligible;
   const showManage =
@@ -134,7 +136,12 @@ export default function PlanActionButtons({
         />
       ) : null}
       {showManage ? (
-        <ManageBillingButton className="shrink-0" label="Manage plan" />
+        <ManageBillingButton
+          className="shrink-0"
+          label="Manage plan"
+          disabled={!hasPaymentMethod}
+          tooltip={!hasPaymentMethod ? "Available after starting a trial or purchase." : undefined}
+        />
       ) : null}
       {showCancel ? (
         <div className="shrink-0">
