@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { toApiUrl } from "@/lib/http";
+import { openPopup, resolvePopupMessage } from "@/lib/popup";
 
 type ActionKind = "trial" | "purchase";
 
@@ -64,12 +65,40 @@ export function PlanCheckoutButtons({
   className = "",
 }: PlanCheckoutButtonsProps) {
   const [state, setState] = useState<ActionState>({ kind: null, error: null });
+  useEffect(() => {
+    const allowedOrigin = "https://oneearlybird.ai";
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== allowedOrigin) return;
+      const data = event.data as { type?: string } | null;
+      if (!data || data.type !== "billing:checkout:success") return;
+      resolvePopupMessage(data.type);
+      setState({ kind: null, error: null });
+    };
+    const handleFallback = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string }>).detail;
+      if (detail?.type === "billing:checkout:success") {
+        setState({ kind: null, error: null });
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    window.addEventListener("popup:fallback", handleFallback as EventListener);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+    };
+  }, []);
 
   const run = async (kind: ActionKind) => {
     setState({ kind, error: null });
     try {
       const url = await submitAction(kind, priceId);
-      window.location.assign(url);
+      const popup = openPopup(url, {
+        name: kind === "trial" ? "stripe-checkout-trial" : "stripe-checkout",
+        expectedMessageType: "billing:checkout:success",
+      });
+      if (!popup) {
+        window.location.assign(url);
+      }
     } catch (err: any) {
       setState({
         kind: null,

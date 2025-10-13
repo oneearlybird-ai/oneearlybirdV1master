@@ -4,6 +4,8 @@ import {
   PLAN_DEFINITIONS,
   PLAN_BY_PRICE_ID,
   type PlanDefinition,
+  getPlanPriceLabel,
+  getPlanTrialBadge,
 } from "@/lib/plans";
 
 export const metadata: Metadata = {
@@ -30,7 +32,18 @@ function Tier({
   planStatus?: string | null;
   activePlanSlug?: string | null;
 }) {
-  const { name, priceLabel, blurb, features, popular, priceId } = plan;
+  const {
+    name,
+    blurb,
+    features,
+    popular,
+    priceId,
+    includedMinutes,
+    overagePerMinute,
+    trialAvailable,
+  } = plan;
+  const priceLabel = getPlanPriceLabel(plan);
+  const trialBadge = getPlanTrialBadge(plan);
   const slug = plan.slug;
   function featureHint(f: string): string | null {
     const s = f.toLowerCase();
@@ -57,7 +70,15 @@ function Tier({
         ) : null}
       </div>
       <div className="mt-3 text-3xl font-semibold">{priceLabel}</div>
-      <p className="mt-2 text-sm text-white/70">{blurb}</p>
+      {blurb ? <p className="mt-2 text-sm text-white/70">{blurb}</p> : null}
+      <p className="mt-2 text-xs uppercase tracking-wide text-white/50">
+        {includedMinutes.toLocaleString()} min included • {overagePerMinute}/min overage
+      </p>
+      {trialAvailable && trialBadge ? (
+        <p className="mt-1 inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-200">
+          {trialBadge}
+        </p>
+      ) : null}
       <ul className="mt-6 space-y-2 text-sm text-white/80">
         {features.map((f, i) => {
           const id = `feat-${slug}-${i}`;
@@ -89,6 +110,7 @@ function Tier({
         priceId={priceId}
         planName={name}
         disableTrial={
+          !trialAvailable ||
           planStatus === "trial-active" ||
           planStatus === "active" ||
           planStatus === "trialing"

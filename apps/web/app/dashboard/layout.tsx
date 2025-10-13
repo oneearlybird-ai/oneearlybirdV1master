@@ -53,6 +53,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
               <NavLink href="/dashboard/calls" label="Calls & Recordings" />
               <NavLink href="/dashboard/appointments" label="Appointments" />
               <NavLink href="/dashboard/integrations" label="Integrations" />
+              <NavLink href="/dashboard/phone" label="Phone & Agent" />
               <NavLink href="/dashboard/billing" label="Billing & Plan" />
               <NavLink href="/dashboard/settings" label="Settings" />
             </nav>

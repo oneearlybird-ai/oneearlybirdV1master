@@ -2,7 +2,8 @@
 
 import { apiFetch } from "@/lib/http";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { openPopup, resolvePopupMessage } from "@/lib/popup";
 
 type ManageBillingButtonProps = {
   className?: string;
@@ -13,6 +14,28 @@ type ManageBillingButtonProps = {
 export default function ManageBillingButton({ className = "", label = "Manage billing", variant = "primary" }: ManageBillingButtonProps) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  useEffect(() => {
+    const allowedOrigin = "https://oneearlybird.ai";
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== allowedOrigin) return;
+      const data = event.data as { type?: string } | null;
+      if (!data || data.type !== "billing:portal:returned") return;
+      resolvePopupMessage(data.type);
+      setLoading(false);
+    };
+    const handleFallback = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string }>).detail;
+      if (detail?.type === "billing:portal:returned") {
+        setLoading(false);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    window.addEventListener("popup:fallback", handleFallback as EventListener);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+    };
+  }, []);
 
   async function openPortal() {
     if (loading) return;
@@ -30,7 +53,13 @@ export default function ManageBillingButton({ className = "", label = "Manage bi
       }
       const url = data?.url;
       if (typeof url === "string" && url.startsWith("http")) {
-        window.location.href = url;
+        const popup = openPopup(url, {
+          name: "stripe-portal",
+          expectedMessageType: "billing:portal:returned",
+        });
+        if (!popup) {
+          window.location.href = url;
+        }
         return;
       }
       throw new Error("invalid_response");

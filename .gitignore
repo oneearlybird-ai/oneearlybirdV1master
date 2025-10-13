@@ -113,3 +113,6 @@ Desktop/earlbirdmiscallaneous/
 
 # local artifacts
 artifacts/
+# local media folders
+Public/
+Pictures/

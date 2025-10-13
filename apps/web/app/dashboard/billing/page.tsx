@@ -7,8 +7,9 @@ import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 import ManageBillingButton from "@/components/ManageBillingButton";
 import { apiFetch } from "@/lib/http";
 import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
-import { PLAN_DEFINITIONS, type PlanDefinition } from "@/lib/plans";
+import { PLAN_DEFINITIONS, type PlanDefinition, getPlanPriceLabel, getPlanTrialBadge } from "@/lib/plans";
 import PlanActionButtons from "@/components/PlanActionButtons";
+import { resolvePopupMessage } from "@/lib/popup";
 
 type TenantProfile = {
   planKey?: string | null;
@@ -92,13 +93,15 @@ function PlanTile({
   const normalizedStatus = (summaryStatus || "none").toLowerCase();
   const showPortal = ["active", "trial-active", "trial-pending", "activating"].includes(normalizedStatus);
   let actions: React.ReactNode = null;
+  const priceLabel = getPlanPriceLabel(plan);
+  const trialBadge = getPlanTrialBadge(plan);
 
   if (showPortal) {
     const label = isCurrent ? "Manage plan" : "Upgrade via portal";
     const variant = isCurrent ? "primary" : "secondary";
     actions = <ManageBillingButton className="mt-4 inline-flex" label={label} variant={variant} />;
   } else if (["none", "trial-expired", "canceled"].includes(normalizedStatus)) {
-    const allowTrial = trialEligible && normalizedStatus === "none";
+    const allowTrial = plan.trialAvailable && trialEligible && normalizedStatus === "none";
     actions = (
       <PlanCheckoutButtons
         className="mt-4"
@@ -132,7 +135,17 @@ function PlanTile({
           <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{plan.tag}</span>
         ) : null}
       </div>
-      <div className="mt-1 text-white/90">{plan.priceLabel}</div>
+      <div className="mt-1 text-white/90">{priceLabel}</div>
+      {plan.blurb ? <p className="mt-2 text-sm text-white/70">{plan.blurb}</p> : null}
+      <div className="text-xs uppercase tracking-wide text-white/50 mt-1">
+        {plan.includedMinutes.toLocaleString()} min included
+        {plan.overagePerMinute ? ` • ${plan.overagePerMinute}/min overage` : ""}
+      </div>
+      {plan.trialAvailable && trialBadge ? (
+        <div className="mt-2 inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[11px] text-emerald-200">
+          {trialBadge}
+        </div>
+      ) : null}
       <ul className="mt-3 space-y-1 text-sm text-white/80">
         {plan.features.map((feature) => (
           <li key={feature} className="flex items-start gap-2">
@@ -244,6 +257,35 @@ export default function BillingPage() {
   useEffect(() => {
     void loadPlanData();
     void loadHistory(undefined, true);
+  }, [loadPlanData, loadHistory]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const allowedOrigin = "https://oneearlybird.ai";
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== allowedOrigin) return;
+      const data = event.data as { type?: string } | null;
+      if (!data || typeof data.type !== "string") return;
+      if (data.type === "billing:checkout:success" || data.type === "billing:portal:returned") {
+        resolvePopupMessage(data.type);
+        void loadPlanData();
+        void loadHistory(undefined, true);
+      }
+    };
+    const handleFallback = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string }>).detail;
+      if (!detail?.type) return;
+      if (detail.type === "billing:checkout:success" || detail.type === "billing:portal:returned") {
+        void loadPlanData();
+        void loadHistory(undefined, true);
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    window.addEventListener("popup:fallback", handleFallback as EventListener);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+    };
   }, [loadPlanData, loadHistory]);
 
   useEffect(() => {

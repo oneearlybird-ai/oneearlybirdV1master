@@ -9,6 +9,7 @@ import CopyOrgIdButton from "@/components/CopyOrgIdButton";
 import CopyPageLinkButton from "@/components/CopyPageLinkButton";
 import { derivePlanDisplay } from "@/lib/billing";
 import PlanActionButtons from "@/components/PlanActionButtons";
+import { resolvePopupMessage } from "@/lib/popup";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
 
@@ -209,6 +210,52 @@ export default function DashboardPage() {
 
   useEffect(() => {
     void fetchAll();
+  }, [fetchAll]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const allowedOrigin = "https://oneearlybird.ai";
+    const handleMessage = (event: MessageEvent) => {
+      if (event.origin !== allowedOrigin) return;
+      const data = event.data as { type?: string; sessionId?: string } | null;
+      if (!data || typeof data.type !== "string") return;
+      if (data.type === "billing:checkout:success" || data.type === "billing:portal:returned" || data.type === "auth:success") {
+        resolvePopupMessage(data.type);
+        void fetchAll();
+      }
+    };
+    const handleFallback = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string }>).detail;
+      if (!detail?.type) return;
+      if (detail.type === "billing:checkout:success" || detail.type === "billing:portal:returned" || detail.type === "auth:success") {
+        void fetchAll();
+      }
+    };
+    window.addEventListener("message", handleMessage);
+    window.addEventListener("popup:fallback", handleFallback as EventListener);
+
+    const search = new URLSearchParams(window.location.search);
+    const sessionId = search.get("session_id");
+    if (window.opener && sessionId) {
+      window.opener.postMessage({ type: "billing:checkout:success", sessionId }, allowedOrigin);
+      window.close();
+    } else if (window.opener && window.name === "stripe-portal") {
+      window.opener.postMessage({ type: "billing:portal:returned" }, allowedOrigin);
+      window.close();
+    } else if (window.opener && window.name === "oauth-google") {
+      window.opener.postMessage({ type: "auth:success" }, allowedOrigin);
+      window.close();
+    }
+    if (sessionId) {
+      search.delete("session_id");
+      const next = `${window.location.pathname}${search.toString() ? `?${search.toString()}` : ""}${window.location.hash}`;
+      window.history.replaceState(null, "", next);
+    }
+
+    return () => {
+      window.removeEventListener("message", handleMessage);
+      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+    };
   }, [fetchAll]);
 
   useEffect(() => {

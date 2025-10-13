@@ -1,4 +1,9 @@
-import { PLAN_DEFINITIONS, PLAN_BY_PRICE_ID, type PlanDefinition } from "@/lib/plans";
+import {
+  PLAN_DEFINITIONS,
+  PLAN_BY_PRICE_ID,
+  type PlanDefinition,
+  getPlanPriceLabel,
+} from "@/lib/plans";
 
 export type PlanSummaryLike = {
   status: "none" | "trial-active" | "active";
@@ -69,7 +74,7 @@ export function derivePlanDisplay(
     }
     return {
       value: definition.name,
-      hint: definition.priceLabel,
+      hint: getPlanPriceLabel(definition),
     };
   }
 
@@ -90,6 +95,8 @@ export function derivePlanDisplay(
   const minutes = summary.planMinutes ?? summary.minutesCap ?? null;
   const name = definition?.name || fallbackName;
   const value = minutes ? `${name} • ${minutes} min/mo` : name;
-  const hint = definition?.priceLabel || (summary.hasPaymentMethod ? "Payment method on file" : undefined);
+  const hint =
+    (definition && getPlanPriceLabel(definition)) ||
+    (summary.hasPaymentMethod ? "Payment method on file" : undefined);
   return { value, hint };
 }

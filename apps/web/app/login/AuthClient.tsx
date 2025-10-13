@@ -1,10 +1,11 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import Link from "next/link";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
+import { openPopup, resolvePopupMessage } from "@/lib/popup";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 
@@ -30,6 +31,34 @@ export default function AuthClient({
   const [suConfirm, setSuConfirm] = useState("");
   const [suErr, setSuErr] = useState<string | null>(null);
   const [suLoading, setSuLoading] = useState(false);
+  const [googlePending, setGooglePending] = useState(false);
+
+  useEffect(() => {
+    const allowedOrigin = "https://oneearlybird.ai";
+    const messageHandler = (event: MessageEvent) => {
+      if (event.origin !== allowedOrigin) return;
+      const data = event.data as { type?: string } | null;
+      if (!data || typeof data.type !== "string") return;
+      if (data.type === "auth:success") {
+        resolvePopupMessage(data.type);
+        setGooglePending(false);
+        window.location.href = "/dashboard";
+      }
+    };
+    const fallbackHandler = (event: Event) => {
+      const detail = (event as CustomEvent<{ type?: string }>).detail;
+      if (detail?.type === "auth:success") {
+        setGooglePending(false);
+        window.location.href = "/dashboard";
+      }
+    };
+    window.addEventListener("message", messageHandler);
+    window.addEventListener("popup:fallback", fallbackHandler as EventListener);
+    return () => {
+      window.removeEventListener("message", messageHandler);
+      window.removeEventListener("popup:fallback", fallbackHandler as EventListener);
+    };
+  }, []);
 
   function switchTab(next: "login" | "signup") {
     setTab(next);
@@ -120,14 +149,22 @@ export default function AuthClient({
   const GoogleBtn = ({ label }: { label: string }) => (
     <button
       onClick={() => {
-        window.location.href = apiUrl("/oauth/google/start");
+        if (googlePending) return;
+        const popup = openPopup(apiUrl("/oauth/google/start"), {
+          name: "oauth-google",
+          expectedMessageType: "auth:success",
+        });
+        if (popup) {
+          setGooglePending(true);
+        }
       }}
-      className="w-full h-11 rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] font-medium flex items-center justify-center gap-2 hover:bg-white/90 hover:shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4]"
+      disabled={googlePending}
+      className="w-full h-11 rounded-xl border border-[#DADCE0] bg-white text-[#3C4043] font-medium flex items-center justify-center gap-2 hover:bg-white/90 hover:shadow-sm transition-colors duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4] disabled:opacity-60"
       aria-label={label}
       type="button"
     >
       <OfficialGoogleIcon />
-      <span>{label}</span>
+      <span>{googlePending ? "Waiting…" : label}</span>
     </button>
   );
 

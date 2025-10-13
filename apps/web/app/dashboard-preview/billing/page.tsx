@@ -88,10 +88,10 @@ export default async function BillingPage() {
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
           <div className="font-medium">Compare plans</div>
           <div className="mt-3 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-            <PlanTile name="Basic" price="$99/mo" features={["Up to 200 calls","Standard voice","Email summaries"]} />
-            <PlanTile name="Pro" price="$199/mo" tag="Most popular" features={["Up to 500 calls","Premium voice","Calendar booking","CRM logging"]} current={plan==='Pro'} />
-            <PlanTile name="Elite" price="$399/mo" features={["Up to 1200 calls","Priority routing","Advanced analytics"]} />
-            <PlanTile name="Enterprise" price="Custom" features={["Unlimited volume","SLA & SSO","Dedicated support"]} />
+            <PlanTile name="Starter" price="$149/mo" features={["200 min included","Core routing","Email summaries"]} />
+            <PlanTile name="Professional" price="$249/mo" tag="Most popular" features={["400 min included","CRM sync","Calendar booking"]} current={plan==='Pro'} />
+            <PlanTile name="Growth" price="$399/mo" features={["800 min included","Team routing","Advanced analytics"]} />
+            <PlanTile name="Enterprise" price="$899/mo" features={["2000 min included","SSO & compliance","Dedicated manager"]} />
           </div>
         </div>
 
@@ -103,8 +103,8 @@ export default async function BillingPage() {
               <tr><th className="text-left font-normal">Date</th><th className="text-left font-normal">Amount</th><th className="text-left font-normal">Status</th></tr>
             </thead>
             <tbody>
-              <tr><td>2025-08-12</td><td>$199.00</td><td>Paid</td></tr>
-              <tr><td>2025-07-12</td><td>$199.00</td><td>Paid</td></tr>
+              <tr><td>2025-08-12</td><td>$249.00</td><td>Paid</td></tr>
+              <tr><td>2025-07-12</td><td>$249.00</td><td>Paid</td></tr>
             </tbody>
           </table>
         </div>
