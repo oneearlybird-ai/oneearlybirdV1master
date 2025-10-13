@@ -30,6 +30,7 @@ ehthumbs.db
 # Allow project files
 !.vercel/
 !apps/
+!apps/web/public/**
 !infra/
 !scripts/
 !package.json
