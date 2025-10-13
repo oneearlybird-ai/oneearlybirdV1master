@@ -79,8 +79,9 @@ export function derivePlanDisplay(
 
   if (summary.status === "trial-active") {
     const cap = summary.minutesCap ?? 100;
+    const capLabel = `${cap}-minute cap`;
     const end = formatIsoDate(summary.trialEnd);
-    const value = end ? `Trial (${cap} cap) ends ${end}` : `Trial (${cap} cap)`;
+    const value = end ? `Trial (${capLabel}) ends ${end}` : `Trial (${capLabel})`;
     return { value };
   }
 

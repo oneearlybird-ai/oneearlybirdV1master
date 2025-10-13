@@ -27,6 +27,7 @@ async function submitAction(kind: ActionKind, priceId: string): Promise<string> 
   const res = await fetch(toApiUrl(path), {
     method: "POST",
     credentials: "include",
+    cache: "no-store",
     body: JSON.stringify({ priceId }),
     headers: {
       "content-type": "application/json",

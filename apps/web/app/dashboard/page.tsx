@@ -8,6 +8,7 @@ import CopyDiagnostics from "@/components/CopyDiagnostics";
 import CopyOrgIdButton from "@/components/CopyOrgIdButton";
 import CopyPageLinkButton from "@/components/CopyPageLinkButton";
 import { derivePlanDisplay } from "@/lib/billing";
+import PlanActionButtons from "@/components/PlanActionButtons";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
 
@@ -306,9 +307,7 @@ export default function DashboardPage() {
         <Kpi label="Booked (7d)" value={bookedLabel} hint={`Voicemail deflected ${deflectedLabel}`} />
       </div>
       <div className="mt-3">
-        <a href="/dashboard/billing" className="btn btn-outline">
-          Manage plan
-        </a>
+        <PlanActionButtons summary={summary} profile={profile} onRefresh={fetchAll} />
       </div>
 
       <ThisWeekPanel

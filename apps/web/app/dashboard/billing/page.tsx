@@ -3,11 +3,12 @@
 export const dynamic = "force-dynamic";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import ManageBillingButton from "@/components/ManageBillingButton";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
+import ManageBillingButton from "@/components/ManageBillingButton";
 import { apiFetch } from "@/lib/http";
 import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
 import { PLAN_DEFINITIONS, type PlanDefinition } from "@/lib/plans";
+import PlanActionButtons from "@/components/PlanActionButtons";
 
 type TenantProfile = {
   planKey?: string | null;
@@ -307,8 +308,13 @@ export default function BillingPage() {
               <dd>{periodEnd ?? "—"}</dd>
             </div>
           </dl>
-          <div className="mt-4 flex flex-wrap gap-3">
-            <ManageBillingButton className="shrink-0" label="Manage plan" />
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <PlanActionButtons
+              summary={summary}
+              profile={profile}
+              onRefresh={loadPlanData}
+              className="shrink-0"
+            />
             <a
               href="/pricing"
               className="shrink-0 rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white"
