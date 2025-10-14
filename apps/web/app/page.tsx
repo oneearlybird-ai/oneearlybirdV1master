@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { Marquee } from '@/components/Marquee';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
+import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
@@ -104,7 +105,12 @@ export default function Home() {
         </h1>
         <p className="mt-6 max-w-xl sm:max-w-2xl text-white/70">EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs, routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts, recordings, analytics, and clean billing.</p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">Start free</Link>
+          <AuthModalTriggerButton
+            mode="signup"
+            className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
+          >
+            Start free
+          </AuthModalTriggerButton>
           <Link href="/pricing" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">See pricing</Link>
         </div>
       </Section>
@@ -188,7 +194,9 @@ export default function Home() {
         <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-white/5 to-white/10 p-8 text-center">
           <h3 className="text-xl font-semibold">Never miss another call. Ready to get started?</h3>
           <div className="mt-4 flex justify-center gap-3">
-            <Link href="/signup" className="btn btn-primary">Start Free Trial</Link>
+            <AuthModalTriggerButton mode="signup" className="btn btn-primary">
+              Start Free Trial
+            </AuthModalTriggerButton>
             <Link href="/signup" className="btn btn-outline">Book a Demo</Link>
           </div>
         </div>

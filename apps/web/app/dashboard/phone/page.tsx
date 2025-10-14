@@ -7,7 +7,6 @@ import { toast } from "@/components/Toasts";
 type RoutingMode = "agent" | "passthrough";
 
 type PhoneProfile = {
-  businessNumber?: string | null;
   did?: string | null;
   phoneVerifiedAt?: string | null;
   routingMode?: RoutingMode | null;
@@ -69,6 +68,29 @@ export default function PhoneAndAgentPage() {
     return `Verified on ${formatDate(profile.phoneVerifiedAt)}`;
   }, [profile.phoneVerifiedAt]);
 
+  const statusRows = useMemo(() => {
+    const rows: Array<{ label: string; value: string }> = [];
+    rows.push({
+      label: "Caller ID (DID)",
+      value: maskPhone(profile.did),
+    });
+    rows.push({
+      label: "Routing mode",
+      value: profile.routingMode === "agent" ? "AI Agent" : profile.routingMode === "passthrough" ? "Passthrough" : "—",
+    });
+    rows.push({
+      label: "Agent status",
+      value: typeof profile.agentEnabled === "boolean" ? (profile.agentEnabled ? "Enabled" : "Paused") : "—",
+    });
+    rows.push({ label: "Verification", value: verifiedLabel });
+    return rows;
+  }, [
+    profile.agentEnabled,
+    profile.did,
+    profile.phoneVerifiedAt,
+    profile.routingMode,
+    verifiedLabel,
+  ]);
   const refreshProfile = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -76,11 +98,14 @@ export default function PhoneAndAgentPage() {
       const res = await apiFetch("/tenants/profile", { cache: "no-store" });
       if (!res.ok) throw new Error(`profile_${res.status}`);
       const data = (await res.json()) as Record<string, unknown> & PhoneProfile;
+      const routing =
+        typeof data.routingMode === "string" && (data.routingMode === "agent" || data.routingMode === "passthrough")
+          ? (data.routingMode as RoutingMode)
+          : null;
       setProfile({
-        businessNumber: (data.businessNumber as string | null) ?? null,
-        did: (data.did as string | null) ?? null,
-        phoneVerifiedAt: (data.phoneVerifiedAt as string | null) ?? null,
-        routingMode: (data.routingMode as RoutingMode | null) ?? null,
+        did: typeof data.did === "string" ? data.did : null,
+        phoneVerifiedAt: typeof data.phoneVerifiedAt === "string" ? data.phoneVerifiedAt : null,
+        routingMode: routing,
         agentEnabled: typeof data.agentEnabled === "boolean" ? data.agentEnabled : null,
       });
     } catch (err) {
@@ -112,7 +137,7 @@ export default function PhoneAndAgentPage() {
         throw new Error(payload.error || payload.message || `connect_${res.status}`);
       }
       toast("Verification code sent to your business number", "success");
-      setProfile((prev) => ({ ...prev, businessNumber: number }));
+      void refreshProfile();
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to connect number", "error");
     } finally {
@@ -138,7 +163,6 @@ export default function PhoneAndAgentPage() {
       }
       toast("Number verified", "success");
       setVerifyCode("");
-      setProfile((prev) => ({ ...prev, phoneVerifiedAt: new Date().toISOString() }));
       void refreshProfile();
     } catch (err) {
       toast(err instanceof Error ? err.message : "Verification failed", "error");
@@ -225,9 +249,6 @@ export default function PhoneAndAgentPage() {
               {connectPending ? "Sending…" : "Send code"}
             </button>
           </div>
-          {profile.businessNumber ? (
-            <p className="text-xs text-white/50">Current number: {profile.businessNumber}</p>
-          ) : null}
         </div>
 
         <div>
@@ -259,35 +280,18 @@ export default function PhoneAndAgentPage() {
       </SectionCard>
 
       <SectionCard title="Status">
-        <dl className="space-y-2">
-          {profile.did ? (
-            <div className="flex items-center justify-between">
-              <dt className="text-white/60">Caller ID (DID)</dt>
-              <dd className="text-white">{maskPhone(profile.did)}</dd>
-            </div>
-          ) : null}
-          {profile.routingMode ? (
-            <div className="flex items-center justify-between">
-              <dt className="text-white/60">Routing mode</dt>
-              <dd className="text-white">{profile.routingMode === "agent" ? "AI Agent" : "Passthrough"}</dd>
-            </div>
-          ) : null}
-          {typeof profile.agentEnabled === "boolean" ? (
-            <div className="flex items-center justify-between">
-              <dt className="text-white/60">Agent status</dt>
-              <dd className="text-white">{profile.agentEnabled ? "Enabled" : "Paused"}</dd>
-            </div>
-          ) : null}
-          {profile.phoneVerifiedAt ? (
-            <div className="flex items-center justify-between">
-              <dt className="text-white/60">Verification</dt>
-              <dd className="text-white">{verifiedLabel}</dd>
-            </div>
-          ) : null}
-          {!profile.did && !profile.routingMode && typeof profile.agentEnabled !== "boolean" && !profile.phoneVerifiedAt ? (
-            <p className="text-xs text-white/50">No phone setup detected yet.</p>
-          ) : null}
-        </dl>
+        {statusRows.length > 0 ? (
+          <dl className="space-y-2">
+            {statusRows.map((row) => (
+              <div key={row.label} className="flex items-center justify-between">
+                <dt className="text-white/60">{row.label}</dt>
+                <dd className="text-white">{row.value}</dd>
+              </div>
+            ))}
+          </dl>
+        ) : (
+          <p className="text-xs text-white/50">No phone setup detected yet.</p>
+        )}
         {loading ? <p className="text-xs text-white/50">Loading status…</p> : null}
         {error ? <p className="text-xs text-rose-300">{error}</p> : null}
       </SectionCard>

@@ -1,6 +1,7 @@
 
 'use client';
 import Image from 'next/image';
+import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton';
 export default function Hero() {
   return (
     <section className="relative overflow-hidden">
@@ -19,7 +20,9 @@ export default function Hero() {
             delivers transcripts, analytics, and clean billing.
           </p>
           <div className="mt-8 flex gap-3">
-            <a href="/signup" className="btn btn-primary">Start free</a>
+            <AuthModalTriggerButton mode="signup" className="btn btn-primary">
+              Start free
+            </AuthModalTriggerButton>
             <a href="/signup" className="btn btn-outline">Book a demo</a>
           </div>
           <div className="mt-8 flex items-center gap-6 opacity-80">

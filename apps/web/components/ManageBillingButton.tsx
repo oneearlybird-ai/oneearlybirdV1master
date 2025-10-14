@@ -3,7 +3,7 @@
 import { apiFetch } from "@/lib/http";
 
 import { useEffect, useState } from "react";
-import { openPopup, resolvePopupMessage } from "@/lib/popup";
+import { openPopup } from "@/lib/popup";
 
 type ManageBillingButtonProps = {
   className?: string;
@@ -22,26 +22,15 @@ export default function ManageBillingButton({
 }: ManageBillingButtonProps) {
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState<string | null>(null);
+  const [showOverlay, setShowOverlay] = useState(false);
   useEffect(() => {
-    const allowedOrigin = "https://oneearlybird.ai";
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== allowedOrigin) return;
-      const data = event.data as { type?: string } | null;
-      if (!data || data.type !== "billing:portal:returned") return;
-      resolvePopupMessage(data.type);
+    const handlePortalReturned = () => {
       setLoading(false);
+      setShowOverlay(false);
     };
-    const handleFallback = (event: Event) => {
-      const detail = (event as CustomEvent<{ type?: string }>).detail;
-      if (detail?.type === "billing:portal:returned") {
-        setLoading(false);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    window.addEventListener("popup:fallback", handleFallback as EventListener);
+    window.addEventListener("ob:billing:portal:returned", handlePortalReturned);
     return () => {
-      window.removeEventListener("message", handleMessage);
-      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+      window.removeEventListener("ob:billing:portal:returned", handlePortalReturned);
     };
   }, []);
 
@@ -49,6 +38,7 @@ export default function ManageBillingButton({
     if (loading || disabled) return;
     setErr(null);
     setLoading(true);
+    let keepActive = false;
     try {
       const res = await apiFetch("/billing/portal", {
         method: "POST",
@@ -61,12 +51,19 @@ export default function ManageBillingButton({
       }
       const url = data?.url;
       if (typeof url === "string" && url.startsWith("http")) {
-        const popup = openPopup(url, {
-          name: "stripe-portal",
+        const popup = openPopup(url, "stripe-portal", {
           expectedMessageType: "billing:portal:returned",
+          w: 540,
+          h: 680,
         });
         if (!popup) {
+          setShowOverlay(false);
+          setLoading(false);
           window.location.href = url;
+        }
+        if (popup) {
+          keepActive = true;
+          setShowOverlay(true);
         }
         return;
       }
@@ -75,7 +72,10 @@ export default function ManageBillingButton({
       const msg = (e as any)?.message || "request_failed";
       setErr(msg);
     } finally {
-      setLoading(false);
+      if (!keepActive) {
+        setLoading(false);
+        setShowOverlay(false);
+      }
     }
   }
 
@@ -86,6 +86,12 @@ export default function ManageBillingButton({
 
   return (
     <div className={className}>
+      {showOverlay ? (
+        <div
+          className="pointer-events-none fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px] transition-opacity"
+          aria-hidden="true"
+        />
+      ) : null}
       <button
         onClick={openPortal}
         disabled={loading || disabled}

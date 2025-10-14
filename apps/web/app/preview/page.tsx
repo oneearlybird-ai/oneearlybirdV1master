@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 
 import Link from 'next/link';
 import { Marquee } from '@/components/Marquee';
+import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
@@ -123,12 +124,12 @@ export default function PreviewLanding() {
           recordings, analytics, and clean billing.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
-          <Link
-            href="/signup"
+          <AuthModalTriggerButton
+            mode="signup"
             className="rounded-xl bg-white px-5 py-3 font-medium text-black motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
           >
             Start free
-          </Link>
+          </AuthModalTriggerButton>
           <Link
             href="/pricing"
             className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95"
@@ -209,7 +210,9 @@ export default function PreviewLanding() {
         <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-white/5 to-white/10 p-8 text-center">
           <h3 className="text-xl font-semibold">Never miss another call. Ready to get started?</h3>
           <div className="mt-4 flex justify-center gap-3">
-            <Link href="/signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black hover:bg-white/90">Start Free Trial</Link>
+            <AuthModalTriggerButton mode="signup" className="rounded-xl bg-white px-5 py-3 font-medium text-black hover:bg-white/90">
+              Start Free Trial
+            </AuthModalTriggerButton>
             <Link href="/signup" className="rounded-xl border border-white/20 px-5 py-3 text-white/80 hover:text-white">Book a Demo</Link>
           </div>
         </div>

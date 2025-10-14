@@ -1,7 +1,6 @@
 export type PopupOptions = {
-  name: string;
-  width?: number;
-  height?: number;
+  w?: number;
+  h?: number;
   expectedMessageType?: string;
   pollInterval?: number;
 };
@@ -15,11 +14,23 @@ function buildFeatures(width: number, height: number) {
   const screenHeight = window.innerHeight ?? document.documentElement.clientHeight ?? screen.height;
   const left = Math.max(0, dualScreenLeft + screenWidth / 2 - width / 2);
   const top = Math.max(0, dualScreenTop + screenHeight / 2 - height / 2);
-  return `scrollbars=yes,width=${width},height=${height},top=${top},left=${left}`;
+  return [
+    "toolbar=0",
+    "menubar=0",
+    "location=0",
+    "status=0",
+    "resizable=1",
+    "scrollbars=1",
+    `width=${Math.round(width)}`,
+    `height=${Math.round(height)}`,
+    `top=${Math.round(top)}`,
+    `left=${Math.round(left)}`,
+  ].join(",");
 }
 
-export function openPopup(url: string, { name, width = 600, height = 700, expectedMessageType, pollInterval = 2000 }: PopupOptions): Window | null {
-  const features = buildFeatures(width, height);
+export function openPopup(url: string, name: string, options: PopupOptions = {}): Window | null {
+  const { w = 600, h = 700, expectedMessageType, pollInterval = 2000 } = options;
+  const features = buildFeatures(w, h);
   const popup = window.open(url, name, features);
   if (!popup) return null;
   if (expectedMessageType) {

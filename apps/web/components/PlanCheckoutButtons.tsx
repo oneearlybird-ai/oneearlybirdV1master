@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { toApiUrl } from "@/lib/http";
-import { openPopup, resolvePopupMessage } from "@/lib/popup";
+import { openPopup } from "@/lib/popup";
 
 type ActionKind = "trial" | "purchase";
 
@@ -65,45 +65,43 @@ export function PlanCheckoutButtons({
   className = "",
 }: PlanCheckoutButtonsProps) {
   const [state, setState] = useState<ActionState>({ kind: null, error: null });
+  const [showOverlay, setShowOverlay] = useState(false);
   useEffect(() => {
-    const allowedOrigin = "https://oneearlybird.ai";
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== allowedOrigin) return;
-      const data = event.data as { type?: string } | null;
-      if (!data || data.type !== "billing:checkout:success") return;
-      resolvePopupMessage(data.type);
+    const handleCheckoutSuccess = () => {
       setState({ kind: null, error: null });
+      setShowOverlay(false);
     };
-    const handleFallback = (event: Event) => {
-      const detail = (event as CustomEvent<{ type?: string }>).detail;
-      if (detail?.type === "billing:checkout:success") {
-        setState({ kind: null, error: null });
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    window.addEventListener("popup:fallback", handleFallback as EventListener);
+    window.addEventListener("ob:billing:checkout:success", handleCheckoutSuccess);
     return () => {
-      window.removeEventListener("message", handleMessage);
-      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+      window.removeEventListener("ob:billing:checkout:success", handleCheckoutSuccess);
     };
   }, []);
 
   const run = async (kind: ActionKind) => {
     setState({ kind, error: null });
+    let keepOverlay = false;
+    let errorMessage: string | null = null;
     try {
       const url = await submitAction(kind, priceId);
-      const popup = openPopup(url, {
-        name: kind === "trial" ? "stripe-checkout-trial" : "stripe-checkout",
+      const popup = openPopup(url, "stripe-checkout", {
         expectedMessageType: "billing:checkout:success",
+        w: 540,
+        h: 680,
       });
       if (!popup) {
+        setShowOverlay(false);
         window.location.assign(url);
+        return;
       }
+      keepOverlay = true;
+      setShowOverlay(true);
     } catch (err: any) {
-      setState({
-        kind: null,
-        error: err?.message || "Something went wrong. Please try again.",
-      });
+      errorMessage = err?.message || "Something went wrong. Please try again.";
+    } finally {
+      if (!keepOverlay || errorMessage) {
+        setShowOverlay(false);
+        setState({ kind: null, error: errorMessage });
+      }
     }
   };
 
@@ -113,6 +111,12 @@ export function PlanCheckoutButtons({
 
   return (
     <div className={`flex flex-col gap-2 ${className}`}>
+      {showOverlay ? (
+        <div
+          className="pointer-events-none fixed inset-0 z-40 bg-black/25 backdrop-blur-[1px] transition-opacity"
+          aria-hidden="true"
+        />
+      ) : null}
       {showTrial ? (
         <button
           type="button"
