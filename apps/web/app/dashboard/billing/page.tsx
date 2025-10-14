@@ -9,7 +9,6 @@ import { apiFetch } from "@/lib/http";
 import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
 import { PLAN_DEFINITIONS, type PlanDefinition, getPlanPriceLabel, getPlanTrialBadge } from "@/lib/plans";
 import PlanActionButtons from "@/components/PlanActionButtons";
-import { resolvePopupMessage } from "@/lib/popup";
 
 type TenantProfile = {
   planKey?: string | null;
@@ -261,30 +260,15 @@ export default function BillingPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const allowedOrigin = "https://oneearlybird.ai";
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== allowedOrigin) return;
-      const data = event.data as { type?: string } | null;
-      if (!data || typeof data.type !== "string") return;
-      if (data.type === "billing:checkout:success" || data.type === "billing:portal:returned") {
-        resolvePopupMessage(data.type);
-        void loadPlanData();
-        void loadHistory(undefined, true);
-      }
+    const handleRefetch = () => {
+      void loadPlanData();
+      void loadHistory(undefined, true);
     };
-    const handleFallback = (event: Event) => {
-      const detail = (event as CustomEvent<{ type?: string }>).detail;
-      if (!detail?.type) return;
-      if (detail.type === "billing:checkout:success" || detail.type === "billing:portal:returned") {
-        void loadPlanData();
-        void loadHistory(undefined, true);
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    window.addEventListener("popup:fallback", handleFallback as EventListener);
+    window.addEventListener("ob:billing:checkout:success", handleRefetch);
+    window.addEventListener("ob:billing:portal:returned", handleRefetch);
     return () => {
-      window.removeEventListener("message", handleMessage);
-      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+      window.removeEventListener("ob:billing:checkout:success", handleRefetch);
+      window.removeEventListener("ob:billing:portal:returned", handleRefetch);
     };
   }, [loadPlanData, loadHistory]);
 

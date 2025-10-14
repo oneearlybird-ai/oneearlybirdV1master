@@ -12,6 +12,7 @@ import NavMainLinks from "@/components/NavMainLinks";
 import FooterLinks from "@/components/FooterLinks";
 import MobileNav from "@/components/MobileNav";
 import { Analytics } from "@vercel/analytics/react";
+import AuthModalProvider from "@/components/auth/AuthModalProvider";
 import LogoLockup from "./(assets)/logo-lockup-supercrisp-clean.png";
 
 export const metadata: Metadata = {
@@ -27,44 +28,46 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en">
       <body className="min-h-dvh flex flex-col bg-neutral-950 text-white">
-        <a href="#content" className="skip-link">Skip to content</a>
-        <RevealOnScroll />
-        {/* Header */}
-        <ScrollHeaderElevator />
-        <header id="eb-header" className="eb-header sticky top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
-          <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-0.5 md:py-1">
-            <Link
-              href="/"
-              className="flex items-center gap-2 font-semibold tracking-tight text-white"
-              aria-label="EarlyBird home"
-            >
-              <Image src={LogoLockup} alt="EarlyBird" priority width={168} height={54} className="h-9 w-auto" />
-              <span className="sr-only">EarlyBird</span>
-            </Link>
-            <NavMainLinks />
-            <div className="flex items-center gap-3">
-              <SupportDrawer />
-              <AuthControls />
-              <MobileNav />
-            </div>
-          </nav>
-        </header>
+        <AuthModalProvider>
+          <a href="#content" className="skip-link">Skip to content</a>
+          <RevealOnScroll />
+          {/* Header */}
+          <ScrollHeaderElevator />
+          <header id="eb-header" className="eb-header sticky top-0 z-40 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
+            <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-0.5 md:py-1">
+              <Link
+                href="/"
+                className="flex items-center gap-2 font-semibold tracking-tight text-white"
+                aria-label="EarlyBird home"
+              >
+                <Image src={LogoLockup} alt="EarlyBird" priority width={168} height={54} className="h-9 w-auto" />
+                <span className="sr-only">EarlyBird</span>
+              </Link>
+              <NavMainLinks />
+              <div className="flex items-center gap-3">
+                <SupportDrawer />
+                <AuthControls />
+                <MobileNav />
+              </div>
+            </nav>
+          </header>
 
-        {/* Main content */}
-        <main id="content" className="flex-1">{children}</main>
-        <BackToTop />
+          {/* Main content */}
+          <main id="content" className="flex-1">{children}</main>
+          <BackToTop />
 
-        {/* Footer */}
-        <footer className="border-t border-white/10 mt-12">
-          <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 md:flex-row md:items-center md:justify-between">
-            <div className="text-sm text-white/60">
-              © {new Date().getFullYear()} EarlyBird, Inc.
+          {/* Footer */}
+          <footer className="border-t border-white/10 mt-12">
+            <div className="mx-auto flex max-w-6xl flex-col gap-4 px-6 py-10 md:flex-row md:items-center md:justify-between">
+              <div className="text-sm text-white/60">
+                © {new Date().getFullYear()} EarlyBird, Inc.
+              </div>
+              <FooterLinks />
             </div>
-            <FooterLinks />
-          </div>
-        </footer>
-        {/* Vercel Analytics */}
-        <Analytics />
+          </footer>
+          {/* Vercel Analytics */}
+          <Analytics />
+        </AuthModalProvider>
       </body>
     </html>
   );

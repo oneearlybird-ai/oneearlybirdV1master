@@ -1,9 +1,9 @@
 "use client";
 
-import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
+import { useAuthModal } from "@/components/auth/AuthModalProvider";
 
 const LOGOUT_EVENT_KEY = "__ob_logout";
 const LOGIN_EVENT_KEY = "__ob_login";
@@ -13,6 +13,7 @@ type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 export default function AuthControls() {
   const [status, setStatus] = useState<AuthStatus>("loading");
   const [signingOut, setSigningOut] = useState(false);
+  const { open } = useAuthModal();
 
   const apiUrl = useCallback((path: string) => {
     const base = (API_BASE || "").replace(/\/+$/, "");
@@ -40,6 +41,16 @@ export default function AuthControls() {
 
   useEffect(() => {
     refreshSessionState();
+  }, [refreshSessionState]);
+
+  useEffect(() => {
+    const handleAuthSuccess = () => {
+      refreshSessionState();
+    };
+    window.addEventListener("ob:auth:success", handleAuthSuccess);
+    return () => {
+      window.removeEventListener("ob:auth:success", handleAuthSuccess);
+    };
   }, [refreshSessionState]);
 
   useEffect(() => {
@@ -108,12 +119,13 @@ export default function AuthControls() {
   if (status === "authenticated") {
     return (
       <div className="flex items-center gap-3">
-        <Link
-          href="/dashboard"
-          className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white"
+        <button
+          onClick={() => redirectTo("/dashboard")}
+          className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 transition hover:text-white"
+          type="button"
         >
           Dashboard
-        </Link>
+        </button>
         <button
           onClick={() => {
             void handleSignOut();
@@ -129,18 +141,20 @@ export default function AuthControls() {
 
   return (
     <div className="flex items-center gap-3">
-      <Link
-        href="/login"
-        className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white"
+      <button
+        type="button"
+        onClick={() => open("signin")}
+        className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 transition hover:text-white"
       >
-        Log in
-      </Link>
-      <Link
-        href="/signup"
-        className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90"
+        Sign in
+      </button>
+      <button
+        type="button"
+        onClick={() => open("signup")}
+        className="rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90"
       >
         Get Started
-      </Link>
+      </button>
     </div>
   );
 }

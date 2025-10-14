@@ -9,7 +9,6 @@ import CopyOrgIdButton from "@/components/CopyOrgIdButton";
 import CopyPageLinkButton from "@/components/CopyPageLinkButton";
 import { derivePlanDisplay } from "@/lib/billing";
 import PlanActionButtons from "@/components/PlanActionButtons";
-import { resolvePopupMessage } from "@/lib/popup";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
 
@@ -215,24 +214,12 @@ export default function DashboardPage() {
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const allowedOrigin = "https://oneearlybird.ai";
-    const handleMessage = (event: MessageEvent) => {
-      if (event.origin !== allowedOrigin) return;
-      const data = event.data as { type?: string; sessionId?: string } | null;
-      if (!data || typeof data.type !== "string") return;
-      if (data.type === "billing:checkout:success" || data.type === "billing:portal:returned" || data.type === "auth:success") {
-        resolvePopupMessage(data.type);
-        void fetchAll();
-      }
+    const refresh = () => {
+      void fetchAll();
     };
-    const handleFallback = (event: Event) => {
-      const detail = (event as CustomEvent<{ type?: string }>).detail;
-      if (!detail?.type) return;
-      if (detail.type === "billing:checkout:success" || detail.type === "billing:portal:returned" || detail.type === "auth:success") {
-        void fetchAll();
-      }
-    };
-    window.addEventListener("message", handleMessage);
-    window.addEventListener("popup:fallback", handleFallback as EventListener);
+    window.addEventListener("ob:auth:success", refresh);
+    window.addEventListener("ob:billing:checkout:success", refresh);
+    window.addEventListener("ob:billing:portal:returned", refresh);
 
     const search = new URLSearchParams(window.location.search);
     const sessionId = search.get("session_id");
@@ -253,8 +240,9 @@ export default function DashboardPage() {
     }
 
     return () => {
-      window.removeEventListener("message", handleMessage);
-      window.removeEventListener("popup:fallback", handleFallback as EventListener);
+      window.removeEventListener("ob:auth:success", refresh);
+      window.removeEventListener("ob:billing:checkout:success", refresh);
+      window.removeEventListener("ob:billing:portal:returned", refresh);
     };
   }, [fetchAll]);
 
