@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/http";
 import { toast } from "@/components/Toasts";
 
@@ -12,6 +12,12 @@ type PhoneProfile = {
   routingMode?: RoutingMode | null;
   agentEnabled?: boolean | null;
 };
+
+type VerificationChannel = "call" | "sms";
+
+type PendingToggle =
+  | { kind: "routing"; mode: RoutingMode }
+  | { kind: "agent"; enabled: boolean };
 
 const ROUTING_MODES: Array<{ value: RoutingMode; label: string }> = [
   { value: "agent", label: "AI Agent" },
@@ -53,12 +59,15 @@ export default function PhoneAndAgentPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [profile, setProfile] = useState<PhoneProfile>({});
+  const pendingToggleRef = useRef<PendingToggle | null>(null);
 
   const [connectNumber, setConnectNumber] = useState("");
   const [connectPending, setConnectPending] = useState(false);
+  const [connectChannel, setConnectChannel] = useState<VerificationChannel>("call");
 
   const [verifyCode, setVerifyCode] = useState("");
   const [verifyPending, setVerifyPending] = useState(false);
+  const [verifyVisible, setVerifyVisible] = useState(false);
 
   const [routingPending, setRoutingPending] = useState(false);
   const [agentPending, setAgentPending] = useState(false);
@@ -102,12 +111,14 @@ export default function PhoneAndAgentPage() {
         typeof data.routingMode === "string" && (data.routingMode === "agent" || data.routingMode === "passthrough")
           ? (data.routingMode as RoutingMode)
           : null;
+      const verifiedAt = typeof data.phoneVerifiedAt === "string" ? data.phoneVerifiedAt : null;
       setProfile({
         did: typeof data.did === "string" ? data.did : null,
-        phoneVerifiedAt: typeof data.phoneVerifiedAt === "string" ? data.phoneVerifiedAt : null,
+        phoneVerifiedAt: verifiedAt,
         routingMode: routing,
         agentEnabled: typeof data.agentEnabled === "boolean" ? data.agentEnabled : null,
       });
+      setVerifyVisible((prev) => prev || !verifiedAt);
     } catch (err) {
       const message = err instanceof Error ? err.message : "profile_fetch_failed";
       setError(message);
@@ -130,20 +141,21 @@ export default function PhoneAndAgentPage() {
     try {
       const res = await apiFetch("/phone/connect", {
         method: "POST",
-        body: JSON.stringify({ businessNumber: number }),
+        body: JSON.stringify({ businessNumber: number, channel: connectChannel }),
       });
       if (!res.ok) {
         const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
         throw new Error(payload.error || payload.message || `connect_${res.status}`);
       }
       toast("Verification code sent to your business number", "success");
+      setVerifyVisible(true);
       void refreshProfile();
     } catch (err) {
       toast(err instanceof Error ? err.message : "Failed to connect number", "error");
     } finally {
       setConnectPending(false);
     }
-  }, [connectNumber]);
+  }, [connectChannel, connectNumber, refreshProfile]);
 
   const handleVerify = useCallback(async () => {
     const code = verifyCode.trim();
@@ -163,6 +175,7 @@ export default function PhoneAndAgentPage() {
       }
       toast("Number verified", "success");
       setVerifyCode("");
+      setVerifyVisible(false);
       void refreshProfile();
     } catch (err) {
       toast(err instanceof Error ? err.message : "Verification failed", "error");
@@ -171,49 +184,93 @@ export default function PhoneAndAgentPage() {
     }
   }, [refreshProfile, verifyCode]);
 
-  const updateRouting = useCallback(async (mode: RoutingMode) => {
-    if (profile.routingMode === mode) return;
-    if (!window.confirm(`Switch routing to ${mode === "agent" ? "AI Agent" : "Passthrough"}?`)) return;
-    setRoutingPending(true);
-    try {
-      const res = await apiFetch("/phone/routing", {
-        method: "POST",
-        body: JSON.stringify({ mode }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
-        throw new Error(payload.error || payload.message || `routing_${res.status}`);
+  const updateRouting = useCallback(
+    async (mode: RoutingMode, options?: { skipConfirm?: boolean }) => {
+      const skipConfirm = options?.skipConfirm ?? false;
+      if (!skipConfirm && profile.routingMode === mode) return;
+      if (!skipConfirm && !window.confirm(`Switch routing to ${mode === "agent" ? "AI Agent" : "Passthrough"}?`)) {
+        return;
       }
-      toast("Routing mode updated", "success");
-      setProfile((prev) => ({ ...prev, routingMode: mode }));
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to update routing", "error");
-    } finally {
-      setRoutingPending(false);
-    }
-  }, [profile.routingMode]);
+      setRoutingPending(true);
+      try {
+        const res = await apiFetch("/phone/routing", {
+          method: "POST",
+          body: JSON.stringify({ mode }),
+        });
+        if (res.status === 403) {
+          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string; code?: string };
+          if ((payload?.code || payload?.error) === "phone_unverified") {
+            pendingToggleRef.current = { kind: "routing", mode };
+            setVerifyVisible(true);
+            toast("Verify your number to update routing", "error");
+            void refreshProfile();
+            return;
+          }
+          throw new Error(payload.error || payload.message || "routing_403");
+        }
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+          throw new Error(payload.error || payload.message || `routing_${res.status}`);
+        }
+        toast("Routing mode updated", "success");
+        setProfile((prev) => ({ ...prev, routingMode: mode }));
+      } catch (err) {
+        toast(err instanceof Error ? err.message : "Failed to update routing", "error");
+      } finally {
+        setRoutingPending(false);
+      }
+    },
+    [profile.routingMode, refreshProfile],
+  );
 
-  const updateAgent = useCallback(async (enabled: boolean) => {
-    if (profile.agentEnabled === enabled) return;
-    if (!window.confirm(`Turn ${enabled ? "on" : "off"} the AI Agent?`)) return;
-    setAgentPending(true);
-    try {
-      const res = await apiFetch("/agent/toggle", {
-        method: "POST",
-        body: JSON.stringify({ enabled }),
-      });
-      if (!res.ok) {
-        const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
-        throw new Error(payload.error || payload.message || `agent_${res.status}`);
+  const updateAgent = useCallback(
+    async (enabled: boolean, options?: { skipConfirm?: boolean }) => {
+      const skipConfirm = options?.skipConfirm ?? false;
+      if (!skipConfirm && profile.agentEnabled === enabled) return;
+      if (!skipConfirm && !window.confirm(`Turn ${enabled ? "on" : "off"} the AI Agent?`)) return;
+      setAgentPending(true);
+      try {
+        const res = await apiFetch("/agent/toggle", {
+          method: "POST",
+          body: JSON.stringify({ enabled }),
+        });
+        if (res.status === 403) {
+          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string; code?: string };
+          if ((payload?.code || payload?.error) === "phone_unverified") {
+            pendingToggleRef.current = { kind: "agent", enabled };
+            setVerifyVisible(true);
+            toast("Verify your number to toggle the agent", "error");
+            void refreshProfile();
+            return;
+          }
+          throw new Error(payload.error || payload.message || "agent_403");
+        }
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
+          throw new Error(payload.error || payload.message || `agent_${res.status}`);
+        }
+        toast(`Agent ${enabled ? "enabled" : "paused"}`, "success");
+        setProfile((prev) => ({ ...prev, agentEnabled: enabled }));
+      } catch (err) {
+        toast(err instanceof Error ? err.message : "Failed to update agent", "error");
+      } finally {
+        setAgentPending(false);
       }
-      toast(`Agent ${enabled ? "enabled" : "paused"}`, "success");
-      setProfile((prev) => ({ ...prev, agentEnabled: enabled }));
-    } catch (err) {
-      toast(err instanceof Error ? err.message : "Failed to update agent", "error");
-    } finally {
-      setAgentPending(false);
+    },
+    [profile.agentEnabled, refreshProfile],
+  );
+
+  useEffect(() => {
+    if (!profile.phoneVerifiedAt) return;
+    const pending = pendingToggleRef.current;
+    if (!pending) return;
+    pendingToggleRef.current = null;
+    if (pending.kind === "routing") {
+      void updateRouting(pending.mode, { skipConfirm: true });
+    } else {
+      void updateAgent(pending.enabled, { skipConfirm: true });
     }
-  }, [profile.agentEnabled]);
+  }, [profile.phoneVerifiedAt, updateAgent, updateRouting]);
 
   return (
     <main className="mx-auto max-w-4xl space-y-6">
@@ -249,34 +306,69 @@ export default function PhoneAndAgentPage() {
               {connectPending ? "Sending…" : "Send code"}
             </button>
           </div>
+          <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <span className="text-xs uppercase tracking-wide text-white/60">Delivery method</span>
+            <div
+              role="group"
+              aria-label="Verification delivery method"
+              className="inline-flex rounded-md border border-white/15 bg-white/5 p-0.5"
+            >
+              <button
+                type="button"
+                onClick={() => setConnectChannel("call")}
+                disabled={connectPending}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  connectChannel === "call"
+                    ? "bg-white text-black shadow"
+                    : "text-white/70 hover:text-white"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                Send via Call
+              </button>
+              <button
+                type="button"
+                onClick={() => setConnectChannel("sms")}
+                disabled={connectPending}
+                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                  connectChannel === "sms"
+                    ? "bg-white text-black shadow"
+                    : "text-white/70 hover:text-white"
+                } disabled:cursor-not-allowed disabled:opacity-60`}
+              >
+                Send via SMS
+              </button>
+            </div>
+          </div>
         </div>
 
-        <div>
-          <label className="block text-xs uppercase tracking-wide text-white/60" htmlFor="verification-code">
-            Step 2 — Verify code
-          </label>
-          <div className="mt-1 flex flex-col gap-2 sm:flex-row">
-            <input
-              id="verification-code"
-              type="text"
-              placeholder="6-digit code"
-              value={verifyCode}
-              onChange={(event) => setVerifyCode(event.target.value)}
-              className="flex-1 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
-              inputMode="numeric"
-              pattern="[0-9]*"
-            />
-            <button
-              type="button"
-              onClick={handleVerify}
-              disabled={verifyPending}
-              className="shrink-0 rounded-md border border-white/20 px-3 py-2 text-sm text-white/80 hover:text-white disabled:opacity-60"
-            >
-              {verifyPending ? "Verifying…" : "Verify"}
-            </button>
+        {verifyVisible ? (
+          <div>
+            <label className="block text-xs uppercase tracking-wide text-white/60" htmlFor="verification-code">
+              Step 2 — Verify code
+            </label>
+            <div className="mt-1 flex flex-col gap-2 sm:flex-row">
+              <input
+                id="verification-code"
+                type="text"
+                placeholder="6-digit code"
+                value={verifyCode}
+                onChange={(event) => setVerifyCode(event.target.value)}
+                className="flex-1 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                inputMode="numeric"
+                pattern="[0-9]*"
+              />
+              <button
+                type="button"
+                onClick={handleVerify}
+                disabled={verifyPending}
+                className="shrink-0 rounded-md border border-white/20 px-3 py-2 text-sm text-white/80 hover:text-white disabled:opacity-60"
+              >
+                {verifyPending ? "Verifying…" : "Verify"}
+              </button>
+            </div>
           </div>
-          <p className="text-xs text-white/50">{verifiedLabel}</p>
-        </div>
+        ) : null}
+        <p className="text-xs text-white/50">{verifiedLabel}</p>
       </SectionCard>
 
       <SectionCard title="Status">
