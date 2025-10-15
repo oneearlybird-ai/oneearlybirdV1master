@@ -47,6 +47,8 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
     const currentPath = window.location.pathname || "";
     if (currentPath.startsWith("/dashboard")) {
       window.location.href = "/";
+    } else if (currentPath === "/m" || currentPath.startsWith("/m/")) {
+      window.location.href = "/m";
     }
   }
   return response;

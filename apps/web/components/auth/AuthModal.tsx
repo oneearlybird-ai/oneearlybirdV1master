@@ -50,7 +50,14 @@ export default function AuthModal() {
 
   const [googlePending, setGooglePending] = useState(false);
 
+  const [mobileShell, setMobileShell] = useState(false);
+
   const isSignIn = mode === "signin";
+
+  useEffect(() => {
+    if (typeof document === "undefined") return;
+    setMobileShell(document.body.classList.contains("ob-mobile-shell"));
+  }, []);
 
   const warmDashboardData = useCallback(async () => {
     try {
@@ -265,7 +272,11 @@ export default function AuthModal() {
         role="dialog"
         aria-modal="true"
         aria-labelledby="auth-modal-title"
-        className="relative w-full max-w-[420px] rounded-3xl border border-white/10 bg-neutral-950/95 p-6 shadow-2xl outline-none backdrop-blur-xl"
+        className={`relative border border-white/10 bg-neutral-950/95 shadow-2xl outline-none backdrop-blur-xl ${
+          mobileShell
+            ? "flex h-full w-full max-w-none flex-col rounded-none p-6 pb-[calc(env(safe-area-inset-bottom)+2rem)]"
+            : "w-full max-w-[420px] rounded-3xl p-6"
+        }`}
         onClick={(event) => event.stopPropagation()}
       >
         <button
