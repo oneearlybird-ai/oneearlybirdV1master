@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "@/components/auth/AuthModal";
 import { resolvePopupMessage } from "@/lib/popup";
+import { apiFetch } from "@/lib/http";
 
 export type AuthModalMode = "signin" | "signup";
 
@@ -30,6 +31,19 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const [state, setState] = useState<{ open: boolean; mode: AuthModalMode }>({ open: false, mode: "signin" });
+
+  const warmDashboardData = useCallback(async () => {
+    try {
+      await Promise.all([
+        apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/usage/summary?window=week", { cache: "no-store" }),
+      ]);
+    } catch (error) {
+      console.warn("auth_refresh_failed", {
+        message: (error as Error)?.message,
+      });
+    }
+  }, []);
 
   const applyQuery = useCallback(
     (mode: AuthModalMode | null) => {
@@ -102,6 +116,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       if (type === "auth:success" || type === "billing:checkout:success" || type === "billing:portal:returned") {
         resolvePopupMessage(type);
         if (type === "auth:success") {
+          void warmDashboardData();
           close();
         }
         dispatchAppEvent(type);
@@ -113,6 +128,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       if (type === "auth:success" || type === "billing:checkout:success" || type === "billing:portal:returned") {
         resolvePopupMessage(type);
         if (type === "auth:success") {
+          void warmDashboardData();
           close();
         }
         dispatchAppEvent(type);
@@ -124,7 +140,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       window.removeEventListener("message", handlePostMessage);
       window.removeEventListener("popup:fallback", handleFallback as EventListener);
     };
-  }, [close]);
+  }, [close, warmDashboardData]);
 
   const value = useMemo<AuthModalContextValue>(
     () => ({ open, close, isOpen: state.open, mode: state.mode, setMode }),

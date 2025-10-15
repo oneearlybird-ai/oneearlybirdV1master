@@ -42,7 +42,14 @@ export async function apiFetch(path: string, init: RequestInit = {}): Promise<Re
     cache: init.cache ?? "no-store",
     headers,
   };
-  return fetch(url, merged);
+  const response = await fetch(url, merged);
+  if (typeof window !== "undefined" && response.status === 401) {
+    const currentPath = window.location.pathname || "";
+    if (currentPath.startsWith("/dashboard")) {
+      window.location.href = "/";
+    }
+  }
+  return response;
 }
 
 export async function jsonFetch<T = unknown>(url: string, init: RequestInit = {}): Promise<HttpJson<T>> {

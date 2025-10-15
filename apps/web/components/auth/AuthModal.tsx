@@ -1,12 +1,13 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { apiFetch } from "@/lib/http";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
@@ -15,10 +16,6 @@ function apiUrl(path: string) {
   const base = (API_BASE || "").replace(/\/+$/, "");
   if (base) return `${base}${path}`;
   return `/api/upstream${path}`;
-}
-
-function isGoogleEmail(value: string) {
-  return value.trim().toLowerCase().endsWith("@gmail.com");
 }
 
 function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
@@ -52,9 +49,21 @@ export default function AuthModal() {
   const [signUpPending, setSignUpPending] = useState(false);
 
   const [googlePending, setGooglePending] = useState(false);
-  const [showGmailHint, setShowGmailHint] = useState(false);
 
   const isSignIn = mode === "signin";
+
+  const warmDashboardData = useCallback(async () => {
+    try {
+      await Promise.all([
+        apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/usage/summary?window=week", { cache: "no-store" }),
+      ]);
+    } catch (error) {
+      console.warn("auth_refresh_failed", {
+        message: (error as Error)?.message,
+      });
+    }
+  }, []);
 
   useEffect(() => {
     const active = document.activeElement as HTMLElement | null;
@@ -112,59 +121,53 @@ export default function AuthModal() {
   useEffect(() => {
     const handleAuthSuccess = () => {
       setGooglePending(false);
-      setShowGmailHint(false);
+      void warmDashboardData();
       triggerLoginEvent();
+      close();
       redirectTo("/dashboard");
     };
     window.addEventListener("ob:auth:success", handleAuthSuccess);
     return () => {
       window.removeEventListener("ob:auth:success", handleAuthSuccess);
     };
-  }, [triggerLoginEvent]);
+  }, [close, triggerLoginEvent, warmDashboardData]);
 
   useEffect(() => {
     setSignInError(null);
-    setShowGmailHint(false);
   }, [signInEmail]);
 
   useEffect(() => {
     setSignUpError(null);
   }, [signUpEmail, signUpPassword, signUpConfirm]);
 
-  const attemptSignIn = useCallback(
-    async (bypassGmailPrompt = false) => {
-      setSignInError(null);
-      setSignInPending(true);
-      try {
-        const response = await fetch(apiUrl("/auth/login"), {
-          method: "POST",
-          credentials: "include",
-          cache: "no-store",
-          headers: {
-            "content-type": "application/json",
-          },
-          body: JSON.stringify({ email: signInEmail, password: signInPassword }),
-        });
-        if (!response.ok) {
-          if ((response.status === 400 || response.status === 401) && isGoogleEmail(signInEmail) && !bypassGmailPrompt) {
-            setShowGmailHint(true);
-            return;
-          }
-          setSignInError(response.status === 400 || response.status === 401 ? "Invalid email or password" : "Service unavailable");
-          return;
-        }
-        triggerLoginEvent();
-        close();
-        redirectTo("/dashboard");
-      } catch (error) {
-        console.error("signin_request_failed", { message: (error as Error)?.message });
-        setSignInError("We could not reach the server. Please try again.");
-      } finally {
-        setSignInPending(false);
+  const attemptSignIn = useCallback(async () => {
+    setSignInError(null);
+    setSignInPending(true);
+    try {
+      const response = await fetch(apiUrl("/auth/login"), {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          "content-type": "application/json",
+        },
+        body: JSON.stringify({ email: signInEmail, password: signInPassword }),
+      });
+      if (!response.ok) {
+        setSignInError(response.status === 400 || response.status === 401 ? "Invalid email or password" : "Service unavailable");
+        return;
       }
-    },
-    [close, signInEmail, signInPassword, triggerLoginEvent],
-  );
+      triggerLoginEvent();
+      void warmDashboardData();
+      close();
+      redirectTo("/dashboard");
+    } catch (error) {
+      console.error("signin_request_failed", { message: (error as Error)?.message });
+      setSignInError("We could not reach the server. Please try again.");
+    } finally {
+      setSignInPending(false);
+    }
+  }, [close, signInEmail, signInPassword, triggerLoginEvent, warmDashboardData]);
 
   const attemptSignUp = useCallback(
     async () => {
@@ -206,6 +209,7 @@ export default function AuthModal() {
           return;
         }
         triggerLoginEvent();
+        void warmDashboardData();
         close();
         redirectTo("/dashboard");
       } catch (error) {
@@ -215,20 +219,16 @@ export default function AuthModal() {
         setSignUpPending(false);
       }
     },
-    [close, signUpConfirm, signUpEmail, signUpPassword, triggerLoginEvent],
+    [close, signUpConfirm, signUpEmail, signUpPassword, triggerLoginEvent, warmDashboardData],
   );
 
   const onSignInSubmit = useCallback(
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (signInPending) return;
-      if (isGoogleEmail(signInEmail)) {
-        setShowGmailHint(true);
-        return;
-      }
       void attemptSignIn();
     },
-    [attemptSignIn, signInEmail, signInPending],
+    [attemptSignIn, signInPending],
   );
 
   const onSignUpSubmit = useCallback(
@@ -242,45 +242,17 @@ export default function AuthModal() {
 
   const startGoogleAuth = useCallback(() => {
     if (googlePending) return;
-    const baseUrl = apiUrl("/oauth/google/start");
-    const url = `${baseUrl}${baseUrl.includes("?") ? "&" : "?"}prompt=select_account`;
+    const url = apiUrl("/oauth/google/start?prompt=select_account");
     setGooglePending(true);
-    setShowGmailHint(false);
-    const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "auth:success" });
+    const popup = openPopup(url, GOOGLE_POPUP_NAME, {
+      w: 540,
+      h: 680,
+      expectedMessageType: "auth:success",
+    });
     if (!popup) {
       window.location.href = url;
     }
   }, [googlePending]);
-
-  const gmailHintCard = useMemo(() => {
-    if (!showGmailHint) return null;
-    return (
-      <div className="mt-4 rounded-xl border border-amber-100 bg-amber-50 p-4 text-sm text-neutral-900 shadow-sm">
-        <div className="font-medium text-neutral-800">This email is typically used with Google.</div>
-        <p className="mt-1 text-neutral-700">Continue with Google for a faster sign-in, or proceed with your email and password.</p>
-        <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-          <button
-            type="button"
-            onClick={startGoogleAuth}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg border border-[#dadce0] bg-white px-4 py-2 font-medium text-[#3c4043] transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285f4]"
-          >
-            <OfficialGoogleIcon width={18} height={18} />
-            <span>{googlePending ? "Opening…" : "Continue with Google"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              setShowGmailHint(false);
-              void attemptSignIn(true);
-            }}
-            className="flex flex-1 items-center justify-center rounded-lg border border-neutral-300 bg-white px-4 py-2 font-medium text-neutral-800 transition hover:bg-neutral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400"
-          >
-            Continue with email
-          </button>
-        </div>
-      </div>
-    );
-  }, [attemptSignIn, googlePending, showGmailHint, startGoogleAuth]);
 
   return (
     <div
@@ -383,7 +355,6 @@ export default function AuthModal() {
                 {signInPending ? "Signing in…" : "Sign in"}
               </button>
               {signInError ? <p className="text-sm text-red-300">{signInError}</p> : null}
-              {gmailHintCard}
               <p className="text-xs text-white/50">
                 Forgot your password?{" "}
                 <Link href="/support" className="underline hover:text-white">
