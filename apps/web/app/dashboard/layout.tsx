@@ -1,12 +1,27 @@
 "use client";
 
-import { dashboardFetch } from "@/lib/dashboardFetch";
-import Link from "next/link";
-import Toasts from "@/components/Toasts";
-import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
+import Toasts from "@/components/Toasts";
+import { dashboardFetch } from "@/lib/dashboardFetch";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
+
+function LayoutSkeleton() {
+  return (
+    <div className="min-h-dvh bg-neutral-950 text-white">
+      <div className="flex items-center justify-center px-6 py-24">
+        <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-4 text-sm text-white/60">
+          Loading dashboard…
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
+  const router = useRouter();
+  const { status } = useAuthSession();
   const [live, setLive] = useState(true);
   const [unread, setUnread] = useState(0);
   const [build, setBuild] = useState<string|undefined>(undefined);
@@ -35,6 +50,17 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     window.addEventListener('keydown', onKey);
     return () => { cancelled = true };
   }, []);
+  useEffect(() => {
+    if (status === "unauthenticated") {
+      router.replace("/");
+    }
+  }, [router, status]);
+  if (status === "loading") {
+    return <LayoutSkeleton />;
+  }
+  if (status === "unauthenticated") {
+    return null;
+  }
   const pathname = usePathname() || "";
   const NavLink = ({ href, label }: { href: string; label: string }) => {
     const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));

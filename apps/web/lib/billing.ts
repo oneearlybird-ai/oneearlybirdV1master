@@ -67,14 +67,18 @@ export function derivePlanDisplay(
   summary: PlanSummaryLike | null | undefined,
   profile: PlanProfileLike | null | undefined,
 ): { value: string; hint?: string } {
+  const planDefinition = findPlanDefinition(
+    summary?.planKey ?? profile?.planKey ?? null,
+    summary?.planPriceId ?? profile?.planPriceId ?? null,
+  );
+  const includedMinutes = planDefinition?.includedMinutes ?? null;
   if (!summary) {
-    const definition = findPlanDefinition(profile?.planKey ?? null, profile?.planPriceId ?? null);
-    if (!definition) {
+    if (!planDefinition) {
       return { value: "No plan yet" };
     }
     return {
-      value: definition.name,
-      hint: getPlanPriceLabel(definition),
+      value: includedMinutes ? `${planDefinition.name} • ${includedMinutes} min/mo` : planDefinition.name,
+      hint: getPlanPriceLabel(planDefinition),
     };
   }
 
@@ -91,20 +95,18 @@ export function derivePlanDisplay(
   }
 
   if (summary.status === "trial-active") {
-    const cap = summary.minutesCap ?? 100;
-    const capLabel = `${cap}-minute cap`;
+    const trialMinutes = planDefinition?.trialMinutes ?? summary.minutesCap ?? 100;
+    const capLabel = `${trialMinutes}-minute cap`;
     const end = formatIsoDate(summary.trialEnd);
     const value = end ? `Trial (${capLabel}) ends ${end}` : `Trial (${capLabel})`;
     return { value };
   }
 
-  const definition = findPlanDefinition(summary.planKey ?? null, summary.planPriceId ?? null);
   const fallbackName = humanizePlanKey(summary.planKey) || "Active plan";
-  const minutes = summary.planMinutes ?? summary.minutesCap ?? null;
-  const name = definition?.name || fallbackName;
-  const value = minutes ? `${name} • ${minutes} min/mo` : name;
+  const name = planDefinition?.name || fallbackName;
+  const value = includedMinutes ? `${name} • ${includedMinutes} min/mo` : name;
   const hint =
-    (definition && getPlanPriceLabel(definition)) ||
+    (planDefinition && getPlanPriceLabel(planDefinition)) ||
     (summary.hasPaymentMethod ? "Payment method on file" : undefined);
   return { value, hint };
 }
