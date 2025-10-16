@@ -2,7 +2,6 @@ import "./globals.css";
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import AuthControls from "@/components/AuthControls";
 import SupportDrawer from "@/components/SupportDrawer";
 import RevealOnScroll from "@/components/RevealOnScroll";
@@ -13,7 +12,6 @@ import FooterLinks from "@/components/FooterLinks";
 import MobileNav from "@/components/MobileNav";
 import { Analytics } from "@vercel/analytics/react";
 import AuthModalProvider from "@/components/auth/AuthModalProvider";
-import LogoLockup from "./(assets)/logo-lockup-supercrisp-clean.png";
 
 export const metadata: Metadata = {
   title: "EarlyBird",
@@ -37,10 +35,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
             <nav className="mx-auto flex max-w-6xl items-center justify-between px-6 py-0.5 md:py-1">
               <Link
                 href="/"
-                className="flex items-center gap-2 font-semibold tracking-tight text-white"
+                className="flex items-center gap-2 font-semibold tracking-tight text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 aria-label="EarlyBird AI home"
               >
-                <Image src={LogoLockup} alt="EarlyBird AI" priority width={168} height={54} className="h-9 w-auto" />
+                <span className="text-xl font-semibold md:text-3xl" aria-hidden>EarlyBird AI</span>
                 <span className="sr-only">EarlyBird AI</span>
               </Link>
               <NavMainLinks />
