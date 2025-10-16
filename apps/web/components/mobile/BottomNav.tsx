@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import type { SessionStatus } from "@/components/auth/AuthSessionProvider";
 
 type NavItem = {
   key: string;
@@ -102,11 +103,12 @@ function UserIcon({ active }: { active: boolean }) {
 }
 
 type MobileBottomNavProps = {
+  status: SessionStatus;
   isAuthenticated: boolean;
   onSignIn: () => void;
 };
 
-export default function MobileBottomNav({ isAuthenticated, onSignIn }: MobileBottomNavProps) {
+export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: MobileBottomNavProps) {
   const pathname = usePathname() || "/";
   const [hash, setHash] = useState("");
 
@@ -117,7 +119,12 @@ export default function MobileBottomNav({ isAuthenticated, onSignIn }: MobileBot
     return () => window.removeEventListener("hashchange", handler);
   }, []);
 
+  const showSkeleton = status === "loading";
+
   const navItems = useMemo<NavItem[]>(() => {
+    if (showSkeleton) {
+      return [];
+    }
     if (isAuthenticated) {
       return [
         {
@@ -187,7 +194,7 @@ export default function MobileBottomNav({ isAuthenticated, onSignIn }: MobileBot
         icon: (active) => <UserIcon active={active} />,
       },
     ];
-  }, [isAuthenticated, onSignIn]);
+  }, [isAuthenticated, onSignIn, showSkeleton]);
 
   const isActive = useCallback(
     (item: NavItem) => {
@@ -209,44 +216,57 @@ export default function MobileBottomNav({ isAuthenticated, onSignIn }: MobileBot
       aria-label="Mobile primary"
       className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-neutral-950/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_32px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80"
     >
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-2 py-1.5 sm:hidden">
-        {navItems.map((item) => {
-          const active = isActive(item);
-          const content = (
-            <>
-              <span className={`flex h-9 w-9 items-center justify-center rounded-full ${active ? "bg-white/10" : ""}`}>
-                {item.icon(active)}
-              </span>
-              <span className="leading-4 text-[11px]">{item.label}</span>
-            </>
-          );
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-2 py-1.5 sm:hidden min-h-[3.5rem]">
+        {showSkeleton ? (
+          <div className="flex w-full items-center justify-between gap-2">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <div key={idx} className="flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5">
+                <span className="flex h-9 w-9 items-center justify-center rounded-full">
+                  <span className="skeleton skeleton-circle h-9 w-9" />
+                </span>
+                <span className="skeleton skeleton-line h-3 w-10" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          navItems.map((item) => {
+            const active = isActive(item);
+            const content = (
+              <>
+                <span className={`flex h-9 w-9 items-center justify-center rounded-full ${active ? "bg-white/10" : ""}`}>
+                  {item.icon(active)}
+                </span>
+                <span className="leading-4 text-[11px]">{item.label}</span>
+              </>
+            );
 
-          if (item.href) {
+            if (item.href) {
+              return (
+                <Link
+                  key={item.key}
+                  href={item.href}
+                  className={`flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] font-medium transition min-h-[3.25rem] ${
+                    active ? "text-white" : "text-white/70 hover:text-white"
+                  }`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {content}
+                </Link>
+              );
+            }
+
             return (
-              <Link
+              <button
                 key={item.key}
-                href={item.href}
-                className={`flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] font-medium transition ${
-                  active ? "text-white" : "text-white/70 hover:text-white"
-                }`}
-                aria-current={active ? "page" : undefined}
+                type="button"
+                onClick={item.onClick}
+                className="flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] font-medium text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 min-h-[3.25rem]"
               >
                 {content}
-              </Link>
+              </button>
             );
-          }
-
-          return (
-            <button
-              key={item.key}
-              type="button"
-              onClick={item.onClick}
-              className="flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] font-medium text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-            >
-              {content}
-            </button>
-          );
-        })}
+          })
+        )}
       </div>
     </nav>
   );

@@ -10,7 +10,7 @@ import {
 } from "react";
 import { dashboardFetch } from "@/lib/dashboardFetch";
 
-type SessionStatus = "loading" | "authenticated" | "unauthenticated";
+export type SessionStatus = "loading" | "authenticated" | "unauthenticated";
 
 export type TenantProfile = {
   tenantId?: string;

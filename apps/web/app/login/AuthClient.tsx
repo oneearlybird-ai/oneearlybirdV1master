@@ -50,7 +50,6 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       } catch (error) {
         console.warn("google_login_storage_failed", { message: (error as Error)?.message });
       }
-      window.location.href = getDashboardPath();
     };
     window.addEventListener("ob:auth:success", handleAuthSuccess);
     return () => {

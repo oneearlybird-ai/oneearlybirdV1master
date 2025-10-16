@@ -7,7 +7,7 @@ import { dashboardFetch } from "@/lib/dashboardFetch";
 import { MobileCard, MobileCardContent, MobileCardFooter, MobileCardHeader } from "@/components/mobile/Card";
 
 type BillingSummary = {
-  status: "none" | "trial-active" | "active";
+  status: "none" | "trial-active" | "trial-cancelled" | "active";
   planKey: string | null;
   planPriceId: string | null;
   planMinutes: number | null;
@@ -65,6 +65,7 @@ export default function MobileBillingPage() {
   const [loading, setLoading] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [historyError, setHistoryError] = useState<string | null>(null);
 
   const loadPlanData = useCallback(async () => {
     setLoading(true);
@@ -98,6 +99,7 @@ export default function MobileBillingPage() {
       if (replace) {
         setHistory([]);
         setHistoryCursor(null);
+        setHistoryError(null);
       }
       try {
         const params = new URLSearchParams({ limit: String(HISTORY_LIMIT) });
@@ -110,8 +112,13 @@ export default function MobileBillingPage() {
         const json = (await res.json()) as HistoryResponse;
         setHistory((prev) => (replace ? json.items ?? [] : [...prev, ...(json.items ?? [])]));
         setHistoryCursor(json.nextCursor ?? null);
+        setHistoryError(null);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "failed_to_load_history");
+        setHistoryError(err instanceof Error ? err.message : "failed_to_load_history");
+        if (replace) {
+          setHistory([]);
+          setHistoryCursor(null);
+        }
       } finally {
         setHistoryLoading(false);
       }
@@ -125,6 +132,8 @@ export default function MobileBillingPage() {
   }, [loadPlanData, loadHistory]);
 
   const planDisplay = useMemo(() => derivePlanDisplay(summary, profile), [summary, profile]);
+  const planStatus = summary?.status ?? "none";
+  const trialEndLabel = planStatus === "trial-cancelled" ? formatIsoDate(summary?.trialEnd ?? null) : null;
 
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6 text-white">
@@ -148,7 +157,13 @@ export default function MobileBillingPage() {
         <MobileCardContent>
           <div className="flex flex-wrap gap-2 text-xs text-white/60">
             <span className="rounded-full border border-white/15 px-2 py-1">
-              Status: {summary?.status === "trial-active" ? "Trial" : summary?.status === "active" ? "Active" : "None"}
+              {planStatus === "trial-active"
+                ? "Trial active"
+                : planStatus === "trial-cancelled"
+                  ? trialEndLabel ? `Trial ends ${trialEndLabel}` : "Trial cancelled"
+                  : planStatus === "active"
+                    ? "Active plan"
+                    : "No current plan"}
             </span>
             <span className="rounded-full border border-white/15 px-2 py-1">
               Concurrency: {summary?.concurrencyCap ?? profile?.concurrencyCap ?? "—"}
@@ -159,13 +174,40 @@ export default function MobileBillingPage() {
           </div>
         </MobileCardContent>
         <MobileCardFooter>
-          <PlanActionButtons summary={summary} profile={profile} onRefresh={loadPlanData} align="start" />
+          <div className="flex w-full flex-col gap-2">
+            <PlanActionButtons summary={summary} profile={profile} onRefresh={loadPlanData} align="start" />
+            {planStatus === "none" ? (
+              <p className="text-xs text-white/60">
+                No current plan. Purchase a plan when you’re ready to keep EarlyBird active.
+              </p>
+            ) : null}
+            {planStatus === "trial-cancelled" ? (
+              <p className="text-xs text-white/60">
+                Trial ended{trialEndLabel ? ` ${trialEndLabel}` : ""}. Select a plan to continue uninterrupted service.
+              </p>
+            ) : null}
+          </div>
         </MobileCardFooter>
       </MobileCard>
 
       <MobileCard>
         <MobileCardHeader title="Billing history" subtitle="Most recent invoices" />
         <MobileCardContent>
+          {historyError ? (
+            <div className="mb-3 rounded-2xl border border-red-400/40 bg-red-500/10 p-3 text-xs text-red-200">
+              <div className="flex flex-wrap items-center gap-2">
+                <span>{historyError.replace(/_/g, " ")}</span>
+                <button
+                  type="button"
+                  onClick={() => void loadHistory(undefined, true)}
+                  className="rounded-full border border-red-300/40 px-3 py-1 text-xs text-red-50 transition hover:border-red-200 hover:text-white disabled:opacity-40"
+                  disabled={historyLoading}
+                >
+                  Retry
+                </button>
+              </div>
+            </div>
+          ) : null}
           {history.length === 0 && historyLoading ? (
             <div className="space-y-2" aria-hidden>
               {Array.from({ length: 4 }).map((_, idx) => (
