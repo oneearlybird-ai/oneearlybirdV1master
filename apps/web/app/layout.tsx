@@ -15,7 +15,7 @@ import AuthModalProvider from "@/components/auth/AuthModalProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 
 export const metadata: Metadata = {
-  title: "EarlyBird",
+  title: "EarlyBird AI",
   description: "AI voice receptionist for your business",
 };
 
