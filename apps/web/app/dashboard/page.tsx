@@ -7,7 +7,7 @@ import { LiveStatusBadge, RecentCallsPreview } from "@/components/RecentCallsPre
 import CopyDiagnostics from "@/components/CopyDiagnostics";
 import CopyOrgIdButton from "@/components/CopyOrgIdButton";
 import CopyPageLinkButton from "@/components/CopyPageLinkButton";
-import { derivePlanDisplay, formatIsoDate } from "@/lib/billing";
+import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
 import PlanActionButtons from "@/components/PlanActionButtons";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
@@ -142,6 +142,24 @@ function Kpi({ label, value, hint, progress }: { label: string; value: string; h
   );
 }
 
+function KpiSkeleton() {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 animate-pulse" aria-hidden>
+      <div className="h-3 w-20 rounded bg-white/10" />
+      <div className="mt-3 h-7 w-24 rounded bg-white/10" />
+      <div className="mt-2 h-3 w-16 rounded bg-white/5" />
+    </div>
+  );
+}
+
+function InlineErrorCard({ message }: { message: string }) {
+  return (
+    <div className="rounded-2xl border border-rose-400/30 bg-rose-500/10 p-4 text-sm text-rose-200">
+      {message}
+    </div>
+  );
+}
+
 export default function DashboardPage() {
   const mountedRef = useRef(true);
   const [profileState, setProfileState] = useState<FetchState<TenantProfile>>(() => initialState<TenantProfile>());
@@ -263,21 +281,27 @@ export default function DashboardPage() {
   const usage = usageState.data;
   const summary = summaryState.data;
 
-  const planDisplay = useMemo(() => derivePlanDisplay(summary ?? null, profile ?? null), [summary, profile]);
+  const planDefinition = useMemo(
+    () => findPlanDefinition(summary?.planKey ?? profile?.planKey ?? null, summary?.planPriceId ?? profile?.planPriceId ?? null),
+    [profile, summary],
+  );
+  const planIncludedMinutes = planDefinition?.includedMinutes ?? null;
+  const planLoaded = !profileState.loading && !summaryState.loading;
+  const planDisplay = planLoaded ? derivePlanDisplay(summary ?? null, profile ?? null) : null;
   const planStatus = summary?.status ?? "none";
   const trialEndLabel = planStatus === "trial-cancelled" ? formatIsoDate(summary?.trialEnd ?? null) : null;
 
-  const minutesCap = summary?.minutesCap ?? profile?.minutesCap ?? usage?.minutesCap ?? null;
-  const concurrencyCap = summary?.concurrencyCap ?? profile?.concurrencyCap ?? usage?.concurrencyCap ?? null;
+  const minutesCap = profile?.minutesCap ?? null;
+  const concurrencyCap = profile?.concurrencyCap ?? null;
 
   const periodTotals = useMemo(() => aggregatePeriods(usage?.periods ?? []), [usage?.periods]);
   const sparklineSeries = useMemo(() => (usage?.periods ?? []).map((period) => Number(period.answered ?? 0)), [usage?.periods]);
   const sparklinePoints = useMemo(() => computeSparklinePoints(sparklineSeries), [sparklineSeries]);
 
-  const minutesLabel = formatMinutesWithCap(
-    usage?.monthlyMinutes ?? usage?.usedMinutes ?? null,
-    summary?.planMinutes ?? minutesCap,
-  );
+  const planCapForUsage = planIncludedMinutes ?? minutesCap;
+  const minutesLabel = usage
+    ? formatMinutesWithCap(usage.monthlyMinutes ?? usage.usedMinutes ?? null, planCapForUsage ?? undefined)
+    : { label: "—", progress: 0 };
 
   const avgDurationLabel = secondsToDurationLabel(periodTotals.avgDuration);
   const answeredLabel = String(periodTotals.answered || 0);
@@ -341,22 +365,52 @@ export default function DashboardPage() {
       </div>
 
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-        <Kpi label="Current plan" value={planDisplay.value} hint={planDisplay.hint} />
-        <Kpi
-          label="Minutes (month)"
-          value={minutesLabel.label}
-          hint={minutesCap ? `Minute cap ${formatMinutes(minutesCap)}` : undefined}
-          progress={minutesLabel.progress}
-        />
-        <Kpi
-          label="Answered (7d)"
-          value={answeredLabel}
-          hint={concurrencyCap ? `Concurrency cap ${concurrencyCap}` : undefined}
-        />
-        <Kpi label="Booked (7d)" value={bookedLabel} hint={`Voicemail deflected ${deflectedLabel}`} />
+        {planLoaded && planDisplay ? (
+          <Kpi label="Current plan" value={planDisplay.value} hint={planDisplay.hint} />
+        ) : (profileState.error || summaryState.error) ? (
+          <InlineErrorCard message="We couldn’t load your plan details. Please refresh." />
+        ) : (
+          <KpiSkeleton />
+        )}
+        {usageState.loading ? (
+          <KpiSkeleton />
+        ) : usageState.error ? (
+          <InlineErrorCard message="Usage data is unavailable right now. Please try again." />
+        ) : (
+          <Kpi
+            label="Minutes (month)"
+            value={minutesLabel.label}
+            hint={planCapForUsage ? `Plan cap ${formatMinutes(planCapForUsage)}` : undefined}
+            progress={minutesLabel.progress}
+          />
+        )}
+        {usageState.loading ? (
+          <KpiSkeleton />
+        ) : usageState.error ? (
+          <InlineErrorCard message="We couldn’t load call metrics. Refresh to retry." />
+        ) : (
+          <Kpi
+            label="Answered (7d)"
+            value={answeredLabel}
+            hint={concurrencyCap ? `Concurrency cap ${concurrencyCap}` : undefined}
+          />
+        )}
+        {usageState.loading ? (
+          <KpiSkeleton />
+        ) : usageState.error ? (
+          <InlineErrorCard message="Bookings will reappear once data reloads." />
+        ) : (
+          <Kpi label="Booked (7d)" value={bookedLabel} hint={`Voicemail deflected ${deflectedLabel}`} />
+        )}
       </div>
       <div className="mt-3">
-        <PlanActionButtons summary={summary} profile={profile} onRefresh={fetchAll} />
+        {planLoaded ? (
+          <PlanActionButtons summary={summary} profile={profile} onRefresh={fetchAll} />
+        ) : (profileState.error || summaryState.error) ? (
+          <InlineErrorCard message="Plan actions unavailable while we reconnect. Try refreshing the page." />
+        ) : (
+          <div className="h-12 rounded-xl border border-white/10 bg-white/5 animate-pulse" aria-hidden />
+        )}
       </div>
 
       {planStatus === "none" ? (

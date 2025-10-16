@@ -133,7 +133,8 @@ export default function MobileDashboardPage() {
     void loadData();
   }, [loadData]);
 
-  const planDisplay = useMemo(() => derivePlanDisplay(summary.data, profile.data), [summary.data, profile.data]);
+  const planLoaded = !profile.loading && !summary.loading;
+  const planDisplay = planLoaded ? derivePlanDisplay(summary.data, profile.data) : null;
   const planStatus = summary.data?.status ?? "none";
   const trialEndLabel = planStatus === "trial-cancelled" ? formatIsoDate(summary.data?.trialEnd ?? null) : null;
 
@@ -143,10 +144,11 @@ export default function MobileDashboardPage() {
   }, [usage.data]);
 
   const minutesUsed = usage.data?.usedMinutes ?? 0;
-  const minutesCap = usage.data?.minutesCap ?? summary.data?.minutesCap ?? profile.data?.minutesCap ?? null;
+  const minutesCap = profile.data?.minutesCap ?? null;
   const planDefinition = useMemo(() => {
-    return findPlanDefinition(summary.data?.planKey ?? null, summary.data?.planPriceId ?? null);
-  }, [summary.data]);
+    return findPlanDefinition(summary.data?.planKey ?? profile.data?.planKey ?? null, summary.data?.planPriceId ?? profile.data?.planPriceId ?? null);
+  }, [profile.data, summary.data]);
+  const planError = profile.error || summary.error;
   const usageHasData = useMemo(() => {
     const minutes = Number(usage.data?.usedMinutes ?? usage.data?.minutesCap ?? 0);
     if (minutes > 0) return true;
@@ -181,75 +183,149 @@ export default function MobileDashboardPage() {
         </MobileCard>
       ) : null}
 
-      <MobileCard>
-        <MobileCardHeader
-          title={planDisplay.value}
-          subtitle={planDisplay.hint ?? "Current subscription status"}
-        />
-        <MobileCardContent>
-          <div className="flex flex-wrap gap-2 text-xs text-white/60">
-            <span className="rounded-full border border-white/10 px-2 py-1">
-              {planStatus === "trial-active"
-                ? "Trial active"
-                : planStatus === "trial-cancelled"
-                  ? trialEndLabel ? `Trial ends ${trialEndLabel}` : "Trial cancelled"
-                  : planStatus === "active"
-                    ? "Active plan"
-                    : "No current plan"}
-            </span>
-            {planDefinition ? (
+      {planLoaded && planDisplay ? (
+        <MobileCard>
+          <MobileCardHeader title={planDisplay.value} subtitle={planDisplay.hint ?? "Current subscription status"} />
+          <MobileCardContent>
+            <div className="flex flex-wrap gap-2 text-xs text-white/60">
               <span className="rounded-full border border-white/10 px-2 py-1">
-                {planDefinition.includedMinutes.toLocaleString()} min included
+                {planStatus === "trial-active"
+                  ? "Trial active"
+                  : planStatus === "trial-cancelled"
+                    ? trialEndLabel ? `Trial ends ${trialEndLabel}` : "Trial cancelled"
+                    : planStatus === "active"
+                      ? "Active plan"
+                      : "No current plan"}
               </span>
-            ) : null}
-            <span className="rounded-full border border-white/10 px-2 py-1">DID: {maskedDid}</span>
-          </div>
-        </MobileCardContent>
-        <MobileCardFooter>
-          <div className="flex w-full flex-col gap-2">
-            <PlanActionButtons summary={summary.data} profile={profile.data} onRefresh={loadData} align="start" />
-            {planStatus === "none" ? (
-              <p className="text-xs text-white/60">
-                No current plan. Purchase a plan to keep EarlyBird active.
-              </p>
-            ) : null}
-            {planStatus === "trial-cancelled" ? (
-              <p className="text-xs text-white/60">
-                Trial ended{trialEndLabel ? ` ${trialEndLabel}` : ""}. Choose a plan to continue uninterrupted service.
-              </p>
-            ) : null}
-          </div>
-        </MobileCardFooter>
-      </MobileCard>
+              {planDefinition ? (
+                <span className="rounded-full border border-white/10 px-2 py-1">
+                  {planDefinition.includedMinutes.toLocaleString()} min included
+                </span>
+              ) : null}
+              <span className="rounded-full border border-white/10 px-2 py-1">DID: {maskedDid}</span>
+            </div>
+          </MobileCardContent>
+          <MobileCardFooter>
+            <div className="flex w-full flex-col gap-2">
+              <PlanActionButtons summary={summary.data} profile={profile.data} onRefresh={loadData} align="start" />
+              {planStatus === "none" ? (
+                <p className="text-xs text-white/60">
+                  No current plan. Purchase a plan to keep EarlyBird active.
+                </p>
+              ) : null}
+              {planStatus === "trial-cancelled" ? (
+                <p className="text-xs text-white/60">
+                  Trial ended{trialEndLabel ? ` ${trialEndLabel}` : ""}. Choose a plan to continue uninterrupted service.
+                </p>
+              ) : null}
+            </div>
+          </MobileCardFooter>
+        </MobileCard>
+      ) : planError ? (
+        <MobileCard>
+          <MobileCardContent>
+            <p className="text-sm text-rose-200">
+              We couldn’t load your plan details. Pull to refresh or try again soon.
+            </p>
+          </MobileCardContent>
+        </MobileCard>
+      ) : (
+        <MobileCard>
+          <MobileCardContent>
+            <div className="h-6 w-32 rounded bg-white/10 animate-pulse" aria-hidden />
+            <div className="mt-3 flex gap-2">
+              <span className="h-5 w-20 rounded-full bg-white/10 animate-pulse" aria-hidden />
+              <span className="h-5 w-24 rounded-full bg-white/10 animate-pulse" aria-hidden />
+            </div>
+          </MobileCardContent>
+          <MobileCardFooter>
+            <div className="h-10 rounded-xl border border-white/10 bg-white/5 animate-pulse" aria-hidden />
+          </MobileCardFooter>
+        </MobileCard>
+      )}
 
       <div className="grid gap-3 sm:grid-cols-3">
-        <MobileCard className="sm:col-span-1">
-          <MobileCardHeader title="Answered rate" subtitle="Past 7 days" />
-          <MobileCardContent>
-            <div className="text-3xl font-semibold">{answeredStats.answeredPct}%</div>
-            <p className="mt-1 text-sm text-white/60">Booked {answeredStats.booked} meetings</p>
-          </MobileCardContent>
-        </MobileCard>
-        <MobileCard className="sm:col-span-1">
-          <MobileCardHeader title="Minutes used" subtitle={minutesCap ? `${minutesCap.toLocaleString()} plan minutes` : "No cap"} />
-          <MobileCardContent>
-            <div className="text-3xl font-semibold">{Math.round(minutesUsed)}</div>
-            {minutesCap ? (
-              <p className="mt-1 text-sm text-white/60">
-                {Math.round((minutesUsed / minutesCap) * 100)}% of plan
-              </p>
-            ) : null}
-          </MobileCardContent>
-        </MobileCard>
-        <MobileCard className="sm:col-span-1">
-          <MobileCardHeader title="Concurrency" subtitle="Agent + passthrough" />
-          <MobileCardContent>
-            <div className="text-3xl font-semibold">
-              {summary.data?.concurrencyCap ?? profile.data?.concurrencyCap ?? "—"}
-            </div>
-            <p className="mt-1 text-sm text-white/60">Simultaneous calls supported</p>
-          </MobileCardContent>
-        </MobileCard>
+        {usage.loading ? (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardContent>
+              <div className="h-6 w-20 rounded bg-white/10 animate-pulse" aria-hidden />
+              <div className="mt-2 h-4 w-16 rounded bg-white/10 animate-pulse" aria-hidden />
+            </MobileCardContent>
+          </MobileCard>
+        ) : usage.error ? (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardContent>
+              <p className="text-sm text-rose-200">Usage data unavailable. Pull to refresh.</p>
+            </MobileCardContent>
+          </MobileCard>
+        ) : (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardHeader title="Answered rate" subtitle="Past 7 days" />
+            <MobileCardContent>
+              <div className="text-3xl font-semibold">{answeredStats.answeredPct}%</div>
+              <p className="mt-1 text-sm text-white/60">Booked {answeredStats.booked} meetings</p>
+            </MobileCardContent>
+          </MobileCard>
+        )}
+        {usage.loading ? (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardContent>
+              <div className="h-6 w-24 rounded bg-white/10 animate-pulse" aria-hidden />
+              <div className="mt-2 h-5 w-16 rounded bg-white/10 animate-pulse" aria-hidden />
+            </MobileCardContent>
+          </MobileCard>
+        ) : usage.error ? (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardContent>
+              <p className="text-sm text-rose-200">Minutes used will return once data reloads.</p>
+            </MobileCardContent>
+          </MobileCard>
+        ) : (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardHeader
+              title="Minutes used"
+              subtitle={
+                planDefinition
+                  ? `${planDefinition.includedMinutes.toLocaleString()} included minutes`
+                  : minutesCap
+                    ? `${minutesCap.toLocaleString()} plan minutes`
+                    : "No cap"
+              }
+            />
+            <MobileCardContent>
+              <div className="text-3xl font-semibold">{Math.round(minutesUsed)}</div>
+              {planDefinition && planDefinition.includedMinutes > 0 ? (
+                <p className="mt-1 text-sm text-white/60">
+                  {Math.min(100, Math.round((minutesUsed / Math.max(1, planDefinition.includedMinutes)) * 100))}% of plan
+                </p>
+              ) : null}
+            </MobileCardContent>
+          </MobileCard>
+        )}
+        {profile.loading ? (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardContent>
+              <div className="h-6 w-16 rounded bg-white/10 animate-pulse" aria-hidden />
+              <div className="mt-2 h-4 w-24 rounded bg-white/10 animate-pulse" aria-hidden />
+            </MobileCardContent>
+          </MobileCard>
+        ) : profile.error ? (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardContent>
+              <p className="text-sm text-rose-200">Concurrency information unavailable.</p>
+            </MobileCardContent>
+          </MobileCard>
+        ) : (
+          <MobileCard className="sm:col-span-1">
+            <MobileCardHeader title="Concurrency" subtitle="Agent + passthrough" />
+            <MobileCardContent>
+              <div className="text-3xl font-semibold">
+                {profile.data?.concurrencyCap ?? "—"}
+              </div>
+              <p className="mt-1 text-sm text-white/60">Simultaneous calls supported</p>
+            </MobileCardContent>
+          </MobileCard>
+        )}
       </div>
 
       <MobileCard>
