@@ -49,6 +49,8 @@ export default function AuthModal() {
   const [signUpPending, setSignUpPending] = useState(false);
 
   const [googlePending, setGooglePending] = useState(false);
+  const [showGmailHint, setShowGmailHint] = useState(false);
+  const [forceEmailSignIn, setForceEmailSignIn] = useState(false);
 
   const [mobileShell, setMobileShell] = useState(false);
 
@@ -141,6 +143,8 @@ export default function AuthModal() {
 
   useEffect(() => {
     setSignInError(null);
+    setShowGmailHint(false);
+    setForceEmailSignIn(false);
   }, [signInEmail]);
 
   useEffect(() => {
@@ -233,9 +237,15 @@ export default function AuthModal() {
     (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (signInPending) return;
+      const trimmed = signInEmail.trim().toLowerCase();
+      if (trimmed.endsWith("@gmail.com") && !forceEmailSignIn) {
+        setShowGmailHint(true);
+        return;
+      }
+      setShowGmailHint(false);
       void attemptSignIn();
     },
-    [attemptSignIn, signInPending],
+    [attemptSignIn, forceEmailSignIn, signInEmail, signInPending],
   );
 
   const onSignUpSubmit = useCallback(
@@ -251,15 +261,17 @@ export default function AuthModal() {
     if (googlePending) return;
     const url = apiUrl("/oauth/google/start?prompt=select_account");
     setGooglePending(true);
+    setShowGmailHint(false);
     const popup = openPopup(url, GOOGLE_POPUP_NAME, {
       w: 540,
       h: 680,
       expectedMessageType: "auth:success",
     });
     if (!popup) {
+      setGooglePending(false);
       window.location.href = url;
     }
-  }, [googlePending]);
+  }, [apiUrl, googlePending]);
 
   return (
     <div
@@ -358,6 +370,34 @@ export default function AuthModal() {
                   className="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10"
                 />
               </label>
+              {showGmailHint ? (
+                <div className="rounded-xl border border-white/10 bg-white/5 p-3 text-sm text-white/70">
+                  <div className="font-medium text-white">Use Google for a faster sign-in</div>
+                  <p className="mt-1 text-xs text-white/60">
+                    Select Continue with Google to choose your Gmail account, or continue with email and password.
+                  </p>
+                  <div className="mt-3 flex flex-col gap-2 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => startGoogleAuth()}
+                      className="flex flex-1 items-center justify-center gap-2 rounded-full border border-[#dadce0] bg-white px-4 py-2 text-sm font-medium text-[#3c4043] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285f4]"
+                    >
+                      <OfficialGoogleIcon width={16} height={16} /> Continue with Google
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setForceEmailSignIn(true);
+                        setShowGmailHint(false);
+                        void attemptSignIn();
+                      }}
+                      className="flex flex-1 items-center justify-center rounded-full border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    >
+                      Continue with email
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               <button
                 type="submit"
                 disabled={signInPending}
