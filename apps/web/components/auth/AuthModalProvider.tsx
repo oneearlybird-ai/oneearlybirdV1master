@@ -36,11 +36,25 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
     try {
       await Promise.all([
         apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/billing/summary", { cache: "no-store" }),
         apiFetch("/usage/summary?window=week", { cache: "no-store" }),
       ]);
     } catch (error) {
       console.warn("auth_refresh_failed", {
         message: (error as Error)?.message,
+      });
+    }
+  }, []);
+
+  const refreshBillingState = useCallback(async () => {
+    try {
+      await Promise.all([
+        apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/billing/summary", { cache: "no-store" }),
+      ]);
+    } catch (error) {
+      console.warn("billing_refresh_failed", {
+        message: error instanceof Error ? error.message : "unknown_error",
       });
     }
   }, []);
@@ -113,25 +127,43 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       if (event.origin !== allowedOrigin) return;
       const data = event.data as { type?: string } | null;
       const type = data?.type;
-      if (type === "auth:success" || type === "billing:checkout:success" || type === "billing:portal:returned") {
-        resolvePopupMessage(type);
-        if (type === "auth:success") {
+      if (
+        type === "auth:success" ||
+        type === "billing:checkout:success" ||
+        type === "billing:trial:success" ||
+        type === "billing:portal:returned"
+      ) {
+        const normalized: "auth:success" | "billing:checkout:success" | "billing:portal:returned" =
+          type === "billing:trial:success" ? "billing:checkout:success" : type;
+        resolvePopupMessage(normalized);
+        if (normalized === "auth:success") {
           void warmDashboardData();
           close();
+        } else if (normalized === "billing:checkout:success") {
+          void refreshBillingState();
         }
-        dispatchAppEvent(type);
+        dispatchAppEvent(normalized);
       }
     };
     const handleFallback = (event: Event) => {
       const detail = (event as CustomEvent<{ type?: string }>).detail;
       const type = detail?.type;
-      if (type === "auth:success" || type === "billing:checkout:success" || type === "billing:portal:returned") {
-        resolvePopupMessage(type);
-        if (type === "auth:success") {
+      if (
+        type === "auth:success" ||
+        type === "billing:checkout:success" ||
+        type === "billing:trial:success" ||
+        type === "billing:portal:returned"
+      ) {
+        const normalized: "auth:success" | "billing:checkout:success" | "billing:portal:returned" =
+          type === "billing:trial:success" ? "billing:checkout:success" : type;
+        resolvePopupMessage(normalized);
+        if (normalized === "auth:success") {
           void warmDashboardData();
           close();
+        } else if (normalized === "billing:checkout:success") {
+          void refreshBillingState();
         }
-        dispatchAppEvent(type);
+        dispatchAppEvent(normalized);
       }
     };
     window.addEventListener("message", handlePostMessage);
@@ -140,7 +172,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       window.removeEventListener("message", handlePostMessage);
       window.removeEventListener("popup:fallback", handleFallback as EventListener);
     };
-  }, [close, warmDashboardData]);
+  }, [close, refreshBillingState, warmDashboardData]);
 
   const value = useMemo<AuthModalContextValue>(
     () => ({ open, close, isOpen: state.open, mode: state.mode, setMode }),

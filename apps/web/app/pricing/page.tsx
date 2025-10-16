@@ -3,10 +3,12 @@ import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 import {
   PLAN_DEFINITIONS,
   PLAN_BY_PRICE_ID,
+  PLAN_BY_SLUG,
   type PlanDefinition,
   getPlanPriceLabel,
   getPlanTrialBadge,
 } from "@/lib/plans";
+import { serverApiFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
   title: "Pricing – EarlyBird",
@@ -23,14 +25,28 @@ async function fetchStripePlan() {
   }
 }
 
+type TenantProfile = {
+  planKey?: string | null;
+  planPriceId?: string | null;
+};
+
+type BillingSummary = {
+  status?: string | null;
+  planKey?: string | null;
+  planPriceId?: string | null;
+  trialEligible?: boolean | null;
+};
+
 function Tier({
   plan,
   planStatus,
   activePlanSlug,
+  showTrialMarketing = true,
 }: {
   plan: PlanDefinition;
   planStatus?: string | null;
   activePlanSlug?: string | null;
+  showTrialMarketing?: boolean;
 }) {
   const {
     name,
@@ -74,7 +90,7 @@ function Tier({
       <p className="mt-2 text-xs uppercase tracking-wide text-white/50">
         {includedMinutes.toLocaleString()} min included • {overagePerMinute}/min overage
       </p>
-      {trialAvailable && trialBadge ? (
+      {trialAvailable && trialBadge && showTrialMarketing ? (
         <p className="mt-1 inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-xs text-emerald-200">
           {trialBadge}
         </p>
@@ -109,7 +125,9 @@ function Tier({
         className="mt-6"
         priceId={priceId}
         planName={name}
+        allowTrial={showTrialMarketing && trialAvailable}
         disableTrial={
+          !showTrialMarketing ||
           !trialAvailable ||
           planStatus === "trial-active" ||
           planStatus === "active" ||
@@ -123,10 +141,47 @@ function Tier({
 
 export default async function Page() {
   const stripePlan = await fetchStripePlan();
-  const planStatus: string | null = stripePlan?.plan?.status || null;
-  const planPriceId: string | null = stripePlan?.plan?.price_id || null;
-  const activePlanSlug =
+  let planStatus: string | null = stripePlan?.plan?.status || null;
+  let planPriceId: string | null = stripePlan?.plan?.price_id || null;
+  let activePlanSlug =
     (planPriceId && PLAN_BY_PRICE_ID.get(planPriceId)?.slug) || null;
+  let trialEligible: boolean | null | undefined;
+  try {
+    const profileResponse = await serverApiFetch("/tenants/profile");
+    if (profileResponse.status === 200) {
+      const profile = (await profileResponse.json()) as TenantProfile;
+      const summaryResponse = await serverApiFetch("/billing/summary");
+      if (summaryResponse.ok) {
+        const summary = (await summaryResponse.json()) as BillingSummary;
+        trialEligible = summary.trialEligible ?? null;
+        planStatus = summary.status ?? planStatus ?? null;
+        if (summary.planPriceId) {
+          planPriceId = summary.planPriceId;
+        } else if (summary.planKey) {
+          const derivedFromKey = PLAN_BY_SLUG.get(summary.planKey);
+          planPriceId = derivedFromKey?.priceId ?? planPriceId;
+        }
+      } else if (summaryResponse.status === 401) {
+        trialEligible = undefined;
+      }
+      if (!planPriceId) {
+        planPriceId = profile.planPriceId ?? null;
+      }
+      if (!planPriceId && profile.planKey) {
+        const derivedFromProfileKey = PLAN_BY_SLUG.get(profile.planKey);
+        planPriceId = derivedFromProfileKey?.priceId ?? null;
+      }
+    } else if (profileResponse.status === 401) {
+      trialEligible = undefined;
+    }
+  } catch (error) {
+    console.warn("pricing_fetch_state_failed", {
+      message: error instanceof Error ? error.message : "unknown_error",
+    });
+  }
+  activePlanSlug =
+    (planPriceId && PLAN_BY_PRICE_ID.get(planPriceId)?.slug) || activePlanSlug;
+  const showTrialMarketing = trialEligible !== false;
 
   return (
     <main className="min-h-dvh bg-neutral-950 text-white">
@@ -146,6 +201,7 @@ export default async function Page() {
               plan={plan}
               planStatus={planStatus}
               activePlanSlug={activePlanSlug}
+              showTrialMarketing={showTrialMarketing}
             />
           ))}
         </div>

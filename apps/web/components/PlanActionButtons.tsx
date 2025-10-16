@@ -61,7 +61,7 @@ export default function PlanActionButtons({
     status = "active";
   }
 
-  const trialEligible = Boolean(summary?.trialEligible);
+  const trialEligible = summary?.trialEligible === true;
   const hasPaymentMethod = Boolean(summary?.hasPaymentMethod);
   const showTrialCta = status === "none" && trialEligible;
   const showPurchaseCta = status === "none" && !trialEligible;
