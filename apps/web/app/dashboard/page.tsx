@@ -213,9 +213,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const allowedOrigins = new Set(["https://oneearlybird.ai", "https://m.oneearlybird.ai"]);
-    const currentOrigin = typeof window !== "undefined" ? window.location.origin : "https://oneearlybird.ai";
-    const allowedOrigin = allowedOrigins.has(currentOrigin) ? currentOrigin : "https://oneearlybird.ai";
+    const allowedOrigin = "https://oneearlybird.ai";
     const refresh = () => {
       void fetchAll();
     };
