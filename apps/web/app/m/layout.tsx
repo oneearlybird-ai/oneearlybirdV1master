@@ -127,7 +127,7 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
           {headerAction}
         </div>
       </header>
-      <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.75rem)] pt-2">{children}</main>
+      <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.25rem)] pt-2">{children}</main>
       <MobileBottomNav status={status} isAuthenticated={isAuthenticated} onSignIn={handleSignIn} />
       <Toasts />
     </div>

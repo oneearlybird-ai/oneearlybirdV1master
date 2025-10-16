@@ -216,15 +216,15 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
       aria-label="Mobile primary"
       className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-neutral-950/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_32px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80"
     >
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-2 py-1.5 sm:hidden min-h-[3.5rem]">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-2 py-1 sm:hidden min-h-[3.1rem]">
         {showSkeleton ? (
           <div className="flex w-full items-center justify-between gap-2">
             {Array.from({ length: 5 }).map((_, idx) => (
-              <div key={idx} className="flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5">
-                <span className="flex h-9 w-9 items-center justify-center rounded-full">
-                  <span className="skeleton skeleton-circle h-9 w-9" />
+              <div key={idx} className="flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1">
+                <span className="flex h-8 w-8 items-center justify-center rounded-full">
+                  <span className="skeleton skeleton-circle h-8 w-8" />
                 </span>
-                <span className="skeleton skeleton-line h-3 w-10" />
+                <span className="skeleton skeleton-line h-2.5 w-10" />
               </div>
             ))}
           </div>
@@ -233,7 +233,7 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
             const active = isActive(item);
             const content = (
               <>
-                <span className={`flex h-9 w-9 items-center justify-center rounded-full ${active ? "bg-white/10" : ""}`}>
+                <span className={`flex h-8 w-8 items-center justify-center rounded-full ${active ? "bg-white/10" : ""}`}>
                   {item.icon(active)}
                 </span>
                 <span className="leading-4 text-[11px]">{item.label}</span>
@@ -245,7 +245,7 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
                 <Link
                   key={item.key}
                   href={item.href}
-                  className={`flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] font-medium transition min-h-[3.25rem] ${
+                  className={`flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1 text-[11px] font-medium transition min-h-[3rem] ${
                     active ? "text-white" : "text-white/70 hover:text-white"
                   }`}
                   aria-current={active ? "page" : undefined}
@@ -260,7 +260,7 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
                 key={item.key}
                 type="button"
                 onClick={item.onClick}
-                className="flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1.5 text-[11px] font-medium text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 min-h-[3.25rem]"
+                className="flex w-full flex-col items-center gap-1.5 rounded-xl px-2 py-1 text-[11px] font-medium text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 min-h-[3rem]"
               >
                 {content}
               </button>
