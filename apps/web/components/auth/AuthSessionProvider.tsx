@@ -21,6 +21,7 @@ export type TenantProfile = {
 
 type RefreshOptions = {
   showLoading?: boolean;
+  retryOnUnauthorized?: boolean;
 };
 
 type AuthSessionValue = {
@@ -36,34 +37,40 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   const [status, setStatus] = useState<SessionStatus>("loading");
   const [profile, setProfile] = useState<TenantProfile | null>(null);
 
-  const fetchProfile = useCallback(async () => {
+  const fetchProfile = useCallback(async (): Promise<"ok" | "unauthorized" | "error"> => {
     try {
       const response = await dashboardFetch("/tenants/profile", { cache: "no-store" });
       if (response.ok) {
         const data = (await response.json()) as TenantProfile;
         setProfile(data);
         setStatus("authenticated");
-        return;
+        return "ok";
       }
       if (response.status === 401) {
         setProfile(null);
         setStatus("unauthenticated");
-        return;
+        return "unauthorized";
       }
       setProfile(null);
       setStatus("unauthenticated");
+      return "error";
     } catch {
       setProfile(null);
       setStatus("unauthenticated");
+      return "error";
     }
   }, []);
 
   const refresh = useCallback(
-    async ({ showLoading = false }: RefreshOptions = {}) => {
+    async ({ showLoading = false, retryOnUnauthorized = false }: RefreshOptions = {}) => {
       if (showLoading) {
         setStatus("loading");
       }
-      await fetchProfile();
+      const result = await fetchProfile();
+      if (result === "unauthorized" && retryOnUnauthorized) {
+        await new Promise((resolve) => setTimeout(resolve, 350));
+        await fetchProfile();
+      }
     },
     [fetchProfile],
   );
@@ -79,7 +86,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
 
   useEffect(() => {
     const handleAuthSuccess = () => {
-      void refresh({ showLoading: true });
+      void refresh({ showLoading: true, retryOnUnauthorized: true });
     };
     const handleAuthLogout = () => {
       markUnauthenticated();
@@ -95,7 +102,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   useEffect(() => {
     const handleStorage = (event: StorageEvent) => {
       if (event.key === "__ob_login") {
-        void refresh({ showLoading: true });
+        void refresh({ showLoading: true, retryOnUnauthorized: true });
       }
       if (event.key === "__ob_logout") {
         markUnauthenticated();
