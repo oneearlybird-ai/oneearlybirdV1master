@@ -1,11 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import Toasts from "@/components/Toasts";
 import { dashboardFetch } from "@/lib/dashboardFetch";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
+import { toast } from "@/components/Toasts";
+import { fallbackNameFromEmail, maskAccountNumber } from "@/lib/format";
 
 function LayoutSkeleton() {
   return (
@@ -21,7 +23,7 @@ function LayoutSkeleton() {
 
 export default function DashboardLayout({ children }: { children: ReactNode }) {
   const router = useRouter();
-  const { status } = useAuthSession();
+  const { status, profile } = useAuthSession();
   const [live, setLive] = useState(true);
   const [unread, setUnread] = useState(0);
   const [build, setBuild] = useState<string|undefined>(undefined);
@@ -61,6 +63,29 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   if (status === "unauthenticated") {
     return null;
   }
+  const primaryEmail = profile?.contactEmail ?? profile?.email ?? "";
+  const greetingName = useMemo(() => {
+    const fromProfile = (profile?.firstName ?? "").toString().trim();
+    if (fromProfile.length > 0) return fromProfile;
+    const display = (profile?.displayName ?? "").toString().trim();
+    if (display.length > 0) return display;
+    return fallbackNameFromEmail(primaryEmail);
+  }, [primaryEmail, profile?.displayName, profile?.firstName]);
+  const accountNumberMask = useMemo(() => maskAccountNumber(profile?.accountNumber ?? null), [profile?.accountNumber]);
+
+  const handleCopyAccount = async () => {
+    if (!profile?.accountNumber) return;
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        throw new Error("clipboard_unavailable");
+      }
+      await navigator.clipboard.writeText(profile.accountNumber);
+      toast("Account number copied", "success");
+    } catch (err) {
+      console.error("account_copy_failed", err);
+      toast("Couldn’t copy account number", "error");
+    }
+  };
   const pathname = usePathname() || "";
   const NavLink = ({ href, label }: { href: string; label: string }) => {
     const isActive = pathname === href || (href !== "/dashboard" && pathname.startsWith(href));
@@ -88,11 +113,30 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
         <div>
           <div className="sticky top-0 z-30 border-b border-white/10 bg-neutral-950/75 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/55">
             <div className="flex items-center justify-between px-4 py-3">
-              <div className="flex items-center gap-2 text-sm">
-                <span className={`inline-flex h-2 w-2 rounded-full ${live ? 'bg-emerald-400' : 'bg-red-400'}`} />
-                <span className="text-white/70">{live ? 'AI Receptionist: Live' : 'AI Receptionist: Paused'}</span>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2 text-sm">
+                  <span className={`inline-flex h-2 w-2 rounded-full ${live ? 'bg-emerald-400' : 'bg-red-400'}`} />
+                  <span className="text-white/70">{live ? 'AI Receptionist: Live' : 'AI Receptionist: Paused'}</span>
+                </div>
+                <div className="text-xs text-white/60">
+                  Welcome back, <span className="font-semibold text-white">{greetingName}</span>
+                </div>
               </div>
               <div className="flex items-center gap-2">
+                {accountNumberMask ? (
+                  <button
+                    type="button"
+                    onClick={handleCopyAccount}
+                    className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+                    aria-label="Copy account number"
+                  >
+                    <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                      <rect x="9" y="9" width="13" height="13" rx="2" />
+                      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                    </svg>
+                    <span className="font-medium">{accountNumberMask}</span>
+                  </button>
+                ) : null}
                 <button onClick={() => alert('Test call triggered (preview).')} className="rounded-md bg-white text-black px-3 py-1.5 text-sm font-medium hover:bg-white/90">Test Call</button>
                 <button onClick={() => setLive(v => !v)} className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white">{live ? 'Pause' : 'Go Live'}</button>
                 <button

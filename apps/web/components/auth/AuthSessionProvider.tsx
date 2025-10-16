@@ -16,6 +16,33 @@ export type TenantProfile = {
   tenantId?: string;
   planKey?: string | null;
   planPriceId?: string | null;
+  accountNumber?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  displayName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  email?: string | null;
+  businessName?: string | null;
+  businessPhone?: string | null;
+  timezone?: string | null;
+  addressNormalized?: {
+    line1: string;
+    line2?: string | null;
+    city: string;
+    region: string;
+    postal: string;
+    country: string;
+    lat?: number | null;
+    lng?: number | null;
+  } | null;
+  hours?: Array<{ day: string; open: string; close: string }> | null;
+  industry?: string | null;
+  crm?: "hubspot" | "salesforce" | "none" | "other" | string | null;
+  locations?: number | null;
+  website?: string | null;
+  businessProfileComplete?: boolean | null;
+  stepUpOkUntil?: string | null;
   [key: string]: unknown;
 };
 

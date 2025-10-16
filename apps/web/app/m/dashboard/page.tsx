@@ -7,7 +7,10 @@ import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/bill
 import { dashboardFetch } from "@/lib/dashboardFetch";
 import { formatCallDuration, formatCallTimestamp, outcomeLabel } from "@/lib/call-format";
 import { MobileCard, MobileCardContent, MobileCardHeader, MobileCardFooter } from "@/components/mobile/Card";
+import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
 import type { CallItem } from "@/components/RecentCallsPreview";
+import { fallbackNameFromEmail, maskAccountNumber } from "@/lib/format";
+import { toast } from "@/components/Toasts";
 
 type TenantProfile = {
   planKey?: string | null;
@@ -15,6 +18,30 @@ type TenantProfile = {
   minutesCap?: number | null;
   concurrencyCap?: number | null;
   did?: string | null;
+  accountNumber?: string | null;
+  firstName?: string | null;
+  displayName?: string | null;
+  contactEmail?: string | null;
+  email?: string | null;
+  businessName?: string | null;
+  businessPhone?: string | null;
+  timezone?: string | null;
+  addressNormalized?: {
+    line1: string;
+    line2?: string | null;
+    city: string;
+    region: string;
+    postal: string;
+    country: string;
+    lat?: number | null;
+    lng?: number | null;
+  } | null;
+  hours?: Array<{ day: string; open: string; close: string }> | null;
+  industry?: string | null;
+  crm?: string | null;
+  locations?: number | null;
+  website?: string | null;
+  businessProfileComplete?: boolean | null;
 };
 
 type BillingSummary = {
@@ -74,6 +101,8 @@ export default function MobileDashboardPage() {
   const [summary, setSummary] = useState<FetchState<BillingSummary>>(() => initialState<BillingSummary>());
   const [usage, setUsage] = useState<FetchState<UsageSummary>>(() => initialState<UsageSummary>());
   const [calls, setCalls] = useState<FetchState<CallItem[]>>(() => initialState<CallItem[]>());
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardDismissed, setWizardDismissed] = useState(false);
 
   const loadData = useCallback(async () => {
     setProfile((prev) => ({ ...prev, loading: true, error: null }));
@@ -133,6 +162,64 @@ export default function MobileDashboardPage() {
     void loadData();
   }, [loadData]);
 
+  const needsBusinessSetup = useMemo(() => {
+    if (profile.loading) return false;
+    const data = profile.data;
+    if (!data) return false;
+    if (data.businessProfileComplete === true) return false;
+    if (data.businessProfileComplete === false) return true;
+    return !data.businessName || !data.addressNormalized;
+  }, [profile.data, profile.loading]);
+
+  useEffect(() => {
+    if (needsBusinessSetup && !wizardDismissed) {
+      setWizardOpen(true);
+    }
+  }, [needsBusinessSetup, wizardDismissed]);
+
+  useEffect(() => {
+    if (!needsBusinessSetup) {
+      setWizardOpen(false);
+    }
+  }, [needsBusinessSetup]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const openWizard = () => {
+      setWizardDismissed(false);
+      if (needsBusinessSetup) {
+        setWizardOpen(true);
+      }
+    };
+    window.addEventListener("ob:billing:checkout:success", openWizard);
+    window.addEventListener("ob:billing:trial:success", openWizard);
+    return () => {
+      window.removeEventListener("ob:billing:checkout:success", openWizard);
+      window.removeEventListener("ob:billing:trial:success", openWizard);
+    };
+  }, [needsBusinessSetup]);
+
+  const businessSeed = useMemo(() => {
+    const data = profile.data;
+    if (!data) return null;
+    return {
+      businessName: data.businessName ?? undefined,
+      phoneE164: data.businessPhone ?? undefined,
+      timezone: data.timezone ?? undefined,
+      addressNormalized: data.addressNormalized ?? undefined,
+      hours: data.hours ?? undefined,
+      industry: data.industry ?? undefined,
+      crm: data.crm ?? undefined,
+      locations: data.locations ?? undefined,
+      website: data.website ?? undefined,
+    };
+  }, [profile.data]);
+
+  const handleWizardClose = useCallback((_completed: boolean) => {
+    setWizardOpen(false);
+    setWizardDismissed(true);
+  }, []);
+
   const planLoaded = !profile.loading && !summary.loading;
   const planDisplay = planLoaded ? derivePlanDisplay(summary.data, profile.data) : null;
   const planStatus = summary.data?.status ?? "none";
@@ -165,13 +252,56 @@ export default function MobileDashboardPage() {
     return `+${c1 || ""}•••-${c3 || "•••"}-${c4}`;
   }) : "—";
 
+  const greetingName = useMemo(() => {
+    const data = profile.data;
+    if (!data) return "there";
+    const first = (data.firstName ?? "").toString().trim();
+    if (first.length > 0) return first;
+    const display = (data.displayName ?? "").toString().trim();
+    if (display.length > 0) return display;
+    const email = (data.contactEmail ?? data.email ?? "").toString();
+    return fallbackNameFromEmail(email);
+  }, [profile.data]);
+
+  const accountNumberMask = useMemo(() => maskAccountNumber(profile.data?.accountNumber ?? null), [profile.data?.accountNumber]);
+
+  const handleCopyAccount = useCallback(async () => {
+    const value = profile.data?.accountNumber;
+    if (!value) return;
+    try {
+      if (!navigator?.clipboard?.writeText) {
+        throw new Error("clipboard_unavailable");
+      }
+      await navigator.clipboard.writeText(value);
+      toast("Account number copied", "success");
+    } catch (err) {
+      console.error("account_copy_failed", err);
+      toast("Couldn’t copy account number", "error");
+    }
+  }, [profile.data?.accountNumber]);
+
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6 text-white">
-      <div className="flex flex-col gap-1">
-        <span className="text-xs uppercase tracking-wide text-white/50">Mobile dashboard</span>
-        <h1 className="text-2xl font-semibold">Welcome back</h1>
-        <p className="text-sm text-white/60">Manage plan, calls, and routing without leaving your phone.</p>
-      </div>
+    <>
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-4 px-4 py-6 text-white">
+        <div className="flex flex-col gap-1">
+          <span className="text-xs uppercase tracking-wide text-white/50">Mobile dashboard</span>
+          <h1 className="text-2xl font-semibold">Welcome back, {greetingName}</h1>
+          <p className="text-sm text-white/60">Manage plan, calls, and routing without leaving your phone.</p>
+          {accountNumberMask ? (
+            <button
+              type="button"
+              onClick={handleCopyAccount}
+              className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              aria-label="Copy account number"
+            >
+              <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+                <rect x="9" y="9" width="13" height="13" rx="2" />
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+              </svg>
+              <span className="font-medium">{accountNumberMask}</span>
+            </button>
+          ) : null}
+        </div>
 
       {!usageHasData ? (
         <MobileCard>
@@ -395,6 +525,16 @@ export default function MobileDashboardPage() {
       >
         Refresh data
       </button>
-    </div>
+      </div>
+      <BusinessSetupWizard
+        open={wizardOpen}
+        onClose={handleWizardClose}
+        onCompleted={() => {
+          void loadData();
+        }}
+        seed={businessSeed}
+        variant="sheet"
+      />
+    </>
   );
 }

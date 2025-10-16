@@ -9,6 +9,7 @@ import CopyOrgIdButton from "@/components/CopyOrgIdButton";
 import CopyPageLinkButton from "@/components/CopyPageLinkButton";
 import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
 import PlanActionButtons from "@/components/PlanActionButtons";
+import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
 
@@ -22,6 +23,32 @@ type TenantProfile = {
   concurrencyCap?: number | null;
   did?: string | null;
   conversionAt?: string | null;
+  accountNumber?: string | null;
+  firstName?: string | null;
+  lastName?: string | null;
+  displayName?: string | null;
+  contactEmail?: string | null;
+  contactPhone?: string | null;
+  email?: string | null;
+  businessName?: string | null;
+  businessPhone?: string | null;
+  timezone?: string | null;
+  addressNormalized?: {
+    line1: string;
+    line2?: string | null;
+    city: string;
+    region: string;
+    postal: string;
+    country: string;
+    lat?: number | null;
+    lng?: number | null;
+  } | null;
+  hours?: Array<{ day: string; open: string; close: string }> | null;
+  industry?: string | null;
+  crm?: string | null;
+  locations?: number | null;
+  website?: string | null;
+  businessProfileComplete?: boolean | null;
 };
 
 type BillingSummary = {
@@ -165,6 +192,8 @@ export default function DashboardPage() {
   const [profileState, setProfileState] = useState<FetchState<TenantProfile>>(() => initialState<TenantProfile>());
   const [usageState, setUsageState] = useState<FetchState<UsageSummary>>(() => initialState<UsageSummary>());
   const [summaryState, setSummaryState] = useState<FetchState<BillingSummary>>(() => initialState<BillingSummary>());
+  const [wizardOpen, setWizardOpen] = useState(false);
+  const [wizardDismissed, setWizardDismissed] = useState(false);
 
   useEffect(() => {
     return () => {
@@ -278,8 +307,67 @@ export default function DashboardPage() {
   }, [fetchAll]);
 
   const profile = profileState.data;
+  const needsBusinessSetup = useMemo(() => {
+    if (profileState.loading) return false;
+    if (!profile) return false;
+    if (profile.businessProfileComplete === true) return false;
+    if (profile.businessProfileComplete === false) return true;
+    return !profile.businessName || !profile.addressNormalized;
+  }, [profile, profileState.loading]);
+
+  useEffect(() => {
+    if (needsBusinessSetup && !wizardDismissed) {
+      setWizardOpen(true);
+    }
+  }, [needsBusinessSetup, wizardDismissed]);
+
+  useEffect(() => {
+    if (!needsBusinessSetup) {
+      setWizardOpen(false);
+    }
+  }, [needsBusinessSetup]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return undefined;
+    const openWizard = () => {
+      setWizardDismissed(false);
+      if (needsBusinessSetup) {
+        setWizardOpen(true);
+      }
+    };
+    window.addEventListener("ob:billing:checkout:success", openWizard);
+    window.addEventListener("ob:billing:trial:success", openWizard);
+    return () => {
+      window.removeEventListener("ob:billing:checkout:success", openWizard);
+      window.removeEventListener("ob:billing:trial:success", openWizard);
+    };
+  }, [needsBusinessSetup]);
+
+  const businessSeed = useMemo(() => {
+    if (!profile) return null;
+    return {
+      businessName: profile.businessName ?? undefined,
+      phoneE164: profile.businessPhone ?? undefined,
+      timezone: profile.timezone ?? undefined,
+      addressNormalized: profile.addressNormalized ?? undefined,
+      hours: profile.hours ?? undefined,
+      industry: profile.industry ?? undefined,
+      crm: profile.crm ?? undefined,
+      locations: profile.locations ?? undefined,
+      website: profile.website ?? undefined,
+    };
+  }, [profile]);
+
   const usage = usageState.data;
   const summary = summaryState.data;
+
+  const handleWizardClose = useCallback(
+    (_completed: boolean) => {
+      setWizardOpen(false);
+      setWizardDismissed(true);
+    },
+    [],
+  );
 
   const planDefinition = useMemo(
     () => findPlanDefinition(summary?.planKey ?? profile?.planKey ?? null, summary?.planPriceId ?? profile?.planPriceId ?? null),
@@ -322,7 +410,8 @@ export default function DashboardPage() {
   const when = now.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" } as Intl.DateTimeFormatOptions);
 
   return (
-    <section className="mx-auto max-w-6xl px-6 py-8">
+    <>
+      <section className="mx-auto max-w-6xl px-6 py-8">
       <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome back</h1>
       <p className="mt-2 text-white/70">
         Your AI receptionist is{" "}
@@ -502,7 +591,17 @@ export default function DashboardPage() {
           </a>
         </div>
       </div>
-    </section>
+      </section>
+      <BusinessSetupWizard
+        open={wizardOpen}
+        onClose={handleWizardClose}
+        onCompleted={() => {
+          void fetchAll();
+        }}
+        seed={businessSeed}
+        variant="modal"
+      />
+    </>
   );
 }
 
