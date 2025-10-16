@@ -31,25 +31,9 @@ export function EbButton({ href = "#", variant = "primary", children }: { href?:
 }
 
 export function ProviderLogo({ id, label }: { id: string; label?: string }) {
-  const masked = new Set([
-    "hubspot",
-    "salesforce",
-    "zoho",
-    "twilio",
-    "slack",
-    "stripe",
-    "signalwire",
-    "outlook",
-    "microsoft-365",
-    "zapier",
-  ]);
   return (
     <figure className="logo-badge h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center">
-      {masked.has(id) ? (
-        <span className={`logo-mask logo-${id}`} aria-label={label || id} />
-      ) : (
-        <img src={`/logos/${id}.svg`} alt={label || id} className="block max-h-6 max-w-full object-contain" />
-      )}
+      <img src={`/logos/${id}.svg`} alt={label || id} className="block max-h-6 max-w-full object-contain" loading="lazy" decoding="async" />
       <figcaption className="sr-only">{label || id}</figcaption>
     </figure>
   );
