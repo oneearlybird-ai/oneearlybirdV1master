@@ -116,3 +116,6 @@ artifacts/
 # local media folders
 Public/
 Pictures/
+.CFUserTextEncoding
+Movies/
+Music/
