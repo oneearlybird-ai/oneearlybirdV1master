@@ -14,12 +14,20 @@ import { Analytics } from "@vercel/analytics/react";
 import AuthModalProvider from "@/components/auth/AuthModalProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 
+const TRANSPARENT_FAVICON = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO71gogAAAAASUVORK5CYII=";
+
 export const metadata: Metadata = {
   title: {
     default: "EarlyBird AI",
     template: "%s – EarlyBird AI",
   },
   description: "AI voice receptionist for your business",
+  icons: {
+    icon: [{ url: TRANSPARENT_FAVICON, type: "image/png", sizes: "any" }],
+    shortcut: [{ url: TRANSPARENT_FAVICON, type: "image/png" }],
+    apple: [{ url: TRANSPARENT_FAVICON, type: "image/png" }],
+    other: [{ rel: "mask-icon", url: TRANSPARENT_FAVICON }],
+  },
 };
 
 // Ensure header reflects session cookies on every request (no static caching)
