@@ -48,20 +48,12 @@ export default function MobilePricingPage() {
                   {getPlanTrialBadge(plan)}
                 </span>
               ) : null}
-              <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-                <Link
-                  href="/m/dashboard/billing"
-                  className="inline-flex h-11 flex-1 items-center justify-center rounded-full bg-white text-sm font-semibold text-black transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
-                >
-                  Manage plan
-                </Link>
-                <Link
-                  href="/pricing"
-                  className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-white/15 text-sm font-semibold text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-                >
-                  View desktop pricing
-                </Link>
-              </div>
+              <Link
+                href="/m/dashboard/billing"
+                className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-full bg-white text-sm font-semibold text-black transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
+              >
+                Manage plan
+              </Link>
             </MobileCardContent>
           </MobileCard>
         ))}

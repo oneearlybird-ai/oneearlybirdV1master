@@ -4,37 +4,59 @@ import { MobileCard, MobileCardContent, MobileCardHeader } from "@/components/mo
 
 export default function MobileLandingPage() {
   return (
-    <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8 text-white">
-      <section className="space-y-4 text-center">
-        <span className="inline-flex items-center justify-center rounded-full border border-white/10 px-3 py-1 text-xs uppercase tracking-wide text-white/60">
-          Mobile preview
-        </span>
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-8 text-white">
+      <section className="space-y-5 text-center">
         <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-          AI reception that feels personal—designed for your phone.
+          AI receptionist that feels personal, designed for your business.
         </h1>
         <p className="text-base text-white/70">
-          EarlyBird answers calls, books meetings, and syncs with your tools. Manage everything on the go with our mobile-first dashboard.
+          EarlyBird answers calls, books meetings, and routes conversations to your team—while staying on-brand. Track every interaction, listen to
+          recordings, and manage billing wherever you are.
         </p>
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
-            href="/m/dashboard"
+            href="/m/pricing"
             className="inline-flex h-12 w-full max-w-sm items-center justify-center rounded-full bg-white px-6 text-base font-semibold text-black shadow-lg shadow-black/20 transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/40"
           >
-            Go to mobile dashboard
+            View pricing
           </Link>
           <Link
-            href="/pricing"
+            href="/m#how-it-works"
             className="inline-flex h-12 w-full max-w-sm items-center justify-center rounded-full border border-white/20 px-6 text-base font-semibold text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
           >
-            View desktop site
+            How it works
           </Link>
         </div>
       </section>
 
+      <section id="how-it-works" className="space-y-4">
+        <h2 className="text-xl font-semibold text-center">How it works</h2>
+        <div className="grid gap-4">
+          <MobileCard>
+            <MobileCardHeader title="1. Connect your number" subtitle="Port or forward your business line" />
+            <MobileCardContent>
+              Link Google or Microsoft calendars, set routing rules, and choose whether calls stay with EarlyBird or reach your team.
+            </MobileCardContent>
+          </MobileCard>
+          <MobileCard>
+            <MobileCardHeader title="2. EarlyBird answers 24/7" subtitle="Natural voice, on-brand scripts" />
+            <MobileCardContent>
+              Every caller gets qualified, scheduled, or routed instantly. FAQs, CRM notes, and transcripts sync back to your workspace.
+            </MobileCardContent>
+          </MobileCard>
+          <MobileCard>
+            <MobileCardHeader title="3. Review from anywhere" subtitle="Dashboards built for mobile" />
+            <MobileCardContent>
+              Monitor calls, listen to recordings, manage billing, and update routing controls right from your phone.
+            </MobileCardContent>
+          </MobileCard>
+        </div>
+      </section>
+
       <section className="space-y-4">
-        <h2 className="text-xl font-semibold">Plans for every team</h2>
-        <p className="text-sm text-white/60">
-          Unified pricing across desktop and mobile. Pick your plan on either surface; it’s the same catalog and billing flow.
+        <h2 className="text-xl font-semibold text-center">Plans for every team</h2>
+        <p className="text-sm text-white/60 text-center">
+          One catalog across desktop and mobile. Start a trial or upgrade from either surface—everything stays in sync.
         </p>
         <div className="grid gap-4">
           {PLAN_DEFINITIONS.map((plan) => (
@@ -68,28 +90,15 @@ export default function MobileLandingPage() {
                   </span>
                 ) : null}
                 <Link
-                  href={`/m/dashboard/billing?plan=${plan.slug}`}
-                  className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-full bg-white text-sm font-semibold text-black transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
+                  href="/m/pricing"
+                  className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-full border border-white/20 text-sm font-semibold text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 >
-                  Choose {plan.name}
+                  Compare plans
                 </Link>
               </MobileCardContent>
             </MobileCard>
           ))}
         </div>
-      </section>
-
-      <section className="space-y-3">
-        <h2 className="text-xl font-semibold">Need the desktop app?</h2>
-        <p className="text-sm text-white/60">
-          Switch back any time. Append <code className="rounded bg-white/10 px-2 py-1 text-xs">?desktop=1</code> to stay on desktop from your phone.
-        </p>
-        <Link
-          href="/dashboard"
-          className="inline-flex h-12 w-full items-center justify-center rounded-full border border-white/20 px-6 text-base font-semibold text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-        >
-          Open desktop dashboard
-        </Link>
       </section>
     </div>
   );

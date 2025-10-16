@@ -38,10 +38,10 @@ export default function RootLayout({ children }: { children: ReactNode }) {
               <Link
                 href="/"
                 className="flex items-center gap-2 font-semibold tracking-tight text-white"
-                aria-label="EarlyBird home"
+                aria-label="EarlyBird AI home"
               >
-                <Image src={LogoLockup} alt="EarlyBird" priority width={168} height={54} className="h-9 w-auto" />
-                <span className="sr-only">EarlyBird</span>
+                <Image src={LogoLockup} alt="EarlyBird AI" priority width={168} height={54} className="h-9 w-auto" />
+                <span className="sr-only">EarlyBird AI</span>
               </Link>
               <NavMainLinks />
               <div className="flex items-center gap-3">
