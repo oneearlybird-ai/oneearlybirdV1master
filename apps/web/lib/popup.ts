@@ -36,7 +36,17 @@ export function openPopup(url: string, name: string, options: PopupOptions = {})
   if (expectedMessageType) {
     pendingMessages.add(expectedMessageType);
     const interval = window.setInterval(() => {
-      if (!popup || popup.closed) {
+      let isClosed = false;
+      try {
+        isClosed = !popup || popup.closed;
+      } catch (error) {
+        // Some browsers throw when touching popup.closed under COOP/COEP.
+        console.warn("popup_closed_check_failed", {
+          message: (error as Error)?.message,
+        });
+        return;
+      }
+      if (isClosed) {
         window.clearInterval(interval);
         if (pendingMessages.has(expectedMessageType)) {
           pendingMessages.delete(expectedMessageType);

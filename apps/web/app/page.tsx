@@ -2,6 +2,7 @@ export const dynamic = 'force-dynamic';
 import Link from 'next/link';
 import { Marquee } from '@/components/Marquee';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
+import { resolveLogoSrc } from '@/lib/logoAssets';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton';
 
@@ -57,10 +58,11 @@ function Feature({ icon, title, text, mutedClassName }: { icon: React.ReactNode;
 }
 
 function LogoBadge({ id, label }: { id: string; label: string }) {
+  const resolved = resolveLogoSrc(id) ?? `/logos/${id}.svg`;
   return (
     <figure className="logo-badge h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center flex-shrink-0 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
       <img
-        src={`/logos/${id}.svg`}
+        src={resolved}
         alt={label}
         className="block max-h-6 max-w-full object-contain"
         loading="lazy"

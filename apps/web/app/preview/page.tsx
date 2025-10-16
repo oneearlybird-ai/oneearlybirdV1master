@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { Marquee } from '@/components/Marquee';
 import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
+import { resolveLogoSrc } from '@/lib/logoAssets';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
@@ -80,7 +81,7 @@ function LogoBadge({ id, label }: { id: string; label: string }) {
       style={{ backgroundColor: bg }}
     >
       <img
-        src={`/logos/${id}.svg`}
+        src={resolveLogoSrc(id) ?? `/logos/${id}.svg`}
         alt={label}
         className="block max-h-6 max-w-full object-contain"
       />
