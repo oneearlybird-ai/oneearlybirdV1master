@@ -1,4 +1,4 @@
-import { apiFetch, type ApiFetchInit } from "@/lib/http";
+import { apiFetch } from "@/lib/http";
 
 const RETRY_DELAYS_MS = [250, 600];
 
@@ -8,7 +8,7 @@ function delay(ms: number): Promise<void> {
   });
 }
 
-export async function dashboardFetch(path: string, init: ApiFetchInit = {}): Promise<Response> {
+export async function dashboardFetch(path: string, init: RequestInit = {}): Promise<Response> {
   let attempt = 0;
   let response: Response | null = null;
 
