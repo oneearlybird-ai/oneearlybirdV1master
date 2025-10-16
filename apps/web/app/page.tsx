@@ -92,18 +92,14 @@ export default function Home() {
             </svg>
           </div>
         </div>
-        {/* Removed marketing bubble per request */}
-        <h1 className="eb-hero-title text-4xl md:text-6xl font-semibold tracking-tight">
-          <span className="eb-fade-word eb-delay-1000">Answer</span>{' '}
-          <span className="eb-fade-word eb-delay-2500">every</span>{' '}
-          <span className="eb-fade-word eb-delay-4000">call.</span>{' '}
-          <span className="text-white/70">
-            <span className="eb-fade-word eb-delay-7500">Book</span>{' '}
-            <span className="eb-fade-word eb-delay-9000">more</span>{' '}
-            <span className="eb-fade-word eb-delay-10500">appointments.</span>
-          </span>
+        {/* Updated hero copy for unified branding */}
+        <h1 className="text-4xl font-semibold tracking-tight md:text-6xl">
+          AI receptionist that feels personal, designed for your business.
         </h1>
-        <p className="mt-6 max-w-xl sm:max-w-2xl text-white/70">EarlyBird handles inbound calls with a natural, on-brand voice: qualification, FAQs, routing/transfers, and scheduling across Google/Microsoft Calendar. Owners get transcripts, recordings, analytics, and clean billing.</p>
+        <p className="mt-6 max-w-xl sm:max-w-2xl text-white/70">
+          EarlyBird answers every inbound call with a natural voice that represents your brand, handles FAQs, books meetings across Google or
+          Microsoft calendars, and routes hot leads to your team. Review transcripts, recordings, and analytics from web or mobile.
+        </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <AuthModalTriggerButton
             mode="signup"

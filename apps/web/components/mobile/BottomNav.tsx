@@ -2,12 +2,15 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
 
 type NavItem = {
-  href: string;
+  key: string;
   label: string;
   icon: (active: boolean) => ReactNode;
+  href?: string;
+  onClick?: () => void;
+  match?: (pathname: string, hash: string) => boolean;
 };
 
 function iconClass(active: boolean) {
@@ -75,23 +78,131 @@ function BillingIcon({ active }: { active: boolean }) {
   );
 }
 
-const NAV_ITEMS: NavItem[] = [
-    { href: "/m/dashboard", label: "Home", icon: (active) => <HomeIcon active={active} /> },
-    { href: "/m/dashboard/calls", label: "Calls", icon: (active) => <CallsIcon active={active} /> },
-    { href: "/m/dashboard/appointments", label: "Appts", icon: (active) => <CalendarIcon active={active} /> },
-    { href: "/m/dashboard/phone", label: "Phone", icon: (active) => <PhoneIcon active={active} /> },
-    { href: "/m/dashboard/billing", label: "Billing", icon: (active) => <BillingIcon active={active} /> },
-];
+function InfoIcon({ active }: { active: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={`h-6 w-6 ${iconClass(active)}`} fill="none">
+      <circle cx={12} cy={12} r={9} stroke="currentColor" strokeWidth={1.5} />
+      <path d="M12 8h.01M11 11h2v5" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} />
+    </svg>
+  );
+}
 
-export default function MobileBottomNav() {
+function UserIcon({ active }: { active: boolean }) {
+  return (
+    <svg aria-hidden="true" viewBox="0 0 24 24" className={`h-6 w-6 ${iconClass(active)}`} fill="none">
+      <path
+        d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Zm0 3c-4.418 0-8 2.239-8 5v.5h16V20c0-2.761-3.582-5-8-5Z"
+        stroke="currentColor"
+        strokeWidth={1.5}
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}
+
+type MobileBottomNavProps = {
+  isAuthenticated: boolean;
+  onSignIn: () => void;
+};
+
+export default function MobileBottomNav({ isAuthenticated, onSignIn }: MobileBottomNavProps) {
   const pathname = usePathname() || "/";
+  const [hash, setHash] = useState("");
 
-  const matches = (href: string) => {
-    if (href === "/m/dashboard") {
-      return pathname === "/m" || pathname === "/m/dashboard";
+  useEffect(() => {
+    setHash(window.location.hash);
+    const handler = () => setHash(window.location.hash);
+    window.addEventListener("hashchange", handler);
+    return () => window.removeEventListener("hashchange", handler);
+  }, []);
+
+  const navItems = useMemo<NavItem[]>(() => {
+    if (isAuthenticated) {
+      return [
+        {
+          key: "home",
+          label: "Home",
+          href: "/m/dashboard",
+          icon: (active) => <HomeIcon active={active} />,
+          match: (path) => path === "/m" || path === "/m/dashboard",
+        },
+        {
+          key: "calls",
+          label: "Calls",
+          href: "/m/dashboard/calls",
+          icon: (active) => <CallsIcon active={active} />,
+          match: (path) => path.startsWith("/m/dashboard/calls"),
+        },
+        {
+          key: "appts",
+          label: "Appts",
+          href: "/m/dashboard/appointments",
+          icon: (active) => <CalendarIcon active={active} />,
+          match: (path) => path.startsWith("/m/dashboard/appointments"),
+        },
+        {
+          key: "phone",
+          label: "Phone",
+          href: "/m/dashboard/phone",
+          icon: (active) => <PhoneIcon active={active} />,
+          match: (path) => path.startsWith("/m/dashboard/phone"),
+        },
+        {
+          key: "billing",
+          label: "Billing",
+          href: "/m/dashboard/billing",
+          icon: (active) => <BillingIcon active={active} />,
+          match: (path) => path.startsWith("/m/dashboard/billing"),
+        },
+      ];
     }
-    return pathname.startsWith(href);
-  };
+
+    return [
+      {
+        key: "home",
+        label: "Home",
+        href: "/m",
+        icon: (active) => <HomeIcon active={active} />,
+        match: (path) => path === "/m",
+      },
+      {
+        key: "how",
+        label: "How it works",
+        href: "/m#how-it-works",
+        icon: (active) => <InfoIcon active={active} />,
+        match: (path, currentHash) => path === "/m" && currentHash === "#how-it-works",
+      },
+      {
+        key: "pricing",
+        label: "Pricing",
+        href: "/m/pricing",
+        icon: (active) => <BillingIcon active={active} />,
+        match: (path) => path === "/m/pricing",
+      },
+      {
+        key: "signin",
+        label: "Sign in",
+        onClick: onSignIn,
+        icon: (active) => <UserIcon active={active} />,
+      },
+    ];
+  }, [isAuthenticated, onSignIn]);
+
+  const isActive = useCallback(
+    (item: NavItem) => {
+      if (item.match) {
+        return item.match(pathname, hash);
+      }
+      if (!item.href) return false;
+      const [hrefPath] = item.href.split("#");
+      if (hrefPath === "/m/dashboard") {
+        return pathname === "/m" || pathname === "/m/dashboard";
+      }
+      return pathname.startsWith(hrefPath);
+    },
+    [hash, pathname],
+  );
 
   return (
     <nav
@@ -99,22 +210,41 @@ export default function MobileBottomNav() {
       className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-neutral-950/95 shadow-[0_-12px_32px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80"
     >
       <div className="mx-auto flex max-w-3xl items-center justify-between px-2 pb-[calc(env(safe-area-inset-bottom)+0.5rem)] pt-2 sm:hidden">
-        {NAV_ITEMS.map((item) => {
-          const active = matches(item.href);
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={`flex w-full flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition ${
-                active ? "text-white" : "text-white/70 hover:text-white"
-              }`}
-              aria-current={active ? "page" : undefined}
-            >
+        {navItems.map((item) => {
+          const active = isActive(item);
+          const content = (
+            <>
               <span className={`flex h-10 w-10 items-center justify-center rounded-full ${active ? "bg-white/10" : ""}`}>
                 {item.icon(active)}
               </span>
               <span className="leading-none">{item.label}</span>
-            </Link>
+            </>
+          );
+
+          if (item.href) {
+            return (
+              <Link
+                key={item.key}
+                href={item.href}
+                className={`flex w-full flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium transition ${
+                  active ? "text-white" : "text-white/70 hover:text-white"
+                }`}
+                aria-current={active ? "page" : undefined}
+              >
+                {content}
+              </Link>
+            );
+          }
+
+          return (
+            <button
+              key={item.key}
+              type="button"
+              onClick={item.onClick}
+              className="flex w-full flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-medium text-white/70 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+            >
+              {content}
+            </button>
           );
         })}
       </div>
