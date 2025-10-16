@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import Link from "next/link";
@@ -11,10 +11,6 @@ import { useAuthModal } from "@/components/auth/AuthModalProvider";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 
-function isLikelyGoogleEmail(value: string) {
-  return value.trim().toLowerCase().endsWith("@gmail.com");
-}
-
 export default function AuthClient({ initialTab }: { initialTab: "login" | "signup" }) {
   const router = useRouter();
   const sp = useSearchParams();
@@ -22,12 +18,12 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
   const [tab, setTab] = useState<"login" | "signup">(initialTab);
   const loginEmailRef = useRef<HTMLInputElement | null>(null);
   const signupEmailRef = useRef<HTMLInputElement | null>(null);
+  const googlePopupMonitorRef = useRef<number | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [err, setErr] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [showGooglePrompt, setShowGooglePrompt] = useState(false);
 
   // Signup-specific state
   const [suEmail, setSuEmail] = useState("");
@@ -37,10 +33,17 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
   const [suLoading, setSuLoading] = useState(false);
   const [googlePending, setGooglePending] = useState(false);
 
+  const clearGooglePopupMonitor = useCallback(() => {
+    if (googlePopupMonitorRef.current !== null) {
+      window.clearInterval(googlePopupMonitorRef.current);
+      googlePopupMonitorRef.current = null;
+    }
+  }, []);
+
   useEffect(() => {
     const handleAuthSuccess = () => {
+      clearGooglePopupMonitor();
       setGooglePending(false);
-      setShowGooglePrompt(false);
       try {
         localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
       } catch (error) {
@@ -52,7 +55,7 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
     return () => {
       window.removeEventListener("ob:auth:success", handleAuthSuccess);
     };
-  }, []);
+  }, [clearGooglePopupMonitor]);
 
   useEffect(() => {
     const mode = initialTab === "signup" ? "signup" : "signin";
@@ -62,6 +65,12 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       openModal(mode);
     }
   }, [initialTab, isOpen, openModal, setMode]);
+
+  useEffect(() => {
+    return () => {
+      clearGooglePopupMonitor();
+    };
+  }, [clearGooglePopupMonitor]);
 
   function switchTab(next: "login" | "signup") {
     setTab(next);
@@ -77,7 +86,7 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
     }, 0);
   }
 
-  async function attemptLogin(bypassPrompt = false) {
+  async function attemptLogin() {
     setErr(null);
     setLoading(true);
     try {
@@ -88,10 +97,6 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
         body: JSON.stringify({ email, password }),
       });
       if (!res.ok) {
-        if ((res.status === 400 || res.status === 401) && isLikelyGoogleEmail(email) && !bypassPrompt) {
-          setShowGooglePrompt(true);
-          return;
-        }
         setErr(res.status === 400 || res.status === 401 ? "login_failed" : "unavailable");
         return;
       }
@@ -111,10 +116,6 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
   async function onLogin(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
-    if (isLikelyGoogleEmail(email)) {
-      setShowGooglePrompt(true);
-      return;
-    }
     await attemptLogin();
   }
 
@@ -177,20 +178,21 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
 
   function startGoogleSignIn() {
     if (googlePending) return;
-    const base = apiUrl("/oauth/google/start");
-    const separator = base.includes("?") ? "&" : "?";
-    const url = `${base}${separator}prompt=select_account`;
-    setShowGooglePrompt(false);
-      const popup = openPopup(url, "oauth-google", {
-        expectedMessageType: "auth:success",
-        w: 540,
-        h: 680,
-      });
-      if (popup) {
-        setGooglePending(true);
-    } else {
+    const url = "/oauth/google/start";
+    setGooglePending(true);
+    clearGooglePopupMonitor();
+    const popup = openPopup(url, "oauth-google", { w: 540, h: 680 });
+    if (!popup) {
+      setGooglePending(false);
       window.location.href = url;
+      return;
     }
+    googlePopupMonitorRef.current = window.setInterval(() => {
+      if (!popup || popup.closed) {
+        clearGooglePopupMonitor();
+        setGooglePending(false);
+      }
+    }, 500);
   }
 
   const GoogleBtn = ({ label }: { label: string }) => (
@@ -202,7 +204,10 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       type="button"
     >
       <OfficialGoogleIcon />
-      <span>{googlePending ? "Waiting…" : label}</span>
+      <span>{googlePending ? "Opening…" : label}</span>
+      {googlePending ? (
+        <span className="ml-1 inline-flex h-4 w-4 animate-spin rounded-full border-[2px] border-[#c1c3c6] border-t-transparent" aria-hidden />
+      ) : null}
     </button>
   );
 
@@ -347,50 +352,6 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
           )}
         </div>
       </section>
-
-      {showGooglePrompt ? (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm"
-          role="presentation"
-          onClick={() => setShowGooglePrompt(false)}
-        >
-          <div
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="gmail-modal-title"
-            className="w-full max-w-sm rounded-2xl bg-white p-6 text-neutral-900 shadow-xl"
-            onClick={(event) => event.stopPropagation()}
-          >
-            <h2 id="gmail-modal-title" className="text-lg font-semibold text-neutral-900">
-              Continue with Google?
-            </h2>
-            <p className="mt-2 text-sm text-neutral-600">
-              This email often signs in with Google. Choose Google for the fastest sign-in, or continue with your email and password.
-            </p>
-            <div className="mt-6 flex flex-col gap-2">
-              <GoogleBtn label="Continue with Google" />
-              <button
-                type="button"
-                onClick={() => {
-                  setShowGooglePrompt(false);
-                  void attemptLogin(true);
-                }}
-                disabled={loading}
-                className="flex items-center justify-center rounded-xl border border-neutral-300 px-4 py-2 text-sm font-medium text-neutral-700 hover:bg-neutral-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-neutral-400 disabled:opacity-60"
-              >
-                Continue with email
-              </button>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowGooglePrompt(false)}
-              className="mt-4 text-xs font-medium text-neutral-500 underline-offset-4 hover:underline"
-            >
-              Cancel
-            </button>
-          </div>
-        </div>
-      ) : null}
     </div>
   );
 }
