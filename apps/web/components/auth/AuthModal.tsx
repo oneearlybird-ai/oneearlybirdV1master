@@ -138,16 +138,13 @@ export default function AuthModal() {
     const handleAuthSuccess = () => {
       clearGooglePopupMonitor();
       setGooglePending(false);
-      void warmDashboardData();
       triggerLoginEvent();
-      close();
-      redirectTo(getDashboardPath());
     };
     window.addEventListener("ob:auth:success", handleAuthSuccess);
     return () => {
       window.removeEventListener("ob:auth:success", handleAuthSuccess);
     };
-  }, [clearGooglePopupMonitor, close, triggerLoginEvent, warmDashboardData]);
+  }, [clearGooglePopupMonitor, triggerLoginEvent]);
 
   useEffect(() => {
     return () => {

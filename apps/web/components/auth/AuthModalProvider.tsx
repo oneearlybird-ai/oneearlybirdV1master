@@ -5,6 +5,8 @@ import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import AuthModal from "@/components/auth/AuthModal";
 import { resolvePopupMessage } from "@/lib/popup";
 import { apiFetch } from "@/lib/http";
+import { redirectTo } from "@/lib/clientNavigation";
+import { getDashboardPath } from "@/lib/authPaths";
 
 export type AuthModalMode = "signin" | "signup";
 
@@ -114,18 +116,43 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const allowedOrigins = new Set(["https://oneearlybird.ai", "https://m.oneearlybird.ai"]);
-    const dispatchAppEvent = (
-      type: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned",
-    ) => {
+    const dispatchAppEvent = (type: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned") => {
       const eventName =
         type === "auth:success"
           ? "ob:auth:success"
           : type === "auth:logout"
             ? "ob:auth:logout"
             : type === "billing:checkout:success"
-            ? "ob:billing:checkout:success"
-            : "ob:billing:portal:returned";
+              ? "ob:billing:checkout:success"
+              : "ob:billing:portal:returned";
       window.dispatchEvent(new CustomEvent(eventName));
+    };
+    const handleNormalizedEvent = (
+      normalized: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned",
+    ) => {
+      resolvePopupMessage(normalized);
+      if (normalized === "auth:success") {
+        void warmDashboardData();
+        close();
+        dispatchAppEvent(normalized);
+        if (typeof window !== "undefined") {
+          const targetPath = getDashboardPath();
+          const currentPath = window.location.pathname || "";
+          if (currentPath !== targetPath) {
+            redirectTo(targetPath);
+          }
+        }
+        return;
+      }
+      if (normalized === "auth:logout") {
+        close();
+        dispatchAppEvent(normalized);
+        return;
+      }
+      if (normalized === "billing:checkout:success") {
+        void refreshBillingState();
+      }
+      dispatchAppEvent(normalized);
     };
     const handlePostMessage = (event: MessageEvent) => {
       if (!allowedOrigins.has(event.origin)) return;
@@ -140,16 +167,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       ) {
         const normalized: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned" =
           type === "billing:trial:success" ? "billing:checkout:success" : type;
-        resolvePopupMessage(normalized);
-        if (normalized === "auth:success") {
-          void warmDashboardData();
-          close();
-        } else if (normalized === "auth:logout") {
-          close();
-        } else if (normalized === "billing:checkout:success") {
-          void refreshBillingState();
-        }
-        dispatchAppEvent(normalized);
+        handleNormalizedEvent(normalized);
       }
     };
     const handleFallback = (event: Event) => {
@@ -164,16 +182,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       ) {
         const normalized: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned" =
           type === "billing:trial:success" ? "billing:checkout:success" : type;
-        resolvePopupMessage(normalized);
-        if (normalized === "auth:success") {
-          void warmDashboardData();
-          close();
-        } else if (normalized === "auth:logout") {
-          close();
-        } else if (normalized === "billing:checkout:success") {
-          void refreshBillingState();
-        }
-        dispatchAppEvent(normalized);
+        handleNormalizedEvent(normalized);
       }
     };
     window.addEventListener("message", handlePostMessage);

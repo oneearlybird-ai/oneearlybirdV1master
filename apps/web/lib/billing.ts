@@ -6,7 +6,7 @@ import {
 } from "@/lib/plans";
 
 export type PlanSummaryLike = {
-  status: "none" | "trial-active" | "active";
+  status: "none" | "trial-active" | "trial-cancelled" | "active";
   planKey: string | null;
   planPriceId: string | null;
   planMinutes?: number | null;
@@ -79,7 +79,15 @@ export function derivePlanDisplay(
   }
 
   if (summary.status === "none") {
-    return { value: "No plan yet" };
+    return { value: "No current plan", hint: "Choose a plan to get started." };
+  }
+
+  if (summary.status === "trial-cancelled") {
+    const end = formatIsoDate(summary.trialEnd);
+    return {
+      value: end ? `Trial ends ${end}` : "Trial cancelled",
+      hint: "Activate a plan to keep service running.",
+    };
   }
 
   if (summary.status === "trial-active") {

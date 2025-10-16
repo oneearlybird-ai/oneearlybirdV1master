@@ -7,7 +7,7 @@ import { LiveStatusBadge, RecentCallsPreview } from "@/components/RecentCallsPre
 import CopyDiagnostics from "@/components/CopyDiagnostics";
 import CopyOrgIdButton from "@/components/CopyOrgIdButton";
 import CopyPageLinkButton from "@/components/CopyPageLinkButton";
-import { derivePlanDisplay } from "@/lib/billing";
+import { derivePlanDisplay, formatIsoDate } from "@/lib/billing";
 import PlanActionButtons from "@/components/PlanActionButtons";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
@@ -25,7 +25,7 @@ type TenantProfile = {
 };
 
 type BillingSummary = {
-  status: "none" | "trial-active" | "active";
+  status: "none" | "trial-active" | "trial-cancelled" | "active";
   planKey: string | null;
   planPriceId: string | null;
   planMinutes: number | null;
@@ -264,6 +264,8 @@ export default function DashboardPage() {
   const summary = summaryState.data;
 
   const planDisplay = useMemo(() => derivePlanDisplay(summary ?? null, profile ?? null), [summary, profile]);
+  const planStatus = summary?.status ?? "none";
+  const trialEndLabel = planStatus === "trial-cancelled" ? formatIsoDate(summary?.trialEnd ?? null) : null;
 
   const minutesCap = summary?.minutesCap ?? profile?.minutesCap ?? usage?.minutesCap ?? null;
   const concurrencyCap = summary?.concurrencyCap ?? profile?.concurrencyCap ?? usage?.concurrencyCap ?? null;
@@ -281,6 +283,16 @@ export default function DashboardPage() {
   const answeredLabel = String(periodTotals.answered || 0);
   const bookedLabel = String(periodTotals.booked || 0);
   const deflectedLabel = String(periodTotals.deflected || 0);
+  const usageHasData = useMemo(() => {
+    const minutes = Number(usage?.usedMinutes ?? usage?.monthlyMinutes ?? 0);
+    if (minutes > 0) return true;
+    return (usage?.periods ?? []).some((period) => {
+      const answered = Number(period.answered ?? 0);
+      const booked = Number(period.booked ?? 0);
+      const deflected = Number(period.deflected ?? 0);
+      return answered > 0 || booked > 0 || deflected > 0;
+    });
+  }, [usage?.monthlyMinutes, usage?.periods, usage?.usedMinutes]);
 
   const now = new Date();
   const when = now.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" } as Intl.DateTimeFormatOptions);
@@ -347,16 +359,33 @@ export default function DashboardPage() {
         <PlanActionButtons summary={summary} profile={profile} onRefresh={fetchAll} />
       </div>
 
-      <ThisWeekPanel
-        periods={usage?.periods ?? []}
-        sparklinePoints={sparklinePoints}
-        totals={{
-          answered: answeredLabel,
-          booked: bookedLabel,
-          deflected: deflectedLabel,
-          avgDuration: avgDurationLabel,
-        }}
-      />
+      {planStatus === "none" ? (
+        <p className="mt-2 text-sm text-white/60">
+          No current plan. Purchase a plan when you’re ready to keep EarlyBird handling calls.
+        </p>
+      ) : null}
+      {planStatus === "trial-cancelled" ? (
+        <p className="mt-2 text-sm text-white/60">
+          Trial ended{trialEndLabel ? ` ${trialEndLabel}` : ""}. Select a plan to continue uninterrupted service.
+        </p>
+      ) : null}
+
+      {usageHasData ? (
+        <ThisWeekPanel
+          periods={usage?.periods ?? []}
+          sparklinePoints={sparklinePoints}
+          totals={{
+            answered: answeredLabel,
+            booked: bookedLabel,
+            deflected: deflectedLabel,
+            avgDuration: avgDurationLabel,
+          }}
+        />
+      ) : (
+        <div className="mt-6 rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-sm text-white/60">
+          No usage yet. Once calls start flowing, live insights will appear here.
+        </div>
+      )}
 
       {(profileState.error || usageState.error) ? (
         <div className="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">

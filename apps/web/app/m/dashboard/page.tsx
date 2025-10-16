@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import PlanActionButtons from "@/components/PlanActionButtons";
-import { derivePlanDisplay, findPlanDefinition } from "@/lib/billing";
+import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
 import { dashboardFetch } from "@/lib/dashboardFetch";
 import { formatCallDuration, formatCallTimestamp, outcomeLabel } from "@/lib/call-format";
 import { MobileCard, MobileCardContent, MobileCardHeader, MobileCardFooter } from "@/components/mobile/Card";
@@ -18,7 +18,7 @@ type TenantProfile = {
 };
 
 type BillingSummary = {
-  status: "none" | "trial-active" | "active";
+  status: "none" | "trial-active" | "trial-cancelled" | "active";
   planKey: string | null;
   planPriceId: string | null;
   planMinutes: number | null;
@@ -134,6 +134,8 @@ export default function MobileDashboardPage() {
   }, [loadData]);
 
   const planDisplay = useMemo(() => derivePlanDisplay(summary.data, profile.data), [summary.data, profile.data]);
+  const planStatus = summary.data?.status ?? "none";
+  const trialEndLabel = planStatus === "trial-cancelled" ? formatIsoDate(summary.data?.trialEnd ?? null) : null;
 
   const answeredStats = useMemo(() => {
     if (!usage.data) return { answeredPct: 0, booked: 0 };
@@ -145,6 +147,16 @@ export default function MobileDashboardPage() {
   const planDefinition = useMemo(() => {
     return findPlanDefinition(summary.data?.planKey ?? null, summary.data?.planPriceId ?? null);
   }, [summary.data]);
+  const usageHasData = useMemo(() => {
+    const minutes = Number(usage.data?.usedMinutes ?? usage.data?.minutesCap ?? 0);
+    if (minutes > 0) return true;
+    return (usage.data?.periods ?? []).some((period) => {
+      const answered = Number(period.answered ?? 0);
+      const booked = Number(period.booked ?? 0);
+      const deflected = Number(period.deflected ?? 0);
+      return answered > 0 || booked > 0 || deflected > 0;
+    });
+  }, [usage.data]);
 
   const maskedDid = profile.data?.did ? profile.data.did.replace(/^\+?(\d{0,2})(\d{0,3})(\d{0,3})(\d{0,4})$/, (_, c1, c2, c3, c4) => {
     if (!c4) return profile.data?.did ?? "";
@@ -159,6 +171,16 @@ export default function MobileDashboardPage() {
         <p className="text-sm text-white/60">Manage plan, calls, and routing without leaving your phone.</p>
       </div>
 
+      {!usageHasData ? (
+        <MobileCard>
+          <MobileCardContent>
+            <p className="text-sm text-white/60">
+              No usage yet. Your insights will appear here after the first calls.
+            </p>
+          </MobileCardContent>
+        </MobileCard>
+      ) : null}
+
       <MobileCard>
         <MobileCardHeader
           title={planDisplay.value}
@@ -167,11 +189,13 @@ export default function MobileDashboardPage() {
         <MobileCardContent>
           <div className="flex flex-wrap gap-2 text-xs text-white/60">
             <span className="rounded-full border border-white/10 px-2 py-1">
-              {summary.data?.status === "trial-active"
+              {planStatus === "trial-active"
                 ? "Trial active"
-                : summary.data?.status === "active"
-                  ? "Active plan"
-                  : "No plan"}
+                : planStatus === "trial-cancelled"
+                  ? trialEndLabel ? `Trial ends ${trialEndLabel}` : "Trial cancelled"
+                  : planStatus === "active"
+                    ? "Active plan"
+                    : "No current plan"}
             </span>
             {planDefinition ? (
               <span className="rounded-full border border-white/10 px-2 py-1">
@@ -182,7 +206,19 @@ export default function MobileDashboardPage() {
           </div>
         </MobileCardContent>
         <MobileCardFooter>
-          <PlanActionButtons summary={summary.data} profile={profile.data} onRefresh={loadData} align="start" />
+          <div className="flex w-full flex-col gap-2">
+            <PlanActionButtons summary={summary.data} profile={profile.data} onRefresh={loadData} align="start" />
+            {planStatus === "none" ? (
+              <p className="text-xs text-white/60">
+                No current plan. Purchase a plan to keep EarlyBird active.
+              </p>
+            ) : null}
+            {planStatus === "trial-cancelled" ? (
+              <p className="text-xs text-white/60">
+                Trial ended{trialEndLabel ? ` ${trialEndLabel}` : ""}. Choose a plan to continue uninterrupted service.
+              </p>
+            ) : null}
+          </div>
         </MobileCardFooter>
       </MobileCard>
 

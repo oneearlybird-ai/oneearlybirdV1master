@@ -1,9 +1,8 @@
 "use client";
 
-import { toApiUrl } from "@/lib/http";
-
 const DEFAULT_DESKTOP_HOST = "oneearlybird.ai";
 const DEFAULT_MOBILE_HOST = "m.oneearlybird.ai";
+const GOOGLE_START_BASE = "https://api.oneearlybird.ai/oauth/google/start";
 
 function isMobileHostname(hostname: string): boolean {
   return hostname === DEFAULT_MOBILE_HOST || hostname.startsWith("m.");
@@ -14,14 +13,6 @@ function getCurrentHostname(): string {
     return window.location.hostname;
   }
   return DEFAULT_DESKTOP_HOST;
-}
-
-function getCurrentOrigin(): string {
-  if (typeof window !== "undefined" && window.location?.origin) {
-    return window.location.origin;
-  }
-  const hostname = getCurrentHostname();
-  return `https://${hostname}`;
 }
 
 export function getDashboardPath(): string {
@@ -36,15 +27,13 @@ export function getLandingPath(): string {
 
 export function buildGoogleStartUrl(): string {
   const hostname = getCurrentHostname();
-  const origin = getCurrentOrigin();
-  const dashboardPath = isMobileHostname(hostname) ? "/m/dashboard" : "/dashboard";
-
-  const params = new URLSearchParams({
-    prompt: "select_account",
-    return_host: hostname,
-    return_path: dashboardPath,
-    return_url: `${origin.replace(/\/+$/, "")}${dashboardPath}`,
-  });
-
-  return toApiUrl(`/oauth/google/start?${params.toString()}`);
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+  const targetHost = mobileContext ? DEFAULT_MOBILE_HOST : DEFAULT_DESKTOP_HOST;
+  const returnPath = mobileContext ? "/m/dashboard" : "/dashboard";
+  const url = new URL(GOOGLE_START_BASE);
+  url.searchParams.set("prompt", "select_account");
+  url.searchParams.set("return_host", targetHost);
+  url.searchParams.set("return_path", returnPath);
+  return url.toString();
 }

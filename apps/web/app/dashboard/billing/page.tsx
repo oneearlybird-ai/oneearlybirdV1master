@@ -18,7 +18,7 @@ type TenantProfile = {
 };
 
 type BillingSummary = {
-  status: "none" | "trial-active" | "active";
+  status: "none" | "trial-active" | "trial-cancelled" | "active";
   planKey: string | null;
   planPriceId: string | null;
   planMinutes: number | null;
@@ -99,7 +99,7 @@ function PlanTile({
     const label = isCurrent ? "Manage plan" : "Upgrade via portal";
     const variant = isCurrent ? "primary" : "secondary";
     actions = <ManageBillingButton className="mt-4 inline-flex" label={label} variant={variant} />;
-  } else if (["none", "trial-expired", "canceled"].includes(normalizedStatus)) {
+  } else if (["none", "trial-expired", "canceled", "trial-cancelled"].includes(normalizedStatus)) {
     const allowTrial = plan.trialAvailable && trialEligible && normalizedStatus === "none";
     actions = (
       <PlanCheckoutButtons
@@ -348,6 +348,16 @@ export default function BillingPage() {
               View pricing
             </a>
           </div>
+          {summaryStatus === "none" ? (
+            <p className="mt-2 text-sm text-white/60">
+              No current plan. Purchase a plan when you’re ready to keep EarlyBird active.
+            </p>
+          ) : null}
+          {summaryStatus === "trial-cancelled" ? (
+            <p className="mt-2 text-sm text-white/60">
+              Trial ended{trialEnd ? ` ${trialEnd}` : ""}. Select a plan to continue uninterrupted service.
+            </p>
+          ) : null}
         </div>
 
         <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
@@ -372,8 +382,16 @@ export default function BillingPage() {
           {historyLoading ? <div className="text-xs text-white/50">Loading…</div> : null}
         </div>
         {historyError ? (
-          <div className="mt-3 text-xs text-rose-300" role="alert">
-            {historyError.replace(/_/g, " ")}
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-rose-300" role="alert">
+            <span>{historyError.replace(/_/g, " ")}</span>
+            <button
+              type="button"
+              onClick={() => void loadHistory(undefined, true)}
+              className="rounded border border-rose-300/40 px-2 py-1 text-xs text-rose-100 transition hover:border-rose-200 hover:text-rose-50"
+              disabled={historyLoading}
+            >
+              Retry
+            </button>
           </div>
         ) : null}
         <div className="mt-3 overflow-x-auto">
