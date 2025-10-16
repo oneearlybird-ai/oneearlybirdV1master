@@ -11,7 +11,7 @@ import {
 import { serverApiFetch } from "@/lib/server-api";
 
 export const metadata: Metadata = {
-  title: "Pricing – EarlyBird",
+  title: "Pricing",
   description: "Simple, transparent pricing for AI voice reception.",
 };
 

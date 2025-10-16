@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Proven ROI – EarlyBird",
+  title: "Proven ROI",
   description: "Estimate savings, deflection, and effective cost per booking with EarlyBird.",
 };
 

@@ -4,7 +4,7 @@ import { PLAN_DEFINITIONS, getPlanPriceLabel, getPlanTrialBadge } from "@/lib/pl
 import { MobileCard, MobileCardContent, MobileCardHeader } from "@/components/mobile/Card";
 
 export const metadata: Metadata = {
-  title: "Mobile Pricing – EarlyBird",
+  title: "Mobile Pricing",
   description: "Plans and pricing for EarlyBird on the mobile experience.",
 };
 
