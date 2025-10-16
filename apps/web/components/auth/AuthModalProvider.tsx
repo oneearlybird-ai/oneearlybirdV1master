@@ -113,7 +113,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const allowedOrigin = "https://oneearlybird.ai";
+    const allowedOrigins = new Set(["https://oneearlybird.ai", "https://m.oneearlybird.ai"]);
     const dispatchAppEvent = (
       type: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned",
     ) => {
@@ -128,7 +128,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
       window.dispatchEvent(new CustomEvent(eventName));
     };
     const handlePostMessage = (event: MessageEvent) => {
-      if (event.origin !== allowedOrigin) return;
+      if (!allowedOrigins.has(event.origin)) return;
       const data = event.data as { type?: string } | null;
       const type = data?.type;
       if (
