@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
                 className="flex items-center gap-2 font-semibold tracking-tight text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
                 aria-label="EarlyBird AI home"
               >
-                <span className="text-xl font-semibold md:text-3xl" aria-hidden>EarlyBird AI</span>
+                <span className="text-lg font-semibold md:text-2xl" aria-hidden>EarlyBird AI</span>
                 <span className="sr-only">EarlyBird AI</span>
               </Link>
               <NavMainLinks />
