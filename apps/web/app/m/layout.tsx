@@ -5,15 +5,15 @@ import type { ReactNode } from "react";
 import MobileBottomNav from "@/components/mobile/BottomNav";
 import Toasts from "@/components/Toasts";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { API_BASE } from "@/lib/config";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
+import { apiFetch } from "@/lib/http";
+import { getLandingPath } from "@/lib/authPaths";
 
 const LOGOUT_EVENT_KEY = "__ob_logout";
 
-type AuthStatus = "loading" | "authenticated" | "unauthenticated";
-
 export default function MobileLayout({ children }: { children: ReactNode }) {
   const { open } = useAuthModal();
-  const [status, setStatus] = useState<AuthStatus>("loading");
+  const { status, markUnauthenticated } = useAuthSession();
   const [signingOut, setSigningOut] = useState(false);
 
   useEffect(() => {
@@ -37,52 +37,16 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
     };
   }, []);
 
-  const apiUrl = useCallback((path: string) => {
-    const base = (API_BASE || "").replace(/\/+$/, "");
-    return base ? `${base}${path}` : `/api/upstream${path}`;
-  }, []);
-
-  const refreshSessionState = useCallback(async () => {
-    try {
-      const response = await fetch(apiUrl("/tenants/me"), {
-        method: "GET",
-        credentials: "include",
-        headers: { "cache-control": "no-store" },
-      });
-      if (response.ok) {
-        setStatus("authenticated");
-      } else if (response.status === 401) {
-        setStatus("unauthenticated");
-      } else {
-        setStatus("unauthenticated");
-      }
-    } catch {
-      setStatus("unauthenticated");
-    }
-  }, [apiUrl]);
-
-  useEffect(() => {
-    refreshSessionState();
-  }, [refreshSessionState]);
-
-  useEffect(() => {
-    const handleAuthSuccess = () => {
-      void refreshSessionState();
-    };
-    window.addEventListener("ob:auth:success", handleAuthSuccess);
-    return () => window.removeEventListener("ob:auth:success", handleAuthSuccess);
-  }, [refreshSessionState]);
-
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
       if (event.key === LOGOUT_EVENT_KEY) {
-        setStatus("unauthenticated");
-        window.location.href = "/m";
+        markUnauthenticated();
+        window.location.href = getLandingPath();
       }
     };
     window.addEventListener("storage", onStorage);
     return () => window.removeEventListener("storage", onStorage);
-  }, []);
+  }, [markUnauthenticated]);
 
   const handleSignIn = useCallback(() => {
     open("signin");
@@ -92,22 +56,24 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      await fetch(apiUrl("/auth/logout"), {
+      await apiFetch("/auth/logout", {
         method: "POST",
-        credentials: "include",
-        headers: { "cache-control": "no-store" },
+        cache: "no-store",
       });
     } catch (error) {
       console.error("mobile_signout_failed", { message: (error as Error)?.message });
+    } finally {
+      try {
+        localStorage.setItem(LOGOUT_EVENT_KEY, String(Date.now()));
+      } catch (error) {
+        console.warn("mobile_signout_storage_failed", { message: (error as Error)?.message });
+      }
+      window.dispatchEvent(new CustomEvent("ob:auth:logout"));
+      markUnauthenticated();
+      window.location.href = getLandingPath();
+      setSigningOut(false);
     }
-    try {
-      localStorage.setItem(LOGOUT_EVENT_KEY, String(Date.now()));
-    } catch (error) {
-      console.warn("mobile_signout_storage_failed", { message: (error as Error)?.message });
-    }
-    setStatus("unauthenticated");
-    window.location.href = "/m";
-  }, [apiUrl, signingOut]);
+  }, [markUnauthenticated, signingOut]);
 
   const isAuthenticated = status === "authenticated";
 
@@ -147,7 +113,7 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
     if (isAuthenticated) return;
     const currentPath = window.location.pathname;
     if (currentPath.startsWith("/m/dashboard")) {
-      window.location.href = "/m";
+      window.location.href = getLandingPath();
     }
   }, [isAuthenticated, status]);
 

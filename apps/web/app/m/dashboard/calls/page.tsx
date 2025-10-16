@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { MobileCard, MobileCardContent, MobileCardFooter, MobileCardHeader } from "@/components/mobile/Card";
 import MobileSheet from "@/components/mobile/Sheet";
 import type { CallItem } from "@/components/RecentCallsPreview";
@@ -66,7 +67,7 @@ export default function MobileCallsPage() {
         setPendingCursor(cursor);
       }
       try {
-        const res = await apiFetch("/calls/list", {
+        const res = await dashboardFetch("/calls/list", {
           method: "POST",
           cache: "no-store",
           body: JSON.stringify(payloadForFilters(requestCursor ?? undefined)),

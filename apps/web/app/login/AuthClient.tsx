@@ -8,6 +8,7 @@ import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { buildGoogleStartUrl, getDashboardPath } from "@/lib/authPaths";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 
@@ -49,7 +50,7 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       } catch (error) {
         console.warn("google_login_storage_failed", { message: (error as Error)?.message });
       }
-      window.location.href = "/dashboard";
+      window.location.href = getDashboardPath();
     };
     window.addEventListener("ob:auth:success", handleAuthSuccess);
     return () => {
@@ -105,7 +106,7 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       } catch (error) {
         console.warn("login_storage_failed", { message: (error as Error)?.message });
       }
-      redirectTo("/dashboard");
+      redirectTo(getDashboardPath());
     } catch (_err) {
       setErr("unavailable");
     } finally {
@@ -168,7 +169,7 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       } catch (error) {
         console.warn("signup_login_storage_failed", { message: (error as Error)?.message });
       }
-      redirectTo("/dashboard");
+      redirectTo(getDashboardPath());
     } catch (_e) {
       setSuErr("unavailable");
     } finally {
@@ -178,7 +179,7 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
 
   function startGoogleSignIn() {
     if (googlePending) return;
-    const url = "/oauth/google/start";
+    const url = buildGoogleStartUrl();
     setGooglePending(true);
     clearGooglePopupMonitor();
     const popup = openPopup(url, "oauth-google", { w: 540, h: 680 });

@@ -1,5 +1,6 @@
 "use client";
 import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 
 import { useEffect, useState } from "react";
 import { toast } from "@/components/Toasts";
@@ -41,7 +42,7 @@ export default function IntegrationsPage() {
   const [providers, setProviders] = useState<Record<string, Provider>>({});
   useEffect(() => {
     let cancelled = false;
-    apiFetch('/integrations/status', { cache: 'no-store' })
+    dashboardFetch('/integrations/status', { cache: 'no-store' })
       .then(r => r.json())
       .then((j) => {
         if (cancelled) return;

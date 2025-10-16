@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import type { CallItem } from "@/components/RecentCallsPreview";
 import { formatCallDuration, formatCallTimestamp, normalisePhone, outcomeLabel } from "@/lib/call-format";
 
@@ -13,7 +14,7 @@ type CallState = {
 };
 
 async function fetchCallById(id: string): Promise<CallItem | null> {
-  const res = await apiFetch("/calls/list", {
+  const res = await dashboardFetch("/calls/list", {
     method: "POST",
     body: JSON.stringify({ limit: 1, search: id }),
     cache: "no-store",

@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { CallDrawer, type CallItem } from "@/components/RecentCallsPreview";
-import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { formatCallDuration, formatCallTimestamp, normalisePhone, outcomeLabel } from "@/lib/call-format";
 
 type CallsFilters = {
@@ -28,7 +28,7 @@ function toIsoDate(date: string): string | undefined {
 }
 
 async function requestCalls(payload: Record<string, unknown>): Promise<CallsResponse> {
-  const res = await apiFetch("/calls/list", {
+  const res = await dashboardFetch("/calls/list", {
     method: "POST",
     body: JSON.stringify(payload),
     cache: "no-store",

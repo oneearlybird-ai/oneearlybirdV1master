@@ -1,112 +1,41 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { API_BASE } from "@/lib/config";
+import { useCallback, useState } from "react";
 import { redirectTo } from "@/lib/clientNavigation";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
+import { apiFetch } from "@/lib/http";
+import { getDashboardPath, getLandingPath } from "@/lib/authPaths";
 
 const LOGOUT_EVENT_KEY = "__ob_logout";
-const LOGIN_EVENT_KEY = "__ob_login";
-
-type AuthStatus = "loading" | "authenticated" | "unauthenticated";
 
 export default function AuthControls() {
-  const [status, setStatus] = useState<AuthStatus>("loading");
-  const [signingOut, setSigningOut] = useState(false);
+  const { status, markUnauthenticated } = useAuthSession();
   const { open } = useAuthModal();
-
-  const apiUrl = useCallback((path: string) => {
-    const base = (API_BASE || "").replace(/\/+$/, "");
-    return base ? `${base}${path}` : `/api/upstream${path}`;
-  }, []);
-
-  const refreshSessionState = useCallback(async () => {
-    try {
-      const response = await fetch(apiUrl("/tenants/me"), {
-        method: "GET",
-        credentials: "include",
-        headers: { "cache-control": "no-store" }
-      });
-      if (response.ok) {
-        setStatus("authenticated");
-      } else if (response.status === 401) {
-        setStatus("unauthenticated");
-      } else {
-        setStatus("unauthenticated");
-      }
-    } catch {
-      setStatus("unauthenticated");
-    }
-  }, [apiUrl]);
-
-  useEffect(() => {
-    refreshSessionState();
-  }, [refreshSessionState]);
-
-  useEffect(() => {
-    const handleAuthSuccess = () => {
-      refreshSessionState();
-    };
-    window.addEventListener("ob:auth:success", handleAuthSuccess);
-    return () => {
-      window.removeEventListener("ob:auth:success", handleAuthSuccess);
-    };
-  }, [refreshSessionState]);
-
-  useEffect(() => {
-    const handlePageShow = () => {
-      refreshSessionState();
-    };
-    window.addEventListener("pageshow", handlePageShow);
-    return () => window.removeEventListener("pageshow", handlePageShow);
-  }, [refreshSessionState]);
-
-  useEffect(() => {
-    const handleStorage = (event: StorageEvent) => {
-      if (event.key === LOGOUT_EVENT_KEY) {
-        setStatus("unauthenticated");
-        redirectTo("/");
-      }
-      if (event.key === LOGIN_EVENT_KEY) {
-        refreshSessionState();
-      }
-    };
-    window.addEventListener("storage", handleStorage);
-    return () => window.removeEventListener("storage", handleStorage);
-  }, [refreshSessionState]);
-
-  useEffect(() => {
-    const onVisibility = () => {
-      if (document.visibilityState === "visible") {
-        refreshSessionState();
-      }
-    };
-    document.addEventListener("visibilitychange", onVisibility);
-    return () => document.removeEventListener("visibilitychange", onVisibility);
-  }, [refreshSessionState]);
+  const [signingOut, setSigningOut] = useState(false);
 
   const handleSignOut = useCallback(async () => {
     if (signingOut) return;
     setSigningOut(true);
     try {
-      await fetch(apiUrl("/auth/logout"), {
+      await apiFetch("/auth/logout", {
         method: "POST",
-        credentials: "include",
-        headers: { "cache-control": "no-store" }
+        cache: "no-store",
       });
     } catch (error) {
       console.error("signout_request_failed", { message: (error as Error)?.message });
+    } finally {
+      try {
+        localStorage.setItem(LOGOUT_EVENT_KEY, String(Date.now()));
+      } catch (storageError) {
+        console.warn("signout_storage_failed", { message: (storageError as Error)?.message });
+      }
+      window.dispatchEvent(new CustomEvent("ob:auth:logout"));
+      markUnauthenticated();
+      redirectTo(getLandingPath());
+      setSigningOut(false);
     }
-
-    try {
-      localStorage.setItem(LOGOUT_EVENT_KEY, String(Date.now()));
-    } catch (error) {
-      console.warn("signout_storage_failed", { message: (error as Error)?.message });
-    }
-
-    setStatus("unauthenticated");
-    redirectTo("/");
-  }, [apiUrl, signingOut]);
+  }, [markUnauthenticated, signingOut]);
 
   if (status === "loading") {
     return (
@@ -120,7 +49,7 @@ export default function AuthControls() {
     return (
       <div className="flex items-center gap-3">
         <button
-          onClick={() => redirectTo("/dashboard")}
+          onClick={() => redirectTo(getDashboardPath())}
           className="rounded-xl border border-white/20 px-4 py-2 text-sm text-white/80 transition hover:text-white"
           type="button"
         >

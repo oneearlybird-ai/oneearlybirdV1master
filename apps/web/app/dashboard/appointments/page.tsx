@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 
 type BookingItem = {
   id: string;
@@ -48,7 +49,7 @@ export default function AppointmentsPage() {
       setLoading(true);
       setError(null);
       try {
-        const res = await apiFetch(`/bookings/list?window=${windowValue}`, { cache: "no-store" });
+        const res = await dashboardFetch(`/bookings/list?window=${windowValue}`, { cache: "no-store" });
         if (!res.ok) {
           const text = await res.text();
           throw new Error(text || `bookings_list_${res.status}`);

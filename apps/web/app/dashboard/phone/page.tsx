@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { toast } from "@/components/Toasts";
 
 type RoutingMode = "agent" | "passthrough";
@@ -104,7 +105,7 @@ export default function PhoneAndAgentPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await apiFetch("/tenants/profile", { cache: "no-store" });
+      const res = await dashboardFetch("/tenants/profile", { cache: "no-store" });
       if (!res.ok) throw new Error(`profile_${res.status}`);
       const data = (await res.json()) as Record<string, unknown> & PhoneProfile;
       const routing =
