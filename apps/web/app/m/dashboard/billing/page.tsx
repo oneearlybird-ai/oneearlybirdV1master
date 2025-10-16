@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import PlanActionButtons from "@/components/PlanActionButtons";
 import { derivePlanDisplay, formatIsoDate } from "@/lib/billing";
-import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { MobileCard, MobileCardContent, MobileCardFooter, MobileCardHeader } from "@/components/mobile/Card";
 
 type BillingSummary = {
@@ -71,8 +71,8 @@ export default function MobileBillingPage() {
     setError(null);
     try {
       const [profileRes, summaryRes] = await Promise.all([
-        apiFetch("/tenants/profile", { cache: "no-store" }),
-        apiFetch("/billing/summary", { cache: "no-store" }),
+        dashboardFetch("/tenants/profile", { cache: "no-store" }),
+        dashboardFetch("/billing/summary", { cache: "no-store" }),
       ]);
       if (!profileRes.ok) {
         const text = await profileRes.text();
@@ -102,7 +102,7 @@ export default function MobileBillingPage() {
       try {
         const params = new URLSearchParams({ limit: String(HISTORY_LIMIT) });
         if (cursor) params.set("cursor", cursor);
-        const res = await apiFetch(`/billing/history?${params.toString()}`, { cache: "no-store" });
+        const res = await dashboardFetch(`/billing/history?${params.toString()}`, { cache: "no-store" });
         if (!res.ok) {
           const text = await res.text();
           throw new Error(text || `history_${res.status}`);

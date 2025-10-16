@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import dynamic from "next/dynamic";
-import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { LiveStatusBadge, RecentCallsPreview } from "@/components/RecentCallsPreview";
 import CopyDiagnostics from "@/components/CopyDiagnostics";
 import CopyOrgIdButton from "@/components/CopyOrgIdButton";
@@ -160,9 +160,9 @@ export default function DashboardPage() {
     setSummaryState((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const [profileRes, usageRes, summaryRes] = await Promise.all([
-        apiFetch("/tenants/profile", { cache: "no-store" }),
-        apiFetch("/usage/summary?window=week", { cache: "no-store" }),
-        apiFetch("/billing/summary", { cache: "no-store" }),
+        dashboardFetch("/tenants/profile", { cache: "no-store" }),
+        dashboardFetch("/usage/summary?window=week", { cache: "no-store" }),
+        dashboardFetch("/billing/summary", { cache: "no-store" }),
       ]);
       if (!mountedRef.current) return;
 
@@ -213,7 +213,9 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const allowedOrigin = "https://oneearlybird.ai";
+    const allowedOrigins = new Set(["https://oneearlybird.ai", "https://m.oneearlybird.ai"]);
+    const currentOrigin = typeof window !== "undefined" ? window.location.origin : "https://oneearlybird.ai";
+    const allowedOrigin = allowedOrigins.has(currentOrigin) ? currentOrigin : "https://oneearlybird.ai";
     const refresh = () => {
       void fetchAll();
     };

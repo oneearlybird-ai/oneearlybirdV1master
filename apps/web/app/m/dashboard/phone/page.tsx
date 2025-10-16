@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { MobileCard, MobileCardContent, MobileCardFooter, MobileCardHeader } from "@/components/mobile/Card";
 import MobileSheet from "@/components/mobile/Sheet";
 import { toast } from "@/components/Toasts";
@@ -31,7 +32,7 @@ export default function MobilePhonePage() {
   const refreshProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await apiFetch("/tenants/profile", { cache: "no-store" });
+      const res = await dashboardFetch("/tenants/profile", { cache: "no-store" });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `profile_${res.status}`);

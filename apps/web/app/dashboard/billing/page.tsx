@@ -5,7 +5,7 @@ export const dynamic = "force-dynamic";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 import ManageBillingButton from "@/components/ManageBillingButton";
-import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
 import { PLAN_DEFINITIONS, type PlanDefinition, getPlanPriceLabel, getPlanTrialBadge } from "@/lib/plans";
 import PlanActionButtons from "@/components/PlanActionButtons";
@@ -182,8 +182,8 @@ export default function BillingPage() {
     setPlanError(null);
     try {
       const [profileRes, summaryRes] = await Promise.all([
-        apiFetch("/tenants/profile", { cache: "no-store" }),
-        apiFetch("/billing/summary", { cache: "no-store" }),
+        dashboardFetch("/tenants/profile", { cache: "no-store" }),
+        dashboardFetch("/billing/summary", { cache: "no-store" }),
       ]);
       if (!mountedRef.current) return;
 
@@ -225,7 +225,7 @@ export default function BillingPage() {
       try {
         const params = new URLSearchParams({ limit: String(HISTORY_LIMIT) });
         if (cursor) params.set("cursor", cursor);
-        const res = await apiFetch(`/billing/history?${params.toString()}`, { cache: "no-store" });
+        const res = await dashboardFetch(`/billing/history?${params.toString()}`, { cache: "no-store" });
         const data = (await res.json().catch(() => ({}))) as HistoryResponse & { error?: string };
         if (!mountedRef.current) return;
         if (!res.ok) {

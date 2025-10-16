@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import PlanActionButtons from "@/components/PlanActionButtons";
 import { derivePlanDisplay, findPlanDefinition } from "@/lib/billing";
-import { apiFetch } from "@/lib/http";
+import { dashboardFetch } from "@/lib/dashboardFetch";
 import { formatCallDuration, formatCallTimestamp, outcomeLabel } from "@/lib/call-format";
 import { MobileCard, MobileCardContent, MobileCardHeader, MobileCardFooter } from "@/components/mobile/Card";
 import type { CallItem } from "@/components/RecentCallsPreview";
@@ -82,10 +82,10 @@ export default function MobileDashboardPage() {
     setCalls((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const [profileRes, summaryRes, usageRes, callsRes] = await Promise.all([
-        apiFetch("/tenants/profile", { cache: "no-store" }),
-        apiFetch("/billing/summary", { cache: "no-store" }),
-        apiFetch("/usage/summary?window=week", { cache: "no-store" }),
-        apiFetch("/calls/list", {
+        dashboardFetch("/tenants/profile", { cache: "no-store" }),
+        dashboardFetch("/billing/summary", { cache: "no-store" }),
+        dashboardFetch("/usage/summary?window=week", { cache: "no-store" }),
+        dashboardFetch("/calls/list", {
           method: "POST",
           cache: "no-store",
           body: JSON.stringify({ limit: 3 }),

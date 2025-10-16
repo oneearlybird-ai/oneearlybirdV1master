@@ -8,6 +8,7 @@ import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { apiFetch } from "@/lib/http";
+import { buildGoogleStartUrl, getDashboardPath } from "@/lib/authPaths";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
@@ -140,7 +141,7 @@ export default function AuthModal() {
       void warmDashboardData();
       triggerLoginEvent();
       close();
-      redirectTo("/dashboard");
+      redirectTo(getDashboardPath());
     };
     window.addEventListener("ob:auth:success", handleAuthSuccess);
     return () => {
@@ -182,7 +183,7 @@ export default function AuthModal() {
       triggerLoginEvent();
       void warmDashboardData();
       close();
-      redirectTo("/dashboard");
+      redirectTo(getDashboardPath());
     } catch (error) {
       console.error("signin_request_failed", { message: (error as Error)?.message });
       setSignInError("We could not reach the server. Please try again.");
@@ -233,7 +234,7 @@ export default function AuthModal() {
         triggerLoginEvent();
         void warmDashboardData();
         close();
-        redirectTo("/dashboard");
+        redirectTo(getDashboardPath());
       } catch (error) {
         console.error("signup_request_failed", { message: (error as Error)?.message });
         setSignUpError("We could not reach the server. Please try again.");
@@ -264,7 +265,7 @@ export default function AuthModal() {
 
   const startGoogleAuth = useCallback(() => {
     if (googlePending) return;
-    const url = "/oauth/google/start";
+    const url = buildGoogleStartUrl();
     setGooglePending(true);
     clearGooglePopupMonitor();
     const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680 });
