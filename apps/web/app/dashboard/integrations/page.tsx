@@ -8,15 +8,15 @@ import { toast } from "@/components/Toasts";
 type Provider = { id: string; name: string; connected: boolean };
 
 function Logo({ id, alt }: { id: string; alt: string }) {
-  const masked = new Set(['hubspot','salesforce','zoho','twilio','slack','stripe','signalwire','outlook','microsoft-365','zapier','aws']);
-  const isMasked = masked.has(id);
   return (
     <div className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center">
-      {isMasked ? (
-        <span className={`logo-mask logo-${id}`} aria-label={alt} />
-      ) : (
-        <img src={`/logos/${id}.svg`} className="block max-h-6 max-w-full object-contain" alt={alt} />
-      )}
+      <img
+        src={`/logos/${id}.svg`}
+        className="block max-h-6 max-w-full object-contain"
+        alt={alt}
+        loading="lazy"
+        decoding="async"
+      />
     </div>
   );
 }
