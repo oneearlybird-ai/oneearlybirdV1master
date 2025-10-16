@@ -29,10 +29,10 @@ export default function BackToTop() {
     <button
       onClick={scrollTop}
       aria-label="Back to top"
-      className="fixed bottom-5 right-5 z-50 rounded-full bg-white text-black shadow-lg shadow-black/30 hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 transition-colors px-4 py-2 text-sm"
+      className="fixed right-4 bottom-[calc(env(safe-area-inset-bottom)+4.75rem)] z-50 rounded-full bg-white px-4 py-2 text-sm text-black shadow-lg shadow-black/30 transition-colors hover:bg-white/90 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/40 sm:bottom-6 sm:right-6"
       type="button"
     >
-      ↑ Top
+      ^ Top
     </button>
   );
 }
