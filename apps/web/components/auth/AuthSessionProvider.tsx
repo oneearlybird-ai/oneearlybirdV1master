@@ -39,7 +39,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
 
   const fetchProfile = useCallback(async (): Promise<"ok" | "unauthorized" | "error"> => {
     try {
-      const response = await dashboardFetch("/tenants/profile", { cache: "no-store" });
+      const response = await dashboardFetch("/tenants/profile", { cache: "no-store", suppressAuthRedirect: true });
       if (response.ok) {
         const data = (await response.json()) as TenantProfile;
         setProfile(data);

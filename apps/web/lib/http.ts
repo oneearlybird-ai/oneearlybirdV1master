@@ -3,6 +3,10 @@ import { API_BASE } from "@/lib/config";
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 export interface HttpJson<T> { ok: boolean; data?: T; error?: string; }
 
+export type ApiFetchInit = RequestInit & {
+  suppressAuthRedirect?: boolean;
+};
+
 export const API_BASE_PROD = "https://api.oneearlybird.ai";
 
 export function isProdEnv(): boolean {
@@ -29,21 +33,22 @@ export function toApiUrl(path: string): string {
   return `${base}${normalisePath(path)}`;
 }
 
-export async function apiFetch(path: string, init: RequestInit = {}): Promise<Response> {
+export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<Response> {
+  const { suppressAuthRedirect = false, ...rest } = init;
   const url = toApiUrl(path);
-  const headers = new Headers(init.headers as HeadersInit | undefined);
-  const method = (init.method || "GET").toUpperCase();
+  const headers = new Headers(rest.headers as HeadersInit | undefined);
+  const method = (rest.method || "GET").toUpperCase();
   if (!headers.has("content-type") && method !== "GET" && method !== "HEAD") {
     headers.set("content-type", "application/json");
   }
   const merged: RequestInit = {
-    ...init,
+    ...rest,
     credentials: "include",
-    cache: init.cache ?? "no-store",
+    cache: rest.cache ?? "no-store",
     headers,
   };
   const response = await fetch(url, merged);
-  if (typeof window !== "undefined" && response.status === 401) {
+  if (!suppressAuthRedirect && typeof window !== "undefined" && response.status === 401) {
     const currentPath = window.location.pathname || "";
     if (currentPath.startsWith("/dashboard")) {
       window.location.href = "/";
