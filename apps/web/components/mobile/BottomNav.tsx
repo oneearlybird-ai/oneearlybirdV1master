@@ -129,7 +129,7 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
       return [
         {
           key: "home",
-          label: "Home",
+          label: "Dashboard",
           href: "/m/dashboard",
           icon: (active) => <HomeIcon active={active} />,
           match: (path) => path === "/m" || path === "/m/dashboard",
@@ -214,9 +214,9 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
   return (
     <nav
       aria-label="Mobile primary"
-      className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-neutral-950/95 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_32px_rgba(0,0,0,0.45)] backdrop-blur supports-[backdrop-filter]:bg-neutral-950/80"
+      className="fixed inset-x-0 bottom-0 z-50 border-t border-white/10 bg-[#05050b]/90 pb-[env(safe-area-inset-bottom)] shadow-[0_-18px_48px_rgba(5,5,11,0.65)] backdrop-blur supports-[backdrop-filter]:bg-[#05050b]/75"
     >
-      <div className="mx-auto flex max-w-3xl items-center justify-between px-2 py-1 sm:hidden min-h-[3.1rem]">
+      <div className="mx-auto flex max-w-3xl items-center justify-between px-2 py-1.5 sm:hidden min-h-[3.25rem]">
         {showSkeleton ? (
           <div className="flex w-full items-center justify-between gap-2">
             {Array.from({ length: 5 }).map((_, idx) => (
@@ -233,10 +233,14 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
             const active = isActive(item);
             const content = (
               <>
-                <span className={`flex h-8 w-8 items-center justify-center rounded-full ${active ? "bg-white/10" : ""}`}>
+                <span
+                  className={`flex h-9 w-9 items-center justify-center rounded-2xl border border-white/10 transition ${
+                    active ? "bg-white/15 text-white" : "text-white/70 hover:text-white hover:border-white/20"
+                  }`}
+                >
                   {item.icon(active)}
                 </span>
-                <span className="leading-4 text-[11px]">{item.label}</span>
+                <span className={`leading-4 text-[11px] ${active ? "text-white" : "text-white/75"}`}>{item.label}</span>
               </>
             );
 
