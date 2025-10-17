@@ -1,0 +1,90 @@
+API Header Proofs — 2025-10-16
+================================
+
+---
+GET /auth/csrf (origin: https://oneearlybird.ai)
+HTTP/2 200 
+date: Fri, 17 Oct 2025 01:11:18 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body: {"ok":true,"token":"***masked***"}
+
+---
+POST /auth/otp/start (origin: https://oneearlybird.ai)
+HTTP/2 403 
+date: Fri, 17 Oct 2025 01:11:51 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body: {"code":"missing_csrf"}
+
+---
+POST /auth/otp/verify (invalid code, origin: https://oneearlybird.ai)
+HTTP/2 403 
+date: Fri, 17 Oct 2025 01:12:38 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body: {"code":"missing_csrf"}
+
+---
+GET /places/suggest?q=New%20York&limit=2 (origin: https://oneearlybird.ai)
+HTTP/2 200 
+date: Fri, 17 Oct 2025 01:13:00 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body (masked PlaceId): {"ok":true,"items":[{"id":"PLACE_ID_MASKED","text":"New York, NY, USA (New York County)","subtitle":null},{"id":"AQADAJwA79ziLaP1Vtl2Br3sMdcILQtRvLdusmfEk07DcFjUH5frVr8fKUgLm7eDlGQGKmdbBgRE8PYOObfDAYqfLC-zHFIQeTHf8k135UVeikXOppT-2gybcPNenGLIZk6QjjYCTtGaFz7V8ImWYsELsW0KEv2TvA-IWYZZQMFYtmU63CTOUC3xv20czuRmzCpg4DGEk8uSVazl02YbECljvKJWLBvPoCBHsfhVQAmLD5WWRCGI3wEMkSUO-BGfE-0","text":"New York, USA","subtitle":null}]}
+
+---
+POST /places/resolve (origin: https://oneearlybird.ai)
+HTTP/2 400 
+date: Fri, 17 Oct 2025 01:13:48 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body: {"code":"missing_parameters"}
+
+---
+POST /profile/setup (origin: https://oneearlybird.ai)
+HTTP/2 403 
+date: Fri, 17 Oct 2025 01:14:19 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body: {"code":"missing_csrf"}
+
+---
+GET /tenants/profile (origin: https://oneearlybird.ai)
+HTTP/2 200 
+date: Fri, 17 Oct 2025 01:14:37 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body (masked): {"authenticated":true,"status":"none","tenantId":"tn-***","planKey":null,"planPriceId":null,"minutesCap":0,"concurrencyCap":0,"did":null,"conversionAt":null,"accountNumber":"NBOARD","agentId":null,"templateVersion":"voice-v1","twilioSubaccountSidMasked":null,"phoneVerifiedAt":null,"businessNumberMasked":null,"lastVerifyChannel":null}
+
+---
+GET /billing/summary (origin: https://oneearlybird.ai)
+HTTP/2 200 
+date: Fri, 17 Oct 2025 01:15:04 GMT
+cache-control: no-store
+vary: Origin
+access-control-allow-origin: https://oneearlybird.ai
+access-control-allow-credentials: true
+Body: {"status":"none","planKey":null,"planPriceId":null,"planMinutes":0,"minutesCap":0,"concurrencyCap":0,"trialEnd":null,"trialEndsAt":null,"cancelAtPeriodEnd":false,"currentPeriodEnd":null,"hasPaymentMethod":false,"trialEligible":true,"trialConsumedAt":null}
+
+---
+GET /oauth/google/start (origin: none)
+HTTP/2 302 
+date: Fri, 17 Oct 2025 01:15:31 GMT
+location: https://oneearlybird-prod-auth.auth.us-east-1.amazoncognito.com/oauth2/authorize?identity_provider=Google&response_type=code&client_id=7jkr3ieutu7bch64hksj28so9e&redirect_uri=https%3A%2F%2Fapi.oneearlybird.ai%2Foauth%2Fgoogle%2Fcallback&scope=openid+email+profile&state=***masked***&code_challenge=***masked***&code_challenge_method=S256&nonce=***masked***&prompt=select_account&max_age=0
+vary: Origin
+cache-control: no-store

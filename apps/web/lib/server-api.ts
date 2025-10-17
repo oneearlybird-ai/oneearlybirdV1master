@@ -5,10 +5,10 @@ import { toApiUrl } from "./http";
 
 export async function serverApiFetch(path: string, init: RequestInit = {}): Promise<Response> {
   const url = toApiUrl(path);
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const cookieHeader = cookieStore.getAll().map(({ name, value }) => `${name}=${value}`).join("; ");
 
-  const incomingHeaders = headers();
+  const incomingHeaders = await headers();
   const forwardedFor = incomingHeaders.get("x-forwarded-for");
   const forwardedProto = incomingHeaders.get("x-forwarded-proto");
   const forwardedHost = incomingHeaders.get("x-forwarded-host");

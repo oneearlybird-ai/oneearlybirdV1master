@@ -20,7 +20,10 @@ backend/
 stripe-webhook-src/
 usage-overage-reporter/
 ob-provisioner-step/
+lambda_src/
+repo_eb_frontend/
 \{ns*vendorReady
+lambda_csp_collector.py
 *.zip
 
 # Backup/audit artifacts (do not track)

@@ -8,6 +8,7 @@ import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { apiFetch } from "@/lib/http";
 import { getLandingPath } from "@/lib/authPaths";
+import BrandMark from "@/components/stellar/BrandMark";
 
 const LOGOUT_EVENT_KEY = "__ob_logout";
 
@@ -15,27 +16,6 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
   const { open } = useAuthModal();
   const { status, markUnauthenticated } = useAuthSession();
   const [signingOut, setSigningOut] = useState(false);
-
-  useEffect(() => {
-    const header = document.getElementById("eb-header");
-    const footer = document.querySelector("footer");
-    const storedStyles: Array<{ el: HTMLElement; display: string }> = [];
-    if (header) {
-      storedStyles.push({ el: header, display: header.style.display });
-      header.style.display = "none";
-    }
-    if (footer instanceof HTMLElement) {
-      storedStyles.push({ el: footer, display: footer.style.display });
-      footer.style.display = "none";
-    }
-    document.body.classList.add("ob-mobile-shell");
-    return () => {
-      storedStyles.forEach(({ el, display }) => {
-        el.style.display = display;
-      });
-      document.body.classList.remove("ob-mobile-shell");
-    };
-  }, []);
 
   useEffect(() => {
     const onStorage = (event: StorageEvent) => {
@@ -80,7 +60,7 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
   const headerAction = useMemo(() => {
     if (status === "loading") {
       return (
-        <span className="inline-flex h-11 items-center justify-center rounded-full border border-white/15 px-4 text-sm text-white/60">
+        <span className="inline-flex h-11 items-center justify-center rounded-xl border border-white/15 px-4 text-sm text-white/60">
           Checking…
         </span>
       );
@@ -91,7 +71,7 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
           type="button"
           onClick={() => void handleSignOut()}
           disabled={signingOut}
-          className="inline-flex h-11 items-center justify-center rounded-full border border-white/20 px-4 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:opacity-50"
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-medium text-white/85 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-50"
         >
           {signingOut ? "Signing out…" : "Sign out"}
         </button>
@@ -101,7 +81,7 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
       <button
         type="button"
         onClick={handleSignIn}
-        className="inline-flex h-11 items-center justify-center rounded-full border border-white/20 px-4 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+        className="inline-flex h-11 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
       >
         Sign in
       </button>
@@ -119,11 +99,10 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
 
   return (
     <div className="relative flex min-h-[100svh] flex-col bg-neutral-950 text-white">
-      <header className="sticky top-0 z-40 border-b border-white/10 bg-neutral-950/90 backdrop-blur supports-[backdrop-filter]:bg-neutral-950/70">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(59,130,246,0.4),_transparent_60%)] opacity-80" />
+      <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05050b]/95 backdrop-blur supports-[backdrop-filter]:bg-[#05050b]/85">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3 sm:px-6">
-          <a href="/m" className="text-lg font-semibold tracking-tight text-white" aria-label="EarlyBird AI mobile home">
-            EarlyBird AI
-          </a>
+          <BrandMark href="/m" />
           {headerAction}
         </div>
       </header>
