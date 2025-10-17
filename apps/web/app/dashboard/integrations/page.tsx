@@ -1,6 +1,7 @@
 "use client";
 import { apiFetch } from "@/lib/http";
 import { dashboardFetch } from "@/lib/dashboardFetch";
+import { resolveLogoSrc } from "@/lib/logoAssets";
 
 import { useEffect, useState } from "react";
 import { toast } from "@/components/Toasts";
@@ -8,10 +9,11 @@ import { toast } from "@/components/Toasts";
 type Provider = { id: string; name: string; connected: boolean };
 
 function Logo({ id, alt }: { id: string; alt: string }) {
+  const src = resolveLogoSrc(id) ?? `/logos/${id}.svg`;
   return (
     <div className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center">
       <img
-        src={`/logos/${id}.svg`}
+        src={src}
         className="block max-h-6 max-w-full object-contain"
         alt={alt}
         loading="lazy"

@@ -4,6 +4,7 @@ import { Marquee } from '@/components/Marquee';
 import { BoltIcon, CalendarIcon, CheckIcon, ClockIcon, ControlsIcon, CrmIcon, LockIcon, PhoneIcon, PlugIcon, SavingsIcon, VoiceIcon } from '@/components/icons';
 import TestimonialsCarousel from '@/components/TestimonialsCarousel';
 import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton';
+import { resolveLogoSrc } from '@/lib/logoAssets';
 
 function Section({ id, title, children }: { id?: string; title?: string; children: React.ReactNode }) {
   return (
@@ -60,7 +61,7 @@ function LogoBadge({ id, label }: { id: string; label: string }) {
   return (
     <figure className="logo-badge h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center flex-shrink-0 motion-safe:transition-transform hover:-translate-y-0.5 active:scale-95">
       <img
-        src={`/logos/${id}.svg`}
+        src={resolveLogoSrc(id) ?? `/logos/${id}.svg`}
         alt={label}
         className="block max-h-6 max-w-full object-contain"
         loading="lazy"
