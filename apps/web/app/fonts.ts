@@ -12,3 +12,9 @@ export const sansFont = Inter({
   variable: "--font-sans",
   display: "swap",
 });
+
+export const stellarFont = Inter({
+  subsets: ["latin"],
+  variable: "--font-inter",
+  display: "swap",
+});
