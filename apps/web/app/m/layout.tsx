@@ -1,11 +1,13 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { ReactNode } from "react";
 import MobileBottomNav from "@/components/mobile/BottomNav";
 import Toasts from "@/components/Toasts";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
+import MobileNav from "@/components/MobileNav";
 import { apiFetch } from "@/lib/http";
 import { getLandingPath } from "@/lib/authPaths";
 import BrandMark from "@/components/stellar/BrandMark";
@@ -67,26 +69,24 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
     }
     if (isAuthenticated) {
       return (
-        <button
-          type="button"
-          onClick={() => void handleSignOut()}
-          disabled={signingOut}
-          className="inline-flex h-11 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-medium text-white/85 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 disabled:opacity-50"
+        <Link
+          href="/m/dashboard"
+          className="inline-flex h-11 items-center justify-center rounded-xl border border-white/15 px-4 text-sm font-medium text-white/85 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
         >
-          {signingOut ? "Signing out…" : "Sign out"}
-        </button>
+          Dashboard
+        </Link>
       );
     }
     return (
       <button
         type="button"
         onClick={handleSignIn}
-        className="inline-flex h-11 items-center justify-center rounded-xl border border-white/20 px-4 text-sm font-medium text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+        className="inline-flex h-11 items-center justify-center rounded-xl border border-white/15 px-4 text-sm font-medium text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
       >
         Sign in
       </button>
     );
-  }, [handleSignIn, handleSignOut, isAuthenticated, signingOut, status]);
+  }, [handleSignIn, isAuthenticated, status]);
 
   useEffect(() => {
     if (status === "loading") return;
@@ -103,7 +103,15 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
       <header className="sticky top-0 z-40 border-b border-white/10 bg-[#05050b]/95 backdrop-blur supports-[backdrop-filter]:bg-[#05050b]/85">
         <div className="mx-auto flex w-full max-w-3xl items-center justify-between px-4 py-3 sm:px-6">
           <BrandMark href="/m" />
-          {headerAction}
+          <div className="flex items-center gap-2">
+            {headerAction}
+            <MobileNav
+              isAuthenticated={isAuthenticated}
+              onSignOut={handleSignOut}
+              signingOut={signingOut}
+              disabled={status === "loading"}
+            />
+          </div>
         </div>
       </header>
       <main className="flex-1 pb-[calc(env(safe-area-inset-bottom)+4.25rem)] pt-2">{children}</main>
@@ -112,3 +120,4 @@ export default function MobileLayout({ children }: { children: ReactNode }) {
     </div>
   );
 }
+
