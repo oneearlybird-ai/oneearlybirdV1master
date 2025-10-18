@@ -7,7 +7,8 @@ import Link from "next/link";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
-import { buildGoogleStartUrl, getDashboardPath } from "@/lib/authPaths";
+import { buildGoogleStartUrl, getDashboardPath, getProfileCapturePath } from "@/lib/authPaths";
+import { hasCompletedName } from "@/lib/profile";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 
@@ -94,7 +95,8 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       } catch (error) {
         console.warn("login_storage_failed", { message: (error as Error)?.message });
       }
-      redirectTo(getDashboardPath());
+      const nextPath = await resolvePostAuthPath();
+      redirectTo(nextPath);
     } catch (_err) {
       setErr("unavailable");
     } finally {
@@ -112,6 +114,28 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
     const base = (API_BASE || "").replace(/\/+$/, "");
     if (base) return `${base}${path}`;
     return `/api/upstream${path}`; // preview/proxy path
+  }
+
+  async function resolvePostAuthPath(): Promise<string> {
+    try {
+      const response = await fetch(apiUrl("/tenants/profile"), {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+        headers: {
+          "cache-control": "no-store",
+        },
+      });
+      if (response.ok) {
+        const data = (await response.json()) as { firstName?: string | null; lastName?: string | null };
+        if (!hasCompletedName(data)) {
+          return getProfileCapturePath();
+        }
+      }
+    } catch (error) {
+      console.warn("post_auth_profile_failed", { message: (error as Error)?.message });
+    }
+    return getDashboardPath();
   }
 
   async function onSignup(e: React.FormEvent) {
@@ -157,7 +181,8 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
       } catch (error) {
         console.warn("signup_login_storage_failed", { message: (error as Error)?.message });
       }
-      redirectTo(getDashboardPath());
+      const nextPath = await resolvePostAuthPath();
+      redirectTo(nextPath);
     } catch (_e) {
       setSuErr("unavailable");
     } finally {

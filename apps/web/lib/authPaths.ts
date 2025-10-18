@@ -20,6 +20,13 @@ export function getDashboardPath(): string {
   return isMobileHostname(hostname) ? "/m/dashboard" : "/dashboard";
 }
 
+export function getProfileCapturePath(): string {
+  const hostname = getCurrentHostname();
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+  return mobileContext ? "/m/profile-capture" : "/profile-capture";
+}
+
 export function getLandingPath(): string {
   const hostname = getCurrentHostname();
   return isMobileHostname(hostname) ? "/m" : "/";

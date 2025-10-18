@@ -1,3 +1,5 @@
+import { getPriceId } from "@/lib/config";
+
 export type PlanDefinition = {
   slug: string;
   name: string;
@@ -30,7 +32,7 @@ const PLAN_CATALOG: ReadonlyArray<PlanDefinition> = [
     trialAvailable: true,
     trialMinutes: 100,
     overagePerMinute: "$0.90",
-    priceId: "price_1SGUCfBKEf4BPnHSYDX9Onnt",
+    priceId: getPriceId("starter"),
     blurb: "Best for testing and small teams getting started quickly.",
     features: [
       "200 included minutes per month",
@@ -47,7 +49,7 @@ const PLAN_CATALOG: ReadonlyArray<PlanDefinition> = [
     trialAvailable: true,
     trialMinutes: 100,
     overagePerMinute: "$0.90",
-    priceId: "price_1SHGeiBKEf4BPnHSO0LwltzU",
+    priceId: getPriceId("professional"),
     blurb: "Adds analytics and multi-calendar scheduling for growing teams.",
     features: [
       "400 included minutes per month",
@@ -65,7 +67,7 @@ const PLAN_CATALOG: ReadonlyArray<PlanDefinition> = [
     trialAvailable: true,
     trialMinutes: 100,
     overagePerMinute: "$0.90",
-    priceId: "price_1SGUCfBKEf4BPnHSidXOA9Cr",
+    priceId: getPriceId("growth"),
     blurb: "Ideal for high volume teams needing live transfer and onboarding.",
     features: [
       "800 included minutes per month",
@@ -83,7 +85,7 @@ const PLAN_CATALOG: ReadonlyArray<PlanDefinition> = [
     trialAvailable: true,
     trialMinutes: 100,
     overagePerMinute: "$0.90",
-    priceId: "price_1SGUCfBKEf4BPnHS6h7JLl0t",
+    priceId: getPriceId("enterprise"),
     blurb: "Compliance-ready with SSO, integrations, and dedicated success.",
     features: [
       "2000 included minutes per month",

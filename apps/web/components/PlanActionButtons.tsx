@@ -4,7 +4,7 @@ import { useCallback, useMemo, useState } from "react";
 import ManageBillingButton from "@/components/ManageBillingButton";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 import { apiFetch } from "@/lib/http";
-import { PLAN_DEFINITIONS } from "@/lib/plans";
+import { PLAN_DEFINITIONS, type PlanDefinition } from "@/lib/plans";
 import { findPlanDefinition } from "@/lib/billing";
 import { toast } from "@/components/Toasts";
 
@@ -28,6 +28,7 @@ type PlanActionButtonsProps = {
   align?: "start" | "center" | "end";
   className?: string;
   showManageDuringTrial?: boolean;
+  onRequestTrial?: (plan: PlanDefinition) => void;
 };
 
 export default function PlanActionButtons({
@@ -37,6 +38,7 @@ export default function PlanActionButtons({
   align = "start",
   className = "",
   showManageDuringTrial = false,
+  onRequestTrial,
 }: PlanActionButtonsProps) {
   const [canceling, setCanceling] = useState(false);
   const [cancelError, setCancelError] = useState<string | null>(null);
@@ -115,14 +117,24 @@ export default function PlanActionButtons({
   return (
     <div className={`flex flex-wrap gap-2 ${alignmentClass} ${className}`.trim()}>
       {showTrialCta && planDefinition ? (
-        <PlanCheckoutButtons
-          className="shrink-0"
-          priceId={planDefinition.priceId}
-          planName={planDefinition.name}
-          allowTrial
-          disablePurchase
-          trialLabel="Start Free Trial"
-        />
+        onRequestTrial ? (
+          <button
+            type="button"
+            onClick={() => onRequestTrial(planDefinition)}
+            className="shrink-0 inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-medium text-black transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/30"
+          >
+            Start Free Trial
+          </button>
+        ) : (
+          <PlanCheckoutButtons
+            className="shrink-0"
+            priceId={planDefinition.priceId}
+            planName={planDefinition.name}
+            allowTrial
+            disablePurchase
+            trialLabel="Start Free Trial"
+          />
+        )
       ) : null}
       {showPurchaseCta && planDefinition ? (
         <PlanCheckoutButtons
