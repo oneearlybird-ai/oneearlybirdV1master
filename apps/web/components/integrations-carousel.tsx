@@ -36,10 +36,10 @@ Swiper.use([Navigation])
 
 export default function IntegrationsCarousel() {
 
-  const [swiperInitialized, setSwiperInitialized] = useState<boolean>(false)
+  const [, setSwiperInitialized] = useState<boolean>(false)
 
   useEffect(() => {
-    const carousel = new Swiper('.stellar-carousel', {
+    const _carousel = new Swiper('.stellar-carousel', {
       breakpoints: {
         320: {
           slidesPerView: 1

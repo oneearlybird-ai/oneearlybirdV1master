@@ -21,7 +21,7 @@ export default function TestimonialsCarousel() {
   const [swiperInitialized, setSwiperInitialized] = useState<boolean>(false)
 
   useEffect(() => {
-    const carousel = new Swiper('.stellar-carousel', {
+    const _carousel = new Swiper('.stellar-carousel', {
       breakpoints: {
         320: {
           slidesPerView: 1
