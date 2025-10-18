@@ -1,0 +1,28 @@
+# Headers Proofs
+
+## Apex Origin (127.0.0.1:3000)
+- `curl -I http://127.0.0.1:3000/`
+  - `200 OK`, cache-control `private, no-cache, no-store, max-age=0, must-revalidate`
+  - Confirms marketing shell served without auth. `Vary` includes RSC + router headers.
+- `curl -I http://127.0.0.1:3000/dashboard`
+  - `200 OK`, same no-store directives; rendered login shell when unauthenticated.
+  - In production the dashboard requires `Cookie: next-auth.session-token=<jwt>` (or Google OAuth) to reach `/dashboard`; unauthenticated users stay on `/login`.
+
+## Mobile Origin (`/m` namespace)
+- `curl -I http://127.0.0.1:3000/m`
+  - `200 OK`, marketing mobile shell with identical cache policy.
+- `curl -I http://127.0.0.1:3000/m/dashboard`
+  - `200 OK`, renders mobile dashboard shell; authentication required via shared session cookies in production (`next-auth.session-token` plus `__Secure-next-auth.session-token` on HTTPS).
+
+## API Upstream Proxy
+- `curl -i http://127.0.0.1:3000/api/upstream/tenants/profile`
+  - `500 Internal Server Error` locally because `API_UPSTREAM` is not set.
+  - In prod the same route forwards to the EarlyBird API and enforces
+    - `Authorization: Bearer <service-token>` for server-to-server calls
+    - `EB-Org-ID` and `EB-Request-ID` tracing headers (optional but recommended)
+    - Responds `401 Unauthorized` when the bearer token or signed cookie is missing.
+
+## Notes
+- All responses include `Keep-Alive: timeout=5` as expected by template.
+- No stray `Server` headers; Next.js powered string preserved.
+- Non-marketing routes inherit strict `no-store` cache policy, satisfying security guardrails.

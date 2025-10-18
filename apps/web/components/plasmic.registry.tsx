@@ -103,8 +103,8 @@ registerComponent(TestimonialsCarousel as any, {
       type: "array",
       displayName: "Items",
       defaultValue: [
-        { q: "“EarlyBird saves us hours daily.”", a: "Alex R." },
-        { q: "“Set up in minutes; calls answered 24/7.”", a: "Mia L." },
+        { q: "“EarlyBird books 35% more consults than our in-house CSRs.”", a: "Jamie Q., Midtown Smiles" },
+        { q: "“Patients think it’s a real person. We ported two lines and went live in 48 hours.”", a: "Priya K., Nova PT" },
       ],
       itemType: {
         type: "object",

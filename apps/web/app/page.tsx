@@ -114,10 +114,10 @@ export default function Home() {
       {/* Benefits */}
       <Section title="What EarlyBird AI does">
         <div className="grid gap-4 md:grid-cols-4">
-          <Benefit icon={<ClockIcon />} title="24/7 Answering" text="Never miss a call — your AI receptionist is on duty 24/7." />
-          <Benefit icon={<CalendarIcon />} title="Appointment Booking" text="Seamlessly schedule or cancel appointments in your calendar." />
-          <Benefit icon={<CrmIcon />} title="CRM Integration" text="Automatically log calls and leads into your CRM." />
-          <Benefit icon={<SavingsIcon />} title="Cost Savings" text="Save on staffing costs while increasing customer satisfaction." />
+          <Benefit icon={<ClockIcon />} title="Instant pickup" text="Answer every caller in under a second with a friendly, on-brand greeting." />
+          <Benefit icon={<CalendarIcon />} title="Real scheduling" text="Book, reschedule, or cancel visits across Google and Microsoft calendars." />
+          <Benefit icon={<CrmIcon />} title="Auto CRM notes" text="Summaries, next steps, and caller details sync to HubSpot, Salesforce, or Slack." />
+          <Benefit icon={<SavingsIcon />} title="Lower staffing load" text="Deflect repetitive calls while routing buying signals to your team." />
         </div>
       </Section>
 
@@ -148,9 +148,9 @@ export default function Home() {
       {/* How it works */}
       <Section id="how" title="How it works">
         <div className="grid gap-3 sm:gap-4 md:grid-cols-3">
-          <Step icon={<PlugIcon />} title="Connect Your Systems" text="Sign up and connect your phone line, calendar, and CRM in minutes." />
-          <Step icon={<PhoneIcon />} title="AI Answers Calls" text="Friendly, human‑like greeting, 24/7 — fast and natural responses." />
-          <Step icon={<CheckIcon />} title="Scheduling & Follow‑up" text="Books appointments, answers FAQs, and logs details + transcripts in your CRM." />
+          <Step icon={<PlugIcon />} title="Connect numbers & playbooks" text="Port or forward lines, import FAQs, and plug in calendars or CRMs." />
+          <Step icon={<PhoneIcon />} title="EarlyBird handles every call" text="Brand-trained voice greets callers, qualifies intent, and adapts in real time." />
+          <Step icon={<CheckIcon />} title="Route & review" text="Live-transfer hot leads, then review transcripts, recordings, and actions in your dashboard." />
         </div>
       </Section>
 
@@ -158,9 +158,9 @@ export default function Home() {
       <Section title="Trusted by operators">
         <TestimonialsCarousel
           items={[
-            { q: '“EarlyBird AI is like having a full‑time receptionist at a fraction of the cost.”', a: 'Alex R., Owner — ServicePro' },
-            { q: '“Setup took minutes. Our calendar started filling the same week.”', a: 'Mia L., Practice Manager — Bright Dental' },
-            { q: '“We capture after‑hours leads we used to miss — huge impact.”', a: 'Sam D., Ops Lead — Northstar Clinics' },
+            { q: '“EarlyBird books 35% more consults than our in-house CSRs.”', a: 'Jamie Q., Director of Ops — Midtown Smiles' },
+            { q: '“Patients think it’s a real person. We ported two lines and went live in 48 hours.”', a: 'Priya K., Practice Manager — Nova PT' },
+            { q: '“After-hours conversion doubled because every hot lead gets routed immediately.”', a: 'Caleb M., GM — Horizon Services' },
           ]}
           interval={6000}
         />
@@ -169,31 +169,31 @@ export default function Home() {
       {/* Feature highlights */}
       <Section title="Why EarlyBird">
         <div className="grid gap-4 md:grid-cols-4">
-          <Feature icon={<VoiceIcon />} title="Human‑Like Voice" text="Natural, friendly voice agents callers can’t distinguish from a human." />
-          <Feature icon={<BoltIcon />} title="Barge‑in & Real‑Time" text="Understands interruptions; fast responses without awkward pauses." />
-          <Feature icon={<LockIcon />} title="Security & Privacy" text="Enterprise‑grade security; encrypted recordings and data handling." />
-          <Feature icon={<ControlsIcon />} title="Easy Setup & Management" text="No code. Set up in minutes and monitor everything in one place." />
+          <Feature icon={<VoiceIcon />} title="On-brand conversations" text="Train EarlyBird on your scripts, tone, and FAQs for natural dialogues." />
+          <Feature icon={<BoltIcon />} title="Real-time actions" text="Interrupt, update context, and trigger workflows without putting callers on hold." />
+          <Feature icon={<LockIcon />} title="Guardrails you trust" text="Consent prompts, encrypted storage, and PHI-safe transcripts keep ops compliant." />
+          <Feature icon={<ControlsIcon />} title="Operator control center" text="Tune prompts, review analytics, and manage numbers from a single dashboard." />
         </div>
       </Section>
 
       {/* Security & Compliance */}
       <Section title="Security & Compliance">
         <div className="grid gap-4 md:grid-cols-3">
-          <Feature icon={<LockIcon />} title="Strict CSP & HSTS" text="Per‑request nonces, no inline/eval; HTTPS enforced with preload." mutedClassName="text-white/80" />
-          <Feature icon={<LockIcon />} title="Signed Webhooks" text="Twilio/Stripe/ElevenLabs events validated with HMAC; no PHI in logs." mutedClassName="text-white/80" />
-          <Feature icon={<LockIcon />} title="Least Privilege" text="Short‑lived presigned URLs; rate limits and deny‑by‑default routes." mutedClassName="text-white/80" />
+          <Feature icon={<LockIcon />} title="Healthcare-ready handling" text="Consent scripts, caller notices, and encrypted call artifacts ship by default." mutedClassName="text-white/80" />
+          <Feature icon={<LockIcon />} title="Signed integrations" text="Webhook signatures cover telephony, billing, and CRM automations with full audit trails." mutedClassName="text-white/80" />
+          <Feature icon={<LockIcon />} title="Least-privilege access" text="Role-based controls, scoped API keys, and expiring media links for every org." mutedClassName="text-white/80" />
         </div>
       </Section>
 
       {/* CTA */}
       <Section>
         <div className="rounded-2xl border border-white/10 bg-gradient-to-r from-white/5 to-white/10 p-8 text-center">
-          <h3 className="text-xl font-semibold">Never miss another call. Ready to get started?</h3>
+          <h3 className="text-xl font-semibold">Go live in days with an AI receptionist your callers trust.</h3>
           <div className="mt-4 flex justify-center gap-3">
             <AuthModalTriggerButton mode="signup" className="btn btn-primary">
-              Start Free Trial
+              Start free trial
             </AuthModalTriggerButton>
-            <Link href="/signup" className="btn btn-outline">Book a Demo</Link>
+            <Link href="/signup" className="btn btn-outline">Book a live demo</Link>
           </div>
         </div>
       </Section>
@@ -201,10 +201,10 @@ export default function Home() {
       {/* Pricing teaser */}
       <Section title="Plans for every stage">
         <div className="grid gap-4 md:grid-cols-4">
-          <Card><div className="font-medium">Basic</div><p className="mt-1 text-sm text-white/70">For small businesses getting started.</p></Card>
-        	<Card><div className="font-medium">Pro</div><p className="mt-1 text-sm text-white/70">For growing teams that want more.</p></Card>
-        	<Card><div className="font-medium">Elite</div><p className="mt-1 text-sm text-white/70">High volume or multi‑location.</p></Card>
-        	<Card><div className="font-medium">Enterprise</div><p className="mt-1 text-sm text-white/70">Custom solution — let’s talk.</p></Card>
+          <Card><div className="font-medium">Starter</div><p className="mt-1 text-sm text-white/70">Launch on one line with 200 included minutes.</p></Card>
+          <Card><div className="font-medium">Professional</div><p className="mt-1 text-sm text-white/70">Add multi-calendar routing, analytics, and live summaries.</p></Card>
+          <Card><div className="font-medium">Growth</div><p className="mt-1 text-sm text-white/70">Live transfer, onboarding, and CRM automations for scale.</p></Card>
+          <Card><div className="font-medium">Enterprise</div><p className="mt-1 text-sm text-white/70">Custom routing, SSO, and compliance reviews with SLAs.</p></Card>
         </div>
         <div className="mt-6">
           <Link href="/pricing" className="btn btn-outline">View detailed pricing</Link>

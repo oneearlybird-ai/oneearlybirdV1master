@@ -229,12 +229,22 @@ export default async function Page() {
           <h2 className="text-lg font-medium">FAQ</h2>
           <dl className="mt-3 space-y-3 text-sm text-white/80">
             <div>
-              <dt className="font-medium">Do I need a Twilio account?</dt>
-              <dd className="text-white/70">No. We manage telephony for you. You can also <a className="underline" href="/support/porting">port your existing number</a>.</dd>
+              <dt className="font-medium">Do I need to bring my own carrier?</dt>
+              <dd className="text-white/70">
+                No — EarlyBird provisions numbers for you or helps <a className="underline" href="/support/porting">port existing lines</a>. We handle telephony and compliance end to end.
+              </dd>
             </div>
             <div>
-              <dt className="font-medium">How am I billed?</dt>
-              <dd className="text-white/70">One invoice via Stripe that includes platform and usage fees.</dd>
+              <dt className="font-medium">What happens after the trial?</dt>
+              <dd className="text-white/70">
+                Trials include 100 minutes to prove fit. When you pick a plan we convert your account seamlessly—flows, transcripts, and numbers stay live.
+              </dd>
+            </div>
+            <div>
+              <dt className="font-medium">How is usage billed?</dt>
+              <dd className="text-white/70">
+                Each plan includes pooled minutes. Additional minutes bill at $0.90 per minute on the same Stripe invoice as your platform fee.
+              </dd>
             </div>
           </dl>
         </div>

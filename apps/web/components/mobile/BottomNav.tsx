@@ -128,8 +128,8 @@ export default function MobileBottomNav({ status, isAuthenticated, onSignIn }: M
     if (isAuthenticated) {
       return [
         {
-          key: "home",
-          label: "Home",
+          key: "dashboard",
+          label: "Dashboard",
           href: "/m/dashboard",
           icon: (active) => <HomeIcon active={active} />,
           match: (path) => path === "/m" || path === "/m/dashboard",

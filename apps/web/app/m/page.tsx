@@ -7,11 +7,10 @@ export default function MobileLandingPage() {
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-10 px-4 py-8 text-white">
       <section className="space-y-5 text-center">
         <h1 className="text-3xl font-semibold leading-tight sm:text-4xl">
-          AI receptionist that feels personal, designed for your business.
+          AI receptionist that sounds like your best operator.
         </h1>
         <p className="text-base text-white/70">
-          EarlyBird answers calls, books meetings, and routes conversations to your team—while staying on-brand. Track every interaction, listen to
-          recordings, and manage billing wherever you are.
+          EarlyBird greets callers instantly, books and reschedules visits, and routes buying signals to your team. Review transcripts, recordings, and billing from anywhere.
         </p>
         <div className="flex flex-col items-center justify-center gap-3 sm:flex-row">
           <Link
@@ -33,21 +32,21 @@ export default function MobileLandingPage() {
         <h2 className="text-xl font-semibold text-center">How it works</h2>
         <div className="grid gap-4">
           <MobileCard>
-            <MobileCardHeader title="1. Connect your number" subtitle="Port or forward your business line" />
+            <MobileCardHeader title="1. Connect numbers & playbooks" subtitle="Port or forward lines, import FAQs" />
             <MobileCardContent>
-              Link Google or Microsoft calendars, set routing rules, and choose whether calls stay with EarlyBird or reach your team.
+              Plug in calendars and CRMs, upload call flows, and set business hours in minutes.
             </MobileCardContent>
           </MobileCard>
           <MobileCard>
-            <MobileCardHeader title="2. EarlyBird answers 24/7" subtitle="Natural voice, on-brand scripts" />
+            <MobileCardHeader title="2. EarlyBird answers 24/7" subtitle="Brand-trained voice, real-time actions" />
             <MobileCardContent>
-              Every caller gets qualified, scheduled, or routed instantly. FAQs, CRM notes, and transcripts sync back to your workspace.
+              Callers get a natural voice that qualifies intent, schedules, and live-transfers urgent leads.
             </MobileCardContent>
           </MobileCard>
           <MobileCard>
-            <MobileCardHeader title="3. Review from anywhere" subtitle="Dashboards built for mobile" />
+            <MobileCardHeader title="3. Review & optimize" subtitle="Transcripts, analytics, and control" />
             <MobileCardContent>
-              Monitor calls, listen to recordings, manage billing, and update routing controls right from your phone.
+              Monitor activity, adjust prompts, and manage routing from the mobile dashboard.
             </MobileCardContent>
           </MobileCard>
         </div>
