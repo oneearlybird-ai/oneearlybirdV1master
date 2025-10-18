@@ -1,27 +1,27 @@
 import Image from 'next/image'
 import Particles from './particles'
 
-import Client01 from '@/public/images/client-01.svg'
-import Client02 from '@/public/images/client-02.svg'
-import Client03 from '@/public/images/client-03.svg'
-import Client04 from '@/public/images/client-04.svg'
-import Client05 from '@/public/images/client-05.svg'
-import Client06 from '@/public/images/client-06.svg'
-import Client07 from '@/public/images/client-07.svg'
-import Client08 from '@/public/images/client-08.svg'
-import Client09 from '@/public/images/client-09.svg'
+import GoogleCalendarLogo from '@/public/logos/google-calendar.svg'
+import Microsoft365Logo from '@/public/logos/microsoft-365.svg'
+import SlackLogo from '@/public/logos/slack.svg'
+import HubSpotLogo from '@/public/logos/hubspot.svg'
+import SalesforceLogo from '@/public/logos/salesforce.svg'
+import ZohoLogo from '@/public/logos/zoho.svg'
+import ZapierLogo from '@/public/logos/zapier.svg'
+import TwilioLogo from '@/public/logos/twilio.svg'
+import SignalWireLogo from '@/public/logos/signalwire.svg'
 
 const logos = [
-  { src: Client01, alt: "Client 01" },
-  { src: Client02, alt: "Client 02" },
-  { src: Client03, alt: "Client 03" },
-  { src: Client04, alt: "Client 04" },
-  { src: Client05, alt: "Client 05" },
-  { src: Client06, alt: "Client 06" },
-  { src: Client07, alt: "Client 07" },
-  { src: Client08, alt: "Client 08" },
-  { src: Client09, alt: "Client 09" },
-];
+  { src: GoogleCalendarLogo, alt: 'Google Calendar' },
+  { src: Microsoft365Logo, alt: 'Microsoft 365' },
+  { src: SlackLogo, alt: 'Slack' },
+  { src: HubSpotLogo, alt: 'HubSpot' },
+  { src: SalesforceLogo, alt: 'Salesforce' },
+  { src: ZohoLogo, alt: 'Zoho' },
+  { src: ZapierLogo, alt: 'Zapier' },
+  { src: TwilioLogo, alt: 'Twilio' },
+  { src: SignalWireLogo, alt: 'SignalWire' },
+]
 
 export default function Clients() {
   return (
