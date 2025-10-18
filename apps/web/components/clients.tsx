@@ -1,55 +1,46 @@
-import Image from 'next/image'
-import Particles from './particles'
+import Particles from './particles';
 
-import GoogleCalendarLogo from '@/public/logos/google-calendar.svg'
-import Microsoft365Logo from '@/public/logos/microsoft-365.svg'
-import SlackLogo from '@/public/logos/slack.svg'
-import HubSpotLogo from '@/public/logos/hubspot.svg'
-import SalesforceLogo from '@/public/logos/salesforce.svg'
-import ZohoLogo from '@/public/logos/zoho.svg'
-import ZapierLogo from '@/public/logos/zapier.svg'
-import TwilioLogo from '@/public/logos/twilio.svg'
-import SignalWireLogo from '@/public/logos/signalwire.svg'
-
-const logos = [
-  { src: GoogleCalendarLogo, alt: 'Google Calendar' },
-  { src: Microsoft365Logo, alt: 'Microsoft 365' },
-  { src: SlackLogo, alt: 'Slack' },
-  { src: HubSpotLogo, alt: 'HubSpot' },
-  { src: SalesforceLogo, alt: 'Salesforce' },
-  { src: ZohoLogo, alt: 'Zoho' },
-  { src: ZapierLogo, alt: 'Zapier' },
-  { src: TwilioLogo, alt: 'Twilio' },
-  { src: SignalWireLogo, alt: 'SignalWire' },
-]
+const logos: Array<{ label: string; className?: string }> = [
+  { label: 'Google Calendar', className: 'font-semibold tracking-tight' },
+  { label: 'Microsoft 365', className: 'font-semibold tracking-tight' },
+  { label: 'Slack', className: 'font-bold lowercase tracking-tight' },
+  { label: 'HubSpot', className: 'font-semibold tracking-tight' },
+  { label: 'Salesforce', className: 'font-semibold tracking-tight' },
+  { label: 'Zoho', className: 'font-black uppercase tracking-widest' },
+  { label: 'Zapier', className: 'font-semibold tracking-wide lowercase' },
+  { label: 'Twilio', className: 'font-semibold tracking-wide lowercase' },
+  { label: 'ServiceTitan', className: 'font-semibold tracking-tight' },
+];
 
 export default function Clients() {
   return (
     <section>
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-
-        {/* Particles animation */}
-        <div className="absolute inset-0 max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="relative mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="absolute inset-0 mx-auto max-w-6xl px-4 sm:px-6">
           <Particles className="absolute inset-0 -z-10" quantity={5} />
         </div>
 
         <div className="py-12 md:py-16">
           <div className="overflow-hidden">
             <div className="inline-flex w-full flex-nowrap overflow-hidden [mask-image:_linear-gradient(to_right,transparent_0,_black_128px,_black_calc(100%-128px),transparent_100%)]">
-              <ul className="flex animate-infinite-scroll items-center justify-center md:justify-start [&_img]:max-w-none [&_li]:mx-8">
-                {logos.map((logo, index) => (
-                  <li key={index}>
-                    <Image src={logo.src} alt={logo.alt} />
+              <ul className="flex animate-infinite-scroll items-center justify-center md:justify-start [&_li]:mx-8">
+                {logos.map((logo) => (
+                  <li key={logo.label}>
+                    <span className={`text-lg text-slate-300/90 sm:text-xl ${logo.className ?? ''}`}>
+                      {logo.label}
+                    </span>
                   </li>
                 ))}
               </ul>
               <ul
-                className="flex animate-infinite-scroll items-center justify-center md:justify-start [&_img]:max-w-none [&_li]:mx-8"
+                className="flex animate-infinite-scroll items-center justify-center md:justify-start [&_li]:mx-8"
                 aria-hidden="true"
               >
-                {logos.map((logo, index) => (
-                  <li key={index}>
-                    <Image src={logo.src} alt={logo.alt} />
+                {logos.map((logo) => (
+                  <li key={`dup-${logo.label}`}>
+                    <span className={`text-lg text-slate-300/90 sm:text-xl ${logo.className ?? ''}`}>
+                      {logo.label}
+                    </span>
                   </li>
                 ))}
               </ul>
@@ -58,5 +49,5 @@ export default function Clients() {
         </div>
       </div>
     </section>
-  )
+  );
 }
