@@ -31,11 +31,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="scroll-smooth">
       <body
-        className={`${sansFont.variable} ${displayFont.variable} ${stellarFont.variable} min-h-dvh bg-[#05050b] text-white antialiased`}
+        className={`${sansFont.variable} ${displayFont.variable} ${stellarFont.variable} min-h-dvh bg-[#05050b] text-white antialiased overflow-x-hidden`}
       >
         <AuthSessionProvider>
           <AuthModalProvider>
-            {children}
+            <div className="flex min-h-screen flex-col overflow-hidden supports-[overflow:clip]:overflow-clip">
+              {children}
+            </div>
             <Analytics />
           </AuthModalProvider>
         </AuthSessionProvider>
