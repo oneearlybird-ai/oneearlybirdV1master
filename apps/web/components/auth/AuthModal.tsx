@@ -3,21 +3,29 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
+import { API_BASE } from "@/lib/config";
+import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
-import { buildGoogleStartUrl, getMagicVerifyPath } from "@/lib/authPaths";
 import { apiFetch } from "@/lib/http";
+import { buildGoogleStartUrl, getDashboardPath, getMagicVerifyPath } from "@/lib/authPaths";
 import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
 import { setActiveAuthFlow } from "@/lib/authFlow";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
 
-type MagicLinkStatus = "idle" | "pending" | "sent" | "error";
+type MagicStatus = "idle" | "pending" | "sent" | "error";
 
-type PanelMode = "signin" | "signup";
+type Focusable = HTMLElement & { disabled?: boolean };
 
-function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
+function apiUrl(path: string) {
+  const base = (API_BASE || "").replace(/\/+/g, "/").replace(/\/$/, "");
+  if (base) return `${base}${path}`;
+  return `/api/upstream${path}`;
+}
+
+function getFocusableElements(container: HTMLElement | null): Focusable[] {
   if (!container) return [];
   const selectors = [
     "a[href]",
@@ -27,7 +35,7 @@ function getFocusableElements(container: HTMLElement | null): HTMLElement[] {
     "select:not([disabled])",
     "[tabindex]:not([tabindex='-1'])",
   ];
-  return Array.from(container.querySelectorAll<HTMLElement>(selectors.join(","))).filter(
+  return Array.from(container.querySelectorAll<Focusable>(selectors.join(","))).filter(
     (element) => !element.hasAttribute("inert") && element.tabIndex !== -1,
   );
 }
@@ -45,19 +53,28 @@ export default function AuthModal() {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const initialFocusRef = useRef<HTMLInputElement | null>(null);
   const googlePopupMonitorRef = useRef<number | null>(null);
+
   const [signInEmail, setSignInEmail] = useState("");
+  const [signInPassword, setSignInPassword] = useState("");
+  const [signInError, setSignInError] = useState<string | null>(null);
+  const [signInPending, setSignInPending] = useState(false);
+
   const [signUpEmail, setSignUpEmail] = useState("");
-  const [signInStatus, setSignInStatus] = useState<MagicLinkStatus>("idle");
-  const [signUpStatus, setSignUpStatus] = useState<MagicLinkStatus>("idle");
-  const [signInMessage, setSignInMessage] = useState<string | null>(null);
+  const [signUpStatus, setSignUpStatus] = useState<MagicStatus>("idle");
   const [signUpMessage, setSignUpMessage] = useState<string | null>(null);
+
   const [googlePending, setGooglePending] = useState(false);
+
   const isSignIn = mode === "signin";
 
-  const clearGooglePopupMonitor = useCallback(() => {
-    if (googlePopupMonitorRef.current !== null) {
-      window.clearInterval(googlePopupMonitorRef.current);
-      googlePopupMonitorRef.current = null;
+  const warmDashboardData = useCallback(async () => {
+    try {
+      await Promise.all([
+        apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/usage/summary?window=week", { cache: "no-store" }),
+      ]);
+    } catch (error) {
+      console.warn("auth_refresh_failed", { message: (error as Error)?.message });
     }
   }, []);
 
@@ -66,6 +83,13 @@ export default function AuthModal() {
       localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
     } catch (error) {
       console.warn("login_storage_failed", { message: (error as Error)?.message });
+    }
+  }, []);
+
+  const clearGooglePopupMonitor = useCallback(() => {
+    if (googlePopupMonitorRef.current !== null) {
+      window.clearInterval(googlePopupMonitorRef.current);
+      googlePopupMonitorRef.current = null;
     }
   }, []);
 
@@ -92,7 +116,7 @@ export default function AuthModal() {
     const container = dialogRef.current;
     const focusables = getFocusableElements(container);
     if (focusables.length > 0) {
-      (focusables[0] as HTMLElement).focus();
+      focusables[0].focus();
     } else {
       container?.focus();
     }
@@ -132,53 +156,110 @@ export default function AuthModal() {
     initialFocusRef.current?.focus();
   }, [isSignIn]);
 
-  const setStatusForIntent = useCallback((intent: PanelMode, status: MagicLinkStatus, message?: string | null) => {
-    if (intent === "signin") {
-      setSignInStatus(status);
-      setSignInMessage(message ?? null);
-    } else {
-      setSignUpStatus(status);
-      setSignUpMessage(message ?? null);
-    }
-  }, []);
+  useEffect(() => {
+    setSignInError(null);
+  }, [signInEmail, signInPassword]);
 
-  const requestMagicLink = useCallback(
-    async (intent: PanelMode) => {
-      const email = intent === "signin" ? signInEmail.trim() : signUpEmail.trim();
-      if (!email) {
-        setStatusForIntent(intent, "error", "Enter your email to continue.");
+  useEffect(() => {
+    if (signUpStatus !== "pending") {
+      setSignUpStatus("idle");
+      setSignUpMessage(null);
+    }
+  }, [signUpEmail]);
+
+  const attemptSignIn = useCallback(async () => {
+    const email = signInEmail.trim().toLowerCase();
+    if (!email || !signInPassword) {
+      setSignInError("Enter your email and password to continue.");
+      return;
+    }
+    setSignInPending(true);
+    setSignInError(null);
+    try {
+      const response = await fetch(apiUrl("/auth/login"), {
+        method: "POST",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email, password: signInPassword }),
+      });
+      if (!response.ok) {
+        setSignInError(response.status === 400 || response.status === 401 ? "Invalid email or password." : "Service unavailable. Try again.");
         return;
       }
-      setStatusForIntent(intent, "pending");
-      try {
-        const token = await fetchCsrfToken();
-        const response = await apiFetch("/auth/magic/start", {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-csrf-token": token,
-          },
-          body: JSON.stringify({
-            email,
-            intent,
-            redirect: buildAbsoluteUrl(getMagicVerifyPath(intent)),
-          }),
-        });
-        if (response.ok) {
-          setStatusForIntent(intent, "sent", "Check your email for a secure link to continue.");
-          triggerLoginEvent();
-          return;
-        }
-        const payload = await response.json().catch(() => ({}));
-        const errorMessage = typeof payload?.message === "string" ? payload.message : "We couldn’t send the link. Try again.";
-        setStatusForIntent(intent, "error", errorMessage);
-      } catch (error) {
-        console.error("magic_link_request_failed", { message: (error as Error)?.message });
-        setStatusForIntent(intent, "error", "We couldn’t reach the server. Please try again.");
-        invalidateCsrfToken();
-      }
+      triggerLoginEvent();
+      void warmDashboardData();
+      close();
+      redirectTo(getDashboardPath());
+    } catch (error) {
+      console.error("signin_request_failed", { message: (error as Error)?.message });
+      setSignInError("We couldn’t reach the server. Please try again.");
+    } finally {
+      setSignInPending(false);
+    }
+  }, [close, signInEmail, signInPassword, triggerLoginEvent, warmDashboardData]);
+
+  const handleSignInSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (signInPending) return;
+      void attemptSignIn();
     },
-    [signInEmail, signUpEmail, setStatusForIntent, triggerLoginEvent],
+    [attemptSignIn, signInPending],
+  );
+
+  const sendSignupLink = useCallback(async () => {
+    const email = signUpEmail.trim().toLowerCase();
+    if (!email) {
+      setSignUpStatus("error");
+      setSignUpMessage("Enter your email to continue.");
+      return;
+    }
+    setSignUpStatus("pending");
+    setSignUpMessage(null);
+    try {
+      const token = await fetchCsrfToken();
+      const response = await apiFetch("/auth/magic/start", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": token,
+        },
+        body: JSON.stringify({
+          email,
+          intent: "signup",
+          redirect: buildAbsoluteUrl(getMagicVerifyPath("signup")),
+        }),
+      });
+      if (response.ok) {
+        setActiveAuthFlow("email-signup", { email });
+        setSignUpStatus("sent");
+        setSignUpMessage("Check your email for a secure link to finish setup.");
+        triggerLoginEvent();
+        return;
+      }
+      const payload = await response.json().catch(() => ({}));
+      const message =
+        typeof payload?.message === "string" && payload.message.length > 0
+          ? payload.message
+          : "We couldn’t send the link. Please try again.";
+      setSignUpStatus("error");
+      setSignUpMessage(message);
+    } catch (error) {
+      console.error("signup_magic_link_failed", { message: (error as Error)?.message });
+      setSignUpStatus("error");
+      setSignUpMessage("We couldn’t reach the server. Please try again.");
+      invalidateCsrfToken();
+    }
+  }, [signUpEmail, triggerLoginEvent]);
+
+  const handleSignUpSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (signUpStatus === "pending") return;
+      void sendSignupLink();
+    },
+    [sendSignupLink, signUpStatus],
   );
 
   const startGoogle = useCallback(
@@ -204,167 +285,164 @@ export default function AuthModal() {
     [clearGooglePopupMonitor, googlePending],
   );
 
-  const GoogleBtn = ({ label, intent }: { label: string; intent: "signin" | "signup" }) => (
+  const GoogleBtn = ({ intent }: { intent: "signin" | "signup" }) => (
     <button
+      type="button"
       onClick={() => startGoogle(intent)}
       disabled={googlePending}
-      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#DADCE0] bg-white font-medium text-[#3C4043] transition-colors duration-150 hover:bg-white/90 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4] disabled:opacity-60"
-      aria-label={label}
-      type="button"
+      className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#dadce0] bg-white text-sm font-medium text-[#3c4043] transition hover:bg-white/90 hover:shadow focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285f4] disabled:opacity-60"
     >
-      <OfficialGoogleIcon />
-      <span>{googlePending ? "Opening…" : label}</span>
+      <OfficialGoogleIcon width={18} height={18} />
+      <span>{googlePending ? "Opening…" : intent === "signin" ? "Continue with Google" : "Create account with Google"}</span>
       {googlePending ? (
         <span className="ml-1 inline-flex h-4 w-4 animate-spin rounded-full border-[2px] border-[#c1c3c6] border-t-transparent" aria-hidden />
       ) : null}
     </button>
   );
 
-  const handleSubmitMagic = (event: React.FormEvent, intent: PanelMode) => {
-    event.preventDefault();
-    if (intent === "signin" && signInStatus === "pending") return;
-    if (intent === "signup" && signUpStatus === "pending") return;
-    void requestMagicLink(intent);
-  };
-
-  useEffect(() => {
-    setSignInMessage(null);
-    setSignInStatus("idle");
-  }, [signInEmail]);
-
-  useEffect(() => {
-    setSignUpMessage(null);
-    setSignUpStatus("idle");
-  }, [signUpEmail]);
-
   return (
-    <div className="fixed inset-0 z-[999] flex items-center justify-center bg-[#05050b]/80 px-4 py-10 backdrop-blur">
+    <div
+      className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/65 px-4 backdrop-blur-sm"
+      role="presentation"
+      onClick={close}
+    >
       <div
         ref={dialogRef}
         role="dialog"
         aria-modal="true"
-        className="w-full max-w-lg rounded-3xl border border-white/10 bg-neutral-950 px-6 py-8 text-white shadow-[0_45px_72px_rgba(5,5,11,0.45)] focus:outline-none"
+        aria-labelledby="auth-modal-title"
+        className={`relative border border-white/10 bg-neutral-950/95 shadow-2xl outline-none backdrop-blur-xl ${
+          typeof document !== "undefined" && document.body.classList.contains("ob-mobile-shell")
+            ? "flex h-full w-full max-w-none flex-col rounded-none p-6 pb-[calc(env(safe-area-inset-bottom)+2rem)]"
+            : "w-full max-w-[420px] rounded-3xl p-6"
+        }`}
+        onClick={(event) => event.stopPropagation()}
       >
-        <div className="flex justify-between gap-4">
-          <div>
-            <p className="text-xs uppercase tracking-widest text-white/50">EarlyBird AI</p>
-            <h1 className="mt-1 text-2xl font-semibold tracking-tight">Welcome</h1>
-            <p className="mt-1 text-sm text-white/70">
-              Use a magic link or Google to sign {isSignIn ? "back in" : "up"} without passwords.
-            </p>
-          </div>
+        <button
+          type="button"
+          onClick={close}
+          className="absolute right-4 top-4 rounded-full border border-white/15 bg-white/10 p-1.5 text-white/70 transition hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40"
+          aria-label="Close authentication modal"
+        >
+          <svg viewBox="0 0 24 24" className="h-4 w-4" aria-hidden="true">
+            <path d="M6 6l12 12M18 6L6 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+          </svg>
+        </button>
+        <div className="flex items-center justify-center gap-2">
           <button
             type="button"
-            onClick={() => close()}
-            aria-label="Close"
-            className="h-9 w-9 rounded-full border border-white/15 text-white/60 transition hover:text-white"
-          >
-            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth={1.5}>
-              <path d="M7 7l10 10M17 7 7 17" />
-            </svg>
-          </button>
-        </div>
-
-        <div className="mt-6 flex gap-1 rounded-2xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Authentication tabs">
-          <button
-            onClick={() => setMode("signin")}
-            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium ${isSignIn ? "bg-white text-black" : "text-white/80 hover:bg-white/10"}`}
-            aria-selected={isSignIn}
-            aria-controls="panel-login"
-            id="tab-login"
             role="tab"
+            aria-selected={isSignIn}
+            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium transition ${isSignIn ? "bg-white text-black shadow" : "text-white/80 hover:bg-white/10"}`}
+            onClick={() => setMode("signin")}
           >
             Sign in
           </button>
           <button
-            onClick={() => setMode("signup")}
-            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium ${!isSignIn ? "bg-white text-black" : "text-white/80 hover:bg-white/10"}`}
-            aria-selected={!isSignIn}
-            aria-controls="panel-signup"
-            id="tab-signup"
+            type="button"
             role="tab"
+            aria-selected={!isSignIn}
+            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium transition ${!isSignIn ? "bg-white text-black shadow" : "text-white/80 hover:bg-white/10"}`}
+            onClick={() => setMode("signup")}
           >
             Create account
           </button>
         </div>
 
-        <div id="panel-login" role="tabpanel" aria-labelledby="tab-login" hidden={!isSignIn} className="mt-8">
+        <div className="mt-6 flex flex-col gap-4">
+          <GoogleBtn intent={isSignIn ? "signin" : "signup"} />
+
+          <div className="flex items-center gap-3 text-xs text-white/50">
+            <span className="h-px flex-1 bg-white/15" />
+            or
+            <span className="h-px flex-1 bg-white/15" />
+          </div>
+
           {isSignIn ? (
-            <>
-              <h2 className="text-2xl font-semibold tracking-tight">Email a magic link</h2>
-              <p className="mt-2 text-sm text-white/70">We’ll send a secure link to your inbox. No password required.</p>
-              <form onSubmit={(event) => handleSubmitMagic(event, "signin")} className="mt-6 space-y-4" aria-label="Email sign in">
+            <form onSubmit={handleSignInSubmit} className="space-y-3" aria-label="Sign in with email and password">
+              <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
+                Email
                 <input
-                  name="email"
+                  ref={initialFocusRef}
                   type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  name="email"
                   required
-                  placeholder="you@business.com"
                   value={signInEmail}
                   onChange={(event) => setSignInEmail(event.target.value)}
-                  className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
-                  autoComplete="email"
-                  aria-label="Email"
-                  ref={initialFocusRef}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10"
                 />
-                <button
-                  type="submit"
-                  disabled={signInStatus === "pending"}
-                  className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-60"
-                  aria-busy={signInStatus === "pending"}
-                >
-                  {signInStatus === "pending" ? "Sending…" : "Email me a magic link"}
-                </button>
-                {signInMessage ? (
-                  <p className={`text-sm ${signInStatus === "error" ? "text-rose-300" : "text-white/70"}`}>{signInMessage}</p>
-                ) : null}
-              </form>
-              <div className="mt-6">
-                <GoogleBtn label="Continue with Google" intent="signin" />
-              </div>
-              <div className="mt-4 text-xs text-white/60">
-                Need help? <Link href="/support" className="underline">Contact support</Link>
-              </div>
-            </>
-          ) : null}
-        </div>
-
-        <div id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" hidden={isSignIn} className="mt-8">
-          {!isSignIn ? (
-            <>
-              <h2 className="text-2xl font-semibold tracking-tight">Start your account</h2>
-              <p className="mt-2 text-sm text-white/70">Enter your email and we’ll send a magic link to verify ownership.</p>
-              <form onSubmit={(event) => handleSubmitMagic(event, "signup")} className="mt-6 space-y-4" aria-label="Email sign up">
+              </label>
+              <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
+                Password
                 <input
-                  name="email"
-                  type="email"
+                  type="password"
+                  autoComplete="current-password"
+                  name="password"
                   required
-                  placeholder="you@business.com"
+                  value={signInPassword}
+                  onChange={(event) => setSignInPassword(event.target.value)}
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10"
+                />
+              </label>
+              <button
+                type="submit"
+                disabled={signInPending}
+                className="mt-2 w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60"
+              >
+                {signInPending ? "Signing in…" : "Sign in"}
+              </button>
+              {signInError ? <p className="text-sm text-rose-300">{signInError}</p> : null}
+              <p className="text-xs text-white/50">
+                Forgot your password?{" "}
+                <Link href="/support" className="underline hover:text-white">
+                  Contact support
+                </Link>
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={handleSignUpSubmit} className="space-y-3" aria-label="Create account with email">
+              <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
+                Work email
+                <input
+                  ref={initialFocusRef}
+                  type="email"
+                  inputMode="email"
+                  autoComplete="email"
+                  name="email"
+                  required
                   value={signUpEmail}
                   onChange={(event) => setSignUpEmail(event.target.value)}
-                  className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
-                  autoComplete="email"
-                  aria-label="Email"
+                  className="mt-1 w-full rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10"
                 />
-                <button
-                  type="submit"
-                  disabled={signUpStatus === "pending"}
-                  className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-60"
-                  aria-busy={signUpStatus === "pending"}
-                >
-                  {signUpStatus === "pending" ? "Sending…" : "Send verification link"}
-                </button>
-                {signUpMessage ? (
-                  <p className={`text-sm ${signUpStatus === "error" ? "text-rose-300" : "text-white/70"}`}>{signUpMessage}</p>
-                ) : null}
-              </form>
-              <div className="mt-6">
-                <GoogleBtn label="Create with Google" intent="signup" />
-              </div>
-              <p className="mt-4 text-xs text-white/60">
-                After verification we’ll guide you through a short setup to personalize EarlyBird AI.
-              </p>
-            </>
-          ) : null}
+              </label>
+              <button
+                type="submit"
+                disabled={signUpStatus === "pending"}
+                className="mt-2 w-full rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60"
+              >
+                {signUpStatus === "pending" ? "Sending…" : "Email me a magic link"}
+              </button>
+              {signUpMessage ? (
+                <p className={`text-sm ${signUpStatus === "error" ? "text-rose-300" : "text-emerald-300"}`}>{signUpMessage}</p>
+              ) : (
+                <p className="text-xs text-white/50">We’ll send a secure link to verify your email before you finish setup.</p>
+              )}
+            </form>
+          )}
+
+          <p className="text-center text-xs text-white/50">
+            By continuing, you agree to our{" "}
+            <Link href="/terms" className="underline hover:text-white">
+              Terms
+            </Link>{" "}
+            and{" "}
+            <Link href="/privacy" className="underline hover:text-white">
+              Privacy Policy
+            </Link>
+            .
+          </p>
         </div>
       </div>
     </div>

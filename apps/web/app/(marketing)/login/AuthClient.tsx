@@ -2,20 +2,33 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import Link from "next/link";
+import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
+import { API_BASE } from "@/lib/config";
+import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
-import { buildGoogleStartUrl, getMagicVerifyPath } from "@/lib/authPaths";
-import { apiFetch } from "@/lib/http";
+import {
+  buildGoogleStartUrl,
+  getDashboardPath,
+  getMagicVerifyPath,
+  getProfileCapturePath,
+} from "@/lib/authPaths";
 import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
+import { apiFetch } from "@/lib/http";
 import { setActiveAuthFlow } from "@/lib/authFlow";
+import { hasCompletedName } from "@/lib/profile";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
 
-type MagicLinkStatus = "idle" | "pending" | "sent" | "error";
-
 type PanelMode = "login" | "signup";
+type MagicStatus = "idle" | "pending" | "sent" | "error";
+
+function apiUrl(path: string): string {
+  const base = (API_BASE || "").replace(/\/+/g, "/").replace(/\/$/, "");
+  if (base) return `${base}${path}`;
+  return `/api/upstream${path}`;
+}
 
 function buildAbsoluteUrl(path: string): string {
   if (typeof window === "undefined") {
@@ -32,20 +45,28 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
   const loginEmailRef = useRef<HTMLInputElement | null>(null);
   const signupEmailRef = useRef<HTMLInputElement | null>(null);
   const googlePopupMonitorRef = useRef<number | null>(null);
-  const [loginEmail, setLoginEmail] = useState("");
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [loginError, setLoginError] = useState<string | null>(null);
+  const [loginPending, setLoginPending] = useState(false);
+
   const [signupEmail, setSignupEmail] = useState("");
-  const [loginStatus, setLoginStatus] = useState<MagicLinkStatus>("idle");
-  const [signupStatus, setSignupStatus] = useState<MagicLinkStatus>("idle");
-  const [loginMessage, setLoginMessage] = useState<string | null>(null);
+  const [signupStatus, setSignupStatus] = useState<MagicStatus>("idle");
   const [signupMessage, setSignupMessage] = useState<string | null>(null);
+
   const [googlePending, setGooglePending] = useState(false);
+
+  const clearGooglePopupMonitor = useCallback(() => {
+    if (googlePopupMonitorRef.current !== null) {
+      window.clearInterval(googlePopupMonitorRef.current);
+      googlePopupMonitorRef.current = null;
+    }
+  }, []);
 
   useEffect(() => {
     const handleAuthSuccess = () => {
-      if (googlePopupMonitorRef.current !== null) {
-        window.clearInterval(googlePopupMonitorRef.current);
-        googlePopupMonitorRef.current = null;
-      }
+      clearGooglePopupMonitor();
       setGooglePending(false);
       try {
         localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
@@ -57,16 +78,13 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
     return () => {
       window.removeEventListener("ob:auth:success", handleAuthSuccess);
     };
-  }, []);
+  }, [clearGooglePopupMonitor]);
 
   useEffect(() => {
     return () => {
-      if (googlePopupMonitorRef.current !== null) {
-        window.clearInterval(googlePopupMonitorRef.current);
-        googlePopupMonitorRef.current = null;
-      }
+      clearGooglePopupMonitor();
     };
-  }, []);
+  }, [clearGooglePopupMonitor]);
 
   function switchTab(next: PanelMode) {
     setTab(next);
@@ -81,57 +99,136 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
     }, 0);
   }
 
-  const setStatusForIntent = useCallback((intent: PanelMode, status: MagicLinkStatus, message?: string | null) => {
-    if (intent === "login") {
-      setLoginStatus(status);
-      setLoginMessage(message ?? null);
-    } else {
-      setSignupStatus(status);
-      setSignupMessage(message ?? null);
-    }
-  }, []);
+  useEffect(() => {
+    setLoginError(null);
+  }, [email, password]);
 
-  const requestMagicLink = useCallback(
-    async (intent: PanelMode) => {
-      const email = intent === "login" ? loginEmail.trim() : signupEmail.trim();
-      if (!email) {
-        setStatusForIntent(intent, "error", "Enter your email to continue.");
+  useEffect(() => {
+    if (signupStatus !== "pending") {
+      setSignupStatus("idle");
+      setSignupMessage(null);
+    }
+  }, [signupEmail]);
+
+  async function resolvePostAuthPath(): Promise<string> {
+    try {
+      const response = await fetch(apiUrl("/tenants/profile"), {
+        method: "GET",
+        credentials: "include",
+        cache: "no-store",
+        headers: { "cache-control": "no-store" },
+      });
+      if (response.ok) {
+        const data = (await response.json()) as { firstName?: string | null; lastName?: string | null };
+        if (!hasCompletedName(data)) {
+          return getProfileCapturePath();
+        }
+      }
+    } catch (error) {
+      console.warn("post_auth_profile_failed", { message: (error as Error)?.message });
+    }
+    return getDashboardPath();
+  }
+
+  const attemptLogin = useCallback(async () => {
+    const trimmedEmail = email.trim().toLowerCase();
+    if (!trimmedEmail || !password) {
+      setLoginError("Enter your email and password to continue.");
+      return;
+    }
+    setLoginPending(true);
+    setLoginError(null);
+    try {
+      const response = await fetch(apiUrl("/auth/login"), {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email: trimmedEmail, password }),
+      });
+      if (!response.ok) {
+        setLoginError(response.status === 400 || response.status === 401 ? "Invalid email or password." : "Service unavailable. Try again.");
         return;
       }
-      setStatusForIntent(intent, "pending");
       try {
-        const token = await fetchCsrfToken();
-        const response = await apiFetch("/auth/magic/start", {
-          method: "POST",
-          headers: {
-            "content-type": "application/json",
-            "x-csrf-token": token,
-          },
-          body: JSON.stringify({
-            email,
-            intent: intent === "login" ? "signin" : "signup",
-            redirect: buildAbsoluteUrl(getMagicVerifyPath(intent === "login" ? "signin" : "signup")),
-          }),
-        });
-        if (response.ok) {
-          setStatusForIntent(intent, "sent", "Check your email for a secure link.");
-          try {
-            localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
-          } catch (error) {
-            console.warn("magic_link_storage_failed", { message: (error as Error)?.message });
-          }
-          return;
-        }
-        const payload = await response.json().catch(() => ({}));
-        const errorMessage = typeof payload?.message === "string" ? payload.message : "We couldn’t send the link. Try again.";
-        setStatusForIntent(intent, "error", errorMessage);
-      } catch (error) {
-        console.error("magic_link_request_failed", { message: (error as Error)?.message });
-        setStatusForIntent(intent, "error", "We couldn’t reach the server. Please try again.");
-        invalidateCsrfToken();
+        localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
+      } catch (storageError) {
+        console.warn("login_storage_failed", { message: (storageError as Error)?.message });
       }
+      const nextPath = await resolvePostAuthPath();
+      redirectTo(nextPath);
+    } catch (error) {
+      console.error("login_request_failed", { message: (error as Error)?.message });
+      setLoginError("We couldn’t reach the server. Please try again.");
+    } finally {
+      setLoginPending(false);
+    }
+  }, [email, password]);
+
+  const handleLoginSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (loginPending) return;
+      void attemptLogin();
     },
-    [loginEmail, signupEmail, setStatusForIntent],
+    [attemptLogin, loginPending],
+  );
+
+  const sendSignupLink = useCallback(async () => {
+    const normalized = signupEmail.trim().toLowerCase();
+    if (!normalized) {
+      setSignupStatus("error");
+      setSignupMessage("Enter your email to continue.");
+      return;
+    }
+    setSignupStatus("pending");
+    setSignupMessage(null);
+    try {
+      const token = await fetchCsrfToken();
+      const response = await apiFetch("/auth/magic/start", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          "x-csrf-token": token,
+        },
+        body: JSON.stringify({
+          email: normalized,
+          intent: "signup",
+          redirect: buildAbsoluteUrl(getMagicVerifyPath("signup")),
+        }),
+      });
+      if (response.ok) {
+        setActiveAuthFlow("email-signup", { email: normalized });
+        setSignupStatus("sent");
+        setSignupMessage("Check your email for a secure link to finish setup.");
+        try {
+          localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
+        } catch (storageError) {
+          console.warn("signup_link_storage_failed", { message: (storageError as Error)?.message });
+        }
+        return;
+      }
+      const payload = await response.json().catch(() => ({}));
+      const message =
+        typeof payload?.message === "string" && payload.message.length > 0
+          ? payload.message
+          : "We couldn’t send the link. Please try again.";
+      setSignupStatus("error");
+      setSignupMessage(message);
+    } catch (error) {
+      console.error("signup_magic_link_failed", { message: (error as Error)?.message });
+      setSignupStatus("error");
+      setSignupMessage("We couldn’t reach the server. Please try again.");
+      invalidateCsrfToken();
+    }
+  }, [signupEmail]);
+
+  const handleSignupSubmit = useCallback(
+    (event: React.FormEvent<HTMLFormElement>) => {
+      event.preventDefault();
+      if (signupStatus === "pending") return;
+      void sendSignupLink();
+    },
+    [sendSignupLink, signupStatus],
   );
 
   const startGoogle = useCallback(
@@ -140,9 +237,7 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
       const url = buildGoogleStartUrl(intent);
       setActiveAuthFlow(intent === "signup" ? "google-signup" : "google-signin");
       setGooglePending(true);
-      if (googlePopupMonitorRef.current !== null) {
-        window.clearInterval(googlePopupMonitorRef.current);
-      }
+      clearGooglePopupMonitor();
       const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "oauth:success" });
       if (!popup) {
         setGooglePending(false);
@@ -151,57 +246,37 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
       }
       googlePopupMonitorRef.current = window.setInterval(() => {
         if (!popup || popup.closed) {
-          if (googlePopupMonitorRef.current !== null) {
-            window.clearInterval(googlePopupMonitorRef.current);
-            googlePopupMonitorRef.current = null;
-          }
+          clearGooglePopupMonitor();
           setGooglePending(false);
         }
       }, 500);
     },
-    [googlePending],
+    [clearGooglePopupMonitor, googlePending],
   );
 
-  const GoogleBtn = ({ label, intent }: { label: string; intent: "signin" | "signup" }) => (
+  const GoogleBtn = ({ intent }: { intent: "signin" | "signup" }) => (
     <button
       onClick={() => startGoogle(intent)}
       disabled={googlePending}
       className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#DADCE0] bg-white font-medium text-[#3C4043] transition-colors duration-150 hover:bg-white/90 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4] disabled:opacity-60"
-      aria-label={label}
+      aria-label={intent === "signin" ? "Continue with Google" : "Create account with Google"}
       type="button"
     >
       <OfficialGoogleIcon />
-      <span>{googlePending ? "Opening…" : label}</span>
+      <span>{googlePending ? "Opening…" : "Continue with Google"}</span>
       {googlePending ? (
         <span className="ml-1 inline-flex h-4 w-4 animate-spin rounded-full border-[2px] border-[#c1c3c6] border-t-transparent" aria-hidden />
       ) : null}
     </button>
   );
 
-  const handleSubmitMagic = (event: React.FormEvent, intent: PanelMode) => {
-    event.preventDefault();
-    if (intent === "login" && loginStatus === "pending") return;
-    if (intent === "signup" && signupStatus === "pending") return;
-    void requestMagicLink(intent);
-  };
-
-  useEffect(() => {
-    setLoginMessage(null);
-    setLoginStatus("idle");
-  }, [loginEmail]);
-
-  useEffect(() => {
-    setSignupMessage(null);
-    setSignupStatus("idle");
-  }, [signupEmail]);
-
   return (
     <div className="bg-neutral-950 text-white">
-      <section className="mx-auto max-w-lg px-6 py-16 md:py-24">
+      <section className="mx-auto max-w-lg px-6 pb-16 pt-12 md:pb-24 md:pt-16">
         <div className="flex gap-1 rounded-2xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Authentication tabs">
           <button
             onClick={() => switchTab("login")}
-            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium ${tab === "login" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"}`}
+            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium transition ${tab === "login" ? "bg-white text-black shadow" : "text-white/80 hover:bg-white/10"}`}
             aria-selected={tab === "login"}
             aria-controls="panel-login"
             id="tab-login"
@@ -211,7 +286,7 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
           </button>
           <button
             onClick={() => switchTab("signup")}
-            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium ${tab === "signup" ? "bg-white text-black" : "text-white/80 hover:bg-white/10"}`}
+            className={`w-1/2 rounded-xl px-4 py-2 text-sm font-medium transition ${tab === "signup" ? "bg-white text-black shadow" : "text-white/80 hover:bg-white/10"}`}
             aria-selected={tab === "signup"}
             aria-controls="panel-signup"
             id="tab-signup"
@@ -225,40 +300,56 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
           {tab === "login" && (
             <>
               <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Welcome back</h1>
-              <p className="mt-2 text-white/70">We’ll email you a magic link to sign in.</p>
+              <p className="mt-2 text-white/70">Use your email and password, or continue with Google.</p>
 
-              <form onSubmit={(event) => handleSubmitMagic(event, "login") } className="mt-8 space-y-4" aria-label="Magic link sign-in">
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="you@business.com"
-                  value={loginEmail}
-                  onChange={(event) => setLoginEmail(event.target.value)}
-                  className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
-                  autoComplete="email"
-                  aria-label="Email"
-                  ref={loginEmailRef}
-                />
+              <form onSubmit={handleLoginSubmit} className="mt-8 space-y-4" aria-label="Email and password sign-in">
+                <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
+                  Email
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="you@business.com"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40 focus:border-white/40 focus:bg-white/10"
+                    autoComplete="email"
+                    aria-label="Email"
+                    ref={loginEmailRef}
+                  />
+                </label>
+                <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
+                  Password
+                  <input
+                    name="password"
+                    type="password"
+                    required
+                    placeholder="Your password"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40 focus:border-white/40 focus:bg-white/10"
+                    autoComplete="current-password"
+                    aria-label="Password"
+                  />
+                </label>
                 <button
                   type="submit"
-                  disabled={loginStatus === "pending"}
+                  disabled={loginPending}
                   className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-60"
-                  aria-busy={loginStatus === "pending"}
+                  aria-busy={loginPending}
                 >
-                  {loginStatus === "pending" ? "Sending…" : "Email me a magic link"}
+                  {loginPending ? "Signing in…" : "Sign in"}
                 </button>
-                {loginMessage ? (
-                  <p className={`text-sm ${loginStatus === "error" ? "text-rose-300" : "text-white/70"}`}>{loginMessage}</p>
-                ) : null}
               </form>
 
+              {loginError ? <p className="mt-3 text-sm text-rose-300">{loginError}</p> : null}
+
               <div className="mt-4">
-                <GoogleBtn label="Continue with Google" intent="signin" />
+                <GoogleBtn intent="signin" />
               </div>
 
               <div className="mt-3 text-xs text-white/60">
-                <span>Need a hand? </span>
+                Forgot your password?{" "}
                 <Link href="/support" className="underline">
                   Contact support
                 </Link>
@@ -271,40 +362,41 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
           {tab === "signup" && (
             <>
               <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Create your account</h1>
-              <p className="mt-2 text-white/70">Start with your email. We’ll send a magic link to verify it.</p>
+              <p className="mt-2 text-white/70">We’ll send a secure link to verify your email. No password required yet.</p>
 
-              <form className="mt-8 space-y-4" onSubmit={(event) => handleSubmitMagic(event, "signup")} aria-label="Create account">
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  placeholder="you@business.com"
-                  className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
-                  autoComplete="email"
-                  aria-label="Email"
-                  ref={signupEmailRef}
-                  value={signupEmail}
-                  onChange={(event) => setSignupEmail(event.target.value)}
-                />
+              <form className="mt-8 space-y-4" onSubmit={handleSignupSubmit} aria-label="Create account">
+                <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
+                  Work email
+                  <input
+                    name="email"
+                    type="email"
+                    required
+                    placeholder="you@business.com"
+                    className="mt-1 w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40 focus:border-white/40 focus:bg-white/10"
+                    autoComplete="email"
+                    aria-label="Work email"
+                    ref={signupEmailRef}
+                    value={signupEmail}
+                    onChange={(event) => setSignupEmail(event.target.value)}
+                  />
+                </label>
                 <button
                   type="submit"
                   disabled={signupStatus === "pending"}
                   className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-60"
                   aria-busy={signupStatus === "pending"}
                 >
-                  {signupStatus === "pending" ? "Sending…" : "Send verification link"}
+                  {signupStatus === "pending" ? "Sending…" : "Email me a magic link"}
                 </button>
-                {signupMessage ? (
-                  <p className={`text-sm ${signupStatus === "error" ? "text-rose-300" : "text-white/70"}`}>{signupMessage}</p>
-                ) : null}
               </form>
 
+              {signupMessage ? (
+                <p className={`mt-3 text-sm ${signupStatus === "error" ? "text-rose-300" : "text-emerald-300"}`}>{signupMessage}</p>
+              ) : null}
+
               <div className="mt-4">
-                <GoogleBtn label="Create with Google" intent="signup" />
+                <GoogleBtn intent="signup" />
               </div>
-              <p className="mt-4 text-xs text-white/60">
-                After you verify your email, we’ll walk you through a quick setup to personalize EarlyBird AI.
-              </p>
             </>
           )}
         </div>
