@@ -159,3 +159,5 @@ Documents/
 06:44.380]
 
 !apps/web/public/
+!apps/web/public/logos/
+!apps/web/public/logos/integrations/
