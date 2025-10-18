@@ -39,7 +39,7 @@ export default function IntegrationsCarousel() {
   const [, setSwiperInitialized] = useState<boolean>(false)
 
   useEffect(() => {
-    const _carousel = new Swiper('.stellar-carousel', {
+    new Swiper('.stellar-carousel', {
       breakpoints: {
         320: {
           slidesPerView: 1

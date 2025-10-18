@@ -1,26 +1,26 @@
 import Image from 'next/image'
 import Particles from './particles'
 
-import GoogleWorkspace from '@/public/logos/google-workspace.svg'
-import GoogleCalendar from '@/public/logos/google-calendar.svg'
-import Microsoft365 from '@/public/logos/microsoft-365.svg'
-import Outlook from '@/public/logos/outlook.svg'
-import Salesforce from '@/public/logos/salesforce.svg'
-import Hubspot from '@/public/logos/hubspot.svg'
-import Zoho from '@/public/logos/zoho.svg'
-import Stripe from '@/public/logos/stripe.svg'
-import Slack from '@/public/logos/slack.svg'
+import Client01 from '@/public/images/client-01.svg'
+import Client02 from '@/public/images/client-02.svg'
+import Client03 from '@/public/images/client-03.svg'
+import Client04 from '@/public/images/client-04.svg'
+import Client05 from '@/public/images/client-05.svg'
+import Client06 from '@/public/images/client-06.svg'
+import Client07 from '@/public/images/client-07.svg'
+import Client08 from '@/public/images/client-08.svg'
+import Client09 from '@/public/images/client-09.svg'
 
 const logos = [
-  { src: GoogleWorkspace, alt: 'Google Workspace' },
-  { src: GoogleCalendar, alt: 'Google Calendar' },
-  { src: Microsoft365, alt: 'Microsoft 365' },
-  { src: Outlook, alt: 'Outlook' },
-  { src: Salesforce, alt: 'Salesforce' },
-  { src: Hubspot, alt: 'HubSpot' },
-  { src: Zoho, alt: 'Zoho' },
-  { src: Stripe, alt: 'Stripe' },
-  { src: Slack, alt: 'Slack' },
+  { src: Client01, alt: "Client 01" },
+  { src: Client02, alt: "Client 02" },
+  { src: Client03, alt: "Client 03" },
+  { src: Client04, alt: "Client 04" },
+  { src: Client05, alt: "Client 05" },
+  { src: Client06, alt: "Client 06" },
+  { src: Client07, alt: "Client 07" },
+  { src: Client08, alt: "Client 08" },
+  { src: Client09, alt: "Client 09" },
 ];
 
 export default function Clients() {
