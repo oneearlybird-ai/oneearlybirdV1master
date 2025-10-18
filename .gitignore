@@ -157,3 +157,5 @@ Documents/
 .zshenv*
 .zshrc*
 06:44.380]
+
+!apps/web/public/

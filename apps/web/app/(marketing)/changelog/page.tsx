@@ -1,103 +1,91 @@
-export const dynamic = "force-static";
+export const metadata = {
+  title: 'Changelog - Stellar',
+  description: 'Page description',
+}
 
-import CopyLinkButton from "@/components/CopyLinkButton";
-import Section from "@/components/stellar/Section";
+import { getUpdatePosts } from '@/components/mdx/utils'
+import Image from 'next/image'
+import Illustration from '@/public/images/page-illustration.svg'
+import PostItem from './post-item'
+import Cta from '@/components/cta-03'
 
-const releases = [
-  {
-    id: "v0-9-0",
-    version: "v0.9.0",
-    date: "2025-10-15",
-    tag: "Latest",
-    summary: "Stellar marketing + auth refresh",
-    notes: [
-      "Migrated landing, pricing, and preview flows to the Stellar layout with live session-aware header states.",
-      "Inline login/signup tabs with Google OAuth popup + fallback; cookie-auth contract unchanged.",
-      "Tailwind v4 + Next 15.1 upgrade with MDX-ready pipeline, compatibility shim for existing eb-* utilities.",
-    ],
-  },
-  {
-    id: "v0-8-2",
-    version: "v0.8.2",
-    date: "2025-09-16",
-    summary: "Legal & docs refresh",
-    notes: [
-      "Added dedicated Privacy, Terms, and Support pages with consistent styling.",
-      "Documentation now covers porting, authentication guardrails, and signed webhook setup.",
-      "Navigation links consolidated across desktop, mobile, and dashboard shells.",
-    ],
-  },
-  {
-    id: "v0-8-0",
-    version: "v0.8.0",
-    date: "2025-09-10",
-    summary: "Initial public launch",
-    notes: [
-      "Published EarlyBird marketing site with hero, feature tour, and ROI highlights.",
-      "Introduced pricing tiers with checkout CTAs connected to live Stripe plans.",
-      "Baseline accessibility pass (focus outlines, reduced-motion toggles, skip link).",
-    ],
-  },
-];
+export default function Changelog() {
+  const allUpdates = getUpdatePosts();
 
-export default function ChangelogPage() {
+  // Sort posts by date
+  allUpdates.sort((a, b) => {
+    return (new Date(a.metadata.publishedAt) > new Date(b.metadata.publishedAt)) ? -1 : 1
+  })
+
   return (
-    <div className="flex flex-col">
-      <section className="px-5 pt-20 pb-10 sm:px-6 md:pt-28">
-        <div className="mx-auto max-w-3xl">
-          <span className="stellar-pill">Changelog</span>
-          <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">What’s new in EarlyBird.</h1>
-          <p className="mt-6 text-base text-white/70 md:text-lg">
-            Release notes for marketing, auth, and dashboard surfaces. Every entry includes the guardrails we verified before rollout.
-          </p>
+    <>
+
+      {/* Content */}
+      <section className="relative">
+
+        {/* Radial gradient */}
+        <div className="absolute flex items-center justify-center top-0 -translate-y-1/2 left-1/2 -translate-x-1/2 pointer-events-none -z-10 w-[800px] aspect-square" aria-hidden="true">
+          <div className="absolute inset-0 translate-z-0 bg-purple-500 rounded-full blur-[120px] opacity-30"></div>
+          <div className="absolute w-64 h-64 translate-z-0 bg-purple-400 rounded-full blur-[80px] opacity-70"></div>
         </div>
+
+        {/* Particles animation */}
+        <div className="absolute inset-0 h-96 -z-10" aria-hidden="true">
+          <canvas data-particle-animation data-particle-quantity="15"></canvas>
+        </div>
+
+        {/* Illustration */}
+        <div className="md:block absolute left-1/2 -translate-x-1/2 -mt-16 blur-2xl opacity-90 pointer-events-none -z-10" aria-hidden="true">
+          <Image src={Illustration} className="max-w-none" width={1440} height={427} alt="Page Illustration" />
+        </div>
+
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="pt-32 pb-12 md:pt-40 md:pb-20">
+
+            {/* Page header */}
+            <div className="text-center pb-12 md:pb-20">
+              <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">What's New</h1>
+              <div className="max-w-3xl mx-auto">
+                <p className="text-lg text-slate-400">New updates and improvements to Stellar.</p>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="max-w-3xl mx-auto">
+              <div className="relative">
+                <div className="absolute h-full top-4 left-[2px] w-0.5 bg-slate-800 [mask-image:linear-gradient(0deg,transparent,var(--color-white)_150px,var(--color-white))] -z-10 overflow-hidden after:absolute after:h-4 after:top-0 after:-translate-y-full after:left-0 after:w-0.5 after:bg-[linear-gradient(180deg,transparent,--theme(--color-purple-500/.65)_25%,--theme(--color-purple-200)_50%,--theme(--color-purple-500/.65)_75%,transparent)] after:animate-shine" aria-hidden="true"></div>
+                {allUpdates.map((post, postIndex) => (
+                  <PostItem key={postIndex} {...post} />
+                ))}
+              </div>
+            </div>
+
+            {/* Pagination */}
+            <div className="max-w-3xl mx-auto">
+              <ul className="flex items-center justify-between mt-12 pl-8 md:pl-48">
+                <li>
+                  <span className="btn-sm text-slate-700 transition duration-150 ease-in-out group [background:linear-gradient(var(--color-slate-900),var(--color-slate-900))_padding-box,conic-gradient(var(--color-slate-400),var(--color-slate-700)_25%,var(--color-slate-700)_75%,var(--color-slate-400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none cursor-not-allowed">
+                    <span className="relative inline-flex items-center">
+                      <span className="tracking-normal text-slate-700 mr-1">&lt;-</span> Previous Page
+                    </span>
+                  </span>
+                </li>
+                <li>
+                  <a className="btn-sm text-slate-300 hover:text-white transition duration-150 ease-in-out group [background:linear-gradient(var(--color-slate-900),var(--color-slate-900))_padding-box,conic-gradient(var(--color-slate-400),var(--color-slate-700)_25%,var(--color-slate-700)_75%,var(--color-slate-400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none" href="#0">
+                    <span className="relative inline-flex items-center">
+                      Next Page <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
+                    </span>
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+          </div>
+        </div>
+
       </section>
 
-      <Section>
-        <div className="mx-auto flex max-w-3xl flex-col gap-10">
-          {releases.map((release) => (
-            <article key={release.id} id={release.id} className="rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
-              <header className="flex flex-wrap items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-semibold text-white">
-                    {release.version} — {release.summary}
-                  </h2>
-                  <p className="mt-1 text-xs uppercase tracking-[0.18em] text-white/50">{release.date}</p>
-                </div>
-                <div className="flex items-center gap-2">
-                  {release.tag ? (
-                    <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-semibold text-white/70">
-                      {release.tag}
-                    </span>
-                  ) : null}
-                  <CopyLinkButton anchorId={release.id} />
-                </div>
-              </header>
-              <ul className="mt-5 list-disc space-y-3 pl-5 text-sm text-white/80">
-                {release.notes.map((note) => (
-                  <li key={note}>{note}</li>
-                ))}
-              </ul>
-            </article>
-          ))}
-        </div>
-      </Section>
-
-      <Section
-        eyebrow="Need more detail?"
-        title="Join the rollout mailing list or request a deep dive."
-        description="We share CSP reports, Lighthouse results, and regression notes for every significant change. Hit reply to any changelog email and it goes straight to the engineering team."
-      >
-        <div className="stellar-grid-card bg-white/5">
-          <p className="text-sm text-white/75">Email</p>
-          <a
-            href="mailto:updates@oneearlybird.ai"
-            className="mt-2 inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
-          >
-            updates@oneearlybird.ai
-          </a>
-        </div>
-      </Section>
-    </div>
-  );
+      <Cta />
+    </>
+  )
 }
