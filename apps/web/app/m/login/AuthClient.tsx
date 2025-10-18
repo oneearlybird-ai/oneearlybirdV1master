@@ -4,45 +4,48 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import Link from "next/link";
-import { API_BASE } from "@/lib/config";
-import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
-import { buildGoogleStartUrl, getDashboardPath, getProfileCapturePath } from "@/lib/authPaths";
-import { hasCompletedName } from "@/lib/profile";
+import { buildGoogleStartUrl, getMagicVerifyPath } from "@/lib/authPaths";
+import { apiFetch } from "@/lib/http";
+import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
+import { setActiveAuthFlow } from "@/lib/authFlow";
 
 const LOGIN_EVENT_KEY = "__ob_login";
+const GOOGLE_POPUP_NAME = "oauth-google";
 
-export default function AuthClient({ initialTab }: { initialTab: "login" | "signup" }) {
+type MagicLinkStatus = "idle" | "pending" | "sent" | "error";
+
+type PanelMode = "login" | "signup";
+
+function buildAbsoluteUrl(path: string): string {
+  if (typeof window === "undefined") {
+    return `https://m.oneearlybird.ai${path}`;
+  }
+  const origin = window.location.origin.replace(/\/$/, "");
+  return `${origin}${path}`;
+}
+
+export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
   const router = useRouter();
   const sp = useSearchParams();
-  const [tab, setTab] = useState<"login" | "signup">(initialTab);
+  const [tab, setTab] = useState<PanelMode>(initialTab);
   const loginEmailRef = useRef<HTMLInputElement | null>(null);
   const signupEmailRef = useRef<HTMLInputElement | null>(null);
   const googlePopupMonitorRef = useRef<number | null>(null);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [err, setErr] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  // Signup-specific state
-  const [suEmail, setSuEmail] = useState("");
-  const [suPassword, setSuPassword] = useState("");
-  const [suConfirm, setSuConfirm] = useState("");
-  const [suErr, setSuErr] = useState<string | null>(null);
-  const [suLoading, setSuLoading] = useState(false);
+  const [loginEmail, setLoginEmail] = useState("");
+  const [signupEmail, setSignupEmail] = useState("");
+  const [loginStatus, setLoginStatus] = useState<MagicLinkStatus>("idle");
+  const [signupStatus, setSignupStatus] = useState<MagicLinkStatus>("idle");
+  const [loginMessage, setLoginMessage] = useState<string | null>(null);
+  const [signupMessage, setSignupMessage] = useState<string | null>(null);
   const [googlePending, setGooglePending] = useState(false);
-
-  const clearGooglePopupMonitor = useCallback(() => {
-    if (googlePopupMonitorRef.current !== null) {
-      window.clearInterval(googlePopupMonitorRef.current);
-      googlePopupMonitorRef.current = null;
-    }
-  }, []);
 
   useEffect(() => {
     const handleAuthSuccess = () => {
-      clearGooglePopupMonitor();
+      if (googlePopupMonitorRef.current !== null) {
+        window.clearInterval(googlePopupMonitorRef.current);
+        googlePopupMonitorRef.current = null;
+      }
       setGooglePending(false);
       try {
         localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
@@ -54,164 +57,114 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
     return () => {
       window.removeEventListener("ob:auth:success", handleAuthSuccess);
     };
-  }, [clearGooglePopupMonitor]);
+  }, []);
 
   useEffect(() => {
     return () => {
-      clearGooglePopupMonitor();
+      if (googlePopupMonitorRef.current !== null) {
+        window.clearInterval(googlePopupMonitorRef.current);
+        googlePopupMonitorRef.current = null;
+      }
     };
-  }, [clearGooglePopupMonitor]);
+  }, []);
 
-  function switchTab(next: "login" | "signup") {
+  function switchTab(next: PanelMode) {
     setTab(next);
     const entries = typeof (sp as any)?.entries === "function" ? Array.from((sp as any).entries()) : [];
     const q = new URLSearchParams(entries as any);
     if (next === "signup") q.set("tab", "signup");
     else q.delete("tab");
-    router.replace(`/login${q.toString() ? `?${q.toString()}` : ""}`);
-    // Move focus to the first field of the target panel for better a11y
+    router.replace(`/m/login${q.toString() ? `?${q.toString()}` : ""}`);
     setTimeout(() => {
       if (next === "login") loginEmailRef.current?.focus();
       else signupEmailRef.current?.focus();
     }, 0);
   }
 
-  async function attemptLogin() {
-    setErr(null);
-    setLoading(true);
-    try {
-      const res = await fetch(apiUrl("/auth/login"), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        setErr(res.status === 400 || res.status === 401 ? "login_failed" : "unavailable");
+  const setStatusForIntent = useCallback((intent: PanelMode, status: MagicLinkStatus, message?: string | null) => {
+    if (intent === "login") {
+      setLoginStatus(status);
+      setLoginMessage(message ?? null);
+    } else {
+      setSignupStatus(status);
+      setSignupMessage(message ?? null);
+    }
+  }, []);
+
+  const requestMagicLink = useCallback(
+    async (intent: PanelMode) => {
+      const email = intent === "login" ? loginEmail.trim() : signupEmail.trim();
+      if (!email) {
+        setStatusForIntent(intent, "error", "Enter your email to continue.");
         return;
       }
+      setStatusForIntent(intent, "pending");
       try {
-        localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
-      } catch (error) {
-        console.warn("login_storage_failed", { message: (error as Error)?.message });
-      }
-      const nextPath = await resolvePostAuthPath();
-      redirectTo(nextPath);
-    } catch (_err) {
-      setErr("unavailable");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function onLogin(e: React.FormEvent) {
-    e.preventDefault();
-    if (loading) return;
-    await attemptLogin();
-  }
-
-  function apiUrl(path: string) {
-    const base = (API_BASE || "").replace(/\/+$/, "");
-    if (base) return `${base}${path}`;
-    return `/api/upstream${path}`; // preview/proxy path
-  }
-
-  async function resolvePostAuthPath(): Promise<string> {
-    try {
-      const response = await fetch(apiUrl("/tenants/profile"), {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-        headers: {
-          "cache-control": "no-store",
-        },
-      });
-      if (response.ok) {
-        const data = (await response.json()) as { firstName?: string | null; lastName?: string | null };
-        if (!hasCompletedName(data)) {
-          return getProfileCapturePath();
+        const token = await fetchCsrfToken();
+        const response = await apiFetch("/auth/magic/start", {
+          method: "POST",
+          headers: {
+            "content-type": "application/json",
+            "x-csrf-token": token,
+          },
+          body: JSON.stringify({
+            email,
+            intent: intent === "login" ? "signin" : "signup",
+            redirect: buildAbsoluteUrl(getMagicVerifyPath(intent === "login" ? "signin" : "signup")),
+          }),
+        });
+        if (response.ok) {
+          setStatusForIntent(intent, "sent", "Check your email for a secure link.");
+          try {
+            localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
+          } catch (error) {
+            console.warn("magic_link_storage_failed", { message: (error as Error)?.message });
+          }
+          return;
         }
-      }
-    } catch (error) {
-      console.warn("post_auth_profile_failed", { message: (error as Error)?.message });
-    }
-    return getDashboardPath();
-  }
-
-  async function onSignup(e: React.FormEvent) {
-    e.preventDefault();
-    setSuErr(null);
-    if (!suEmail || !suPassword) {
-      setSuErr("missing_fields");
-      return;
-    }
-    if (suPassword !== suConfirm) {
-      setSuErr("passwords_do_not_match");
-      return;
-    }
-    setSuLoading(true);
-    try {
-      // 1) Create account — accept 200/201 or 409 (already exists)
-      const signRes = await fetch(apiUrl("/auth/signup"), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "include",
-        cache: "no-store",
-        body: JSON.stringify({ email: suEmail, password: suPassword }),
-      });
-      if (!(signRes.status === 200 || signRes.status === 201 || signRes.status === 409)) {
-        setSuErr("signup_failed");
-        return;
-      }
-      // 2) Login to set cookies (three httpOnly cookies set by backend)
-      const logRes = await fetch(apiUrl("/auth/login"), {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        credentials: "include",
-        cache: "no-store",
-        body: JSON.stringify({ email: suEmail, password: suPassword }),
-      });
-      if (!logRes.ok) {
-        setSuErr("login_failed");
-        return;
-      }
-      // 3) Redirect to authenticated area
-      try {
-        localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
+        const payload = await response.json().catch(() => ({}));
+        const errorMessage = typeof payload?.message === "string" ? payload.message : "We couldn’t send the link. Try again.";
+        setStatusForIntent(intent, "error", errorMessage);
       } catch (error) {
-        console.warn("signup_login_storage_failed", { message: (error as Error)?.message });
+        console.error("magic_link_request_failed", { message: (error as Error)?.message });
+        setStatusForIntent(intent, "error", "We couldn’t reach the server. Please try again.");
+        invalidateCsrfToken();
       }
-      const nextPath = await resolvePostAuthPath();
-      redirectTo(nextPath);
-    } catch (_e) {
-      setSuErr("unavailable");
-    } finally {
-      setSuLoading(false);
-    }
-  }
+    },
+    [loginEmail, signupEmail, setStatusForIntent],
+  );
 
-  function startGoogleSignIn() {
-    if (googlePending) return;
-    const url = buildGoogleStartUrl();
-    setGooglePending(true);
-    clearGooglePopupMonitor();
-    const popup = openPopup(url, "oauth-google", { w: 540, h: 680 });
-    if (!popup) {
-      setGooglePending(false);
-      window.location.href = url;
-      return;
-    }
-    googlePopupMonitorRef.current = window.setInterval(() => {
-      if (!popup || popup.closed) {
-        clearGooglePopupMonitor();
+  const startGoogle = useCallback(
+    (intent: "signin" | "signup") => {
+      if (googlePending) return;
+      const url = buildGoogleStartUrl(intent);
+      setActiveAuthFlow(intent === "signup" ? "google-signup" : "google-signin");
+      setGooglePending(true);
+      if (googlePopupMonitorRef.current !== null) {
+        window.clearInterval(googlePopupMonitorRef.current);
+      }
+      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "oauth:success" });
+      if (!popup) {
         setGooglePending(false);
+        window.location.href = url;
+        return;
       }
-    }, 500);
-  }
+      googlePopupMonitorRef.current = window.setInterval(() => {
+        if (!popup || popup.closed) {
+          if (googlePopupMonitorRef.current !== null) {
+            window.clearInterval(googlePopupMonitorRef.current);
+            googlePopupMonitorRef.current = null;
+          }
+          setGooglePending(false);
+        }
+      }, 500);
+    },
+    [googlePending],
+  );
 
-  const GoogleBtn = ({ label }: { label: string }) => (
+  const GoogleBtn = ({ label, intent }: { label: string; intent: "signin" | "signup" }) => (
     <button
-      onClick={startGoogleSignIn}
+      onClick={() => startGoogle(intent)}
       disabled={googlePending}
       className="flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#DADCE0] bg-white font-medium text-[#3C4043] transition-colors duration-150 hover:bg-white/90 hover:shadow-sm focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#4285F4] disabled:opacity-60"
       aria-label={label}
@@ -225,9 +178,26 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
     </button>
   );
 
+  const handleSubmitMagic = (event: React.FormEvent, intent: PanelMode) => {
+    event.preventDefault();
+    if (intent === "login" && loginStatus === "pending") return;
+    if (intent === "signup" && signupStatus === "pending") return;
+    void requestMagicLink(intent);
+  };
+
+  useEffect(() => {
+    setLoginMessage(null);
+    setLoginStatus("idle");
+  }, [loginEmail]);
+
+  useEffect(() => {
+    setSignupMessage(null);
+    setSignupStatus("idle");
+  }, [signupEmail]);
+
   return (
     <div className="bg-neutral-950 text-white">
-      <section className="mx-auto max-w-lg px-6 py-16 md:py-24">
+      <section className="mx-auto max-w-lg px-4 py-12">
         <div className="flex gap-1 rounded-2xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Authentication tabs">
           <button
             onClick={() => switchTab("login")}
@@ -254,55 +224,45 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
         <div id="panel-login" role="tabpanel" aria-labelledby="tab-login" hidden={tab !== "login"} className="mt-8">
           {tab === "login" && (
             <>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Welcome back</h1>
-              <p className="mt-2 text-white/70">Use your email and password, or Google if enabled.</p>
+              <h1 className="text-3xl font-semibold tracking-tight">Welcome back</h1>
+              <p className="mt-2 text-white/70">We’ll email you a magic link to sign in.</p>
 
-              <form onSubmit={onLogin} className="mt-8 space-y-4" aria-label="Email and password sign-in">
+              <form onSubmit={(event) => handleSubmitMagic(event, "login")} className="mt-8 space-y-4" aria-label="Email sign-in">
                 <input
                   name="email"
                   type="email"
                   required
                   placeholder="you@business.com"
-                  value={email}
-                  onChange={(event) => setEmail(event.target.value)}
+                  value={loginEmail}
+                  onChange={(event) => setLoginEmail(event.target.value)}
                   className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
                   autoComplete="email"
                   aria-label="Email"
                   ref={loginEmailRef}
                 />
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  placeholder="Your password"
-                  value={password}
-                  onChange={(event) => setPassword(event.target.value)}
-                  className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
-                  autoComplete="current-password"
-                  aria-label="Password"
-                />
                 <button
                   type="submit"
-                  disabled={loading}
+                  disabled={loginStatus === "pending"}
                   className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-60"
-                  aria-busy={loading}
+                  aria-busy={loginStatus === "pending"}
                 >
-                  {loading ? "Signing in…" : "Sign in"}
+                  {loginStatus === "pending" ? "Sending…" : "Email me a magic link"}
                 </button>
+                {loginMessage ? (
+                  <p className={`text-sm ${loginStatus === "error" ? "text-rose-300" : "text-white/70"}`}>{loginMessage}</p>
+                ) : null}
               </form>
 
               <div className="mt-4">
-                <GoogleBtn label="Continue with Google" />
+                <GoogleBtn label="Continue with Google" intent="signin" />
               </div>
 
               <div className="mt-3 text-xs text-white/60">
-                <span>Forgot your password? </span>
-                <Link href="/support" className="underline">
+                <span>Need a hand? </span>
+                <Link href="/m/support" className="underline">
                   Contact support
                 </Link>
               </div>
-
-              {err ? <p className="mt-3 text-sm text-red-300">Error: {err}</p> : null}
             </>
           )}
         </div>
@@ -310,10 +270,10 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
         <div id="panel-signup" role="tabpanel" aria-labelledby="tab-signup" hidden={tab !== "signup"} className="mt-8">
           {tab === "signup" && (
             <>
-              <h1 className="text-3xl font-semibold tracking-tight md:text-4xl">Create your account</h1>
-              <p className="mt-2 text-white/70">Set your email and password to get started.</p>
+              <h1 className="text-3xl font-semibold tracking-tight">Create your account</h1>
+              <p className="mt-2 text-white/70">Start with your email. We’ll send a magic link to verify it.</p>
 
-              <form className="mt-8 space-y-4" onSubmit={onSignup} aria-label="Create account">
+              <form className="mt-8 space-y-4" onSubmit={(event) => handleSubmitMagic(event, "signup")} aria-label="Create account">
                 <input
                   name="email"
                   type="email"
@@ -323,45 +283,28 @@ export default function AuthClient({ initialTab }: { initialTab: "login" | "sign
                   autoComplete="email"
                   aria-label="Email"
                   ref={signupEmailRef}
-                  value={suEmail}
-                  onChange={(event) => setSuEmail(event.target.value)}
-                />
-                <input
-                  name="password"
-                  type="password"
-                  required
-                  placeholder="Create a password"
-                  className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
-                  autoComplete="new-password"
-                  aria-label="Password"
-                  value={suPassword}
-                  onChange={(event) => setSuPassword(event.target.value)}
-                />
-                <input
-                  name="confirm"
-                  type="password"
-                  required
-                  placeholder="Confirm password"
-                  className="w-full rounded-xl border border-white/20 bg-transparent px-4 py-3 text-white outline-none placeholder-white/40"
-                  autoComplete="new-password"
-                  aria-label="Confirm password"
-                  value={suConfirm}
-                  onChange={(event) => setSuConfirm(event.target.value)}
+                  value={signupEmail}
+                  onChange={(event) => setSignupEmail(event.target.value)}
                 />
                 <button
                   type="submit"
-                  disabled={suLoading}
+                  disabled={signupStatus === "pending"}
                   className="w-full rounded-xl bg-white px-4 py-3 font-medium text-black hover:bg-white/90 disabled:opacity-60"
-                  aria-busy={suLoading}
+                  aria-busy={signupStatus === "pending"}
                 >
-                  {suLoading ? "Creating account…" : "Create account"}
+                  {signupStatus === "pending" ? "Sending…" : "Send verification link"}
                 </button>
-                {suErr ? <p className="text-sm text-red-300">Error: {suErr}</p> : null}
+                {signupMessage ? (
+                  <p className={`text-sm ${signupStatus === "error" ? "text-rose-300" : "text-white/70"}`}>{signupMessage}</p>
+                ) : null}
               </form>
 
               <div className="mt-4">
-                <GoogleBtn label="Continue with Google" />
+                <GoogleBtn label="Create with Google" intent="signup" />
               </div>
+              <p className="mt-4 text-xs text-white/60">
+                After verification we’ll guide you through a quick setup to personalize EarlyBird AI.
+              </p>
             </>
           )}
         </div>

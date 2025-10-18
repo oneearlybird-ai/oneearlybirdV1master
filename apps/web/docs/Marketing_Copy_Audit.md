@@ -2,7 +2,7 @@
 
 | Route | Copy Updated to EarlyBird | Structure Preserved | Notes |
 |-------|---------------------------|---------------------|-------|
-| `/` (desktop) | ✅ Hero, benefits, steps, testimonials, CTA, pricing teaser updated with EarlyBird positioning. | ✅ Card grids, marquee, reveal animations unchanged. | `AuthModalTriggerButton` + `LogoBadge` untouched. |
+| `/` (desktop) | ✅ Hero, benefits, steps, testimonials, CTA, pricing teaser updated with EarlyBird positioning. | ✅ Card grids, marquee, reveal animations unchanged. | `AuthModalTriggerButton` remains; header now uses the new brand icon/wordmark (`/brand/icon.svg`, `/brand/wordmark.svg`). |
 | `/preview` | ✅ Mirrored copy aligned with home hero/CTA/testimonials. | ✅ Preview layout and gradient banner intact. | Pricing teaser uses same plan labels. |
 | `/pricing` | ✅ Tier blurbs + FAQ refreshed (carrier ownership, trial rollover, usage billing). | ✅ `PLAN_DEFINITIONS` left as-is; only JSX text touched. | Tooltip hints preserved. |
 | `/m` | ✅ Mobile hero & step cards reflect EarlyBird workflows. | ✅ Mobile card structure + safe-area padding maintained. | CTA destinations unchanged. |

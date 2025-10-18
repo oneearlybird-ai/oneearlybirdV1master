@@ -6,7 +6,8 @@ import AuthModal from "@/components/auth/AuthModal";
 import { resolvePopupMessage } from "@/lib/popup";
 import { apiFetch } from "@/lib/http";
 import { redirectTo } from "@/lib/clientNavigation";
-import { getDashboardPath } from "@/lib/authPaths";
+import { getAccountCreatePath, getDashboardPath, getProfileCapturePath } from "@/lib/authPaths";
+import { consumeActiveAuthFlow, type AuthFlowKind } from "@/lib/authFlow";
 
 export type AuthModalMode = "signin" | "signup";
 
@@ -115,8 +116,12 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const allowedOrigins = new Set(["https://oneearlybird.ai", "https://m.oneearlybird.ai"]);
-    const dispatchAppEvent = (type: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned") => {
+    const currentOrigin = window.location.origin;
+    const allowedOrigins = new Set<string>(["https://oneearlybird.ai", "https://m.oneearlybird.ai", currentOrigin]);
+
+    const dispatchAppEvent = (
+      type: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned",
+    ) => {
       const eventName =
         type === "auth:success"
           ? "ob:auth:success"
@@ -127,64 +132,88 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
               : "ob:billing:portal:returned";
       window.dispatchEvent(new CustomEvent(eventName));
     };
-    const handleNormalizedEvent = (
-      normalized: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned",
-    ) => {
-      resolvePopupMessage(normalized);
-      if (normalized === "auth:success") {
-        void warmDashboardData();
-        close();
-        dispatchAppEvent(normalized);
-        if (typeof window !== "undefined") {
-          const targetPath = getDashboardPath();
-          const currentPath = window.location.pathname || "";
-          if (currentPath !== targetPath) {
-            redirectTo(targetPath);
-          }
-        }
-        return;
-      }
-      if (normalized === "auth:logout") {
-        close();
-        dispatchAppEvent(normalized);
-        return;
-      }
-      if (normalized === "billing:checkout:success") {
-        void refreshBillingState();
-      }
-      dispatchAppEvent(normalized);
+
+    const resolveNextPath = (flow: AuthFlowKind | null): string => {
+      if (!flow) return getDashboardPath();
+      if (flow === "google-signup") return getProfileCapturePath();
+      if (flow === "google-signin") return getDashboardPath();
+      if (flow === "email-signup") return getAccountCreatePath();
+      if (flow === "email-signin") return getDashboardPath();
+      return getDashboardPath();
     };
+
+    const handleOAuthSuccess = () => {
+      resolvePopupMessage("oauth:success");
+      const flow = consumeActiveAuthFlow();
+      void warmDashboardData();
+      close();
+      dispatchAppEvent("auth:success");
+      const targetPath = resolveNextPath(flow?.flow ?? null);
+      const currentPath = window.location.pathname || "";
+      if (currentPath !== targetPath) {
+        redirectTo(targetPath);
+      }
+    };
+
+    const handleAuthLogout = () => {
+      resolvePopupMessage("auth:logout");
+      close();
+      dispatchAppEvent("auth:logout");
+    };
+
+    const handleBillingCheckoutSuccess = () => {
+      resolvePopupMessage("billing:checkout:success");
+      void refreshBillingState();
+      dispatchAppEvent("billing:checkout:success");
+    };
+
+    const handleBillingPortalReturned = () => {
+      resolvePopupMessage("billing:portal:returned");
+      dispatchAppEvent("billing:portal:returned");
+    };
+
+    const handleNormalizedEvent = (type: string) => {
+      switch (type) {
+        case "oauth:success":
+        case "auth:success":
+          handleOAuthSuccess();
+          break;
+        case "auth:logout":
+          handleAuthLogout();
+          break;
+        case "billing:checkout:success":
+        case "billing:trial:success":
+          handleBillingCheckoutSuccess();
+          break;
+        case "billing:portal:returned":
+          handleBillingPortalReturned();
+          break;
+        default:
+          break;
+      }
+    };
+
     const handlePostMessage = (event: MessageEvent) => {
       if (!allowedOrigins.has(event.origin)) return;
-      const data = event.data as { type?: string } | null;
-      const type = data?.type;
-      if (
-        type === "auth:success" ||
-        type === "auth:logout" ||
-        type === "billing:checkout:success" ||
-        type === "billing:trial:success" ||
-        type === "billing:portal:returned"
-      ) {
-        const normalized: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned" =
-          type === "billing:trial:success" ? "billing:checkout:success" : type;
-        handleNormalizedEvent(normalized);
+      const { data } = event;
+      if (typeof data === "string") {
+        handleNormalizedEvent(data);
+        return;
+      }
+      const type = (data as { type?: string } | null)?.type;
+      if (typeof type === "string") {
+        handleNormalizedEvent(type);
       }
     };
+
     const handleFallback = (event: Event) => {
       const detail = (event as CustomEvent<{ type?: string }>).detail;
       const type = detail?.type;
-      if (
-        type === "auth:success" ||
-        type === "auth:logout" ||
-        type === "billing:checkout:success" ||
-        type === "billing:trial:success" ||
-        type === "billing:portal:returned"
-      ) {
-        const normalized: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned" =
-          type === "billing:trial:success" ? "billing:checkout:success" : type;
-        handleNormalizedEvent(normalized);
+      if (typeof type === "string") {
+        handleNormalizedEvent(type);
       }
     };
+
     window.addEventListener("message", handlePostMessage);
     window.addEventListener("popup:fallback", handleFallback as EventListener);
     return () => {

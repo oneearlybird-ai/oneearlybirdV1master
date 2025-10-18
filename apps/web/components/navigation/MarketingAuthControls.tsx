@@ -111,17 +111,20 @@ export default function MarketingAuthControls({ variant = "desktop", onNavigate 
       >
         Sign in
       </button>
-      <Link
-        href="/signup"
-        onClick={onNavigate}
+      <button
+        type="button"
+        onClick={() => {
+          open("signup");
+          onNavigate?.();
+        }}
         className={
           variant === "desktop"
             ? "inline-flex items-center justify-center rounded-xl bg-white px-5 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
             : "w-full inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
         }
       >
-        Start free
-      </Link>
+        Start trial
+      </button>
     </div>
   );
 }

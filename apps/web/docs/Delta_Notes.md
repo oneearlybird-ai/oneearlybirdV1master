@@ -17,3 +17,10 @@
 ## Proof Artifacts
 - Lighthouse JSON exports for `/` and `/pricing` (desktop + mobile) stored here; CLS < 0.01 on all runs.
 - `Headers_Proofs.txt` captures curl header checks for apex + `/m`, plus upstream proxy behavior (401 expected in prod when bearer token missing).
+
+### 2025-10-18 — Auth & Branding Refresh
+- Google OAuth now returns to `/auth/oauth/google/{signin|signup}` callback pages that post `oauth:success` and close the popup.
+- Email auth uses `/auth/magic/start` and `/auth/magic/verify` magic-link flow; `/account/create` collects name/username/password post-verification.
+- `MarketingAuthControls`, marketing header, and mobile navigation consume `useAuthSession` to hide sign-in buttons when authenticated.
+- Added `/brand/icon.svg`, `/brand/wordmark.svg`, `/brand/favicon.svg`; metadata icons and header logo updated accordingly.
+- New `AccountDropdown` addresses desktop dropdown width bug with `w-64` menu anchored to the trigger.
