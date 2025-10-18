@@ -26,17 +26,13 @@ function parseFrontmatter(fileContent: string) {
 }
 
 function getMDXFiles(dir: string) {
-  const baseDir = path.resolve(dir);
+  const baseDir = fs.realpathSync(dir);
+  const absolutePrefix = `${baseDir}${path.sep}`;
   return fs
-    .readdirSync(baseDir)
-    .filter((file) => {
-      const filePath = path.resolve(baseDir, file);
-      if (!filePath.startsWith(baseDir + path.sep)) {
-        return false;
-      }
-      return fs.statSync(filePath).isFile() && path.extname(filePath) === ".mdx";
-    })
-    .map((file) => path.resolve(baseDir, file));
+    .readdirSync(baseDir, { withFileTypes: true })
+    .filter((entry) => entry.isFile() && entry.name.endsWith(".mdx"))
+    .map((entry) => `${absolutePrefix}${entry.name}`)
+    .filter((filePath) => filePath.startsWith(absolutePrefix));
 }
 
 function readMDXFile(filePath: string) {
