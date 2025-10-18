@@ -2,7 +2,7 @@
 
 import FooterLinks from "@/components/FooterLinks";
 
-export default function StellarFooter() {
+export default function MarketingFooter() {
   return (
     <footer className="relative border-t border-white/5 bg-[#05050b]/95">
       <div className="absolute inset-0 -z-10 bg-gradient-to-t from-white/5 via-white/0 to-transparent" />

@@ -1,7 +1,7 @@
 export const dynamic = "force-static";
 
 import CopyLinkButton from "@/components/CopyLinkButton";
-import Section from "@/components/stellar/Section";
+import Section from "@/components/marketing/Section";
 
 const sections = [
   {
@@ -68,7 +68,7 @@ export default function DocsPage() {
           <span className="stellar-pill">Documentation</span>
           <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">Everything you need to launch EarlyBird.</h1>
           <p className="mt-6 text-base text-white/70 md:text-lg">
-            These docs match the Stellar rollout: cookie-auth, security headers, dashboard guardrails, and onboarding tasks. Bookmark this page —
+            These docs match the EarlyBird AI rollout: cookie-auth, security headers, dashboard guardrails, and onboarding tasks. Bookmark this page —
             we append dated updates as the platform evolves.
           </p>
           <nav className="mt-8 flex flex-wrap gap-3 text-sm text-white/70" aria-label="On this page">
@@ -117,7 +117,7 @@ export default function DocsPage() {
         id="guardrails"
         eyebrow="Security & guardrails"
         title="What stays true across marketing, auth, and dashboard surfaces"
-        description="The Stellar port keeps the same contracts you rely on today. When we flip CSP to enforcement, these controls remain identical."
+        description="The EarlyBird AI port keeps the same contracts you rely on today. When we flip CSP to enforcement, these controls remain identical."
       >
         <div className="stellar-grid-card bg-white/5">
           <ul className="list-disc space-y-2 pl-5 text-sm text-white/80">

@@ -1,5 +1,5 @@
 export const metadata = {
-  title: 'Integrations Post - Stellar',
+  title: "Integrations Post - EarlyBird AI",
   description: 'Page description',
 }
 
@@ -67,14 +67,14 @@ export default function IntegrationsSingle() {
                       <div className="prose max-w-none text-slate-400 prose-headings:text-slate-50 prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-p:leading-relaxed prose-a:text-purple-500 prose-a:no-underline hover:prose-a:underline prose-strong:text-slate-50 prose-strong:font-medium prose-blockquote:pl-5 prose-blockquote:xl:-ml-5 prose-blockquote:border-l-2 prose-blockquote:border-purple-500 prose-blockquote:font-medium prose-blockquote:text-slate-300 prose-blockquote:italic">
                         <h2>Overview</h2>
                         <p>
-                          This powerful GitHub integration keeps your work in sync in both applications. It links features to Pull Requests so that details update automatically from In Progress to Done as the PR moves from drafted to merged - there is no need to update the issue in Stellar at all.
+                          This powerful GitHub integration keeps your work in sync in both applications. It links features to Pull Requests so that details update automatically from In Progress to Done as the PR moves from drafted to merged - there is no need to chase status updates across tools.
                         </p>
                         <p>
                           Move even faster by using a keyboard shortcut that creates the issue's git branch name, assigns the issue and moves the issue to In Progress in one step. This integration supports <a href="#0">GitHub Enterprise</a>.
                         </p>
                         <h2>How it works</h2>
                         <p>
-                          Configure the GitHub integration <strong className="text-slate-50 font-medium">in a couple of minutes</strong> by authenticating and selecting which repos to connect to Stellar. Once you do, anyone in the workspace can start linking PRs.
+                          Configure the GitHub integration <strong className="text-slate-50 font-medium">in a couple of minutes</strong> by authenticating and selecting which repos to connect to EarlyBird AI. Once you do, anyone on the team can start linking calls and follow-ups to the right workflows.
                         </p>
                         <p>
                           Link PRs to issues in a few ways. Use the issue ID in the branch name or PR title before creating the PR. To link multiple PRs, or link issues after creating the PR, use magic words along with the issue ID in the PR description.

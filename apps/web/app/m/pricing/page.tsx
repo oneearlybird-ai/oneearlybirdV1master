@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Pricing - Stellar',
-  description: 'Page description',
-}
+  title: "Pricing - EarlyBird AI",
+  description: "Choose the call volume that fits your team and add seats as you grow.",
+};
 
 import PricingSection from './pricing-section'
 import Features from '@/components/features-05'

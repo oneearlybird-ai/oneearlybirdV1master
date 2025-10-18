@@ -159,3 +159,16 @@ Documents/
 06:44.380]
 
 !apps/web/public/
+# Local artifacts / accidental dumps
+routing/
+notify/
+downloaded-templates/
+*.zip
+*.tar
+*.tar.gz
+# Vercel local output
+.vercel/
+# Mac & editor junk
+.DS_Store
+*.swp
+*.swo

@@ -24,7 +24,7 @@ function baseClasses(variant: Variant) {
   return "flex items-center gap-3";
 }
 
-export default function StellarAuthControls({ variant = "desktop", onNavigate }: Props) {
+export default function MarketingAuthControls({ variant = "desktop", onNavigate }: Props) {
   const { status, markUnauthenticated } = useAuthSession();
   const { open } = useAuthModal();
   const [signingOut, setSigningOut] = useState(false);

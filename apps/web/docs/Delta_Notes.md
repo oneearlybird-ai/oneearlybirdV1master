@@ -1,7 +1,7 @@
 # Delta Notes
 
 ## CTA Link Audit
-- Hero primary CTA (`Start free` / `Start free trial`) → modal signup flow (Stellar auth controls).
+- Hero primary CTA (`Start free` / `Start free trial`) → modal signup flow (EarlyBird auth controls).
 - Secondary CTA (`Book a live demo`) → `/signup` as before.
 - Pricing support CTAs remain `/support` + `mailto:support@earlybird.ai`.
 - Mobile bottom nav (logged out) → Home, How it works hash, `/m/pricing`, modal `Sign in`; logged-in tabs → `/m/dashboard` routes.

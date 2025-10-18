@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'Home - Stellar',
-  description: 'Page description',
-}
+  title: "Home - EarlyBird AI",
+  description: "Turn missed calls into booked revenue with an AI receptionist that sounds human.",
+};
 
 import Hero from '@/components/hero'
 import Clients from '@/components/clients'

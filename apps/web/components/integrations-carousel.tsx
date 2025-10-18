@@ -79,7 +79,7 @@ export default function IntegrationsCarousel() {
                 <Link className="font-semibold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 group-hover:before:absolute group-hover:before:inset-0" href="/integrations/single-post">Retool</Link>
               </div>
               <div className="grow mb-4">
-                <div className="text-sm text-slate-400">Stellar makes it easy to build extensions by providing an authentication provider that handles the OAuth flow.</div>
+                <div className="text-sm text-slate-400">EarlyBird AI connects to your stack with secure OAuth flows and keeps tokens fresh automatically.</div>
               </div>
               <div className="flex justify-between">
                 <div className="flex -space-x-3 -ml-0.5">
@@ -108,7 +108,7 @@ export default function IntegrationsCarousel() {
                 <Link className="font-semibold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 group-hover:before:absolute group-hover:before:inset-0" href="/integrations/single-post">Zapier</Link>
               </div>
               <div className="grow mb-4">
-                <div className="text-sm text-slate-400">Stellar makes it easy to build extensions by providing an authentication provider that handles the OAuth flow.</div>
+                <div className="text-sm text-slate-400">EarlyBird AI connects to your stack with secure OAuth flows and keeps tokens fresh automatically.</div>
               </div>
               <div className="flex justify-between">
                 <div className="flex -space-x-3 -ml-0.5">
@@ -136,7 +136,7 @@ export default function IntegrationsCarousel() {
                 <Link className="font-semibold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 group-hover:before:absolute group-hover:before:inset-0" href="/integrations/single-post">Airtable</Link>
               </div>
               <div className="grow mb-4">
-                <div className="text-sm text-slate-400">Stellar makes it easy to build extensions by providing an authentication provider that handles the OAuth flow.</div>
+                <div className="text-sm text-slate-400">EarlyBird AI connects to your stack with secure OAuth flows and keeps tokens fresh automatically.</div>
               </div>
               <div className="flex justify-between">
                 <div className="flex -space-x-3 -ml-0.5">
@@ -165,7 +165,7 @@ export default function IntegrationsCarousel() {
                 <Link className="font-semibold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 group-hover:before:absolute group-hover:before:inset-0" href="/integrations/single-post">Jira</Link>
               </div>
               <div className="grow mb-4">
-                <div className="text-sm text-slate-400">Stellar makes it easy to build extensions by providing an authentication provider that handles the OAuth flow.</div>
+                <div className="text-sm text-slate-400">EarlyBird AI connects to your stack with secure OAuth flows and keeps tokens fresh automatically.</div>
               </div>
               <div className="flex justify-between">
                 <div className="flex -space-x-3 -ml-0.5">
@@ -194,7 +194,7 @@ export default function IntegrationsCarousel() {
                 <Link className="font-semibold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 group-hover:before:absolute group-hover:before:inset-0" href="/integrations/single-post">GitLab</Link>
               </div>
               <div className="grow mb-4">
-                <div className="text-sm text-slate-400">Stellar makes it easy to build extensions by providing an authentication provider that handles the OAuth flow.</div>
+                <div className="text-sm text-slate-400">EarlyBird AI connects to your stack with secure OAuth flows and keeps tokens fresh automatically.</div>
               </div>
               <div className="flex justify-between">
                 <div className="flex -space-x-3 -ml-0.5">

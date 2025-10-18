@@ -1,6 +1,6 @@
 export const dynamic = "force-dynamic";
 
-import Section from "@/components/stellar/Section";
+import Section from "@/components/marketing/Section";
 
 type Probe = { ok: boolean; status: number };
 

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import Link from "next/link";
 import type { NavItem } from "./types";
-import StellarAuthControls from "@/components/navigation/StellarAuthControls";
+import MarketingAuthControls from "@/components/navigation/MarketingAuthControls";
 
 type MobileMenuProps = {
   items: NavItem[];
@@ -46,7 +46,7 @@ export default function MobileMenu({ items, onClose }: MobileMenuProps) {
         ))}
       </nav>
       <div className="mt-6">
-        <StellarAuthControls variant="mobile" onNavigate={onClose} />
+        <MarketingAuthControls variant="mobile" onNavigate={onClose} />
       </div>
     </div>
   );

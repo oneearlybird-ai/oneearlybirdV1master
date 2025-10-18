@@ -1,7 +1,7 @@
 export const dynamic = "force-static";
 
 import Link from "next/link";
-import Section from "@/components/stellar/Section";
+import Section from "@/components/marketing/Section";
 import PortingFormClient from "./PortingFormClient";
 
 export const metadata = {

@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useMemo, useState } from "react";
 import BrandMark from "./BrandMark";
-import StellarAuthControls from "@/components/navigation/StellarAuthControls";
+import MarketingAuthControls from "@/components/navigation/MarketingAuthControls";
 import MobileMenu from "./MobileMenu";
 import type { NavItem } from "./types";
 
@@ -17,7 +17,7 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/support", label: "Support" },
 ];
 
-export default function StellarHeader() {
+export default function MarketingHeader() {
   const pathname = usePathname() || "/";
   const [menuOpen, setMenuOpen] = useState(false);
 
@@ -46,7 +46,7 @@ export default function StellarHeader() {
           })}
         </nav>
         <div className="hidden lg:flex lg:items-center lg:gap-4">
-          <StellarAuthControls />
+          <MarketingAuthControls />
         </div>
         <button
           type="button"

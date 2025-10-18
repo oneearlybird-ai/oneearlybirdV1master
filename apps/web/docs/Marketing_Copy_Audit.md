@@ -13,6 +13,6 @@
 | `/status` | ✅ Messaging matches EarlyBird monitoring/security stance. | ✅ | No changes needed. |
 
 ## Additional Checks
-- Searched for `Stellar` references (none remain outside component names).
-- CTA link set (hero, pricing, nav, footer) matches Stellar template targets.
+- Searched for legacy template references; none remain in copy or component names.
+- CTA link set (hero, pricing, nav, footer) matches EarlyBird marketing targets.
 - Plan teaser labels stay in sync with `PLAN_DEFINITIONS` (`Starter`, `Professional`, `Growth`, `Enterprise`).

@@ -1,7 +1,7 @@
 export const metadata = {
-  title: 'About - Stellar',
-  description: 'Page description',
-}
+  title: "About - EarlyBird AI",
+  description: "Learn how EarlyBird AI keeps your phones answered and customers delighted.",
+};
 
 import Hero from '@/components/hero-about'
 import Story from '@/components/story'

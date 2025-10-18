@@ -14,7 +14,7 @@ export default function Customers() {
   const items = [
     {
       img: CustomerImg01,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Mike Smets',
       twitter: {
         handle: '@MikeSmets',
@@ -23,7 +23,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg02,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Mike Bryan',
       twitter: {
         handle: '@mike0point7',
@@ -32,7 +32,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg03,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Liz Park',
       twitter: {
         handle: '@liz-park82',
@@ -41,7 +41,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg04,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Jessie Maison',
       twitter: {
         handle: '@jessiem9',
@@ -50,7 +50,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg05,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Devani Janssen',
       twitter: {
         handle: '@deva07p',
@@ -59,7 +59,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg06,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Mark Gerkules',
       twitter: {
         handle: '@mark-gerk',
@@ -68,7 +68,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg07,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Andrey Propenk',
       twitter: {
         handle: '@andrey-prok',
@@ -77,7 +77,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg08,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Jay Master',
       twitter: {
         handle: '@masterpro',
@@ -86,7 +86,7 @@ export default function Customers() {
     },
     {
       img: CustomerImg09,
-      quote: "I love Stellar, is super easy to use with top notch features. My favourites are the affiliates and the lovely login box that converts like magic.",
+      quote: "EarlyBird AI sounds human, books real jobs, and gives our team transcripts we can trust.",
       name: 'Steve Wolf',
       twitter: {
         handle: '@imsteve',
