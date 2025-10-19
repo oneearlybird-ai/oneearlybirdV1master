@@ -25,10 +25,7 @@ export default function Cta() {
             <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">
               Ready to take control of your business?
             </h2>
-            <p className="text-lg text-slate-400 mb-8">
-              Sign up today and stop missing calls tomorrow. EarlyBird greets every caller, books the visit, and syncs
-              the transcript back to your team automatically.
-            </p>
+            <p className="text-lg text-slate-400 mb-8">Sign up today and stop missing calls tomorrow.</p>
             <div>
               <a className="btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white transition duration-150 ease-in-out group" href="#0">
                 Get Started <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
