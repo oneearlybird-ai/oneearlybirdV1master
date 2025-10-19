@@ -209,7 +209,7 @@ export function AccountCreateForm() {
           {successMessage ? <p className="text-sm text-emerald-300">{successMessage}</p> : null}
           <button
             type="submit"
-            disabled={pending}
+            disabled={pending || passwordMismatch}
             className="w-full rounded-xl bg-white px-4 py-3 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-60"
             aria-busy={pending}
           >

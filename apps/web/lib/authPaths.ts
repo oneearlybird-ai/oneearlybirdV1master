@@ -39,6 +39,15 @@ export function getAccountCreatePath(): string {
   return mobileContext ? "/m/account/create" : "/account/create";
 }
 
+export function getAccountSettingsPath(tab?: string): string {
+  const hostname = getCurrentHostname();
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+  const base = mobileContext ? "/m/dashboard/settings" : "/dashboard/settings";
+  if (!tab) return base;
+  return `${base}?tab=${encodeURIComponent(tab)}`;
+}
+
 export function getMagicVerifyPath(intent: "signin" | "signup"): string {
   const hostname = getCurrentHostname();
   const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";

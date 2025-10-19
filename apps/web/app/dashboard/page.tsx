@@ -12,6 +12,8 @@ import PlanActionButtons from "@/components/PlanActionButtons";
 import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
+import { getAccountSettingsPath } from "@/lib/authPaths";
+import { redirectTo } from "@/lib/clientNavigation";
 import { toast } from "@/components/Toasts";
 import type { PlanDefinition } from "@/lib/plans";
 
@@ -363,16 +365,12 @@ export default function DashboardPage() {
     if (typeof window === "undefined") return undefined;
     const handleCheckoutSuccess = () => {
       setWizardDismissed(false);
-      if (needsBusinessSetup) {
-        setWizardOpen(true);
-      }
+      redirectTo(getAccountSettingsPath("business"));
     };
     const handleTrialSuccess = () => {
       setWizardDismissed(false);
       toast("Starting trial…", "success");
-      if (needsBusinessSetup) {
-        setWizardOpen(true);
-      }
+      redirectTo(getAccountSettingsPath("business"));
       setTrialModalOpen(false);
       setTrialPlan(null);
       void fetchAll();
@@ -383,7 +381,7 @@ export default function DashboardPage() {
       window.removeEventListener("ob:billing:checkout:success", handleCheckoutSuccess);
       window.removeEventListener("ob:billing:trial:success", handleTrialSuccess);
     };
-  }, [fetchAll, needsBusinessSetup]);
+  }, [fetchAll]);
 
   const businessSeed = useMemo(() => {
     if (!profile) return null;

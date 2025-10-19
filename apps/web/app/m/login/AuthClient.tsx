@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
@@ -273,6 +274,9 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
   return (
     <div className="bg-neutral-950 text-white">
       <section className="mx-auto max-w-md px-4 py-12">
+        <div className="mb-6 flex justify-center">
+          <Image src="/brand/wordmark.svg" alt="EarlyBird AI" width={150} height={30} priority />
+        </div>
         <div className="flex gap-1 rounded-2xl border border-white/15 bg-white/5 p-1" role="tablist" aria-label="Authentication tabs">
           <button
             onClick={() => switchTab("login")}

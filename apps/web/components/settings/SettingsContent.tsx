@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { apiFetch } from "@/lib/http";
 import { fetchCsrfToken } from "@/lib/security";
@@ -21,8 +22,17 @@ type SettingsContentProps = {
   variant?: "desktop" | "mobile";
 };
 
+function maskSensitivePhone(value: string | null | undefined): string {
+  if (!value) return "—";
+  const digits = value.replace(/\D/g, "");
+  if (!digits) return "—";
+  const lastFour = digits.slice(-4).padStart(4, "*");
+  return `***-***-${lastFour}`;
+}
+
 export default function SettingsContent({ variant = "desktop" }: SettingsContentProps) {
   const { profile, refresh } = useAuthSession();
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState<"account" | "security" | "business">("account");
   const accountDefaults = useMemo<AccountFormState>(
     () => ({
@@ -35,15 +45,30 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
     [profile?.contactEmail, profile?.contactPhone, profile?.displayName, profile?.email, profile?.firstName, profile?.lastName],
   );
   const [accountForm, setAccountForm] = useState<AccountFormState>(accountDefaults);
-  useEffect(() => {
-    setAccountForm(accountDefaults);
-  }, [accountDefaults]);
-
+  const [phoneLocked, setPhoneLocked] = useState(true);
+  const [emailLocked, setEmailLocked] = useState(true);
+  const [editVerificationTarget, setEditVerificationTarget] = useState<null | "phone" | "email">(null);
   const [accountPending, setAccountPending] = useState(false);
   const [accountError, setAccountError] = useState<string | null>(null);
   const [accountFieldErrors, setAccountFieldErrors] = useState<Record<string, string>>({});
   const [stepUpOpen, setStepUpOpen] = useState(false);
   const [queuedPayload, setQueuedPayload] = useState<Record<string, unknown> | null>(null);
+  useEffect(() => {
+    const requested = searchParams?.get("tab");
+    if (requested === "account" || requested === "security" || requested === "business") {
+      setTab(requested);
+    }
+  }, [searchParams]);
+
+  useEffect(() => {
+    setAccountForm(accountDefaults);
+  }, [accountDefaults]);
+
+  useEffect(() => {
+    setPhoneLocked(true);
+    setEmailLocked(true);
+  }, [profile?.contactPhone, profile?.contactEmail]);
+
 
   const submitAccount = useCallback(
     async (payload: Record<string, unknown>, retry = false) => {
@@ -64,6 +89,8 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
           toast("Account details saved", "success");
           setQueuedPayload(null);
           setStepUpOpen(false);
+          setPhoneLocked(true);
+          setEmailLocked(true);
           await refresh({ showLoading: true });
           return;
         }
@@ -214,24 +241,72 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
                 Contact email
-                <input
-                  type="email"
-                  value={accountForm.contactEmail}
-                  onChange={(event) => setAccountForm((prev) => ({ ...prev, contactEmail: event.target.value }))}
-                  className={`mt-1 w-full rounded-xl border ${accountFieldErrors.contactEmail ? "border-rose-400/60" : "border-white/15"} bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10`}
-                />
+                {emailLocked ? (
+                  <div className="mt-1 flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/80">
+                    <span>{accountForm.contactEmail ? accountForm.contactEmail : "Add an email"}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditVerificationTarget("email")}
+                      className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
+                    >
+                      Send verification link
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="email"
+                      value={accountForm.contactEmail}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, contactEmail: event.target.value }))}
+                      className={`mt-1 w-full rounded-xl border ${accountFieldErrors.contactEmail ? "border-rose-400/60" : "border-white/15"} bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10`}
+                    />
+                    <div className="mt-2 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => setEmailLocked(true)}
+                        className="rounded-lg border border-white/15 px-3 py-1 text-xs text-white/70 transition hover:text-white"
+                      >
+                        Lock
+                      </button>
+                    </div>
+                  </>
+                )}
                 {accountFieldErrors.contactEmail ? <span className="mt-1 block text-xs text-rose-300">{accountFieldErrors.contactEmail}</span> : null}
               </label>
               <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
                 Contact phone (E.164)
-                <input
-                  type="tel"
-                  value={accountForm.contactPhone}
-                  onChange={(event) => setAccountForm((prev) => ({ ...prev, contactPhone: event.target.value }))}
-                  className={`mt-1 w-full rounded-xl border ${accountFieldErrors.contactPhone ? "border-rose-400/60" : "border-white/15"} bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10`}
-                  placeholder="+1XXXXXXXXXX"
-                />
-                <span className="mt-1 block text-xs text-white/40">{formatDisplayPhone(accountForm.contactPhone)}</span>
+                {phoneLocked ? (
+                  <div className="mt-1 flex items-center justify-between rounded-xl border border-white/15 bg-white/5 px-4 py-3 text-sm text-white/80">
+                    <span>{accountForm.contactPhone ? maskSensitivePhone(accountForm.contactPhone) : "Add a number"}</span>
+                    <button
+                      type="button"
+                      onClick={() => setEditVerificationTarget("phone")}
+                      className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
+                    >
+                      Verify to edit
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <input
+                      type="tel"
+                      value={accountForm.contactPhone}
+                      onChange={(event) => setAccountForm((prev) => ({ ...prev, contactPhone: event.target.value }))}
+                      className={`mt-1 w-full rounded-xl border ${accountFieldErrors.contactPhone ? "border-rose-400/60" : "border-white/15"} bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10`}
+                      placeholder="+1XXXXXXXXXX"
+                    />
+                    <div className="mt-2 flex items-center justify-between text-xs text-white/50">
+                      <span>{formatDisplayPhone(accountForm.contactPhone)}</span>
+                      <button
+                        type="button"
+                        onClick={() => setPhoneLocked(true)}
+                        className="rounded-lg border border-white/15 px-3 py-1 text-xs text-white/70 transition hover:text-white"
+                      >
+                        Lock
+                      </button>
+                    </div>
+                  </>
+                )}
                 {accountFieldErrors.contactPhone ? <span className="mt-1 block text-xs text-rose-300">{accountFieldErrors.contactPhone}</span> : null}
               </label>
             </div>
@@ -248,7 +323,11 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
               </button>
               <button
                 type="button"
-                onClick={() => setAccountForm(accountDefaults)}
+                onClick={() => {
+                  setAccountForm(accountDefaults);
+                  setPhoneLocked(true);
+                  setEmailLocked(true);
+                }}
                 disabled={accountPending}
                 className="rounded-xl border border-white/20 px-4 py-2.5 text-sm text-white/80 hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 disabled:opacity-50"
               >
@@ -290,7 +369,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-white/50">Business phone</dt>
-                  <dd className="mt-1 text-white">{profile?.businessPhone ? formatDisplayPhone(profile.businessPhone) : "—"}</dd>
+                  <dd className="mt-1 text-white">{maskSensitivePhone(profile?.businessPhone ?? null)}</dd>
                 </div>
                 <div>
                   <dt className="text-xs uppercase tracking-wide text-white/50">Timezone</dt>
@@ -335,6 +414,27 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
           </div>
         ) : null}
       </div>
+
+      <StepUpDialog
+        open={editVerificationTarget === "phone"}
+        onClose={() => setEditVerificationTarget(null)}
+        onVerified={() => {
+          setPhoneLocked(false);
+          setEditVerificationTarget(null);
+        }}
+        channel="sms"
+        disableEmail
+      />
+      <StepUpDialog
+        open={editVerificationTarget === "email"}
+        onClose={() => setEditVerificationTarget(null)}
+        onVerified={() => {
+          setEmailLocked(false);
+          setEditVerificationTarget(null);
+        }}
+        channel="email"
+        disableEmail={false}
+      />
 
       <StepUpDialog
         open={stepUpOpen}

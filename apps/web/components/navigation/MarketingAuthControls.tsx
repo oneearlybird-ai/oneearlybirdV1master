@@ -1,12 +1,10 @@
 "use client";
 
 import Link from "next/link";
-import { useCallback, useState } from "react";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
-import { apiFetch } from "@/lib/http";
-import { redirectTo } from "@/lib/clientNavigation";
-import { getDashboardPath, getLandingPath } from "@/lib/authPaths";
+import SignOutButton from "@/components/auth/SignOutButton";
+import { getDashboardPath } from "@/lib/authPaths";
 
 type Variant = "desktop" | "mobile";
 
@@ -15,7 +13,6 @@ type Props = {
   onNavigate?: () => void;
 };
 
-const LOGOUT_EVENT_KEY = "__ob_logout";
 
 function baseClasses(variant: Variant) {
   if (variant === "mobile") {
@@ -25,32 +22,8 @@ function baseClasses(variant: Variant) {
 }
 
 export default function MarketingAuthControls({ variant = "desktop", onNavigate }: Props) {
-  const { status, markUnauthenticated } = useAuthSession();
+  const { status } = useAuthSession();
   const { open } = useAuthModal();
-  const [signingOut, setSigningOut] = useState(false);
-
-  const handleSignOut = useCallback(async () => {
-    if (signingOut) return;
-    setSigningOut(true);
-    try {
-      await apiFetch("/auth/logout", {
-        method: "POST",
-        cache: "no-store",
-      });
-    } catch (error) {
-      console.error("signout_request_failed", { message: (error as Error)?.message });
-    } finally {
-      try {
-        localStorage.setItem(LOGOUT_EVENT_KEY, String(Date.now()));
-      } catch (storageError) {
-        console.warn("signout_storage_failed", { message: (storageError as Error)?.message });
-      }
-      window.dispatchEvent(new CustomEvent("ob:auth:logout"));
-      markUnauthenticated();
-      redirectTo(getLandingPath());
-      setSigningOut(false);
-    }
-  }, [markUnauthenticated, signingOut]);
 
   if (status === "loading") {
     return (
@@ -76,21 +49,16 @@ export default function MarketingAuthControls({ variant = "desktop", onNavigate 
         >
           Dashboard
         </Link>
-        <button
-          type="button"
-          onClick={() => {
-            void handleSignOut();
-            onNavigate?.();
-          }}
-          disabled={signingOut}
+        <SignOutButton
+          variant="solid"
           className={
             variant === "desktop"
-              ? "inline-flex items-center justify-center rounded-xl bg-white px-5 py-2 text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60"
-              : "w-full inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60"
+              ? "px-5 py-2"
+              : "w-full px-4 py-3"
           }
-        >
-          {signingOut ? "Signing out…" : "Sign out"}
-        </button>
+          fullWidth={variant === "mobile"}
+          onBeforeSignOut={onNavigate}
+        />
       </div>
     );
   }

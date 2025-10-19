@@ -2,6 +2,7 @@ import Link from "next/link";
 import AuthModalTriggerButton from "@/components/auth/AuthModalTriggerButton";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { AccountDropdown } from "@/components/navigation/AccountDropdown";
+import SignOutButton from "@/components/auth/SignOutButton";
 import Logo from "./logo";
 import MobileMenu from "./mobile-menu";
 
@@ -45,7 +46,10 @@ export default function Header() {
           </nav>
           <div className="flex flex-1 justify-end">
             {status === "authenticated" ? (
-              <AccountDropdown />
+              <div className="flex items-center gap-4">
+                <AccountDropdown />
+                <SignOutButton variant="ghost" />
+              </div>
             ) : (
               <div className="flex items-center gap-4">
                 <AuthModalTriggerButton

@@ -6,7 +6,7 @@ import AuthModal from "@/components/auth/AuthModal";
 import { resolvePopupMessage } from "@/lib/popup";
 import { apiFetch } from "@/lib/http";
 import { redirectTo } from "@/lib/clientNavigation";
-import { getAccountCreatePath, getDashboardPath, getProfileCapturePath } from "@/lib/authPaths";
+import { getAccountCreatePath, getDashboardPath } from "@/lib/authPaths";
 import { consumeActiveAuthFlow, type AuthFlowKind } from "@/lib/authFlow";
 
 export type AuthModalMode = "signin" | "signup";
@@ -135,7 +135,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
 
     const resolveNextPath = (flow: AuthFlowKind | null): string => {
       if (!flow) return getDashboardPath();
-      if (flow === "google-signup") return getProfileCapturePath();
+      if (flow === "google-signup") return getAccountCreatePath();
       if (flow === "google-signin") return getDashboardPath();
       if (flow === "email-signup") return getAccountCreatePath();
       if (flow === "email-signin") return getDashboardPath();
