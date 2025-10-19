@@ -86,7 +86,7 @@ export default function Testimonials() {
                     unmount={false}
                     appear={true}
                   >                  
-                    <Image className="relative top-11 left-1/2 -translate-x-1/2 rounded-full" src={item.img} width={56} height={56} alt={item.name} />
+                    <Image className="relative top-11 left-1/2 -translate-x-1/2 rounded-full" src={item.img} width={56} height={56} alt={item.business} />
                   </Transition>
                 ))}
 
