@@ -196,7 +196,7 @@ export default function Features() {
                 </div>
 
                 {/* Receptionist preview */}
-                <div className="space-y-5" data-aos="fade-left" data-aos-delay="200">
+                <div className="space-y-5 lg:-mt-16" data-aos="fade-left" data-aos-delay="200">
                   <h3 className="h3 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">Meet your new receptionist</h3>
                   <div className="space-y-4">
                     {receptionistCards.map((card, index) => (
