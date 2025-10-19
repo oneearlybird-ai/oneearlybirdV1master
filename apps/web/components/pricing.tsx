@@ -85,14 +85,16 @@ export default function Pricing() {
 
         {marketingPlans.map((plan, index) => {
           const purchaseDisabled = !plan.hasPriceId || plan.allowTrial;
+          const cardClassName = [
+            "flex flex-col justify-between rounded-3xl border px-6 py-6 transition duration-200",
+            plan.highlight
+              ? "border-slate-800 bg-slate-800/25 hover:border-purple-300 hover:bg-purple-500/10 hover:shadow-[0_20px_60px_rgba(102,51,153,0.25)]"
+              : "border-slate-800 bg-slate-800/20 hover:border-purple-400/60 hover:bg-slate-800/40",
+          ].join(" ");
           return (
             <div
               key={plan.id}
-              className={`flex flex-col justify-between rounded-3xl border px-6 py-6 transition duration-200 ${
-                plan.highlight
-                  ? "border-purple-400/60 bg-purple-500/10 shadow-[0_20px_60px_rgba(102,51,153,0.25)]"
-                  : "border-slate-800 bg-slate-800/20 hover:border-purple-400/60 hover:bg-slate-800/40"
-              }`}
+              className={cardClassName}
               data-aos="fade-up"
               data-aos-delay={150 + index * 80}
             >
