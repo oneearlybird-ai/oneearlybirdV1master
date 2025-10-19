@@ -18,10 +18,10 @@ export default function HeroAbout() {
 
         {/* Hero content */}
         <div className="text-center">
-          <div className="inline-flex font-medium bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-purple-200 pb-3">Why EarlyBird exists</div>
-          <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-6">Reception that sounds human, scales like software.</h1>
+          <div className="inline-flex font-medium bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-purple-200 pb-3">Who we are</div>
+          <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-6">AI infrastructure for every service business</h1>
           <p className="mx-auto mt-6 max-w-2xl text-base text-white/70 md:text-lg">
-            Founded in 2025 just outside Loudoun County — the world’s data center capital — EarlyBird AI was built on the idea that dependable phone coverage shouldn’t be reserved for enterprise budgets. We help local teams sound polished, stay responsive, and capture every opportunity without adding headcount.
+            EarlyBird AI was founded in 2025 in Loudoun County, Virginia, the heart of the world’s data center corridor. We started with a simple belief: reliable, human-sounding AI reception should be accessible to any company, from solo operators to national brands. Today we build the platform that keeps phones answered, calendars synced, and teams informed.
           </p>
         </div>
 

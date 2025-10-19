@@ -21,12 +21,12 @@ export default function Story() {
 
             {/* Section header */}
             <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-              <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60">Our story (so far)</h2>
+              <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60">Built for operators from day one</h2>
             </div>
 
             <div className="max-w-3xl mx-auto text-slate-400 space-y-6">
               <p>
-                EarlyBird AI started as a late-night experiment in a Loudoun County garage in 2025. We were surrounded by the world’s most powerful data centers, yet every service business we knew still missed calls and lost loyal customers. We believed AI could close that gap without replacing the human touch.
+                EarlyBird AI was founded in 2025 near Loudoun County, Virginia, the data center capital of the world. Surrounded by massive infrastructure, we saw local home services, healthcare, and logistics teams still juggling ringing phones and missed opportunities. We knew AI could close that gap without sacrificing the personal touch customers expect.
               </p>
               <p>
                 The first version of EarlyBird answered a single HVAC line. Within days it was booking jobs after hours, sending summaries to Slack, and giving the owner proof of every conversation. Word spread and more businesses asked for the same superpower: a receptionist that never sleeps, speaks like the brand, and respects their existing workflows.
