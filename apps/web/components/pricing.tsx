@@ -56,7 +56,11 @@ export default function Pricing() {
       </div>
 
       <div className="grid gap-6 md:grid-cols-4 xl:-mx-6 text-sm">
-        <div className="flex flex-col justify-between rounded-3xl border border-slate-800 bg-slate-800/25 px-6 py-6">
+        <div
+          className="flex flex-col justify-between rounded-3xl border border-slate-800 bg-slate-800/25 px-6 py-6 transition duration-200 hover:border-purple-400/60 hover:bg-slate-800/40"
+          data-aos="fade-up"
+          data-aos-delay="100"
+        >
           <div>
             <p className="text-sm font-semibold text-slate-200">Simple monthly plans</p>
             <p className="mt-3 text-sm text-slate-400">
@@ -79,14 +83,18 @@ export default function Pricing() {
           </ul>
         </div>
 
-        {marketingPlans.map((plan) => {
+        {marketingPlans.map((plan, index) => {
           const purchaseDisabled = !plan.hasPriceId || plan.allowTrial;
           return (
             <div
               key={plan.id}
-              className={`flex flex-col justify-between rounded-3xl border px-6 py-6 ${
-                plan.highlight ? "border-purple-400/60 bg-purple-500/10 shadow-[0_20px_60px_rgba(102,51,153,0.25)]" : "border-slate-800 bg-slate-800/20"
+              className={`flex flex-col justify-between rounded-3xl border px-6 py-6 transition duration-200 ${
+                plan.highlight
+                  ? "border-purple-400/60 bg-purple-500/10 shadow-[0_20px_60px_rgba(102,51,153,0.25)]"
+                  : "border-slate-800 bg-slate-800/20 hover:border-purple-400/60 hover:bg-slate-800/40"
               }`}
+              data-aos="fade-up"
+              data-aos-delay={150 + index * 80}
             >
               <div className="grow">
                 <div className="flex items-center justify-between gap-2">
