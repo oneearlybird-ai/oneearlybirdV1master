@@ -25,21 +25,21 @@ export default function Testimonials() {
   const items: Item[] = [
     {
       img: TestimonialImg01,
-      quote: "The ability to capture responses is a game-changer. If a user gets tired of the sign up and leaves, that data is still persisted. Additionally, it's great to be able to select between formats.ture responses is a game-changer.",
-      name: 'Jessie J',
-      role: 'Ltd Head of Product'
+      quote: "EarlyBird handled 180 after-hours calls last month and booked 42 maintenance visits before our techs even clocked in. Customers think they’re speaking with our dispatcher.",
+      name: 'Sonia Patel',
+      role: 'Operations Lead · BrightRoute HVAC'
     },
     {
       img: TestimonialImg02,
-      quote: "I have been using this product for a few weeks now and I am blown away by the results. My skin looks visibly brighter and smoother, and I have received so many compliments on my complexion.",
-      name: 'Mark Luk',
-      role: 'Spark Founder & CEO'
+      quote: "Every transcript, recording, and booking lands in HubSpot instantly. Reps jump into warm conversations instead of chasing missed voicemails.",
+      name: 'Leo Martinez',
+      role: 'Revenue Operations · Harbor Clinics'
     },
     {
       img: TestimonialImg03,
-      quote: "As a busy professional, I don't have a lot of time to devote to working out. But with this fitness program, I have seen amazing results in just a few short weeks. The workouts are efficient and effective.",
-      name: 'Jeff Kahl',
-      role: 'Appy Product Lead'
+      quote: "Weekend emergencies used to roll to voicemail and we’d lose that revenue to competitors. EarlyBird keeps callers on the line, books the job, and sends our techs a recap so nothing slips.",
+      name: 'Maya Chen',
+      role: 'COO · RapidRestore Plumbing'
     }
   ]
 
@@ -47,11 +47,11 @@ export default function Testimonials() {
 
   useEffect(() => {
     if (!autorotate) return
-    const interval = setInterval(() => {
-      setActive(active + 1 === items.length ? 0 : active => active + 1)
+    const timeout = setTimeout(() => {
+      setActive((prev) => (prev + 1) % items.length)
     }, autorotateTiming)
-    return () => clearInterval(interval)
-  }, [active, autorotate])
+    return () => clearTimeout(timeout)
+  }, [active, autorotate, autorotateTiming, items.length])
 
   const heightFix = () => {
     if (testimonials.current && testimonials.current.parentElement) testimonials.current.parentElement.style.height = `${testimonials.current.clientHeight}px`
