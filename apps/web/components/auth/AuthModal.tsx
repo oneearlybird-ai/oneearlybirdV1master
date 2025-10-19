@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
+import Logo from "@/components/ui/logo";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
@@ -330,7 +330,7 @@ export default function AuthModal() {
           </svg>
         </button>
         <div className="mb-5 flex justify-center">
-          <Image src="/brand/wordmark.svg" alt="EarlyBird AI" width={140} height={28} priority />
+          <Logo />
         </div>
         <div className="flex items-center justify-center gap-2">
           <button
