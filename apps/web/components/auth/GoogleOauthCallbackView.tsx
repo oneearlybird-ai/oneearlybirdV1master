@@ -28,12 +28,13 @@ export function GoogleOauthCallbackView({ intent }: { intent: GoogleCallbackInte
       }
       return null;
     })();
+    const nextPath = intent === "signup" ? getAccountCreatePath() : getDashboardPath();
     const baseOrigins = new Set<string>([origin, ...Array.from(PROD_ALLOWED_ORIGINS)]);
     if (referrerOrigin) {
       baseOrigins.add(referrerOrigin);
     }
     const targets = Array.from(baseOrigins);
-    const payload = { type: "oauth:success", provider: "google", intent } as const;
+    const payload = { type: "oauth:success", provider: "google", intent, nextPath } as const;
     try {
       if (opener) {
         targets.forEach((target) => {
@@ -60,8 +61,7 @@ export function GoogleOauthCallbackView({ intent }: { intent: GoogleCallbackInte
       }
       return;
     }
-    const fallback = intent === "signup" ? getAccountCreatePath() : getDashboardPath();
-    redirectTo(fallback);
+    redirectTo(nextPath);
   }, [intent]);
 
   return null;
