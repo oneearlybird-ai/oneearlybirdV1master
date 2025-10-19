@@ -80,7 +80,7 @@ export default function Features() {
 
             {/* Section content */}
             <div className="max-w-xl mx-auto md:max-w-none">
-              <div className="flex flex-col xl:flex-row xl:items-start xl:space-x-16 space-y-10 xl:space-y-0">
+              <div className="flex flex-col lg:flex-row lg:items-start lg:space-x-16 space-y-10 lg:space-y-0">
 
                 {/* Original feature content + animation */}
                 <div className="flex flex-col md:flex-row md:space-x-8 lg:space-x-16 xl:space-x-20 space-y-8 md:space-y-0 flex-1">
@@ -196,9 +196,9 @@ export default function Features() {
                 </div>
 
                 {/* Receptionist preview */}
-                <div className="xl:w-[320px] space-y-5" data-aos="fade-left" data-aos-delay="200">
+                <div className="lg:w-[320px] space-y-5" data-aos="fade-left" data-aos-delay="200">
                   <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                    <h4 className="text-lg font-semibold text-white">Meet your new receptionist</h4>
+                    <h4 className="text-2xl font-semibold text-white">Meet your new receptionist</h4>
                     <p className="mt-3 text-sm text-white/70">Three reasons teams let EarlyBird pick up the phone before they do.</p>
                     <div className="mt-6 space-y-4">
                       {receptionistCards.map((card, index) => (
