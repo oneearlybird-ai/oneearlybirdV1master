@@ -197,49 +197,46 @@ export default function Features() {
 
                 {/* Receptionist preview */}
                 <div className="space-y-5" data-aos="fade-left" data-aos-delay="200">
-                  <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                    <h4 className="text-2xl font-semibold text-white">Meet your new receptionist</h4>
-                    <p className="mt-3 text-sm text-white/70">Three reasons teams let EarlyBird pick up the phone before they do.</p>
-                    <div className="mt-6 space-y-4">
-                      {receptionistCards.map((card, index) => (
-                        <div
-                          key={card.title}
-                          className="rounded-2xl border border-white/12 bg-white/[0.05] p-5 shadow-[0_12px_32px_rgba(15,14,32,0.35)] backdrop-blur"
-                          data-aos="fade-left"
-                          data-aos-delay={260 + index * 120}
-                        >
-                          <h5 className="text-sm font-semibold text-white">{card.title}</h5>
-                          <p className="mt-2 text-sm text-white/65">{card.description}</p>
-                          <ul className="mt-3 space-y-1.5 text-xs text-white/60">
-                            {card.bullets.map((bullet) => (
-                              <li key={bullet} className="flex items-start gap-2">
-                                <span aria-hidden="true" className="mt-1 inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
-                                <span>{bullet}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="mt-6">
-                      <button
-                        type="button"
-                        onClick={startReceptionistDemo}
-                        className="relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border border-transparent px-6 py-3 text-sm font-semibold text-white transition duration-150 ease-in-out [background:linear-gradient(var(--color-purple-500),var(--color-purple-500))_padding-box,linear-gradient(var(--color-purple-500),var(--color-purple-200)_75%,transparent_100%)_border-box] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/80"
+                  <h3 className="h3 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">Meet your new receptionist</h3>
+                  <div className="space-y-4">
+                    {receptionistCards.map((card, index) => (
+                      <div
+                        key={card.title}
+                        className="rounded-2xl border border-white/12 bg-white/[0.05] p-5 shadow-[0_12px_32px_rgba(15,14,32,0.35)] backdrop-blur"
+                        data-aos="fade-left"
+                        data-aos-delay={260 + index * 120}
                       >
-                        <span className="relative inline-flex items-center gap-2">
-                          <span>Test our agent now</span>
-                          <span aria-hidden="true" className="text-purple-200">→</span>
-                        </span>
-                      </button>
-                      <p className="mt-3 text-xs text-white/60" aria-live="polite">
-                        {testStatus === 'idle' && 'Click to grant microphone access and start a live call demo.'}
-                        {testStatus === 'prompting' && 'Requesting microphone access… allow it to continue.'}
-                        {testStatus === 'ready' && 'Microphone ready! Opening the preview experience…'}
-                        {testStatus === 'error' && 'We could not access the microphone. Check your browser permissions and try again.'}
-                        {testStatus === 'unsupported' && 'Your browser does not support microphone access. Switch to a modern browser to test the agent.'}
-                      </p>
-                    </div>
+                        <h5 className="text-sm font-semibold text-white">{card.title}</h5>
+                        <p className="mt-2 text-sm text-white/65">{card.description}</p>
+                        <ul className="mt-3 space-y-1.5 text-xs text-white/60">
+                          {card.bullets.map((bullet) => (
+                            <li key={bullet} className="flex items-start gap-2">
+                              <span aria-hidden="true" className="mt-1 inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
+                              <span>{bullet}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                  <div>
+                    <button
+                      type="button"
+                      onClick={startReceptionistDemo}
+                      className="relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border border-transparent px-6 py-3 text-sm font-semibold text-white transition duration-150 ease-in-out [background:linear-gradient(var(--color-purple-500),var(--color-purple-500))_padding-box,linear-gradient(var(--color-purple-500),var(--color-purple-200)_75%,transparent_100%)_border-box] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/80"
+                    >
+                      <span className="relative inline-flex items-center gap-2">
+                        <span>Test our agent now</span>
+                        <span aria-hidden="true" className="text-purple-200">→</span>
+                      </span>
+                    </button>
+                    <p className="mt-3 text-xs text-white/60" aria-live="polite">
+                      {testStatus === 'idle' && 'Click to grant microphone access and start a live call demo.'}
+                      {testStatus === 'prompting' && 'Requesting microphone access… allow it to continue.'}
+                      {testStatus === 'ready' && 'Microphone ready! Opening the preview experience…'}
+                      {testStatus === 'error' && 'We could not access the microphone. Check your browser permissions and try again.'}
+                      {testStatus === 'unsupported' && 'Your browser does not support microphone access. Switch to a modern browser to test the agent.'}
+                    </p>
                   </div>
                 </div>
 
