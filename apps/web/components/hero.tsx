@@ -32,8 +32,8 @@ export default function Hero() {
                 </span>
               </div>
             </div>
-            <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4" data-aos="fade-down">AI reception that sounds like your best operator.</h1>
-            <p className="text-lg text-slate-300 mb-8" data-aos="fade-down" data-aos-delay="200">EarlyBird greets callers instantly, books appointments, answers FAQs, and routes hot leads to your team while you review transcripts, recordings, and analytics in real time.</p>
+            <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4" data-aos="fade-down">Give every caller a five-star receptionist experience.</h1>
+            <p className="text-lg text-slate-300 mb-8" data-aos="fade-down" data-aos-delay="200">EarlyBird answers in under a second, speaks like your top operator, books appointments, qualifies hot leads, and drops recordings, transcripts, and action items straight into your dashboard so your team never misses a beat.</p>
             <div className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4" data-aos="fade-down" data-aos-delay="400">
               <div>
                 <AuthModalTriggerButton
