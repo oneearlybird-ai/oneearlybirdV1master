@@ -5,15 +5,15 @@ import Image, { StaticImageData } from 'next/image'
 import { Transition } from '@headlessui/react'
 import Particles from './particles'
 
-import TestimonialImg01 from '@/public/images/testimonial-01.jpg'
-import TestimonialImg02 from '@/public/images/testimonial-02.jpg'
-import TestimonialImg03 from '@/public/images/testimonial-03.jpg'
+import TestimonialImg01 from '@/public/images/testimonials-hvac.svg'
+import TestimonialImg02 from '@/public/images/testimonials-clinic.svg'
+import TestimonialImg03 from '@/public/images/testimonials-plumbing.svg'
 
 interface Item {
   img: StaticImageData
   quote: string
-  name: string
-  role: string
+  business: string
+  detail: string
 }
 
 export default function Testimonials() {
@@ -26,20 +26,20 @@ export default function Testimonials() {
     {
       img: TestimonialImg01,
       quote: "EarlyBird handled 180 after-hours calls last month and booked 42 maintenance visits before our techs even clocked in. Customers think they’re speaking with our dispatcher.",
-      name: 'Sonia Patel',
-      role: 'Operations Lead · BrightRoute HVAC'
+      business: 'BrightRoute HVAC',
+      detail: '24/7 service · Denver'
     },
     {
       img: TestimonialImg02,
       quote: "Every transcript, recording, and booking lands in HubSpot instantly. Reps jump into warm conversations instead of chasing missed voicemails.",
-      name: 'Leo Martinez',
-      role: 'Revenue Operations · Harbor Clinics'
+      business: 'Harbor Clinics',
+      detail: 'Multi-location healthcare · Pacific Northwest'
     },
     {
       img: TestimonialImg03,
       quote: "Weekend emergencies used to roll to voicemail and we’d lose that revenue to competitors. EarlyBird keeps callers on the line, books the job, and sends our techs a recap so nothing slips.",
-      name: 'Maya Chen',
-      role: 'COO · RapidRestore Plumbing'
+      business: 'RapidRestore Plumbing',
+      detail: 'Emergency plumbing · Austin'
     }
   ]
 
@@ -106,6 +106,7 @@ export default function Testimonials() {
                     appear={true}
                   >
                     <div className="text-xl font-bold bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60">{item.quote}</div>
+                    <div className="mt-6 text-sm font-medium text-white/70">{item.business} · {item.detail}</div>
                   </Transition>
                 ))}
 
@@ -117,7 +118,7 @@ export default function Testimonials() {
               {items.map((item, index) => (
                 <button className={`btn-sm m-1.5 text-xs py-1.5 text-slate-300 transition duration-150 ease-in-out [background:linear-gradient(var(--color-slate-900),var(--color-slate-900))_padding-box,conic-gradient(var(--color-slate-400),var(--color-slate-700)_25%,var(--color-slate-700)_75%,var(--color-slate-400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none ${active === index ? 'opacity-100' : 'opacity-30 hover:opacity-60'}`} key={index} onClick={() => { setActive(index); setAutorotate(false); }}>
                   <span className="relative">
-                    <span className="text-slate-50">{item.name}</span> <span className="text-slate-600">-</span> <span>{item.role}</span>
+                    <span className="text-slate-50">{item.business}</span> <span className="text-slate-600">·</span> <span>{item.detail}</span>
                   </span>
                 </button>
               ))}
