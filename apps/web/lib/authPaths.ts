@@ -69,17 +69,17 @@ export function buildGoogleStartUrl(intent: GoogleIntent, options: { returnPath?
   const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
   const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
 
-  let targetHost: string;
+  let targetHost = host;
   const isLocal = hostname === "localhost" || hostname.endsWith(".localhost");
-  if (isLocal) {
-    targetHost = host;
-  } else if (hostname === DEFAULT_DESKTOP_HOST || hostname === DEFAULT_MOBILE_HOST) {
-    targetHost = hostname;
-  } else if (hostname.endsWith(`.${DEFAULT_DESKTOP_HOST}`)) {
-    targetHost = DEFAULT_DESKTOP_HOST;
-  } else if (hostname.endsWith(`.${DEFAULT_MOBILE_HOST}`)) {
-    targetHost = DEFAULT_MOBILE_HOST;
-  } else {
+  const matchesPrimaryDomain =
+    hostname === DEFAULT_DESKTOP_HOST ||
+    hostname === DEFAULT_MOBILE_HOST ||
+    hostname.endsWith(`.${DEFAULT_DESKTOP_HOST}`) ||
+    hostname.endsWith(`.${DEFAULT_MOBILE_HOST}`);
+
+  if (!host || host.trim().length === 0) {
+    targetHost = mobileContext ? DEFAULT_MOBILE_HOST : DEFAULT_DESKTOP_HOST;
+  } else if (!isLocal && !matchesPrimaryDomain && !hostname.includes(".")) {
     targetHost = mobileContext ? DEFAULT_MOBILE_HOST : DEFAULT_DESKTOP_HOST;
   }
 
