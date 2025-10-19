@@ -62,7 +62,7 @@ export function buildGoogleStartUrl(intent: GoogleIntent, options: { returnPath?
   const hostname = getCurrentHostname();
   const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
   const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
-  const targetHost = mobileContext ? DEFAULT_MOBILE_HOST : DEFAULT_DESKTOP_HOST;
+  const targetHost = hostname;
   const fallbackReturn = mobileContext
     ? intent === "signup"
       ? "/m/auth/oauth/google/signup"
