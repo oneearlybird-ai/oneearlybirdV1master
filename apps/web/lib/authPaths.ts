@@ -8,11 +8,16 @@ function isMobileHostname(hostname: string): boolean {
   return hostname === DEFAULT_MOBILE_HOST || hostname.startsWith("m.");
 }
 
-function getCurrentHostname(): string {
-  if (typeof window !== "undefined" && window.location?.hostname) {
-    return window.location.hostname;
+function getCurrentHost(): string {
+  if (typeof window !== "undefined" && window.location?.host) {
+    return window.location.host;
   }
   return DEFAULT_DESKTOP_HOST;
+}
+
+function getCurrentHostname(): string {
+  const host = getCurrentHost();
+  return host.includes(":") ? host.split(":")[0] ?? host : host;
 }
 
 export function getDashboardPath(): string {
@@ -59,10 +64,25 @@ export function getMagicVerifyPath(intent: "signin" | "signup"): string {
 type GoogleIntent = "signin" | "signup";
 
 export function buildGoogleStartUrl(intent: GoogleIntent, options: { returnPath?: string } = {}): string {
+  const host = getCurrentHost();
   const hostname = getCurrentHostname();
   const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
   const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
-  const targetHost = hostname;
+
+  let targetHost: string;
+  const isLocal = hostname === "localhost" || hostname.endsWith(".localhost");
+  if (isLocal) {
+    targetHost = host;
+  } else if (hostname === DEFAULT_DESKTOP_HOST || hostname === DEFAULT_MOBILE_HOST) {
+    targetHost = hostname;
+  } else if (hostname.endsWith(`.${DEFAULT_DESKTOP_HOST}`)) {
+    targetHost = DEFAULT_DESKTOP_HOST;
+  } else if (hostname.endsWith(`.${DEFAULT_MOBILE_HOST}`)) {
+    targetHost = DEFAULT_MOBILE_HOST;
+  } else {
+    targetHost = mobileContext ? DEFAULT_MOBILE_HOST : DEFAULT_DESKTOP_HOST;
+  }
+
   const fallbackReturn = mobileContext
     ? intent === "signup"
       ? "/m/auth/oauth/google/signup"
