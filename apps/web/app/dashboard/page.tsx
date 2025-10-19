@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { dashboardFetch } from "@/lib/dashboardFetch";
 import { LiveStatusBadge, RecentCallsPreview } from "@/components/RecentCallsPreview";
@@ -10,6 +10,12 @@ import CopyPageLinkButton from "@/components/CopyPageLinkButton";
 import { derivePlanDisplay, findPlanDefinition, formatIsoDate } from "@/lib/billing";
 import PlanActionButtons from "@/components/PlanActionButtons";
 import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
+import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
+import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
+import { getAccountSettingsPath } from "@/lib/authPaths";
+import { redirectTo } from "@/lib/clientNavigation";
+import { toast } from "@/components/Toasts";
+import type { PlanDefinition } from "@/lib/plans";
 
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
 
@@ -33,6 +39,7 @@ type TenantProfile = {
   businessName?: string | null;
   businessPhone?: string | null;
   timezone?: string | null;
+  businessEmail?: string | null;
   addressNormalized?: {
     line1: string;
     line2?: string | null;
@@ -49,6 +56,7 @@ type TenantProfile = {
   locations?: number | null;
   website?: string | null;
   businessProfileComplete?: boolean | null;
+  aiConsent?: boolean | null;
 };
 
 type BillingSummary = {
@@ -154,17 +162,41 @@ function computeSparklinePoints(series: number[]): string {
     .join(" ");
 }
 
-function Kpi({ label, value, hint, progress }: { label: string; value: string; hint?: string; progress?: number }) {
+function Kpi({
+  label,
+  value,
+  hint,
+  progress,
+  thresholds = [],
+  progressClassName,
+  footer,
+}: {
+  label: string;
+  value: string;
+  hint?: string;
+  progress?: number;
+  thresholds?: number[];
+  progressClassName?: string;
+  footer?: ReactNode;
+}) {
   return (
     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
       <div className="text-xs text-white/60">{label}</div>
       <div className="mt-1 text-2xl font-semibold">{value}</div>
       {hint ? <div className="mt-1 text-xs text-white/50">{hint}</div> : null}
-      {typeof progress === "number" && progress > 0 ? (
-        <div className="mt-3 h-2 w-full overflow-hidden rounded bg-white/5" aria-hidden title={`${Math.round(progress * 100)}%`}>
-          <div className="h-full bg-white/10" style={{ width: `${Math.max(0, Math.min(100, progress * 100))}%` }} />
+      {typeof progress === "number" && (progress > 0 || thresholds.length > 0) ? (
+        <div className="relative mt-3 h-2 w-full overflow-hidden rounded bg-white/5" aria-hidden title={`${Math.round(progress * 100)}%`}>
+          <div className={`h-full ${progressClassName ?? "bg-white/10"}`} style={{ width: `${Math.max(0, Math.min(100, progress * 100))}%` }} />
+          {thresholds.map((threshold) => (
+            <span
+              key={threshold}
+              className="pointer-events-none absolute inset-y-0 w-px bg-white/40"
+              style={{ left: `${Math.max(0, Math.min(100, threshold * 100))}%` }}
+            />
+          ))}
         </div>
       ) : null}
+      {footer ? <div className="mt-2 text-xs text-white/60">{footer}</div> : null}
     </div>
   );
 }
@@ -194,6 +226,8 @@ export default function DashboardPage() {
   const [summaryState, setSummaryState] = useState<FetchState<BillingSummary>>(() => initialState<BillingSummary>());
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
+  const [trialPlan, setTrialPlan] = useState<PlanDefinition | null>(null);
 
   useEffect(() => {
     return () => {
@@ -329,19 +363,25 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const openWizard = () => {
+    const handleCheckoutSuccess = () => {
       setWizardDismissed(false);
-      if (needsBusinessSetup) {
-        setWizardOpen(true);
-      }
+      redirectTo(getAccountSettingsPath("business"));
     };
-    window.addEventListener("ob:billing:checkout:success", openWizard);
-    window.addEventListener("ob:billing:trial:success", openWizard);
+    const handleTrialSuccess = () => {
+      setWizardDismissed(false);
+      toast("Starting trial…", "success");
+      redirectTo(getAccountSettingsPath("business"));
+      setTrialModalOpen(false);
+      setTrialPlan(null);
+      void fetchAll();
+    };
+    window.addEventListener("ob:billing:checkout:success", handleCheckoutSuccess);
+    window.addEventListener("ob:billing:trial:success", handleTrialSuccess);
     return () => {
-      window.removeEventListener("ob:billing:checkout:success", openWizard);
-      window.removeEventListener("ob:billing:trial:success", openWizard);
+      window.removeEventListener("ob:billing:checkout:success", handleCheckoutSuccess);
+      window.removeEventListener("ob:billing:trial:success", handleTrialSuccess);
     };
-  }, [needsBusinessSetup]);
+  }, [fetchAll]);
 
   const businessSeed = useMemo(() => {
     if (!profile) return null;
@@ -355,6 +395,10 @@ export default function DashboardPage() {
       crm: profile.crm ?? undefined,
       locations: profile.locations ?? undefined,
       website: profile.website ?? undefined,
+      businessEmail: profile.businessEmail ?? profile.contactEmail ?? profile.email ?? undefined,
+      contactEmail: profile.contactEmail ?? profile.email ?? undefined,
+      contactPhone: profile.contactPhone ?? undefined,
+      aiConsent: typeof profile.aiConsent === "boolean" ? profile.aiConsent : undefined,
     };
   }, [profile]);
 
@@ -369,10 +413,25 @@ export default function DashboardPage() {
     [],
   );
 
+  const openTrialModal = useCallback((plan: PlanDefinition) => {
+    setTrialPlan(plan);
+    setTrialModalOpen(true);
+  }, []);
+
+  const closeTrialModal = useCallback(() => {
+    setTrialModalOpen(false);
+    setTrialPlan(null);
+  }, []);
+
+  const handleTrialTriggered = useCallback(() => {
+    void fetchAll();
+  }, [fetchAll]);
+
   const planDefinition = useMemo(
     () => findPlanDefinition(summary?.planKey ?? profile?.planKey ?? null, summary?.planPriceId ?? profile?.planPriceId ?? null),
     [profile, summary],
   );
+  const activeTrialPlan = trialPlan ?? planDefinition ?? null;
   const planIncludedMinutes = planDefinition?.includedMinutes ?? null;
   const planLoaded = !profileState.loading && !summaryState.loading;
   const planDisplay = planLoaded ? derivePlanDisplay(summary ?? null, profile ?? null) : null;
@@ -391,6 +450,15 @@ export default function DashboardPage() {
     ? formatMinutesWithCap(usage.monthlyMinutes ?? usage.usedMinutes ?? null, planCapForUsage ?? undefined)
     : { label: "—", progress: 0 };
 
+  const minutesProgress = Math.max(0, Math.min(1, minutesLabel.progress));
+  const hasMinutesCap = typeof planCapForUsage === "number" && Number.isFinite(planCapForUsage) && planCapForUsage > 0;
+  const minutesThresholds = hasMinutesCap ? [0.5, 0.8, 0.95] : [];
+  const minutesProgressClass = minutesProgress >= 0.95 ? "bg-rose-400" : minutesProgress >= 0.8 ? "bg-amber-400" : minutesProgress >= 0.5 ? "bg-amber-300" : "bg-emerald-400";
+
+  const isSuspended = (profile?.status ?? "").toLowerCase() === "suspended";
+  const showCardOnFileBanner = !isSuspended && planStatus === "trial-active" && summary?.hasPaymentMethod === true;
+  const showAddCardBanner = !isSuspended && planStatus === "trial-active" && summary?.hasPaymentMethod === false;
+
   const avgDurationLabel = secondsToDurationLabel(periodTotals.avgDuration);
   const answeredLabel = String(periodTotals.answered || 0);
   const bookedLabel = String(periodTotals.booked || 0);
@@ -406,8 +474,26 @@ export default function DashboardPage() {
     });
   }, [usage?.monthlyMinutes, usage?.periods, usage?.usedMinutes]);
 
-  const now = new Date();
-  const when = now.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" } as Intl.DateTimeFormatOptions);
+  const trialCountdownLabel = useMemo(() => {
+    if (planStatus !== "trial-active") return null;
+    const trialEndIso = summary?.trialEnd ?? profile?.conversionAt ?? null;
+    if (!trialEndIso) return null;
+    const endDate = new Date(trialEndIso);
+    if (Number.isNaN(endDate.getTime())) return null;
+    const nowUtc = new Date();
+    const diffMs = endDate.getTime() - nowUtc.getTime();
+    const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    if (diffDays <= 0) return "Trial ending today";
+    if (diffDays === 1) return "Trial ends in 1 day";
+    return `Trial ends in ${diffDays} days`;
+  }, [planStatus, profile?.conversionAt, summary?.trialEnd]);
+
+  const planHint = useMemo(() => {
+    const hints: string[] = [];
+    if (planDisplay?.hint) hints.push(planDisplay.hint);
+    if (trialCountdownLabel) hints.push(trialCountdownLabel);
+    return hints.length > 0 ? hints.join(" • ") : undefined;
+  }, [planDisplay?.hint, trialCountdownLabel]);
 
   return (
     <>
@@ -421,8 +507,6 @@ export default function DashboardPage() {
         </span>
       </p>
       <div className="mt-1 flex items-center gap-3 text-xs text-white/60">
-        <span>{when}</span>
-        <span>•</span>
         <span>
           What’s new:{" "}
           <a className="underline" href="/changelog">
@@ -455,7 +539,7 @@ export default function DashboardPage() {
 
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
         {planLoaded && planDisplay ? (
-          <Kpi label="Current plan" value={planDisplay.value} hint={planDisplay.hint} />
+          <Kpi label="Current plan" value={planDisplay.value} hint={planHint} />
         ) : (profileState.error || summaryState.error) ? (
           <InlineErrorCard message="We couldn’t load your plan details. Please refresh." />
         ) : (
@@ -470,7 +554,10 @@ export default function DashboardPage() {
             label="Minutes (month)"
             value={minutesLabel.label}
             hint={planCapForUsage ? `Plan cap ${formatMinutes(planCapForUsage)}` : undefined}
-            progress={minutesLabel.progress}
+            progress={minutesProgress}
+            thresholds={minutesThresholds}
+            progressClassName={hasMinutesCap && minutesProgress > 0 ? minutesProgressClass : undefined}
+            footer={trialCountdownLabel ? <span>{trialCountdownLabel}</span> : undefined}
           />
         )}
         {usageState.loading ? (
@@ -492,9 +579,42 @@ export default function DashboardPage() {
           <Kpi label="Booked (7d)" value={bookedLabel} hint={`Voicemail deflected ${deflectedLabel}`} />
         )}
       </div>
-      <div className="mt-3">
+      <div className="mt-3 space-y-3">
+        {isSuspended ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-rose-500/50 bg-rose-500/10 px-4 py-4 text-sm text-rose-100 sm:flex-row sm:items-center sm:justify-between">
+            <span>Trial limits reached. Add a card from Billing to continue — your agent and forwarding are paused.</span>
+            {activeTrialPlan?.priceId ? (
+              <PlanCheckoutButtons
+                className="w-full sm:w-auto"
+                priceId={activeTrialPlan.priceId}
+                planName={activeTrialPlan.name}
+                allowTrial={false}
+                disableTrial
+                purchaseLabel="Add card"
+              />
+            ) : null}
+          </div>
+        ) : null}
+        {showCardOnFileBanner ? (
+          <div className="rounded-2xl border border-emerald-400/40 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
+            Card on file • Service will remain active at conversion.
+          </div>
+        ) : null}
+        {showAddCardBanner && activeTrialPlan?.priceId ? (
+          <div className="flex flex-col gap-3 rounded-2xl border border-amber-400/50 bg-amber-400/10 px-4 py-4 text-sm text-amber-100 sm:flex-row sm:items-center sm:justify-between">
+            <span>Add a card to activate calling — trial runs without a DID until a card is added.</span>
+            <PlanCheckoutButtons
+              className="w-full sm:w-auto"
+              priceId={activeTrialPlan.priceId}
+              planName={activeTrialPlan.name}
+              allowTrial={false}
+              disableTrial
+              purchaseLabel="Add card"
+            />
+          </div>
+        ) : null}
         {planLoaded ? (
-          <PlanActionButtons summary={summary} profile={profile} onRefresh={fetchAll} />
+          <PlanActionButtons summary={summary} profile={profile} onRefresh={fetchAll} onRequestTrial={openTrialModal} />
         ) : (profileState.error || summaryState.error) ? (
           <InlineErrorCard message="Plan actions unavailable while we reconnect. Try refreshing the page." />
         ) : (
@@ -573,25 +693,36 @@ export default function DashboardPage() {
         <RecentCallsPreview />
       </div>
 
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
-        <h2 className="font-medium">Get set up</h2>
-        <ul className="mt-2 space-y-2 text-sm text-white/80">
-          <li>✅ Connect phone number (or <a className="underline" href="/support/porting">port your number</a>)</li>
-          <li>✅ Connect Google Calendar</li>
-          <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
-          <li>⬜ Customize greeting & FAQs</li>
-          <li>⬜ Make a test call</li>
-        </ul>
-        <div className="mt-3 flex gap-3">
-          <a href="/dashboard/integrations" className="btn btn-primary">
-            Open Integrations
-          </a>
-          <a href="/dashboard/kb" className="btn btn-outline">
-            Edit Greeting
-          </a>
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+          <h2 className="font-medium">Get set up</h2>
+          <ul className="mt-2 space-y-2 text-sm text-white/80">
+            <li>✅ Connect phone number (or <a className="underline" href="/support/porting">port your number</a>)</li>
+            <li>✅ Connect Google Calendar</li>
+            <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
+            <li>⬜ Customize greeting & FAQs</li>
+            <li>⬜ Make a test call</li>
+          </ul>
+          <div className="mt-3 flex gap-3">
+            <a href="/dashboard/integrations" className="btn btn-primary">
+              Open Integrations
+            </a>
+            <a href="/dashboard/kb" className="btn btn-outline">
+              Edit Greeting
+            </a>
+          </div>
         </div>
-      </div>
       </section>
+      {activeTrialPlan?.priceId ? (
+        <TrialConfirmationModal
+          open={trialModalOpen}
+          onClose={closeTrialModal}
+          planName={activeTrialPlan.name}
+          priceId={activeTrialPlan.priceId}
+          includedMinutes={activeTrialPlan.includedMinutes}
+          trialMinutes={activeTrialPlan.trialMinutes}
+          onTrialTriggered={handleTrialTriggered}
+        />
+      ) : null}
       <BusinessSetupWizard
         open={wizardOpen}
         onClose={handleWizardClose}

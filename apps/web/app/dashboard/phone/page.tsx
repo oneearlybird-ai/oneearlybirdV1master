@@ -30,7 +30,7 @@ function maskPhone(value: string | null | undefined): string {
   const digits = value.replace(/\D/g, "");
   if (digits.length < 4) return value;
   const last4 = digits.slice(-4);
-  return `•••-•••-${last4}`;
+  return `***-***-${last4}`;
 }
 
 function formatDate(value: string | null | undefined): string {
@@ -82,7 +82,7 @@ export default function PhoneAndAgentPage() {
     const rows: Array<{ label: string; value: string }> = [];
     rows.push({
       label: "Caller ID (DID)",
-      value: maskPhone(profile.did),
+      value: profile.did ? `${maskPhone(profile.did)} • Active` : "Provisioning",
     });
     rows.push({
       label: "Routing mode",
@@ -90,7 +90,7 @@ export default function PhoneAndAgentPage() {
     });
     rows.push({
       label: "Agent status",
-      value: typeof profile.agentEnabled === "boolean" ? (profile.agentEnabled ? "Enabled" : "Paused") : "—",
+      value: profile.agentEnabled === true ? "Ready" : profile.agentEnabled === false ? "Paused" : "Provisioning",
     });
     rows.push({ label: "Verification", value: verifiedLabel });
     return rows;

@@ -8,11 +8,16 @@ function isMobileHostname(hostname: string): boolean {
   return hostname === DEFAULT_MOBILE_HOST || hostname.startsWith("m.");
 }
 
-function getCurrentHostname(): string {
-  if (typeof window !== "undefined" && window.location?.hostname) {
-    return window.location.hostname;
+function getCurrentHost(): string {
+  if (typeof window !== "undefined" && window.location?.host) {
+    return window.location.host;
   }
   return DEFAULT_DESKTOP_HOST;
+}
+
+function getCurrentHostname(): string {
+  const host = getCurrentHost();
+  return host.includes(":") ? host.split(":")[0] ?? host : host;
 }
 
 export function getDashboardPath(): string {
@@ -20,20 +25,76 @@ export function getDashboardPath(): string {
   return isMobileHostname(hostname) ? "/m/dashboard" : "/dashboard";
 }
 
+export function getProfileCapturePath(): string {
+  const hostname = getCurrentHostname();
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+  return mobileContext ? "/m/profile-capture" : "/profile-capture";
+}
+
 export function getLandingPath(): string {
   const hostname = getCurrentHostname();
   return isMobileHostname(hostname) ? "/m" : "/";
 }
 
-export function buildGoogleStartUrl(): string {
+export function getAccountCreatePath(): string {
   const hostname = getCurrentHostname();
   const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
   const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
-  const targetHost = mobileContext ? DEFAULT_MOBILE_HOST : DEFAULT_DESKTOP_HOST;
-  const returnPath = mobileContext ? "/m/dashboard" : "/dashboard";
+  return mobileContext ? "/m/account/create" : "/account/create";
+}
+
+export function getAccountSettingsPath(tab?: string): string {
+  const hostname = getCurrentHostname();
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+  const base = mobileContext ? "/m/dashboard/settings" : "/dashboard/settings";
+  if (!tab) return base;
+  return `${base}?tab=${encodeURIComponent(tab)}`;
+}
+
+export function getMagicVerifyPath(intent: "signin" | "signup"): string {
+  const hostname = getCurrentHostname();
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+  const base = mobileContext ? "/m/auth/magic/verify" : "/auth/magic/verify";
+  return `${base}?intent=${intent}`;
+}
+
+type GoogleIntent = "signin" | "signup";
+
+export function buildGoogleStartUrl(intent: GoogleIntent, options: { returnPath?: string } = {}): string {
+  const host = getCurrentHost();
+  const hostname = getCurrentHostname();
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+
+  let targetHost: string;
+  const isLocal = hostname === "localhost" || hostname.endsWith(".localhost");
+  if (isLocal) {
+    targetHost = host;
+  } else if (hostname === DEFAULT_DESKTOP_HOST || hostname === DEFAULT_MOBILE_HOST) {
+    targetHost = hostname;
+  } else if (hostname.endsWith(`.${DEFAULT_DESKTOP_HOST}`)) {
+    targetHost = DEFAULT_DESKTOP_HOST;
+  } else if (hostname.endsWith(`.${DEFAULT_MOBILE_HOST}`)) {
+    targetHost = DEFAULT_MOBILE_HOST;
+  } else {
+    targetHost = mobileContext ? DEFAULT_MOBILE_HOST : DEFAULT_DESKTOP_HOST;
+  }
+
+  const fallbackReturn = mobileContext
+    ? intent === "signup"
+      ? "/m/auth/oauth/google/signup"
+      : "/m/auth/oauth/google/signin"
+    : intent === "signup"
+      ? "/auth/oauth/google/signup"
+      : "/auth/oauth/google/signin";
+  const returnPath = options.returnPath ?? fallbackReturn;
   const url = new URL(GOOGLE_START_BASE);
-  url.searchParams.set("prompt", "select_account");
+  url.searchParams.set("prompt", intent === "signup" ? "consent" : "select_account");
   url.searchParams.set("return_host", targetHost);
   url.searchParams.set("return_path", returnPath);
+  url.searchParams.set("intent", intent);
   return url.toString();
 }

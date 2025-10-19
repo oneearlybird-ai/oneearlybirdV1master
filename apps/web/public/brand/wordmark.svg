@@ -1,0 +1,39 @@
+<svg width="360" height="72" viewBox="0 0 360 72" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="eb_wordmark_gradient" x1="220" y1="14" x2="340" y2="64" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#6D5BFF" />
+      <stop offset="1" stop-color="#A855F7" />
+    </linearGradient>
+  </defs>
+  <rect x="4" y="8" width="60" height="56" rx="16" fill="url(#eb_wordmark_gradient)" opacity="0.18" />
+  <text
+    x="0"
+    y="48"
+    font-family="Inter, 'Segoe UI', sans-serif"
+    font-weight="700"
+    font-size="44"
+    fill="white"
+  >
+    EB
+  </text>
+  <text
+    x="84"
+    y="48"
+    font-family="Inter, 'Segoe UI', sans-serif"
+    font-weight="700"
+    font-size="44"
+    fill="white"
+  >
+    EarlyBird
+  </text>
+  <text
+    x="272"
+    y="48"
+    font-family="Inter, 'Segoe UI', sans-serif"
+    font-weight="700"
+    font-size="44"
+    fill="url(#eb_wordmark_gradient)"
+  >
+    AI
+  </text>
+</svg>

@@ -29,61 +29,61 @@ export default function CustomersList() {
 
   const items = [
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg01,
       bg: CustomerBg01,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg02,
       bg: CustomerBg02,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg03,
       bg: CustomerBg03,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg04,
       bg: CustomerBg04,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg05,
       bg: CustomerBg05,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg06,
       bg: CustomerBg06,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg07,
       bg: CustomerBg07,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg08,
       bg: CustomerBg08,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg09,
       bg: CustomerBg09,
       link: '/customers/single-post',
     },
     {
-      name: 'Customer name',
+      name: 'Customer',
       img: CustomerImg10,
       bg: CustomerBg10,
       link: '/customers/single-post',
@@ -115,7 +115,7 @@ export default function CustomersList() {
       <div className="flex flex-col items-center justify-center text-center p-4">
         <p className="font-medium bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">
           <span className="line-clamp-4">
-            “We struggled to bring all our conversations into one place until we found Stellar. The UI is very clean and we love the integration with Spark.”
+            “We struggled to bring all our conversations into one place until EarlyBird AI started answering for us. The live transcripts are clean and the CRM sync saves hours every week.”
           </span>
         </p>
         <div className="inline-flex mb-2">
@@ -129,7 +129,7 @@ export default function CustomersList() {
       <div className="flex flex-col items-center justify-center text-center p-4">
         <p className="font-medium bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">
           <span className="line-clamp-4">
-            “We struggled to bring all our conversations into one place until we found Stellar. The UI is very clean and we love the integration with Spark.”
+            “We struggled to bring all our conversations into one place until EarlyBird AI started answering for us. The live transcripts are clean and the CRM sync saves hours every week.”
           </span>
         </p>
         <div className="inline-flex mb-2">

@@ -37,3 +37,23 @@ rules:
       - metavariable-regex:
           metavariable: $SINK
           regex: (fetch|axios|db|exec|spawn|render|writeFile)
+
+  - id: lock-logo-component
+    message: "Logo design is locked; owner approval required."
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include:
+        - apps/web/components/ui/logo.tsx
+    patterns:
+      - pattern-not-regex: '(?s)^import\ Link\ from\ ''next/link''\n\nexport\ default\ function\ Logo\(\)\ \{\n\ \ return\ \(\n\ \ \ \ <Link\ className="inline-flex\ items-center\ gap-2"\ href="/"\ aria-label="EarlyBird\ AI">\n\ \ \ \ \ <span\ className="inline-flex\ h-9\ w-9\ items-center\ justify-center\ rounded-xl\ border\ border-white/15\ bg-white/10\ text-sm\ font-semibold\ text-white\ shadow-[0_12px_30px_rgba(99,102,241,0.25)]">\n\ \ \ \ \ \ EB\n\ \ \ \ \ </span>\n\ \ \ \ \ <span\ className="text-lg\ font-semibold\ tracking-tight\ text-white\ sm:text-xl">\n\ \ \ \ \ \ EarlyBird\ <span\ className="text-purple-300">AI</span>\n\ \ \ \ \ </span>\n\ \ \ </Link>\n\ \ )\n}\n'
+
+  - id: lock-brandmark-component
+    message: "Marketing brand mark is locked; owner approval required."
+    severity: ERROR
+    languages: [generic]
+    paths:
+      include:
+        - apps/web/components/marketing/BrandMark.tsx
+    patterns:
+      - pattern-not-regex: '(?s)^"use\ client";\n\nimport\ Link\ from\ "next/link";\n\ntype\ BrandMarkProps\ =\ \{\n\ \ href\?:\ string;\n\};\n\nexport\ default\ function\ BrandMark\(\{\ href\ =\ "/"\ \}:\ BrandMarkProps\)\ \{\n\ \ return\ \(\n\ \ \ \ <Link\n\ \ \ \ \ href=\{href\}\n\ \ \ \ \ aria-label="EarlyBird\ AI\ home"\n\ \ \ \ \ className="inline-flex\ items-center\ gap-3\ focus-visible:outline-none\ focus-visible:ring-2\ focus-visible:ring-white/40\ focus-visible:ring-offset-2\ focus-visible:ring-offset-[#05050b]"\n\ \ \ \ >\n\ \ \ \ \ <span\ className="inline-flex\ h-12\ w-12\ items-center\ justify-center\ rounded-2xl\ border\ border-white/15\ bg-white/10\ text-lg\ font-semibold\ text-white\ shadow-[0_18px_45px_rgba(99,102,241,0.35)]">\n\ \ \ \ \ \ EB\n\ \ \ \ \ </span>\n\ \ \ \ \ <span\ className="text-xl\ font-semibold\ tracking-tight\ text-white\ sm:text-2xl">\n\ \ \ \ \ \ EarlyBird\ <span\ className="text-purple-300">AI</span>\n\ \ \ \ \ </span>\n\ \ \ </Link>\n\ \ );\n}\n'

@@ -1,4 +1,4 @@
-import Section from "@/components/stellar/Section";
+import Section from "@/components/marketing/Section";
 
 const termsItems = [
   {

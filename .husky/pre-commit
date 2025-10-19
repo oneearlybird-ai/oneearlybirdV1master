@@ -12,3 +12,9 @@ if [ -n "$TP" ]; then
   echo "Run: git rm --cached <file>  (plans should be ignored)" >&2
   exit 1
 fi
+
+# Prevent accidental lockfile deletion (breaks npm ci)
+if git diff --cached --name-only --diff-filter=D | grep -qx "package-lock.json"; then
+  echo "Error: package-lock.json is staged for deletion; this would break deterministic installs." >&2
+  exit 1
+fi

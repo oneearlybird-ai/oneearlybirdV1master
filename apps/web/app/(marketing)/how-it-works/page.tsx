@@ -1,4 +1,4 @@
-import Section from "@/components/stellar/Section";
+import Section from "@/components/marketing/Section";
 import AuthModalTriggerButton from "@/components/auth/AuthModalTriggerButton";
 import Link from "next/link";
 import { PhoneIcon, CalendarIcon, ControlsIcon } from "@/components/icons";

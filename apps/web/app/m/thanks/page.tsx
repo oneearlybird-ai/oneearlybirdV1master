@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Section from "@/components/stellar/Section";
+import Section from "@/components/marketing/Section";
 
 export const metadata = {
   title: "Thank you",

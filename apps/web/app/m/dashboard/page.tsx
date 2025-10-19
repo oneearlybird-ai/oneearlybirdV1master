@@ -8,9 +8,12 @@ import { dashboardFetch } from "@/lib/dashboardFetch";
 import { formatCallDuration, formatCallTimestamp, outcomeLabel } from "@/lib/call-format";
 import { MobileCard, MobileCardContent, MobileCardHeader, MobileCardFooter } from "@/components/mobile/Card";
 import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
+import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
+import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 import type { CallItem } from "@/components/RecentCallsPreview";
 import { fallbackNameFromEmail, maskAccountNumber } from "@/lib/format";
 import { toast } from "@/components/Toasts";
+import type { PlanDefinition } from "@/lib/plans";
 
 type TenantProfile = {
   planKey?: string | null;
@@ -25,7 +28,9 @@ type TenantProfile = {
   email?: string | null;
   businessName?: string | null;
   businessPhone?: string | null;
+  businessEmail?: string | null;
   timezone?: string | null;
+  status?: string | null;
   addressNormalized?: {
     line1: string;
     line2?: string | null;
@@ -42,6 +47,7 @@ type TenantProfile = {
   locations?: number | null;
   website?: string | null;
   businessProfileComplete?: boolean | null;
+  aiConsent?: boolean | null;
 };
 
 type BillingSummary = {
@@ -103,6 +109,9 @@ export default function MobileDashboardPage() {
   const [calls, setCalls] = useState<FetchState<CallItem[]>>(() => initialState<CallItem[]>());
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardDismissed, setWizardDismissed] = useState(false);
+  const [trialModalOpen, setTrialModalOpen] = useState(false);
+  const [trialPlan, setTrialPlan] = useState<PlanDefinition | null>(null);
+
 
   const loadData = useCallback(async () => {
     setProfile((prev) => ({ ...prev, loading: true, error: null }));
@@ -185,19 +194,29 @@ export default function MobileDashboardPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const openWizard = () => {
+    const handleCheckoutSuccess = () => {
       setWizardDismissed(false);
       if (needsBusinessSetup) {
         setWizardOpen(true);
       }
     };
-    window.addEventListener("ob:billing:checkout:success", openWizard);
-    window.addEventListener("ob:billing:trial:success", openWizard);
-    return () => {
-      window.removeEventListener("ob:billing:checkout:success", openWizard);
-      window.removeEventListener("ob:billing:trial:success", openWizard);
+    const handleTrialSuccess = () => {
+      setWizardDismissed(false);
+      toast("Starting trial…", "success");
+      if (needsBusinessSetup) {
+        setWizardOpen(true);
+      }
+      setTrialModalOpen(false);
+      setTrialPlan(null);
+      void loadData();
     };
-  }, [needsBusinessSetup]);
+    window.addEventListener("ob:billing:checkout:success", handleCheckoutSuccess);
+    window.addEventListener("ob:billing:trial:success", handleTrialSuccess);
+    return () => {
+      window.removeEventListener("ob:billing:checkout:success", handleCheckoutSuccess);
+      window.removeEventListener("ob:billing:trial:success", handleTrialSuccess);
+    };
+  }, [loadData, needsBusinessSetup]);
 
   const businessSeed = useMemo(() => {
     const data = profile.data;
@@ -212,6 +231,9 @@ export default function MobileDashboardPage() {
       crm: data.crm ?? undefined,
       locations: data.locations ?? undefined,
       website: data.website ?? undefined,
+      businessEmail: data.businessEmail ?? data.contactEmail ?? data.email ?? undefined,
+      contactEmail: data.contactEmail ?? data.email ?? undefined,
+      aiConsent: typeof data.aiConsent === "boolean" ? data.aiConsent : undefined,
     };
   }, [profile.data]);
 
@@ -219,6 +241,20 @@ export default function MobileDashboardPage() {
     setWizardOpen(false);
     setWizardDismissed(true);
   }, []);
+
+  const openTrialModal = useCallback((plan: PlanDefinition) => {
+    setTrialPlan(plan);
+    setTrialModalOpen(true);
+  }, []);
+
+  const closeTrialModal = useCallback(() => {
+    setTrialModalOpen(false);
+    setTrialPlan(null);
+  }, []);
+
+  const handleTrialTriggered = useCallback(() => {
+    void loadData();
+  }, [loadData]);
 
   const planLoaded = !profile.loading && !summary.loading;
   const planDisplay = planLoaded ? derivePlanDisplay(summary.data, profile.data) : null;
@@ -235,6 +271,38 @@ export default function MobileDashboardPage() {
   const planDefinition = useMemo(() => {
     return findPlanDefinition(summary.data?.planKey ?? profile.data?.planKey ?? null, summary.data?.planPriceId ?? profile.data?.planPriceId ?? null);
   }, [profile.data, summary.data]);
+  const activeTrialPlan = trialPlan ?? planDefinition ?? null;
+  const isSuspended = (profile.data?.status ?? "").toLowerCase() === "suspended";
+  const showCardOnFileBanner = !isSuspended && planStatus === "trial-active" && summary.data?.hasPaymentMethod === true;
+  const showAddCardBanner = !isSuspended && planStatus === "trial-active" && summary.data?.hasPaymentMethod === false;
+  const planCapForUsage = planDefinition?.includedMinutes ?? minutesCap ?? usage.data?.minutesCap ?? null;
+  const minutesProgress = planCapForUsage
+    ? Math.max(0, Math.min(1, minutesUsed / Math.max(1, Number(planCapForUsage))))
+    : 0;
+  const hasMinutesCap = typeof planCapForUsage === "number" && Number.isFinite(planCapForUsage) && planCapForUsage > 0;
+  const minutesThresholds = hasMinutesCap ? [0.5, 0.8, 0.95] : [];
+  const minutesProgressClass = minutesProgress >= 0.95 ? "bg-rose-400" : minutesProgress >= 0.8 ? "bg-amber-400" : minutesProgress >= 0.5 ? "bg-amber-300" : "bg-emerald-400";
+  const minutesUsageLabel = hasMinutesCap ? `${Math.round(minutesUsed)} / ${Math.round(Number(planCapForUsage))} min` : `${Math.round(minutesUsed)} min`;
+
+  const trialCountdownLabel = useMemo(() => {
+    if (planStatus !== "trial-active") return null;
+    const trialEndIso = summary.data?.trialEnd ?? null;
+    if (!trialEndIso) return null;
+    const endDate = new Date(trialEndIso);
+    if (Number.isNaN(endDate.getTime())) return null;
+    const diffDays = Math.max(0, Math.ceil((endDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)));
+    if (diffDays <= 0) return "Trial ending today";
+    if (diffDays === 1) return "Trial ends in 1 day";
+    return `Trial ends in ${diffDays} days`;
+  }, [planStatus, summary.data?.trialEnd]);
+
+  const planHint = useMemo(() => {
+    const hints: string[] = [];
+    if (planDisplay?.hint) hints.push(planDisplay.hint);
+    if (trialCountdownLabel) hints.push(trialCountdownLabel);
+    return hints.length > 0 ? hints.join(" • ") : undefined;
+  }, [planDisplay?.hint, trialCountdownLabel]);
+
   const planError = profile.error || summary.error;
   const usageHasData = useMemo(() => {
     const minutes = Number(usage.data?.usedMinutes ?? usage.data?.minutesCap ?? 0);
@@ -315,7 +383,7 @@ export default function MobileDashboardPage() {
 
       {planLoaded && planDisplay ? (
         <MobileCard>
-          <MobileCardHeader title={planDisplay.value} subtitle={planDisplay.hint ?? "Current subscription status"} />
+          <MobileCardHeader title={planDisplay.value} subtitle={planHint ?? "Current subscription status"} />
           <MobileCardContent>
             <div className="flex flex-wrap gap-2 text-xs text-white/60">
               <span className="rounded-full border border-white/10 px-2 py-1">
@@ -334,10 +402,44 @@ export default function MobileDashboardPage() {
               ) : null}
               <span className="rounded-full border border-white/10 px-2 py-1">DID: {maskedDid}</span>
             </div>
+            {trialCountdownLabel ? <p className="mt-3 text-xs text-white/60">{trialCountdownLabel}</p> : null}
           </MobileCardContent>
           <MobileCardFooter>
             <div className="flex w-full flex-col gap-2">
-              <PlanActionButtons summary={summary.data} profile={profile.data} onRefresh={loadData} align="start" />
+              {isSuspended ? (
+                <div className="flex flex-col gap-2 rounded-xl border border-rose-500/40 bg-rose-500/10 px-3 py-3 text-xs text-rose-100">
+                  <span>Trial limits reached. Add a card from Billing to continue — your agent and forwarding are paused.</span>
+                  {activeTrialPlan?.priceId ? (
+                    <PlanCheckoutButtons
+                      className="w-full"
+                      priceId={activeTrialPlan.priceId}
+                      planName={activeTrialPlan.name}
+                      allowTrial={false}
+                      disableTrial
+                      purchaseLabel="Add card"
+                    />
+                  ) : null}
+                </div>
+              ) : null}
+              {showCardOnFileBanner ? (
+                <div className="rounded-xl border border-emerald-400/40 bg-emerald-400/10 px-3 py-2 text-xs text-emerald-100">
+                  Card on file • Service will remain active at conversion.
+                </div>
+              ) : null}
+              {showAddCardBanner && activeTrialPlan?.priceId ? (
+                <div className="flex flex-col gap-2 rounded-xl border border-amber-400/40 bg-amber-400/10 px-3 py-3 text-xs text-amber-100">
+                  <span>Add a card to activate calling — trial runs without a DID until a card is added.</span>
+                  <PlanCheckoutButtons
+                    className="w-full"
+                    priceId={activeTrialPlan.priceId}
+                    planName={activeTrialPlan.name}
+                    allowTrial={false}
+                    disableTrial
+                    purchaseLabel="Add card"
+                  />
+                </div>
+              ) : null}
+              <PlanActionButtons summary={summary.data} profile={profile.data} onRefresh={loadData} align="start" onRequestTrial={openTrialModal} />
               {planStatus === "none" ? (
                 <p className="text-xs text-white/60">
                   No current plan. Purchase a plan to keep EarlyBird active.
@@ -423,12 +525,21 @@ export default function MobileDashboardPage() {
               }
             />
             <MobileCardContent>
-              <div className="text-3xl font-semibold">{Math.round(minutesUsed)}</div>
-              {planDefinition && planDefinition.includedMinutes > 0 ? (
-                <p className="mt-1 text-sm text-white/60">
-                  {Math.min(100, Math.round((minutesUsed / Math.max(1, planDefinition.includedMinutes)) * 100))}% of plan
-                </p>
-              ) : null}
+              <div className="text-2xl font-semibold">{minutesUsageLabel}</div>
+              <div className="relative mt-3 h-2 w-full overflow-hidden rounded bg-white/10" aria-hidden>
+                <div
+                  className={`h-full ${hasMinutesCap && minutesProgress > 0 ? minutesProgressClass : "bg-white/20"}`}
+                  style={{ width: `${Math.max(0, Math.min(100, minutesProgress * 100))}%` }}
+                />
+                {minutesThresholds.map((threshold) => (
+                  <span
+                    key={threshold}
+                    className="pointer-events-none absolute inset-y-0 w-px bg-white/35"
+                    style={{ left: `${Math.max(0, Math.min(100, threshold * 100))}%` }}
+                  />
+                ))}
+              </div>
+              {trialCountdownLabel ? <p className="mt-2 text-xs text-white/60">{trialCountdownLabel}</p> : null}
             </MobileCardContent>
           </MobileCard>
         )}
@@ -526,6 +637,17 @@ export default function MobileDashboardPage() {
         Refresh data
       </button>
       </div>
+      {activeTrialPlan?.priceId ? (
+        <TrialConfirmationModal
+          open={trialModalOpen}
+          onClose={closeTrialModal}
+          planName={activeTrialPlan.name}
+          priceId={activeTrialPlan.priceId}
+          includedMinutes={activeTrialPlan.includedMinutes}
+          trialMinutes={activeTrialPlan.trialMinutes}
+          onTrialTriggered={handleTrialTriggered}
+        />
+      ) : null}
       <BusinessSetupWizard
         open={wizardOpen}
         onClose={handleWizardClose}

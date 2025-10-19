@@ -2,10 +2,16 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
+import { useAuthSession } from '@/components/auth/AuthSessionProvider'
+import SignOutButton from '@/components/auth/SignOutButton'
+import { getDashboardPath } from '@/lib/authPaths'
 import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton'
 
 export default function MobileMenu() {
   const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false)
+  const { status } = useAuthSession()
+  const isAuthenticated = status === 'authenticated'
+  const dashboardHref = getDashboardPath()
 
   const trigger = useRef<HTMLButtonElement>(null)
   const mobileNav = useRef<HTMLDivElement>(null)
@@ -90,10 +96,20 @@ export default function MobileMenu() {
           <li>
             <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/support">Support</Link>
           </li>
-          <li className="border-t border-slate-800 mt-2 pt-3 flex gap-2">
-            <AuthModalTriggerButton mode="signin" className="flex-1 btn text-slate-200 hover:text-white bg-slate-900/30">Sign in</AuthModalTriggerButton>
-            <AuthModalTriggerButton mode="signup" className="flex-1 btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white">Start trial</AuthModalTriggerButton>
-          </li>
+          {isAuthenticated ? (
+            <li className="border-t border-slate-800 mt-2 pt-3 flex flex-col gap-2">
+              <Link className="flex h-11 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-white/85 transition hover:text-white" href={dashboardHref} onClick={() => setMobileNavOpen(false)}>
+                Dashboard
+              </Link>
+              <SignOutButton fullWidth variant="ghost" className="h-11 border-white/20 text-white/85 hover:text-white" onBeforeSignOut={() => setMobileNavOpen(false)} />
+            </li>
+          ) : (
+            <li className="border-t border-slate-800 mt-2 pt-3 flex gap-2">
+              <AuthModalTriggerButton mode="signin" className="flex-1 btn text-slate-200 hover:text-white bg-slate-900/30">Sign in</AuthModalTriggerButton>
+              <AuthModalTriggerButton mode="signup" className="flex-1 btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white">Start trial</AuthModalTriggerButton>
+            </li>
+          )}
+
         </ul>
       </nav>
     </div>

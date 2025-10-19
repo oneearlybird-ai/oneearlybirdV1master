@@ -31,6 +31,8 @@ export type BusinessProfilePayload = {
   crm?: "hubspot" | "salesforce" | "none" | "other" | string | null;
   locations?: number | null;
   website?: string | null;
+  businessEmail?: string | null;
+  aiConsent?: boolean;
 };
 
 export type BusinessProfileSeed = Partial<BusinessProfilePayload> & {
@@ -38,6 +40,7 @@ export type BusinessProfileSeed = Partial<BusinessProfilePayload> & {
   contactPhone?: string | null;
   firstName?: string | null;
   businessPhone?: string | null;
+  aiConsent?: boolean | null;
 };
 
 type Suggestion = { id: string; text: string; subtitle?: string | null };
@@ -103,13 +106,15 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
   const [businessName, setBusinessName] = useState(seed?.businessName ?? "");
   const [phone, setPhone] = useState(seed?.phoneE164 ?? seed?.businessPhone ?? "");
   const [timezone, setTimezone] = useState(seed?.timezone ?? DEFAULT_TIMEZONE);
+  const [businessEmail, setBusinessEmail] = useState(seed?.businessEmail ?? seed?.contactEmail ?? "");
+  const [aiConsent, setAiConsent] = useState(Boolean(seed?.aiConsent));
 
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [address, setAddress] = useState<AddressNormalized | null>(seed?.addressNormalized ?? null);
   const [addressPreview, setAddressPreview] = useState(() => (seed?.addressNormalized ? formatAddressLine(seed.addressNormalized) : ""));
-  const [hours, setHours] = useState<BusinessHours[]>(() => seed?.hours && seed.hours.length > 0 ? seed.hours : DAYS);
+  const [hours, setHours] = useState<BusinessHours[]>(() => (seed?.hours && seed.hours.length > 0 ? seed.hours : DAYS));
   const [industry, setIndustry] = useState(seed?.industry ?? "");
   const [crm, setCrm] = useState(seed?.crm ?? "none");
   const [locations, setLocations] = useState<number | "" | null>(seed?.locations ?? 1);
@@ -122,8 +127,14 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
       setFieldErrors({});
       setShowStepUp(false);
       setQueuedPayload(null);
+    } else {
+      setBusinessName(seed?.businessName ?? "");
+      setPhone(seed?.phoneE164 ?? seed?.businessPhone ?? "");
+      setTimezone(seed?.timezone ?? DEFAULT_TIMEZONE);
+      setBusinessEmail(seed?.businessEmail ?? seed?.contactEmail ?? "");
+      setAiConsent(Boolean(seed?.aiConsent));
     }
-  }, [open]);
+  }, [open, seed?.aiConsent, seed?.businessEmail, seed?.businessName, seed?.businessPhone, seed?.contactEmail, seed?.phoneE164, seed?.timezone]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -198,11 +209,9 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
       setFieldErrors(errors);
       if (Object.keys(errors).length > 0) return;
     }
-    if (step === 1) {
-      if (!address) {
-        setError("Select your business address before continuing.");
-        return;
-      }
+    if (step === 1 && !address) {
+      setError("Select your business address before continuing.");
+      return;
     }
     setError(null);
     setStep((prev) => Math.min(prev + 1, 2));
@@ -229,7 +238,7 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
           body: JSON.stringify(payload),
         });
         if (res.status === 200) {
-          toast("Business profile saved", "success");
+          toast("Provisioning…", "success");
           onCompleted?.();
           onClose(true);
           return;
@@ -272,6 +281,11 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
       setStep(1);
       return;
     }
+    if (!aiConsent) {
+      setFieldErrors((prev) => ({ ...prev, aiConsent: "Accept the consent to continue." }));
+      setError("Review and accept the consent to continue.");
+      return;
+    }
     const payload: BusinessProfilePayload = {
       businessName: businessName.trim(),
       phoneE164: formatE164Input(phone.trim()),
@@ -282,7 +296,12 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
       crm: includeOptional ? crm || "none" : undefined,
       locations: includeOptional && typeof locations === "number" && locations >= 1 ? locations : undefined,
       website: includeOptional && website.trim() ? website.trim() : undefined,
+      aiConsent: true,
     };
+    const email = businessEmail.trim();
+    if (includeOptional && email.length > 0) {
+      payload.businessEmail = email;
+    }
     submitProfile(payload);
   };
 
@@ -292,7 +311,6 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
     submitProfile(queuedPayload, true);
     setQueuedPayload(null);
     if (stepUpOkUntil) {
-      // best-effort: not stored, but we could use for metrics
       console.info("step-up valid until", stepUpOkUntil);
     }
   };
@@ -407,6 +425,21 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
         </div>
         <div className="grid gap-4 md:grid-cols-2">
           <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
+            Business email (optional)
+            <input
+              type="email"
+              className={`mt-1 w-full rounded-xl border ${fieldErrors.businessEmail ? "border-rose-400/60" : "border-white/15"} bg-white/5 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:border-white/40 focus:bg-white/10`}
+              value={businessEmail}
+              onChange={(event) => {
+                setBusinessEmail(event.target.value);
+                resetFieldError("businessEmail");
+              }}
+              placeholder="you@business.com"
+              autoComplete="email"
+            />
+            {fieldErrors.businessEmail ? <span className="mt-1 block text-xs text-rose-300">{fieldErrors.businessEmail}</span> : null}
+          </label>
+          <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
             Industry
             <input
               type="text"
@@ -452,6 +485,25 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
             />
           </label>
         </div>
+        <div
+          className={`rounded-2xl border ${fieldErrors.aiConsent ? "border-rose-400/60 bg-rose-600/10" : "border-white/15 bg-white/5"} px-4 py-3`}
+        >
+          <label className="flex items-start gap-3 text-sm text-white/80">
+            <input
+              type="checkbox"
+              className="mt-1 h-5 w-5 shrink-0 rounded border border-white/30 bg-black/30 text-white accent-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
+              checked={aiConsent}
+              onChange={(event) => {
+                setAiConsent(event.target.checked);
+                if (event.target.checked) {
+                  resetFieldError("aiConsent");
+                }
+              }}
+            />
+            <span>Use info above for AI configuration</span>
+          </label>
+        </div>
+        {fieldErrors.aiConsent ? <p className="text-xs text-rose-300">{fieldErrors.aiConsent}</p> : null}
         <div>
           <div className="text-xs font-medium uppercase tracking-wide text-white/60">Operating hours</div>
           <div className="mt-2 space-y-2">
@@ -503,15 +555,11 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
         </div>
       </div>
     );
-  }, [address, addressPreview, businessName, crm, error, fieldErrors, hours, industry, loadingSuggestions, pending, phone, query, suggestions, timezone, step, website, locations, resetFieldError]);
+  }, [address, addressPreview, aiConsent, businessEmail, businessName, crm, fieldErrors, hours, industry, loadingSuggestions, pending, phone, query, resetFieldError, step, suggestions, timezone, website, locations]);
 
   return (
     <>
-      <WizardContainer
-        open={open}
-        onClose={() => onClose(false)}
-        variant={variant}
-      >
+      <WizardContainer open={open} onClose={() => onClose(false)} variant={variant}>
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">

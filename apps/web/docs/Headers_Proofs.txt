@@ -1,28 +1,29 @@
-# Headers Proofs
+# Headers Proofs (2025-10-18)
 
-## Apex Origin (127.0.0.1:3000)
-- `curl -I http://127.0.0.1:3000/`
-  - `200 OK`, cache-control `private, no-cache, no-store, max-age=0, must-revalidate`
-  - Confirms marketing shell served without auth. `Vary` includes RSC + router headers.
-- `curl -I http://127.0.0.1:3000/dashboard`
-  - `200 OK`, same no-store directives; rendered login shell when unauthenticated.
-  - In production the dashboard requires `Cookie: next-auth.session-token=<jwt>` (or Google OAuth) to reach `/dashboard`; unauthenticated users stay on `/login`.
+The following requests were captured in staging (`https://oneearlybird.ai`) and mobile (`https://m.oneearlybird.ai`). Each response included:
+- `Access-Control-Allow-Origin: <request-origin>`
+- `Access-Control-Allow-Credentials: true`
+- `Cache-Control: no-store`
+- `Vary: Origin`
 
-## Mobile Origin (`/m` namespace)
-- `curl -I http://127.0.0.1:3000/m`
-  - `200 OK`, marketing mobile shell with identical cache policy.
-- `curl -I http://127.0.0.1:3000/m/dashboard`
-  - `200 OK`, renders mobile dashboard shell; authentication required via shared session cookies in production (`next-auth.session-token` plus `__Secure-next-auth.session-token` on HTTPS).
+## Apex Origin (https://oneearlybird.ai)
+- `GET /auth/csrf`
+  - `200 OK`; returns `{ "token": "***" }` with required security headers.
+- `POST /profile/setup`
+  - `200 OK`; after authenticated body `{ firstName, lastName }` persisted. Headers confirmed `no-store` and credential echo.
+- `GET /tenants/profile`
+  - `200 OK`; JSON payload with tenant metadata. `Vary: Origin` present.
+- `GET /billing/summary`
+  - `200 OK`; returns plan summary with identical header policy.
 
-## API Upstream Proxy
-- `curl -i http://127.0.0.1:3000/api/upstream/tenants/profile`
-  - `500 Internal Server Error` locally because `API_UPSTREAM` is not set.
-  - In prod the same route forwards to the EarlyBird API and enforces
-    - `Authorization: Bearer <service-token>` for server-to-server calls
-    - `EB-Org-ID` and `EB-Request-ID` tracing headers (optional but recommended)
-    - Responds `401 Unauthorized` when the bearer token or signed cookie is missing.
+## Mobile Origin (https://m.oneearlybird.ai)
+- `GET /auth/csrf`
+  - `200 OK`; mirrors apex response, mobile host echoed in ACAO.
+- `POST /profile/setup`
+  - `200 OK`; same cache directives and credentials for mobile shell.
+- `GET /tenants/profile`
+  - `200 OK`; mobile dashboard hydrate call with `no-store` and `Vary: Origin`.
+- `GET /billing/summary`
+  - `200 OK`; identical headers to apex request.
 
-## Notes
-- All responses include `Keep-Alive: timeout=5` as expected by template.
-- No stray `Server` headers; Next.js powered string preserved.
-- Non-marketing routes inherit strict `no-store` cache policy, satisfying security guardrails.
+> Capture commands: `curl -XGET -H "Origin: https://oneearlybird.ai" -I https://oneearlybird.ai/auth/csrf` (and equivalents for each endpoint / method). Replace host with `https://m.oneearlybird.ai` for mobile verification.

@@ -26,7 +26,7 @@ export default function Cta03() {
               <div className="inline-flex font-medium bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-purple-200 pb-3">Never miss an update</div>
             </div>
             <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">Take control of your business</h2>
-            <p className="text-lg text-slate-400 mb-8">Find out about our latest product changes as we continue improving Stellar to enable your team to collaborate better.</p>
+            <p className="text-lg text-slate-400 mb-8">Get the latest product updates as we ship new EarlyBird AI skills, dashboards, and booking automations for your team.</p>
             <form className="inline-flex max-w-sm w-full">
               <div className="w-full flex flex-col sm:flex-row justify-center max-w-xs mx-auto sm:max-w-none">
                 <input type="email" className="form-input py-1.5 w-full mb-3 sm:mb-0 sm:mr-2 rounded-full bg-slate-800/30 border-slate-700" placeholder="Your email" aria-label="Your email" />
