@@ -27,8 +27,11 @@ export default function HeroAbout() {
 
         {/* Hero content */}
         <div className="text-center">
-          <div className="inline-flex font-medium bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-purple-200 pb-3">The folks behind the product</div>
-          <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-6">Turning security into innovation</h1>
+          <div className="inline-flex font-medium bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-purple-200 pb-3">Why EarlyBird exists</div>
+          <h1 className="h1 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-6">Reception that sounds human, scales like software.</h1>
+          <p className="mx-auto mt-6 max-w-2xl text-base text-white/70 md:text-lg">
+            We built EarlyBird so service businesses never miss a valuable call again. Every workflow we ship keeps your phones covered, calendars accurate, and teams confident that someone trustworthy is always answering.
+          </p>
           {/* Rings illustration */}
           <div className="inline-flex items-center justify-center relative">
             {/* Particles animation */}
