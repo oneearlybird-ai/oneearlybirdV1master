@@ -17,7 +17,7 @@ type DerivedPlan = {
   hasPriceId: boolean;
 };
 
-const marketingPlans: DerivedPlan[] = PLAN_DEFINITIONS.map((plan) => {
+const marketingPlans: DerivedPlan[] = PLAN_DEFINITIONS.filter((plan) => plan.slug !== "enterprise").map((plan) => {
   const priceLabel = getPlanPriceLabel(plan);
   const trialBadge = getPlanTrialBadge(plan);
   const hasPriceId = typeof plan.priceId === "string" && plan.priceId.trim().length > 0;
