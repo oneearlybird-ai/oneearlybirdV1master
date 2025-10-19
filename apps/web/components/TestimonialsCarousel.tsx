@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 type Item = { q: string; a: string };
 
@@ -8,7 +8,7 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
   const [index, setIndex] = useState(0);
   const hover = useRef(false);
   const timer = useRef<number | null>(null);
-  const regionRef = useRef<HTMLDivElement | null>(null);
+  const [ready, setReady] = useState(false);
 
   useEffect(() => {
     if (!items || items.length <= 1) return;
@@ -18,7 +18,17 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
     return () => { if (timer.current) window.clearInterval(timer.current); };
   }, [items, interval]);
 
+  useEffect(() => {
+    setReady(true);
+  }, []);
+
   const go = (dir: number) => setIndex((i) => (i + dir + items.length) % items.length);
+  const trackStyle = useMemo(() => {
+    if (!ready) {
+      return { transform: `translateX(-${index * 100}%)` };
+    }
+    return { transform: `translateX(-${index * 100}%)`, transition: "transform 550ms cubic-bezier(0.32, 0.72, 0, 1)" };
+  }, [index, ready]);
 
   return (
     <div
@@ -31,22 +41,26 @@ export default function TestimonialsCarousel({ items, interval = 5000 }: { items
         if (e.key === 'ArrowRight') { e.preventDefault(); go(1); }
       }}
       tabIndex={0}
-      ref={regionRef}
       onMouseEnter={() => { hover.current = true; }}
       onMouseLeave={() => { hover.current = false; }}
     >
-      <div className="overflow-hidden">
-        {items.map((t, i) => (
-          <figure
-            key={t.q}
-            aria-hidden={i !== index}
-            aria-live={i === index ? 'polite' : undefined}
-            className={`rounded-2xl border border-white/10 bg-white/5 p-6 transition-opacity duration-500 ${i === index ? 'opacity-100' : 'opacity-0 absolute inset-0'}`}
-          >
-            <blockquote className="text-white/90 leading-relaxed md:leading-7">{t.q}</blockquote>
-            <figcaption className="mt-2 text-sm text-white/70 leading-6">{t.a}</figcaption>
-          </figure>
-        ))}
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5">
+        <div
+          className="flex"
+          style={trackStyle}
+          aria-live="polite"
+        >
+          {items.map((t, i) => (
+            <figure
+              key={t.q}
+              aria-hidden={i !== index}
+              className="min-w-full shrink-0 p-6"
+            >
+              <blockquote className="text-white/90 leading-relaxed md:leading-7">{t.q}</blockquote>
+              <figcaption className="mt-3 text-sm text-white/70 leading-6">{t.a}</figcaption>
+            </figure>
+          ))}
+        </div>
       </div>
 
       {/* Controls */}
