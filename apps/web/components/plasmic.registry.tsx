@@ -2,7 +2,6 @@
 
 import { registerComponent } from "@plasmicapp/host";
 import { Marquee } from "@/components/Marquee";
-import TestimonialsCarousel from "@/components/TestimonialsCarousel";
 import React from "react";
 
 // Lightweight building blocks that match the site visual language
@@ -90,29 +89,5 @@ registerComponent(Marquee as any, {
     speedSec: { type: "number", defaultValue: 16 },
     ariaLabel: { type: "string", defaultValue: "Integrations logos" },
     children: { type: "slot" },
-  },
-});
-
-registerComponent(TestimonialsCarousel as any, {
-  name: "TestimonialsCarousel",
-  importPath: "@/components/TestimonialsCarousel",
-  importName: "default",
-  props: {
-    interval: { type: "number", defaultValue: 5000 },
-    items: {
-      type: "array",
-      displayName: "Items",
-      defaultValue: [
-        { q: "“EarlyBird saves us hours daily.”", a: "Alex R." },
-        { q: "“Set up in minutes; calls answered 24/7.”", a: "Mia L." },
-      ],
-      itemType: {
-        type: "object",
-        fields: {
-          q: { type: "string", displayName: "Quote" },
-          a: { type: "string", displayName: "Attribution" },
-        },
-      },
-    },
   },
 });

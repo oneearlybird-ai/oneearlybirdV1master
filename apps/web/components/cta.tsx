@@ -22,9 +22,6 @@ export default function Cta() {
           </div>
           {/* Content */}
           <div className="max-w-3xl mx-auto text-center">
-            <div>
-              <div className="inline-flex font-medium bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-purple-200 pb-3">Answer every call</div>
-            </div>
             <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">
               Ready to take control of your business?
             </h2>
