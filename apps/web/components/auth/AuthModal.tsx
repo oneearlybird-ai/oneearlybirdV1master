@@ -12,6 +12,7 @@ import { apiFetch } from "@/lib/http";
 import { buildGoogleStartUrl, getDashboardPath, getMagicVerifyPath } from "@/lib/authPaths";
 import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
 import { setActiveAuthFlow } from "@/lib/authFlow";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
@@ -54,6 +55,7 @@ export default function AuthModal() {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const initialFocusRef = useRef<HTMLInputElement | null>(null);
   const googlePopupMonitorRef = useRef<number | null>(null);
+  const popupRef = useRef<Window | null>(null);
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -67,6 +69,7 @@ export default function AuthModal() {
   const [googlePending, setGooglePending] = useState(false);
 
   const isSignIn = mode === "signin";
+  const { refresh } = useAuthSession();
 
   const warmDashboardData = useCallback(async () => {
     try {
@@ -87,12 +90,52 @@ export default function AuthModal() {
     }
   }, []);
 
-  const clearGooglePopupMonitor = useCallback(() => {
-    if (googlePopupMonitorRef.current !== null) {
-      window.clearInterval(googlePopupMonitorRef.current);
-      googlePopupMonitorRef.current = null;
+const clearGooglePopupMonitor = useCallback(() => {
+  if (googlePopupMonitorRef.current !== null) {
+    window.clearInterval(googlePopupMonitorRef.current);
+    googlePopupMonitorRef.current = null;
+  }
+}, []);
+
+  useEffect(() => {
+    const allowedOrigins = new Set<string>(["https://oneearlybird.ai", "https://m.oneearlybird.ai", "https://www.oneearlybird.ai"]);
+    if (typeof window !== "undefined") {
+      allowedOrigins.add(window.location.origin);
+      try {
+        if (document.referrer) {
+          const refOrigin = new URL(document.referrer).origin;
+          allowedOrigins.add(refOrigin);
+        }
+      } catch {
+        /* ignore */
+      }
     }
-  }, []);
+
+    const handleMessage = (event: MessageEvent) => {
+      if (!allowedOrigins.has(event.origin)) return;
+      const rawType = typeof event.data === "string" ? event.data : (event.data as { type?: string } | null)?.type;
+      if (rawType !== "auth-success" && rawType !== "oauth:success") return;
+      try {
+        const popup = popupRef.current;
+        if (popup && !popup.closed) {
+          popup.close();
+        }
+      } catch (error) {
+        console.warn("auth_popup_close_failed", { message: (error as Error)?.message });
+      } finally {
+        popupRef.current = null;
+      }
+      clearGooglePopupMonitor();
+      setGooglePending(false);
+      triggerLoginEvent();
+      void refresh({ showLoading: true, retryOnUnauthorized: true });
+    };
+
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [clearGooglePopupMonitor, refresh, triggerLoginEvent]);
 
   useEffect(() => {
     const handleAuthSuccess = () => {
@@ -270,16 +313,18 @@ export default function AuthModal() {
       setActiveAuthFlow(intent === "signup" ? "google-signup" : "google-signin");
       setGooglePending(true);
       clearGooglePopupMonitor();
-      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "oauth:success" });
+      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "auth-success" });
       if (!popup) {
         setGooglePending(false);
         window.location.href = url;
         return;
       }
+      popupRef.current = popup;
       googlePopupMonitorRef.current = window.setInterval(() => {
         if (!popup || popup.closed) {
           clearGooglePopupMonitor();
           setGooglePending(false);
+          popupRef.current = null;
         }
       }, 500);
     },

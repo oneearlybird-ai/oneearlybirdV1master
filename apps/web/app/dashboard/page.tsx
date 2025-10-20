@@ -313,7 +313,9 @@ export default function DashboardPage() {
       window.opener.postMessage({ type: "billing:portal:returned" }, allowedOrigin);
       window.close();
     } else if (window.opener && window.name === "oauth-google") {
+      window.opener.postMessage({ type: "auth-success" }, allowedOrigin);
       window.opener.postMessage({ type: "auth:success" }, allowedOrigin);
+      window.opener.postMessage("auth-success", allowedOrigin);
       window.close();
     }
     if (sessionId) {

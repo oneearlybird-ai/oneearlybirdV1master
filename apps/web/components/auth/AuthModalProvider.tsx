@@ -143,6 +143,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
     };
 
     const handleOAuthSuccess = () => {
+      resolvePopupMessage("auth-success");
       resolvePopupMessage("oauth:success");
       const flow = consumeActiveAuthFlow();
       void warmDashboardData();

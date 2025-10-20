@@ -28,6 +28,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const [unread, setUnread] = useState(0);
   const [build, setBuild] = useState<string|undefined>(undefined);
   const searchRef = useRef<HTMLInputElement | null>(null);
+  const guardNotifiedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
     dashboardFetch('/usage/summary', { cache: 'no-store' })
@@ -53,7 +54,12 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
     return () => { cancelled = true };
   }, []);
   useEffect(() => {
-    if (status === "unauthenticated") {
+    if (status === "authenticated") {
+      guardNotifiedRef.current = false;
+    }
+    if (status === "unauthenticated" && !guardNotifiedRef.current) {
+      guardNotifiedRef.current = true;
+      toast("Please sign in to continue", "error");
       router.replace("/");
     }
   }, [router, status]);
