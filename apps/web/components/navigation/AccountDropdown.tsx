@@ -92,7 +92,7 @@ export function AccountDropdown() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-64 max-w-xs rounded-2xl border border-white/15 bg-neutral-950/95 p-2 text-sm shadow-2xl shadow-black/30"
+          className="absolute right-0 z-50 mt-2 min-w-[16rem] max-w-[20rem] rounded-2xl border border-white/15 bg-[#05050b]/95 p-2 text-sm shadow-2xl shadow-black/40"
         >
           <div className="px-3 py-2 text-xs uppercase tracking-wide text-white/50">Account</div>
           <Link

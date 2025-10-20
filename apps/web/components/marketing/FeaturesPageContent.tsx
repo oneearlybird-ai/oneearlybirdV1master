@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from "react";
+import { type ReactNode, useMemo, useState } from "react";
 import Link from "next/link";
 import Section from "@/components/marketing/Section";
 import Particles from "@/components/particles";
@@ -20,7 +20,7 @@ type Highlight = {
   title: string;
   copy: string;
   bullets: string[];
-  icon: JSX.Element;
+  icon: ReactNode;
 };
 
 type CoverageMode = {
