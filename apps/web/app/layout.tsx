@@ -7,7 +7,7 @@ import "./globals.css";
 import { displayFont, sansFont, stellarFont } from "./fonts";
 
 export const metadata: Metadata = {
-  title: "(EB) EarlyBird AI",
+  title: "EarlyBird AI",
   description: "AI voice receptionist for your business",
   icons: {
     icon: [

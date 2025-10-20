@@ -1,21 +1,16 @@
-<svg width="128" height="128" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg">
-  <defs>
-    <linearGradient id="eb_icon_gradient" x1="24" y1="10" x2="116" y2="118" gradientUnits="userSpaceOnUse">
-      <stop stop-color="#6D5BFF" />
-      <stop offset="1" stop-color="#A855F7" />
-    </linearGradient>
-  </defs>
-  <rect width="128" height="128" rx="28" fill="url(#eb_icon_gradient)" />
-  <rect x="16" y="16" width="96" height="96" rx="24" fill="rgba(12, 12, 18, 0.14)" />
-  <text
-    x="64"
-    y="78"
-    text-anchor="middle"
-    font-family="Inter, 'Segoe UI', sans-serif"
-    font-weight="700"
-    font-size="50"
-    fill="white"
-  >
-    EB
-  </text>
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128" fill="none">
+  <path
+    d="M94 34.5c-14.4-7.2-36-4.3-49.5 9.1C31.2 56.8 27 74.7 37.4 88.5l-12.5 15c-2 2.5.8 6 3.7 5.1l19.9-6 11.6 14c1.7 2 5.1.9 5.4-1.7l1.1-19.6 21.8 8.7c2.8 1.1 5.2-2 3.7-4.5L82 83c11.4-3.3 21.2-11.5 24.1-22.7 2.1-7.7.4-15.4-5-21.8"
+    stroke="#D8B4FE"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
+  <path
+    d="M45.5 64.5c11-10.6 26.2-16.8 43-16.8L67 72l29.5 7.4"
+    stroke="#D8B4FE"
+    stroke-width="8"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+  />
 </svg>
