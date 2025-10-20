@@ -8,6 +8,7 @@ type DerivedPlan = {
   name: string;
   blurb: string;
   priceLabel: string;
+  minutesLabel: string;
   trialBadge: string | null;
   features: string[];
   highlight: boolean;
@@ -27,6 +28,7 @@ const marketingPlans: DerivedPlan[] = PLAN_DEFINITIONS.filter((plan) => plan.slu
     name: plan.name,
     blurb: plan.blurb ?? "",
     priceLabel,
+    minutesLabel: `${plan.includedMinutes} minutes per month`,
     trialBadge,
     features: plan.features,
     highlight: plan.popular === true || typeof plan.tag === "string",
@@ -85,12 +87,12 @@ export default function Pricing() {
 
         {marketingPlans.map((plan, index) => {
           const purchaseDisabled = !plan.hasPriceId || plan.allowTrial;
-          const cardClassName = [
-            "flex flex-col justify-between rounded-3xl border px-6 py-6 transition duration-200",
-            plan.highlight
-              ? "border-slate-800 bg-slate-800/25 hover:border-purple-300 hover:bg-purple-500/10 hover:shadow-[0_20px_60px_rgba(102,51,153,0.25)]"
-              : "border-slate-800 bg-slate-800/20 hover:border-purple-400/60 hover:bg-slate-800/40",
-          ].join(" ");
+          const baseCardClassName =
+            "flex flex-col justify-between rounded-3xl border px-6 py-6 transition duration-200 border-slate-800 bg-slate-800/25 hover:border-purple-300 hover:bg-purple-500/10 hover:shadow-[0_20px_60px_rgba(102,51,153,0.25)]";
+          const highlightClassName = plan.highlight
+            ? " border-purple-400/80 bg-purple-500/10 shadow-[0_20px_60px_rgba(102,51,153,0.35)] hover:bg-purple-500/20"
+            : "";
+          const cardClassName = `${baseCardClassName}${highlightClassName}`;
           return (
             <div
               key={plan.id}
@@ -110,7 +112,7 @@ export default function Pricing() {
                   ) : null}
                 </div>
                 <div className="mt-2 text-3xl font-semibold text-slate-50">{plan.priceLabel}</div>
-                {plan.trialBadge ? <div className="mt-2 text-xs font-medium uppercase tracking-wide text-purple-200">{plan.trialBadge}</div> : null}
+                <div className="mt-2 text-xs font-medium uppercase tracking-wide text-purple-200">{plan.minutesLabel}</div>
                 <p className="mt-3 text-sm text-slate-300">{plan.blurb}</p>
                 <ul className="mt-5 space-y-2 text-slate-200">
                   {plan.features.map((feature) => (
@@ -132,8 +134,10 @@ export default function Pricing() {
                   purchaseLabel="Select plan"
                   trialLabel="Start free trial"
                 />
-                {!plan.hasPriceId ? (
-                  <p className="mt-2 text-xs text-slate-400">Set the Stripe price IDs in the environment to enable checkout.</p>
+                {plan.trialBadge ? (
+                  <span className="mt-3 inline-flex items-center rounded-full border border-purple-400/60 bg-purple-500/20 px-3 py-1 text-xs font-semibold text-purple-100">
+                    {plan.trialBadge}
+                  </span>
                 ) : null}
               </div>
             </div>
