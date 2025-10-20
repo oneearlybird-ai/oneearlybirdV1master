@@ -115,16 +115,7 @@ const clearGooglePopupMonitor = useCallback(() => {
       if (!allowedOrigins.has(event.origin)) return;
       const rawType = typeof event.data === "string" ? event.data : (event.data as { type?: string } | null)?.type;
       if (rawType !== "auth-success" && rawType !== "oauth:success") return;
-      try {
-        const popup = popupRef.current;
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-      } catch (error) {
-        console.warn("auth_popup_close_failed", { message: (error as Error)?.message });
-      } finally {
-        popupRef.current = null;
-      }
+      popupRef.current = null;
       clearGooglePopupMonitor();
       setGooglePending(false);
       triggerLoginEvent();

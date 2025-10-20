@@ -103,16 +103,7 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
       if (!allowedOrigins.has(event.origin)) return;
       const type = typeof event.data === "string" ? event.data : (event.data as { type?: string } | null)?.type;
       if (type !== "auth-success" && type !== "oauth:success") return;
-      try {
-        const popup = popupRef.current;
-        if (popup && !popup.closed) {
-          popup.close();
-        }
-      } catch (error) {
-        console.warn("mobile_auth_popup_close_failed", { message: (error as Error)?.message });
-      } finally {
-        popupRef.current = null;
-      }
+      popupRef.current = null;
       clearGooglePopupMonitor();
       setGooglePending(false);
       try {
