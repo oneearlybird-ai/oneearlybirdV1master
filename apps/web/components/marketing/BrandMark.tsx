@@ -14,7 +14,7 @@ export default function BrandMark({ href = "/" }: BrandMarkProps) {
       aria-label="EarlyBird AI home"
       className="inline-flex items-center gap-3 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/40 focus-visible:ring-offset-2 focus-visible:ring-offset-[#05050b]"
     >
-      <BirdMark className="h-12 w-12 text-purple-300" />
+      <BirdMark className="h-12 w-12" size={48} alt="EarlyBird AI bird mark" />
       <span className="text-xl font-semibold tracking-tight text-white sm:text-2xl">
         EarlyBird <span className="text-purple-300">AI</span>
       </span>

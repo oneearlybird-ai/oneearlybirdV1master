@@ -11,11 +11,11 @@ export const metadata: Metadata = {
   description: "AI voice receptionist for your business",
   icons: {
     icon: [
-      { url: "/brand/favicon.svg", type: "image/svg+xml" },
-      { url: "/brand/icon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/brand/favicon.png", type: "image/png", sizes: "32x32" },
+      { url: "/brand/icon.png", type: "image/png", sizes: "192x192" },
     ],
-    shortcut: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/brand/icon.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/brand/favicon.png", type: "image/png" }],
+    apple: [{ url: "/brand/icon.png", type: "image/png", sizes: "180x180" }],
   },
 };
 
