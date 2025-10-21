@@ -73,7 +73,7 @@ export function AccountDropdown() {
   }
 
   return (
-    <div className="relative inline-block" ref={containerRef}>
+    <div className="relative inline-block flex-none" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -92,7 +92,7 @@ export function AccountDropdown() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-auto min-w-[12rem] sm:max-w-[calc(100vw-2.5rem)] overflow-visible rounded-3xl border border-white/12 bg-[#05050b]/97 py-3 text-sm shadow-[0_28px_70px_rgba(5,5,11,0.45)] backdrop-blur sm:min-w-[14rem] md:w-64 md:max-w-none before:absolute before:right-6 before:-top-2 before:h-3.5 before:w-3.5 before:rotate-45 before:rounded-sm before:border before:border-white/12 before:bg-[#05050b]/97 before:content-['']"
+          className="absolute right-0 top-full z-50 mt-2 w-fit min-w-[12rem] overflow-visible rounded-3xl border border-white/12 bg-[#05050b]/97 py-3 text-sm shadow-[0_28px_70px_rgba(5,5,11,0.45)] backdrop-blur sm:min-w-[14rem] sm:max-w-[calc(100vw-2.5rem)] md:w-64 md:max-w-none before:absolute before:right-6 before:-top-2 before:h-3.5 before:w-3.5 before:rotate-45 before:rounded-sm before:border before:border-white/12 before:bg-[#05050b]/97 before:content-['']"
         >
           <div className="px-4 pb-2 text-xs uppercase tracking-wide text-white/50">Account</div>
           <div className="space-y-0.5">
