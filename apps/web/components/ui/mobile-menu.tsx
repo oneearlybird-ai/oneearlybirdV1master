@@ -73,43 +73,70 @@ export default function MobileMenu() {
         </svg>
       </button>
 
-      {/*Mobile navigation */}
+      {/* Mobile navigation */}
       <nav
         id="mobile-nav"
         ref={mobileNav}
-        className="absolute top-full z-20 left-0 w-full px-4 sm:px-6 overflow-hidden transition-all duration-300 ease-in-out"
+        className="absolute top-full z-20 right-4 sm:right-6 mt-3 w-[min(22rem,calc(100vw-2.5rem))] overflow-hidden rounded-3xl border border-white/12 bg-[#05050b]/98 px-1 py-2 shadow-[0_30px_90px_rgba(5,5,11,0.55)] backdrop-blur transition-all duration-300 ease-in-out"
         style={mobileNavOpen ? { maxHeight: mobileNav.current?.scrollHeight, opacity: 1 } : { maxHeight: 0, opacity: 0.8 }}
       >
-        <ul className="border border-transparent [background:linear-gradient(var(--color-slate-900),var(--color-slate-900))_padding-box,conic-gradient(var(--color-slate-400),var(--color-slate-700)_25%,var(--color-slate-700)_75%,var(--color-slate-400)_100%)_border-box] rounded-lg px-4 py-1.5 space-y-0.5">
+        <ul className="flex flex-col gap-1 px-2 py-1.5">
           <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/">Home</Link>
+            <Link className="flex items-center rounded-2xl px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white" href="/" onClick={() => setMobileNavOpen(false)}>
+              Home
+            </Link>
           </li>
           <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/how-it-works">How it works</Link>
+            <Link className="flex items-center rounded-2xl px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white" href="/how-it-works" onClick={() => setMobileNavOpen(false)}>
+              How it works
+            </Link>
           </li>
           <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/pricing">Pricing</Link>
+            <Link className="flex items-center rounded-2xl px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white" href="/pricing" onClick={() => setMobileNavOpen(false)}>
+              Pricing
+            </Link>
           </li>
           <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/preview">Preview</Link>
+            <Link className="flex items-center rounded-2xl px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white" href="/preview" onClick={() => setMobileNavOpen(false)}>
+              Preview
+            </Link>
           </li>
           <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/docs">Docs</Link>
+            <Link className="flex items-center rounded-2xl px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white" href="/docs" onClick={() => setMobileNavOpen(false)}>
+              Docs
+            </Link>
           </li>
           <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/support">Support</Link>
+            <Link className="flex items-center rounded-2xl px-3 py-2 text-sm font-medium text-white/75 transition hover:bg-white/10 hover:text-white" href="/support" onClick={() => setMobileNavOpen(false)}>
+              Support
+            </Link>
           </li>
           {isAuthenticated ? (
-            <li className="border-t border-slate-800 mt-2 pt-3 flex flex-col gap-2">
-              <Link className="flex h-11 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-white/85 transition hover:text-white" href={dashboardHref} onClick={() => setMobileNavOpen(false)}>
+            <li className="border-t border-white/10 mt-3 pt-3 flex flex-col gap-2 px-1">
+              <Link className="flex h-11 items-center justify-center rounded-2xl border border-white/15 text-sm font-semibold text-white/85 transition hover:bg-white/10 hover:text-white" href={dashboardHref} onClick={() => setMobileNavOpen(false)}>
                 Dashboard
               </Link>
-              <SignOutButton fullWidth variant="ghost" className="h-11 border-white/20 text-white/85 hover:text-white" onBeforeSignOut={() => setMobileNavOpen(false)} />
+              <SignOutButton
+                fullWidth
+                variant="ghost"
+                className="h-11 rounded-2xl border border-white/15 text-white/80 hover:bg-rose-500/15 hover:text-rose-100"
+                onBeforeSignOut={() => setMobileNavOpen(false)}
+              />
             </li>
           ) : (
-            <li className="border-t border-slate-800 mt-2 pt-3 flex gap-2">
-              <AuthModalTriggerButton mode="signin" className="flex-1 btn text-slate-200 hover:text-white bg-slate-900/30">Sign in</AuthModalTriggerButton>
-              <AuthModalTriggerButton mode="signup" className="flex-1 btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white">Start trial</AuthModalTriggerButton>
+            <li className="border-t border-white/10 mt-3 pt-3 flex gap-2 px-1">
+              <AuthModalTriggerButton
+                mode="signin"
+                className="flex-1 h-11 rounded-2xl border border-white/15 bg-transparent text-sm font-medium text-white/80 transition hover:bg-white/10 hover:text-white"
+              >
+                Sign in
+              </AuthModalTriggerButton>
+              <AuthModalTriggerButton
+                mode="signup"
+                className="flex-1 h-11 rounded-2xl bg-white text-sm font-semibold text-black transition hover:bg-white/90"
+              >
+                Start trial
+              </AuthModalTriggerButton>
             </li>
           )}
 
