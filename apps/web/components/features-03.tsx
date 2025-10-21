@@ -35,50 +35,58 @@ export default function Features03() {
                     <div className="absolute bottom-0 translate-y-1/2 left-1/2 -translate-x-1/2 pointer-events-none -z-10 w-1/2 aspect-square" aria-hidden="true">
                       <div className="absolute inset-0 translate-z-0 bg-purple-500 rounded-full blur-[120px]" />
                     </div>
-                    <div className="mx-auto w-[260px] md:w-[280px] rounded-[34px] border border-white/10 bg-slate-950/80 p-[14px] shadow-[0_25px_60px_rgba(76,29,149,0.35)] backdrop-blur">
+                    <div className="mx-auto w-[240px] md:w-[286px]">
                       <div className="relative">
-                        <div className="absolute inset-x-10 -top-3 h-5 rounded-full bg-slate-800/80" aria-hidden />
-                        <div className="rounded-[24px] border border-white/10 bg-slate-900/95 p-4 space-y-4 text-slate-100">
-                          <div>
-                            <p className="text-xs uppercase tracking-wide text-slate-400">Today</p>
-                            <p className="mt-1 text-lg font-semibold text-slate-50">Welcome back, Taylor</p>
-                            <p className="text-xs text-slate-400">3 calls in progress · 18 awaiting review</p>
-                          </div>
-
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="rounded-2xl border border-white/10 bg-white/\[0.04\] p-3">
-                              <p className="text-[11px] uppercase tracking-wide text-purple-200">Call capture</p>
-                              <div className="mt-1 text-xl font-semibold text-white">98%</div>
-                              <p className="text-[11px] text-slate-400">Last 30 days</p>
-                            </div>
-                            <div className="rounded-2xl border border-white/10 bg-white/\[0.02\] p-3">
-                              <p className="text-[11px] uppercase tracking-wide text-purple-200">Bookings</p>
-                              <div className="mt-1 text-xl font-semibold text-white">63</div>
-                              <p className="text-[11px] text-slate-400">+12% vs last week</p>
-                            </div>
-                          </div>
-
-                          <div className="rounded-2xl border border-white/10 bg-white/\[0.02\] p-3 space-y-3">
-                            <div className="flex items-center justify-between">
+                        <div className="absolute inset-0 -z-10 rounded-[48px] bg-gradient-to-br from-purple-500/15 via-slate-500/10 to-purple-500/20 blur-2xl opacity-70" aria-hidden />
+                        <div className="relative overflow-hidden rounded-[46px] border border-white/12 bg-gradient-to-br from-[#232339] via-[#06060d] to-[#010104] p-[14px] shadow-[0_30px_90px_rgba(8,8,28,0.6)]">
+                          <div className="absolute inset-x-[58px] -top-[22px] z-20 h-9 rounded-[22px] border border-white/10 bg-[#05050b] shadow-[0_12px_36px_rgba(0,0,0,0.55)]" aria-hidden />
+                          <div className="absolute inset-y-16 -left-[6px] w-[3px] rounded-full bg-white/15" aria-hidden />
+                          <div className="absolute inset-y-[88px] -right-[6px] w-[2px] rounded-full bg-white/12" aria-hidden />
+                          <div className="relative overflow-hidden rounded-[32px] border border-white/12 bg-[#06060d] px-4 py-5 text-slate-100 shadow-[inset_0_1px_1px_rgba(255,255,255,0.08)]">
+                            <div className="pointer-events-none absolute inset-1 rounded-[30px] bg-[radial-gradient(circle_at_top,#23233c,transparent_70%)] opacity-60" aria-hidden />
+                            <div className="relative space-y-4">
                               <div>
-                                <p className="text-[11px] uppercase tracking-wide text-purple-200">Next follow-up</p>
-                                <p className="text-sm font-medium text-white">Hot lead · 4:30pm today</p>
+                                <p className="text-[11px] uppercase tracking-[0.32em] text-white/45">Today</p>
+                                <p className="mt-2 text-lg font-semibold text-white">Welcome back, Taylor</p>
+                                <p className="text-xs text-white/60">3 live calls · 18 awaiting review</p>
                               </div>
-                              <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-300">
-                                High intent
-                              </span>
-                            </div>
-                            <div className="space-y-2 text-[12px] text-slate-300">
-                              <div className="flex items-start gap-2 rounded-xl border border-white/10 bg-white/\[0.03\] px-3 py-2">
-                                <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-300" />
-                                <div>
-                                  <p className="font-medium text-slate-100">Transcript & summary</p>
-                                  <p className="text-slate-400">“Caller asked about emergency availability, ready to start trial tomorrow.”</p>
+
+                              <div className="grid grid-cols-2 gap-2.5">
+                                <div className="rounded-2xl border border-white/12 bg-white/\[0.06\] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                                  <p className="text-[11px] uppercase tracking-wide text-purple-200">Call capture</p>
+                                  <div className="mt-1 text-xl font-semibold text-white">98%</div>
+                                  <p className="text-[10px] text-white/60">Last 30 days</p>
+                                </div>
+                                <div className="rounded-2xl border border-white/12 bg-white/\[0.04\] p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.05)]">
+                                  <p className="text-[11px] uppercase tracking-wide text-purple-200">Bookings</p>
+                                  <div className="mt-1 text-xl font-semibold text-white">63</div>
+                                  <p className="text-[10px] text-white/60">+12% vs last week</p>
                                 </div>
                               </div>
-                              <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/\[0.02\] px-3 py-2">
-                                <span className="text-slate-200">Send hand-off email</span>
-                                <span className="text-xs text-slate-400">Assigned to Maya</span>
+
+                              <div className="space-y-3 rounded-2xl border border-white/12 bg-white/\[0.05\] p-3">
+                                <div className="flex items-center justify-between gap-3">
+                                  <div>
+                                    <p className="text-[11px] uppercase tracking-wide text-purple-200">Next follow-up</p>
+                                    <p className="mt-1 text-sm font-medium text-white">Hot lead · 4:30pm today</p>
+                                  </div>
+                                  <span className="inline-flex items-center rounded-full bg-emerald-500/15 px-2 py-1 text-[10px] font-semibold text-emerald-200">
+                                    High intent
+                                  </span>
+                                </div>
+                                <div className="space-y-2 text-[11px] text-white/70">
+                                  <div className="flex items-start gap-2 rounded-xl border border-white/12 bg-white/\[0.05\] px-3 py-2">
+                                    <div className="mt-1 h-1.5 w-1.5 shrink-0 rounded-full bg-purple-300" />
+                                    <div>
+                                      <p className="font-medium text-white">Transcript &amp; summary</p>
+                                      <p className="text-white/60">“Caller asked about emergency availability, ready to start trial tomorrow.”</p>
+                                    </div>
+                                  </div>
+                                  <div className="flex items-center justify-between rounded-xl border border-white/12 bg-white/\[0.04\] px-3 py-2">
+                                    <span className="text-white/80">Send hand-off email</span>
+                                    <span className="text-xs text-white/50">Assigned to Maya</span>
+                                  </div>
+                                </div>
                               </div>
                             </div>
                           </div>
