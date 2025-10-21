@@ -1,84 +1,55 @@
 import Link from "next/link";
-import AuthModalTriggerButton from "@/components/auth/AuthModalTriggerButton";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { AccountDropdown } from "@/components/navigation/AccountDropdown";
 import SignOutButton from "@/components/auth/SignOutButton";
 import Logo from "./logo";
 import MobileMenu from "./mobile-menu";
+import MarketingAuthControls from "@/components/navigation/MarketingAuthControls";
 
 export default function Header() {
   const { status } = useAuthSession();
+  const isAuthenticated = status === "authenticated";
+
   return (
-    <header className="absolute w-full z-30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-16 md:h-20">
-          <div className="flex-1">
-            <Logo />
-          </div>
-          <nav className="hidden md:flex md:grow">
-            <ul className="flex grow justify-center flex-wrap items-center">
-              <li>
-                <Link className="font-medium text-sm text-slate-300 hover:text-white mx-4 lg:mx-5 transition duration-150 ease-in-out" href="/">
-                  Home
-                </Link>
-              </li>
-              <li>
-                <Link className="font-medium text-sm text-slate-300 hover:text-white mx-4 lg:mx-5 transition duration-150 ease-in-out" href="/how-it-works">
-                  How it works
-                </Link>
-              </li>
-              <li>
-                <Link className="font-medium text-sm text-slate-300 hover:text-white mx-4 lg:mx-5 transition duration-150 ease-in-out" href="/pricing">
-                  Pricing
-                </Link>
-              </li>
-              <li>
-                <Link className="font-medium text-sm text-slate-300 hover:text-white mx-4 lg:mx-5 transition duration-150 ease-in-out" href="/preview">
-                  Preview
-                </Link>
-              </li>
-              <li>
-                <Link className="font-medium text-sm text-slate-300 hover:text-white mx-4 lg:mx-5 transition duration-150 ease-in-out" href="/docs">
-                  Docs
-                </Link>
-              </li>
-              <li>
-                <Link className="font-medium text-sm text-slate-300 hover:text-white mx-4 lg:mx-5 transition duration-150 ease-in-out" href="/support">
-                  Support
-                </Link>
-              </li>
-            </ul>
-          </nav>
-          <div className="flex flex-1 justify-end">
-            {status === "authenticated" ? (
-              <div className="flex items-center gap-4">
-                <AccountDropdown />
-                <SignOutButton variant="ghost" />
-              </div>
-            ) : (
-              <div className="flex items-center gap-4">
-                <AuthModalTriggerButton
-                  mode="signin"
-                  className="font-medium text-sm text-slate-300 hover:text-white whitespace-nowrap transition duration-150 ease-in-out"
-                >
-                  Sign in
-                </AuthModalTriggerButton>
-                <AuthModalTriggerButton
-                  mode="signup"
-                  className="btn-sm text-slate-300 hover:text-white transition duration-150 ease-in-out group [background:linear-gradient(var(--color-slate-900),var(--color-slate-900))_padding-box,conic-gradient(var(--color-slate-400),var(--color-slate-700)_25%,var(--color-slate-700)_75%,var(--color-slate-400)_100%)_border-box] relative before:absolute before:inset-0 before:bg-slate-800/30 before:rounded-full before:pointer-events-none"
-                >
-                  <span className="relative inline-flex items-center">
-                    Start trial
-                    <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">
-                      -&gt;
-                    </span>
-                  </span>
-                </AuthModalTriggerButton>
-              </div>
-            )}
-          </div>
-          <MobileMenu />
+    <header className="absolute inset-x-0 z-30">
+      <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 md:py-6">
+        <div className="flex flex-1 items-center">
+          <Logo />
         </div>
+
+        <nav className="hidden items-center gap-1 md:flex md:grow md:justify-center">
+          <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/">
+            Home
+          </Link>
+          <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/how-it-works">
+            How it works
+          </Link>
+          <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/pricing">
+            Pricing
+          </Link>
+          <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/preview">
+            Preview
+          </Link>
+          <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/docs">
+            Docs
+          </Link>
+          <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/support">
+            Support
+          </Link>
+        </nav>
+
+        <div className="hidden items-center gap-4 md:flex md:flex-1 md:justify-end">
+          {isAuthenticated ? (
+            <div className="flex items-center gap-4">
+              <AccountDropdown />
+              <SignOutButton variant="ghost" />
+            </div>
+          ) : (
+            <MarketingAuthControls />
+          )}
+        </div>
+
+        <MobileMenu isAuthenticated={isAuthenticated} />
       </div>
     </header>
   );
