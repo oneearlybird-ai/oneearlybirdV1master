@@ -92,14 +92,14 @@ export function AccountDropdown() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-2 w-[min(90vw,20.5rem)] overflow-visible rounded-3xl border border-white/12 bg-[#05050b]/97 p-3 text-sm shadow-[0_30px_90px_rgba(5,5,11,0.45)] backdrop-blur sm:w-[20rem] before:absolute before:right-6 before:-top-2 before:h-4 before:w-4 before:rotate-45 before:rounded-sm before:border before:border-white/12 before:bg-[#05050b]/97 before:content-['']"
+          className="absolute right-0 z-50 mt-2 min-w-[14.5rem] max-w-[19rem] overflow-visible rounded-3xl border border-white/12 bg-[#05050b]/97 py-3 text-sm shadow-[0_28px_70px_rgba(5,5,11,0.45)] backdrop-blur sm:min-w-[15.5rem] before:absolute before:right-6 before:-top-2 before:h-3.5 before:w-3.5 before:rotate-45 before:rounded-sm before:border before:border-white/12 before:bg-[#05050b]/97 before:content-['']"
         >
-          <div className="px-4 pb-2 pt-3 text-xs uppercase tracking-wide text-white/50">Account</div>
-          <div className="space-y-1 px-1">
+          <div className="px-4 pb-2 text-xs uppercase tracking-wide text-white/50">Account</div>
+          <div className="space-y-0.5">
             <Link
               role="menuitem"
               href={getDashboardPath()}
-              className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-white/80 transition hover:bg-white/10 hover:text-white"
+              className="flex items-center gap-2 rounded-2xl px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
               onClick={() => setOpen(false)}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -110,7 +110,7 @@ export function AccountDropdown() {
             <Link
               role="menuitem"
               href={getProfileCapturePath()}
-              className="flex items-center gap-2 rounded-2xl px-3.5 py-2.5 text-white/80 transition hover:bg-white/10 hover:text-white"
+              className="flex items-center gap-2 rounded-2xl px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
               onClick={() => setOpen(false)}
             >
               <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
@@ -127,7 +127,7 @@ export function AccountDropdown() {
               void handleSignOut();
             }}
             disabled={signingOut}
-            className="mt-2 flex w-full items-center gap-2 rounded-2xl px-3.5 py-2.5 text-left text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-100 disabled:opacity-60"
+            className="mt-2 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-100 disabled:opacity-60"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
               <path d="M15 12H3" strokeLinecap="round" strokeLinejoin="round" />
