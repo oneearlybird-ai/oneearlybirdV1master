@@ -9,7 +9,7 @@ type BirdMarkProps = {
 export default function BirdMark({ className, size = 36, alt = 'EarlyBird AI mark' }: BirdMarkProps) {
   return (
     <Image
-      src="/brand/bird-mark.png"
+      src="/brand/EarlyBirdAIbrandlogo.png"
       alt={alt}
       width={size}
       height={size}
