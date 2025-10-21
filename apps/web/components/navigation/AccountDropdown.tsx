@@ -92,9 +92,9 @@ export function AccountDropdown() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 z-50 mt-3 w-[min(21rem,calc(100vw-1.5rem))] min-w-[17rem] overflow-hidden rounded-3xl border border-white/12 bg-[#05050b] p-3 text-sm shadow-[0_40px_120px_rgba(5,5,11,0.45)] backdrop-blur"
+          className="absolute right-0 z-50 mt-2 w-[min(90vw,20.5rem)] overflow-visible rounded-3xl border border-white/12 bg-[#05050b]/97 p-3 text-sm shadow-[0_30px_90px_rgba(5,5,11,0.45)] backdrop-blur sm:w-[20rem] before:absolute before:right-6 before:-top-2 before:h-4 before:w-4 before:rotate-45 before:rounded-sm before:border before:border-white/12 before:bg-[#05050b]/97 before:content-['']"
         >
-          <div className="px-4 py-2 text-xs uppercase tracking-wide text-white/50">Account</div>
+          <div className="px-4 pb-2 pt-3 text-xs uppercase tracking-wide text-white/50">Account</div>
           <div className="space-y-1 px-1">
             <Link
               role="menuitem"
