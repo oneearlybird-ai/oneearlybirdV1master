@@ -6,13 +6,13 @@ import Logo from "@/components/ui/logo";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
-import { openPopup } from "@/lib/popup";
+import { openPopup, resolvePopupMessage } from "@/lib/popup";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { apiFetch } from "@/lib/http";
 import { buildGoogleStartUrl, getDashboardPath, getMagicVerifyPath } from "@/lib/authPaths";
 import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
-import { setActiveAuthFlow } from "@/lib/authFlow";
-import { useAuthSession } from "@/components/auth/AuthSessionProvider";
+import { consumeActiveAuthFlow, setActiveAuthFlow } from "@/lib/authFlow";
+import { useOAuthFinalizer } from "@/hooks/useOAuthFinalizer";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
@@ -69,7 +69,7 @@ export default function AuthModal() {
   const [googlePending, setGooglePending] = useState(false);
 
   const isSignIn = mode === "signin";
-  const { refresh } = useAuthSession();
+  const finalizeOAuth = useOAuthFinalizer();
 
   const warmDashboardData = useCallback(async () => {
     try {
@@ -98,7 +98,12 @@ const clearGooglePopupMonitor = useCallback(() => {
 }, []);
 
   useEffect(() => {
-    const allowedOrigins = new Set<string>(["https://oneearlybird.ai", "https://m.oneearlybird.ai", "https://www.oneearlybird.ai"]);
+    const allowedOrigins = new Set<string>([
+      "https://oneearlybird.ai",
+      "https://m.oneearlybird.ai",
+      "https://www.oneearlybird.ai",
+      "https://api.oneearlybird.ai",
+    ]);
     if (typeof window !== "undefined") {
       allowedOrigins.add(window.location.origin);
       try {
@@ -113,20 +118,37 @@ const clearGooglePopupMonitor = useCallback(() => {
 
     const handleMessage = (event: MessageEvent) => {
       if (!allowedOrigins.has(event.origin)) return;
-      const rawType = typeof event.data === "string" ? event.data : (event.data as { type?: string } | null)?.type;
-      if (rawType !== "auth-success" && rawType !== "oauth:success") return;
+      const payload = typeof event.data === "object" ? (event.data as Record<string, unknown>) : {};
+      const type =
+        typeof payload?.type === "string"
+          ? payload.type
+          : typeof event.data === "string"
+            ? event.data
+            : undefined;
+      if (type !== "oauthResult") return;
+      resolvePopupMessage("oauthResult");
+      consumeActiveAuthFlow();
       popupRef.current = null;
       clearGooglePopupMonitor();
       setGooglePending(false);
       triggerLoginEvent();
-      void refresh({ showLoading: true, retryOnUnauthorized: true });
+      const needsAccountCreate =
+        typeof payload?.needsAccountCreate === "boolean"
+          ? (payload.needsAccountCreate as boolean)
+          : payload?.needsAccountCreate === "1";
+      const redirectPath =
+        typeof payload?.redirectPath === "string" ? (payload.redirectPath as string) : undefined;
+      void finalizeOAuth({
+        needsAccountCreate,
+        redirectPath,
+      });
     };
 
     window.addEventListener("message", handleMessage);
     return () => {
       window.removeEventListener("message", handleMessage);
     };
-  }, [clearGooglePopupMonitor, refresh, triggerLoginEvent]);
+  }, [clearGooglePopupMonitor, finalizeOAuth, triggerLoginEvent]);
 
   useEffect(() => {
     const handleAuthSuccess = () => {
@@ -304,7 +326,7 @@ const clearGooglePopupMonitor = useCallback(() => {
       setActiveAuthFlow(intent === "signup" ? "google-signup" : "google-signin");
       setGooglePending(true);
       clearGooglePopupMonitor();
-      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "auth-success" });
+      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "oauthResult" });
       if (!popup) {
         setGooglePending(false);
         window.location.href = url;

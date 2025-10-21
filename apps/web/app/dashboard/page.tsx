@@ -294,7 +294,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const allowedOrigins = new Set(["https://oneearlybird.ai", "https://m.oneearlybird.ai"]);
+    const allowedOrigins = new Set([
+      "https://oneearlybird.ai",
+      "https://m.oneearlybird.ai",
+      "https://www.oneearlybird.ai",
+      "https://api.oneearlybird.ai",
+    ]);
     const currentOrigin = typeof window !== "undefined" ? window.location.origin : "https://oneearlybird.ai";
     const allowedOrigin = allowedOrigins.has(currentOrigin) ? currentOrigin : "https://oneearlybird.ai";
     const refresh = () => {
@@ -313,6 +318,10 @@ export default function DashboardPage() {
       window.opener.postMessage({ type: "billing:portal:returned" }, allowedOrigin);
       window.close();
     } else if (window.opener && window.name === "oauth-google") {
+      window.opener.postMessage(
+        { type: "oauthResult", provider: "google", success: true },
+        allowedOrigin,
+      );
       window.opener.postMessage({ type: "auth-success" }, allowedOrigin);
       window.opener.postMessage({ type: "auth:success" }, allowedOrigin);
       window.opener.postMessage("auth-success", allowedOrigin);
