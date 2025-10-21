@@ -16,9 +16,9 @@ type Props = {
 
 function baseClasses(variant: Variant) {
   if (variant === "mobile") {
-    return "flex flex-col gap-3 w-full";
+    return "flex w-full flex-col gap-3";
   }
-  return "flex items-center gap-3";
+  return "flex items-center gap-2";
 }
 
 export default function MarketingAuthControls({ variant = "desktop", onNavigate }: Props) {
@@ -43,7 +43,7 @@ export default function MarketingAuthControls({ variant = "desktop", onNavigate 
           onClick={onNavigate}
           className={
             variant === "desktop"
-              ? "inline-flex items-center justify-center rounded-xl border border-white/15 px-5 py-2 text-sm font-medium text-white/85 hover:text-white hover:border-white/30 transition"
+              ? "inline-flex items-center justify-center rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:text-white hover:border-white/40"
               : "w-full inline-flex items-center justify-center rounded-xl border border-white/15 px-4 py-3 text-sm font-medium text-white/85 hover:text-white transition"
           }
         >
@@ -53,7 +53,7 @@ export default function MarketingAuthControls({ variant = "desktop", onNavigate 
           variant="solid"
           className={
             variant === "desktop"
-              ? "px-5 py-2"
+              ? "px-3 py-1.5"
               : "w-full px-4 py-3"
           }
           fullWidth={variant === "mobile"}
@@ -73,7 +73,7 @@ export default function MarketingAuthControls({ variant = "desktop", onNavigate 
         }}
         className={
           variant === "desktop"
-            ? "inline-flex items-center justify-center rounded-xl border border-white/20 px-5 py-2 text-sm font-medium text-white/80 transition hover:text-white hover:border-white/40"
+            ? "inline-flex items-center justify-center rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:text-white hover:border-white/40"
             : "w-full inline-flex items-center justify-center rounded-xl border border-white/20 px-4 py-3 text-sm font-medium text-white/80 transition hover:text-white hover:border-white/40"
         }
       >
@@ -87,7 +87,7 @@ export default function MarketingAuthControls({ variant = "desktop", onNavigate 
         }}
         className={
           variant === "desktop"
-            ? "inline-flex items-center justify-center rounded-xl bg-white px-5 py-2 text-sm font-semibold text-black transition hover:bg-white/90"
+            ? "inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-black transition hover:bg-white/90"
             : "w-full inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
         }
       >

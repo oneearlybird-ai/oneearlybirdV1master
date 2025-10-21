@@ -13,11 +13,9 @@ export default function Header() {
   return (
     <header className="absolute inset-x-0 z-30">
       <div className="mx-auto flex w-full max-w-6xl items-center justify-between px-4 py-4 sm:px-6 md:py-6">
-        <div className="flex flex-1 items-center">
-          <Logo />
-        </div>
+        <Logo />
 
-        <nav className="hidden items-center gap-1 md:flex md:grow md:justify-center">
+        <nav className="hidden items-center gap-1 md:flex">
           <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/">
             Home
           </Link>
@@ -38,7 +36,7 @@ export default function Header() {
           </Link>
         </nav>
 
-        <div className="hidden items-center gap-4 md:flex md:flex-1 md:justify-end">
+        <div className="hidden items-center gap-2 md:flex">
           {isAuthenticated ? (
             <div className="flex items-center gap-4">
               <AccountDropdown />
