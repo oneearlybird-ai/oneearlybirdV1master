@@ -5,6 +5,8 @@ import Link from "next/link";
 import Section from "@/components/marketing/Section";
 import Particles from "@/components/particles";
 import AuthModalTriggerButton from "@/components/auth/AuthModalTriggerButton";
+import RevealOnScroll from "@/components/RevealOnScroll";
+import IntegrationsCarousel from "@/components/integrations-carousel";
 import {
   CalendarIcon,
   ClockIcon,
@@ -12,7 +14,6 @@ import {
   CrmIcon,
   PhoneIcon,
   PlugIcon,
-  VoiceIcon,
   CheckIcon,
 } from "@/components/icons";
 
@@ -39,35 +40,23 @@ type Stage = {
 const highlights: Highlight[] = [
   {
     title: "Agent control in seconds",
-    copy:
-      "Flip call forwarding on or off, swap voices, and tailor bilingual scripts without filing a ticket. Your live settings stay in sync across every number you manage.",
+    copy: "Flip the switch on routing, voices, and escalation without waiting for support tickets.",
     bullets: [
-      "Instant call routing toggle from the dashboard header",
-      "Voice library with gender, tone, and language presets",
-      "Workflow guardrails keep compliance and consent in place",
+      "Instant routing toggles with built-in guardrails",
+      "Voice presets for tone, language, and brand nuance",
     ],
     icon: <PhoneIcon className="h-6 w-6 text-purple-300" />,
   },
   {
-    title: "Calendar and CRM automation",
-    copy:
-      "Connect ServiceTitan, HubSpot, Salesforce, or your scheduling tool and let EarlyBird update appointments automatically. Every booking stays aligned with the calendars your teams already live in.",
-    bullets: [
-      "Two-way sync with Google and Microsoft 365 calendars",
-      "Bookings, reschedules, and cancellations flow to your CRM",
-      "Customer records enrich transcripts with context for follow-up",
-    ],
+    title: "Calendar & CRM automation",
+    copy: "Bookings, reschedules, and notes flow into the systems your teams already trust.",
+    bullets: ["Two-way calendar sync", "HubSpot, Salesforce, ServiceTitan, and more"],
     icon: <CalendarIcon className="h-6 w-6 text-purple-300" />,
   },
   {
     title: "Every conversation captured",
-    copy:
-      "Play recordings, scan transcripts, and share summaries from one timeline. Search by intent, tag, or outcome whenever you need the exact language a caller used.",
-    bullets: [
-      "Secure call recordings with downloadable share links",
-      "Live transcripts and highlights for quick review",
-      "Tags, outcomes, and notes stay tied to the customer profile",
-    ],
+    copy: "Searchable transcripts, highlights, and share links keep everyone aligned in minutes.",
+    bullets: ["Live summaries for handoffs", "Secure recordings with smart tags"],
     icon: <CrmIcon className="h-6 w-6 text-purple-300" />,
   },
 ];
@@ -77,91 +66,62 @@ const coverageModes: CoverageMode[] = [
     id: "always-on",
     label: "24/7 coverage",
     summary:
-      "Let your AI receptionist answer every call day or night. Intelligent escalations page the right humans when a voicemail would cost you revenue.",
-    bullets: [
-      "Primary and backup schedules across locations",
-      "Escalation ladder for emergencies and VIP tags",
-      "SMS or Slack alerts when a call needs human follow-up",
-    ],
+      "Let EarlyBird answer every call day or night, escalating humans only when revenue is on the line.",
+    bullets: ["Hands-off routing between locations", "Slack or SMS nudges for urgent callers"],
   },
   {
     id: "after-hours",
     label: "After hours assistant",
     summary:
-      "Keep your team in control during the day and hand off to EarlyBird after closing. Open tasks appear in the dashboard before your staff arrives.",
-    bullets: [
-      "Custom cutover windows per weekday or holiday",
-      "Automatic wrap-up summaries waiting at open",
-      "Caller verification before booking or canceling appointments",
-    ],
+      "Keep your daytime crew in the driver’s seat and hand off to EarlyBird once doors close.",
+    bullets: ["Smart cutover windows by day or holiday", "Open with summaries waiting for your team"],
   },
   {
     id: "time-slots",
     label: "Custom coverage windows",
     summary:
-      "Build bespoke coverage blocks around meetings, training sessions, or seasonal rushes. Toggle coverage with a single click as priorities change.",
-    bullets: [
-      "Drag-and-drop timeline for seasonal adjustments",
-      "Syncs with staffing schedules so agents never overlap",
-      "Saved presets for campaigns, pop-ups, or temporary locations",
-    ],
+      "Drag coverage blocks around training, meetings, or seasonal spikes and save them as presets.",
+    bullets: ["Timeline editor with preset templates", "Syncs with staffing calendars automatically"],
   },
 ];
 
 const stages: Stage[] = [
   {
     label: "01",
-    title: "Configure in your own words",
-    description:
-      "Upload scripts, pricing, FAQ entries, and preferred dispositions. EarlyBird trains on your content so callers hear your brand voice from the first hello.",
+    title: "Configure in plain language",
+    description: "Upload scripts, pricing, and FAQs. EarlyBird learns your tone from the first hello.",
   },
   {
     label: "02",
-    title: "Connect the systems that matter",
-    description:
-      "Authorize calendars, CRMs, and ticketing tools in a few clicks. Each integration is sandboxed per tenant so data stays scoped to the right team.",
+    title: "Connect the tools that matter",
+    description: "Authorize calendars, CRMs, and ticketing tools with secure, per-tenant scopes.",
   },
   {
     label: "03",
     title: "Launch with live monitoring",
-    description:
-      "Watch calls appear in real time, review transcripts on the fly, and intervene instantly. No more blind handoffs or guessing what a caller asked for.",
+    description: "Watch calls appear in real time and jump in instantly when a human touch is needed.",
   },
   {
     label: "04",
-    title: "Optimize with usage insights",
-    description:
-      "Minutes, bookings, and conversion metrics update continuously. Billing, thresholds, and overage alerts keep finance and ops aligned.",
+    title: "Optimize with clear insights",
+    description: "Minutes, bookings, and alerts update continuously so finance and ops stay aligned.",
   },
-];
-
-const integrations = [
-  "ServiceTitan",
-  "HubSpot",
-  "Salesforce",
-  "Jobber",
-  "Housecall Pro",
-  "Zoho",
-  "Google Workspace",
-  "Microsoft 365",
-  "Slack",
-  "Zapier",
 ];
 
 const insightCallouts = [
   {
     title: "Usage that stays predictable",
-    copy: "View minutes consumed, upcoming renewals, and projected usage so there are no end-of-month surprises.",
+    copy: "Minutes, bookings, and headroom stay visible so renewals never surprise finance.",
     icon: <ClockIcon className="h-5 w-5 text-white/70" />,
   },
   {
     title: "Billing built for operators",
-    copy: "Download invoices, update payment methods, and export detailed call logs in CSV or directly into your accounting system.",
+    copy: "Download invoices, update payment methods, and export logs directly into your accounting system.",
     icon: <ControlsIcon className="h-5 w-5 text-white/70" />,
   },
   {
     title: "Team-based permissions",
-    copy: "Assign roles for owners, managers, and agents so sensitive data only appears to the people who need it.",
+    copy: "Assign roles for owners, managers, and agents so sensitive data stays scoped.",
     icon: <PlugIcon className="h-5 w-5 text-white/70" />,
   },
 ];
@@ -173,30 +133,33 @@ export function FeaturesPageContent() {
 
   return (
     <div className="flex flex-col">
+      <RevealOnScroll />
       <section className="relative overflow-hidden px-5 pt-20 pb-16 sm:px-6 md:pt-28 md:pb-20">
         <div className="absolute inset-0 -z-10">
-          <div className="absolute -top-32 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-purple-600/40 blur-[160px]" />
+          <div className="absolute -top-32 left-1/2 h-[520px] w-[520px] -translate-x-1/2 rounded-full bg-purple-600/35 blur-[160px]" />
           <Particles className="absolute inset-0" quantity={10} staticity={40} />
         </div>
         <div className="mx-auto flex max-w-5xl flex-col items-center text-center md:items-start md:text-left">
-          <span className="stellar-pill">Features</span>
-          <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">Your AI receptionist runs from one operations HQ.</h1>
-          <p className="mt-6 max-w-3xl text-base text-white/70 md:text-lg">
-            EarlyBird bundles agent setup, call control, appointment automation, and analytics inside a single dashboard. Turn coverage on and off,
-            watch every conversation unfold, and let your integrations handle the busywork.
+          <span className="stellar-pill eb-reveal">Features</span>
+          <h1 className="eb-reveal mt-6 max-w-3xl text-4xl font-semibold text-white md:text-5xl">
+            The EarlyBird Ops Studio for calls, bookings, and follow-through.
+          </h1>
+          <p className="eb-reveal delay-1 mt-6 max-w-2xl text-base text-white/70 md:text-lg">
+            Flip coverage on, monitor every conversation, and let automations move data back into your CRM. Less reading, more clarity on what your
+            agent handled.
           </p>
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="eb-reveal delay-2 mt-8 flex flex-col gap-3 sm:flex-row">
             <AuthModalTriggerButton
               mode="signup"
               className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-base font-semibold text-black transition hover:bg-white/90"
             >
-              Launch your dashboard
+              Start free trial
             </AuthModalTriggerButton>
             <Link
               href="/preview"
               className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-6 py-3 text-base font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
             >
-              Explore the live preview
+              Watch the live preview
             </Link>
           </div>
         </div>
@@ -204,22 +167,28 @@ export function FeaturesPageContent() {
 
       <Section
         eyebrow="Command center"
-        title="Everything you need to run your AI receptionist"
-        description="One workspace controls routing, voices, calendars, and the context that keeps every caller feeling known."
+        title="Everything your agent needs, in one canvas"
+        description="Interactive panels show what’s happening live while keeping the controls a click away."
         className="pt-0"
       >
         <div className="grid gap-6 lg:grid-cols-3">
-          {highlights.map((item) => (
-            <div key={item.title} className="stellar-grid-card h-full bg-white/5 p-6 transition hover:bg-white/[0.08] md:p-8">
+          {highlights.map((item, index) => (
+            <div
+              key={item.title}
+              className="eb-reveal stellar-grid-card group h-full overflow-hidden rounded-3xl border border-white/[0.08] bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent p-6 transition hover:-translate-y-1 hover:border-white/20 hover:bg-white/[0.08] md:p-8"
+              style={{ transitionDelay: `${index * 60}ms` }}
+            >
               <div className="flex items-center gap-3">
-                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10">{item.icon}</span>
+                <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 shadow-[0_8px_20px_rgba(76,29,149,0.22)]">
+                  {item.icon}
+                </span>
                 <h3 className="text-lg font-semibold text-white">{item.title}</h3>
               </div>
               <p className="mt-4 text-sm text-white/70">{item.copy}</p>
-              <ul className="mt-6 space-y-2 text-sm text-white/60">
+              <ul className="mt-5 space-y-2 text-sm text-white/60">
                 {item.bullets.map((bullet) => (
-                  <li key={bullet} className="flex items-start gap-3">
-                    <CheckIcon className="mt-0.5 h-4 w-4 text-purple-300" />
+                  <li key={bullet} className="flex items-start gap-2 rounded-2xl border border-white/0 bg-white/0 px-2 py-1 transition group-hover:border-white/10 group-hover:bg-white/5">
+                    <CheckIcon className="mt-0.5 h-4 w-4 text-purple-200" />
                     <span>{bullet}</span>
                   </li>
                 ))}
@@ -231,13 +200,13 @@ export function FeaturesPageContent() {
 
       <Section
         eyebrow="Scheduling coverage"
-        title="Choose exactly when EarlyBird answers the phone"
-        description="Switch between presets or design custom windows while watching changes take effect in real time."
+        title="Coverage windows that flex with the day"
+        description="Preset schedules or ad-hoc blocks—EarlyBird keeps callers answered while your team focuses."
         className="pt-0"
       >
-        <div className="grid gap-8 lg:grid-cols-[320px_minmax(0,1fr)]">
-          <div className="stellar-grid-card bg-white/5 p-4">
-            <div className="rounded-2xl border border-white/10 bg-white/[0.03] p-2">
+        <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
+          <div className="eb-reveal stellar-grid-card bg-white/5/30 p-4 backdrop-blur">
+            <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
               {coverageModes.map((mode) => {
                 const isActive = mode.id === selectedMode.id;
                 return (
@@ -246,10 +215,8 @@ export function FeaturesPageContent() {
                     type="button"
                     onClick={() => setActiveMode(mode.id)}
                     onMouseEnter={() => setActiveMode(mode.id)}
-                    className={`w-full rounded-xl px-4 py-3 text-left text-sm font-medium transition ${
-                      isActive
-                        ? "bg-white text-slate-900 shadow-lg shadow-purple-500/20"
-                        : "text-white/70 hover:bg-white/5 hover:text-white"
+                    className={`w-full rounded-xl px-4 py-3 text-left text-sm font-semibold transition ${
+                      isActive ? "bg-white text-slate-900 shadow-[0_14px_30px_rgba(76,29,149,0.25)]" : "text-white/70 hover:bg-white/5 hover:text-white"
                     }`}
                   >
                     {mode.label}
@@ -258,16 +225,23 @@ export function FeaturesPageContent() {
               })}
             </div>
             <p className="mt-4 text-xs text-white/50">
-              Coverage updates apply instantly. Prefer to manual-test first? Stage changes in sandbox mode before promoting to production.
+              Coverage changes apply instantly. Need QA first? Preview them in sandbox mode before going live.
             </p>
           </div>
-          <div className="stellar-grid-card bg-white/5 p-6 md:p-8">
-            <h3 className="text-xl font-semibold text-white">{selectedMode.label}</h3>
-            <p className="mt-3 text-sm text-white/70">{selectedMode.summary}</p>
-            <ul className="mt-6 grid gap-3 text-sm text-white/60 sm:grid-cols-2">
+          <div className="eb-reveal delay-2 stellar-grid-card bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent p-6 md:p-8">
+            <div className="flex items-center gap-3">
+              <span className="flex h-9 w-9 items-center justify-center rounded-full bg-purple-500/20 text-purple-100">
+                <ClockIcon className="h-4 w-4" />
+              </span>
+              <div>
+                <h3 className="text-xl font-semibold text-white">{selectedMode.label}</h3>
+                <p className="mt-1 text-sm text-white/65">{selectedMode.summary}</p>
+              </div>
+            </div>
+            <ul className="mt-6 grid gap-3 text-sm text-white/70 sm:grid-cols-2">
               {selectedMode.bullets.map((bullet) => (
-                <li key={bullet} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/[0.03] p-3">
-                  <CheckIcon className="mt-0.5 h-4 w-4 text-purple-300" />
+                <li key={bullet} className="flex items-start gap-3 rounded-2xl border border-white/10 bg-white/5 p-3">
+                  <CheckIcon className="mt-0.5 h-4 w-4 text-purple-200" />
                   <span>{bullet}</span>
                 </li>
               ))}
@@ -279,15 +253,18 @@ export function FeaturesPageContent() {
       <Section
         eyebrow="Live operations"
         title="A guided flow from setup to optimization"
-        description="We keep the path clear so you can configure, launch, and refine your AI receptionist without waiting on support tickets."
+        description="Each step is short, visual, and ready to revisit whenever your playbook evolves."
         className="pt-0"
       >
         <div className="relative">
           <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-b from-white/[0.04] via-transparent to-transparent blur-xl" />
           <div className="grid gap-6 md:grid-cols-2">
             {stages.map((stage) => (
-              <div key={stage.label} className="stellar-grid-card h-full border border-white/10 bg-white/[0.04] p-6 md:p-8">
-                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-sm font-semibold text-purple-100">
+              <div
+                key={stage.label}
+                className="eb-reveal stellar-grid-card h-full overflow-hidden rounded-3xl border border-white/10 bg-white/[0.05] p-6 md:p-8 transition hover:-translate-y-1 hover:border-white/20"
+              >
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-purple-500/20 text-sm font-semibold text-purple-100 shadow-[0_12px_24px_rgba(147,51,234,0.25)]">
                   {stage.label}
                 </span>
                 <h3 className="mt-4 text-lg font-semibold text-white">{stage.title}</h3>
@@ -301,28 +278,22 @@ export function FeaturesPageContent() {
       <Section
         eyebrow="Integrations"
         title="Plug EarlyBird into the tools your teams already trust"
-        description="Appointment data, tickets, and revenue insights keep moving even when no one is at the front desk."
+        description="Appointment data, tickets, and insight loops keep moving—even when the front desk is quiet."
         className="pt-0"
       >
-        <div className="stellar-grid-card bg-white/5 p-6 md:p-8">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
-            {integrations.map((item) => (
-              <div
-                key={item}
-                className="flex h-16 items-center justify-center rounded-2xl border border-white/10 bg-white/[0.04] text-sm font-semibold text-white/70 transition hover:border-white/25 hover:text-white"
-              >
-                {item}
-              </div>
-            ))}
+        <div className="eb-reveal rounded-[32px] border border-white/10 bg-white/[0.03] p-2 md:p-3">
+          <IntegrationsCarousel />
+        </div>
+        <div className="eb-reveal delay-2 mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
+          <div className="rounded-3xl border border-white/10 bg-[#060610]/80 p-6">
+            <h3 className="text-lg font-semibold text-white">Integrating CRMs with your agent has never been easier.</h3>
+            <p className="mt-3 text-sm text-white/65">
+              Connect HubSpot, Salesforce, ServiceTitan, or Zapier in a few clicks, choose the workflows you trust, and keep your callers in sync with the rest of ops.
+            </p>
           </div>
-          <div className="mt-6 rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-            <div className="flex items-start gap-3">
-              <VoiceIcon className="mt-1 h-5 w-5 text-purple-200" />
-              <p className="text-sm text-white/70">
-                Choose the workflows you want EarlyBird to perform inside each integration. Booking, canceling, updating a ticket, or tagging a customer
-                are all permission based so nothing breaks the moment a process changes.
-              </p>
-            </div>
+          <div className="rounded-3xl border border-white/10 bg-white/[0.04] p-6 text-sm text-white/70">
+            <p>Pick the data you want to read and write, assign team permissions, and preview the handoffs before going live.</p>
+            <p className="mt-4 font-semibold text-white">Get started today &rarr;</p>
           </div>
         </div>
       </Section>
@@ -330,11 +301,11 @@ export function FeaturesPageContent() {
       <Section
         eyebrow="Insights and billing"
         title="Transparency that keeps leadership aligned"
-        description="Know how your agent is performing and what it costs without leaving the dashboard."
+        description="Know how your agent is performing and what it costs—without leaving the dashboard."
         className="pt-0"
       >
         <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
-          <div className="stellar-grid-card bg-white/5 p-6 md:p-8">
+          <div className="eb-reveal stellar-grid-card bg-gradient-to-br from-white/[0.06] via-white/[0.02] to-transparent p-6 md:p-8">
             <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-white/[0.06] to-white/[0.02] p-6">
               <h3 className="text-lg font-semibold text-white">Real-time usage overview</h3>
               <p className="mt-3 text-sm text-white/70">
@@ -359,7 +330,7 @@ export function FeaturesPageContent() {
               </div>
             </div>
           </div>
-          <div className="stellar-grid-card space-y-4 bg-white/5 p-6 md:p-8">
+          <div className="eb-reveal delay-2 stellar-grid-card space-y-4 bg-white/[0.05] p-6 md:p-8">
             {insightCallouts.map((callout) => (
               <div key={callout.title} className="rounded-2xl border border-white/10 bg-white/[0.03] p-4">
                 <div className="flex items-start gap-3">
@@ -377,13 +348,8 @@ export function FeaturesPageContent() {
 
       <Section
         eyebrow="Get started"
-        title="See the dashboard in action"
-        description={
-          <span>
-            Spin up a trial, route a few calls, and explore the transcript archive before you commit. Our team will help connect your first integration
-            and tune the agent for your brand.
-          </span>
-        }
+        title="See EarlyBird in action"
+        description="Spin up a trial, route a few test calls, and explore the transcript archive before you commit."
         className="pt-0 pb-24"
       >
         <div className="flex flex-col gap-3 sm:flex-row">
