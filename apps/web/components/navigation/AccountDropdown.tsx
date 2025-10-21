@@ -92,11 +92,10 @@ export function AccountDropdown() {
       {open ? (
         <div
           role="menu"
-          style={{ width: "min(19rem, calc(100vw - 3rem))" }}
-          className="absolute right-0 z-50 mt-2 overflow-visible rounded-3xl border border-white/15 bg-[#05050b]/97 py-3 text-sm shadow-[0_28px_70px_rgba(5,5,11,0.45)] backdrop-blur before:absolute before:right-6 before:-top-2 before:h-3.5 before:w-3.5 before:rotate-45 before:rounded-sm before:border before:border-white/12 before:bg-[#05050b]/97 before:content-['']"
+          className="absolute right-0 z-50 mt-2 min-w-[14.5rem] max-w-[19rem] overflow-visible rounded-3xl border border-white/12 bg-[#05050b]/97 py-3 text-sm shadow-[0_28px_70px_rgba(5,5,11,0.45)] backdrop-blur sm:min-w-[15.5rem] before:absolute before:right-6 before:-top-2 before:h-3.5 before:w-3.5 before:rotate-45 before:rounded-sm before:border before:border-white/12 before:bg-[#05050b]/97 before:content-['']"
         >
-          <div className="px-4 pb-2 text-[11px] uppercase tracking-[0.32em] text-white/50">Account</div>
-          <div className="space-y-0.5 px-2">
+          <div className="px-4 pb-2 text-xs uppercase tracking-wide text-white/50">Account</div>
+          <div className="space-y-0.5">
             <Link
               role="menuitem"
               href={getDashboardPath()}
