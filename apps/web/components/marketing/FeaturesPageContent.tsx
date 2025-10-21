@@ -132,7 +132,12 @@ export function FeaturesPageContent() {
   const selectedMode = useMemo(() => coverageModes.find((mode) => mode.id === activeMode) ?? coverageModes[0], [activeMode]);
 
   return (
-    <div className="flex flex-col">
+    <div className="relative flex flex-col">
+      <div className="pointer-events-none absolute inset-0 -z-20">
+        <div className="absolute left-[-25%] top-[12%] h-[520px] w-[520px] rounded-full bg-purple-500/15 blur-[180px]" />
+        <div className="absolute right-[-18%] top-[46%] h-[480px] w-[480px] rounded-full bg-sky-500/12 blur-[180px]" />
+        <div className="absolute inset-x-[-30%] bottom-[-32%] h-[520px] rounded-full bg-emerald-500/10 blur-[220px]" />
+      </div>
       <RevealOnScroll />
       <section className="relative overflow-hidden px-5 pt-20 pb-16 sm:px-6 md:pt-28 md:pb-20">
         <div className="absolute inset-0 -z-10">
@@ -169,7 +174,7 @@ export function FeaturesPageContent() {
         eyebrow="Command center"
         title="Everything your agent needs, in one canvas"
         description="Interactive panels show what’s happening live while keeping the controls a click away."
-        className="pt-0"
+        className="pt-0 before:absolute before:-left-24 before:top-20 before:h-72 before:w-72 before:rounded-full before:bg-white/5 before:blur-3xl before:content-[''] after:absolute after:-right-28 after:top-32 after:h-64 after:w-64 after:rounded-full after:bg-purple-500/15 after:blur-3xl after:content-['']"
       >
         <div className="grid gap-6 lg:grid-cols-3">
           {highlights.map((item, index) => (
@@ -202,10 +207,10 @@ export function FeaturesPageContent() {
         eyebrow="Scheduling coverage"
         title="Coverage windows that flex with the day"
         description="Preset schedules or ad-hoc blocks—EarlyBird keeps callers answered while your team focuses."
-        className="pt-0"
+        className="pt-0 before:absolute before:left-1/2 before:top-1/3 before:h-[420px] before:w-[420px] before:-translate-x-1/2 before:rounded-full before:bg-white/5 before:blur-3xl before:content-['']"
       >
         <div className="grid gap-8 lg:grid-cols-[280px_minmax(0,1fr)]">
-          <div className="eb-reveal stellar-grid-card bg-white/5/30 p-4 backdrop-blur">
+          <div className="eb-reveal stellar-grid-card bg-white/10 p-4 backdrop-blur">
             <div className="rounded-2xl border border-white/10 bg-white/[0.04] p-2">
               {coverageModes.map((mode) => {
                 const isActive = mode.id === selectedMode.id;
@@ -254,7 +259,7 @@ export function FeaturesPageContent() {
         eyebrow="Live operations"
         title="A guided flow from setup to optimization"
         description="Each step is short, visual, and ready to revisit whenever your playbook evolves."
-        className="pt-0"
+        className="pt-0 before:absolute before:right-[-20%] before:top-10 before:h-72 before:w-72 before:rounded-full before:bg-sky-500/15 before:blur-3xl before:content-['']"
       >
         <div className="relative">
           <div className="absolute inset-0 -z-10 rounded-3xl bg-gradient-to-b from-white/[0.04] via-transparent to-transparent blur-xl" />
@@ -279,9 +284,11 @@ export function FeaturesPageContent() {
         eyebrow="Integrations"
         title="Plug EarlyBird into the tools your teams already trust"
         description="Appointment data, tickets, and insight loops keep moving—even when the front desk is quiet."
-        className="pt-0"
+        className="pt-0 before:absolute before:left-1/2 before:top-24 before:h-[520px] before:w-[720px] before:-translate-x-1/2 before:rounded-[50%] before:bg-gradient-to-br before:from-purple-500/15 before:via-slate-900/0 before:to-transparent before:blur-3xl before:content-['']"
       >
-        <div className="eb-reveal rounded-[32px] border border-white/10 bg-white/[0.03] p-2 md:p-3">
+        <div className="eb-reveal relative overflow-hidden rounded-[32px] border border-white/10 bg-[#070711]/85 p-2 md:p-3">
+          <div className="pointer-events-none absolute inset-y-0 left-0 w-16 bg-gradient-to-r from-[#070711] via-[#070711]/80 to-transparent" />
+          <div className="pointer-events-none absolute inset-y-0 right-0 w-16 bg-gradient-to-l from-[#070711] via-[#070711]/80 to-transparent" />
           <IntegrationsCarousel />
         </div>
         <div className="eb-reveal delay-2 mt-10 grid gap-6 lg:grid-cols-[minmax(0,1fr)_320px]">
@@ -346,27 +353,38 @@ export function FeaturesPageContent() {
         </div>
       </Section>
 
-      <Section
-        eyebrow="Get started"
-        title="See EarlyBird in action"
-        description="Spin up a trial, route a few test calls, and explore the transcript archive before you commit."
-        className="pt-0 pb-24"
-      >
-        <div className="flex flex-col gap-3 sm:flex-row">
-          <AuthModalTriggerButton
-            mode="signup"
-            className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-base font-semibold text-black transition hover:bg-white/90"
-          >
-            Start free trial
-          </AuthModalTriggerButton>
-          <Link
-            href="mailto:hello@oneearlybird.ai"
-            className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-6 py-3 text-base font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
-          >
-            Talk with an implementation specialist
-          </Link>
+      <section className="relative mx-auto w-full max-w-6xl px-5 pb-24 pt-4 sm:px-6">
+        <div className="relative overflow-hidden rounded-[40px] px-8 py-12 md:py-20">
+          <div className="absolute inset-0 -z-10 bg-gradient-to-br from-white/[0.08] via-white/[0.02] to-transparent" />
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute left-1/4 top-[-20%] h-[360px] w-[360px] rounded-full bg-purple-500/25 blur-[140px]" />
+            <div className="absolute right-[-10%] bottom-[-35%] h-[420px] w-[420px] rounded-full bg-sky-500/20 blur-[160px]" />
+          </div>
+          <div className="relative mx-auto max-w-3xl text-center">
+            <span className="stellar-badge mb-5">Get started</span>
+            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">
+              CRM hand-offs tuned in minutes, not months.
+            </h2>
+            <p className="text-lg text-white/70">
+              Connect your stack, preview the automations, and launch your agent without re-writing a single workflow.
+            </p>
+            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+              <AuthModalTriggerButton
+                mode="signup"
+                className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-base font-semibold text-black transition hover:bg-white/90"
+              >
+                Start free trial
+              </AuthModalTriggerButton>
+              <Link
+                href="mailto:hello@oneearlybird.ai"
+                className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-6 py-3 text-base font-semibold text-white/85 transition hover:border-white/40 hover:text-white"
+              >
+                Talk with an implementation specialist
+              </Link>
+            </div>
+          </div>
         </div>
-      </Section>
+      </section>
     </div>
   );
 }
