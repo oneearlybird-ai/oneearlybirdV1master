@@ -33,6 +33,27 @@ type CallTimelineEntry = {
   tone: CallTone;
 };
 
+const floatingStatusEmojis = [
+  {
+    icon: "🤝",
+    caption: "Warm intro logged",
+    badgeClass:
+      "shadow-[0_14px_32px_rgba(16,185,129,0.28)] bg-gradient-to-br from-emerald-400/20 via-emerald-300/10 to-emerald-400/5 border-emerald-300/30",
+  },
+  {
+    icon: "📩",
+    caption: "Lead assigned",
+    badgeClass:
+      "shadow-[0_16px_34px_rgba(59,130,246,0.27)] bg-gradient-to-br from-sky-400/25 via-sky-300/10 to-sky-400/5 border-sky-300/30",
+  },
+  {
+    icon: "⭐",
+    caption: "Review requested",
+    badgeClass:
+      "shadow-[0_16px_38px_rgba(251,191,36,0.26)] bg-gradient-to-br from-amber-300/25 via-amber-200/10 to-amber-200/5 border-amber-200/30",
+  },
+] as const;
+
 
 export default function Features03() {
   const phoneRef = useRef<HTMLDivElement | null>(null);
@@ -144,6 +165,20 @@ export default function Features03() {
                         <div className="relative aspect-[9/19.5] w-full rounded-[56px] border border-white/25 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_70%)] shadow-[0_48px_110px_rgba(5,5,11,0.78)]">
 
                         {/* Floating brand badges */}
+                        <div className="pointer-events-none absolute -top-16 left-1/2 hidden -translate-x-1/2 md:flex" aria-hidden="true">
+                          <div className="flex items-center gap-4 text-[11px] text-white/80">
+                            {floatingStatusEmojis.map((badge, idx) => (
+                              <span
+                                key={badge.caption}
+                                className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-white/75 backdrop-blur-sm ${badge.badgeClass} animate-[float_16s_ease-in-out_infinite]`}
+                                style={{ animationDelay: `${idx * 1.6}s` }}
+                              >
+                                <span className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-base">{badge.icon}</span>
+                                {badge.caption}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
                         <div className="pointer-events-none absolute -left-36 top-12 hidden md:block animate-[float_12s_ease-in-out_infinite]">
                           <div className="flex flex-col gap-6 text-xs text-white/70">
                             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(59,130,246,0.2)]">
