@@ -17,11 +17,20 @@ const toneStyles: Record<ActivityItem["tone"], string> = {
   sky: "border-sky-400/20 bg-sky-400/10 shadow-[0_16px_32px_rgba(56,189,248,0.18)]",
   amber: "border-amber-300/25 bg-amber-300/10 shadow-[0_16px_32px_rgba(251,191,36,0.22)]",
 };
-const callToneStyles: Record<"emerald" | "amber" | "rose" | "sky", string> = {
+const callToneStyles = {
   emerald: "text-emerald-300",
   amber: "text-amber-300",
   rose: "text-rose-300",
   sky: "text-sky-300",
+} as const;
+
+type CallTone = keyof typeof callToneStyles;
+
+type CallTimelineEntry = {
+  time: string;
+  caller: string;
+  note: string;
+  tone: CallTone;
 };
 
 
@@ -78,7 +87,7 @@ export default function Features03() {
     []
   );
 
-  const callTimeline = useMemo(
+  const callTimeline = useMemo<CallTimelineEntry[]>(
     () => [
       { time: "9:32a", caller: "Vicky (Repeat)", note: "Booked • HVAC tune-up", tone: "emerald" },
       { time: "9:10a", caller: "Dr. Patel", note: "Escalated • VIP voicemail", tone: "amber" },
