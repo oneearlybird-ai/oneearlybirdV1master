@@ -119,11 +119,26 @@ export default function Features03() {
                           <div className="absolute inset-[3px] rounded-[52px] border border-white/20 bg-gradient-to-br from-[#121222] via-[#05050d] to-[#020206] shadow-[inset_0_2px_6px_rgba(255,255,255,0.06)]" />
                           <div className="absolute inset-y-[84px] -left-[4px] w-[4px] rounded-full bg-white/18" aria-hidden />
                           <div className="absolute inset-y-[140px] -right-[3px] w-[3px] rounded-full bg-white/12" aria-hidden />
-                          <div className="absolute top-[22px] left-1/2 z-20 flex h-[38px] w-[138px] -translate-x-1/2 items-center justify-center rounded-[22px] bg-black/80 shadow-[0_16px_40px_rgba(0,0,0,0.55)]">
-                            <span className="h-[6px] w-[70px] rounded-full bg-white/30" />
+                          <div className="absolute top-[18px] inset-x-[22px] z-20 flex items-center justify-between px-2 text-[10px] text-white/65">
+                            <span className="font-semibold tracking-[0.16em]">9:41</span>
+                            <div className="flex items-center gap-2 text-white/45">
+                              <span className="inline-flex h-[10px] w-[18px] items-end gap-[2px]">
+                                <span className="inline-block h-full w-[3px] rounded bg-white/45" />
+                                <span className="inline-block h-[80%] w-[3px] rounded bg-white/35" />
+                                <span className="inline-block h-[55%] w-[3px] rounded bg-white/25" />
+                                <span className="inline-block h-[35%] w-[3px] rounded bg-white/18" />
+                              </span>
+                              <span className="inline-flex h-2 w-3 rounded-sm bg-gradient-to-r from-white/45 to-white/15" />
+                              <span className="inline-flex h-3 w-4 rounded-sm border border-white/25" />
+                            </div>
                           </div>
                           <div className="absolute inset-[14px] overflow-hidden rounded-[38px] border border-white/12 bg-[#05050b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
                             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(147,197,253,0.25),transparent_62%),radial-gradient(circle_at_90%_0%,rgba(192,132,252,0.2),transparent_60%)]" aria-hidden />
+                            <div className="pointer-events-none absolute inset-0 animate-[float_12s_ease-in-out_infinite]">
+                              <div className="absolute -top-14 -left-12 h-24 w-24 rounded-full border border-white/10 bg-white/10 backdrop-blur-sm" />
+                              <div className="absolute top-1/3 -right-14 h-20 w-20 rounded-full border border-white/10 bg-emerald-400/15 backdrop-blur-sm" />
+                              <div className="absolute bottom-6 -left-10 h-16 w-16 rounded-full border border-white/10 bg-sky-400/15 backdrop-blur-sm" />
+                            </div>
                             <div
                               className="absolute inset-0 flex min-h-[220%] flex-col gap-4 px-4 py-5 text-white/85"
                               style={{ animation: isVisible ? "phone-screen-scroll 24s ease-in-out infinite" : "none" }}
@@ -142,9 +157,27 @@ export default function Features03() {
                                 </div>
                               </div>
                               <div className="rounded-3xl border border-white/12 bg-white/10 p-3 shadow-[0_18px_34px_rgba(99,102,241,0.28)]">
-                                <p className="text-[10px] uppercase tracking-[0.32em] text-white/40">Today</p>
-                                <p className="mt-2 text-[19px] font-semibold text-white">Welcome back, Taylor</p>
-                                <p className="text-[10px] text-white/55">3 live calls • 18 awaiting review</p>
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <p className="text-[10px] uppercase tracking-[0.32em] text-white/40">Today</p>
+                                    <p className="mt-2 text-[19px] font-semibold text-white">Morning briefing</p>
+                                  </div>
+                                  <span className="rounded-full border border-white/15 px-3 py-1 text-[9px] text-white/65">Live sync</span>
+                                </div>
+                                <div className="mt-3 grid grid-cols-3 gap-2 text-center text-[10px] text-white/60">
+                                  <div className="rounded-2xl border border-white/12 bg-white/8 p-3">
+                                    <div className="text-xs font-semibold text-white">18</div>
+                                    <p>Queued calls</p>
+                                  </div>
+                                  <div className="rounded-2xl border border-white/12 bg-white/8 p-3">
+                                    <div className="text-xs font-semibold text-white">12</div>
+                                    <p>Bookings today</p>
+                                  </div>
+                                  <div className="rounded-2xl border border-white/12 bg-white/8 p-3">
+                                    <div className="text-xs font-semibold text-white">4</div>
+                                    <p>Escalations</p>
+                                  </div>
+                                </div>
                               </div>
                               <div className="grid grid-cols-2 gap-2">
                                 <div className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(99,102,241,0.25)]">
@@ -189,9 +222,30 @@ export default function Features03() {
                                   <span>Automation queue</span>
                                   <span className="rounded-full border border-white/15 px-2 py-0.5 text-[9px] text-white/70">3 escalations</span>
                                 </div>
-                                <div className="mt-3 space-y-2 text-[10px] text-white/60">
+                                <div className="mt-3 grid gap-2 text-[10px] text-white/60">
                                   <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">Transfer to after-hours crew • 2 mins</div>
                                   <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">Sync diagnostics to HubSpot • 5 mins</div>
+                                  <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">SMS follow-up to booked leads • 3 mins</div>
+                                </div>
+                              </div>
+                              <div className="rounded-2xl border border-white/12 bg-white/8 p-3 text-[10px] text-white/60">
+                                <div className="flex items-center justify-between">
+                                  <span className="text-white/50">Live agents</span>
+                                  <span className="text-white font-semibold">4 online</span>
+                                </div>
+                                <div className="mt-2 flex items-center gap-2 text-white/70">
+                                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[9px] font-semibold">AK</span>
+                                  <div>
+                                    <p className="text-white">Alex Kim</p>
+                                    <p className="text-[9px] text-white/45">On AI assist · SLA 1m</p>
+                                  </div>
+                                </div>
+                                <div className="mt-2 flex items-center gap-2 text-white/70">
+                                  <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/15 text-[9px] font-semibold">RJ</span>
+                                  <div>
+                                    <p className="text-white">Riley Johnson</p>
+                                    <p className="text-[9px] text-white/45">Reviewing transcripts · SLA 3m</p>
+                                  </div>
                                 </div>
                               </div>
                               <div className="mb-10 flex items-center justify-between text-[10px] text-white/50">
