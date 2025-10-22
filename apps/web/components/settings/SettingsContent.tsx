@@ -212,7 +212,10 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
 
       <div className="mt-6">
         {tab === "account" ? (
-          <form onSubmit={handleAccountSubmit} className="space-y-4 max-w-2xl">
+          <form
+            onSubmit={handleAccountSubmit}
+            className="max-w-2xl space-y-5 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur"
+          >
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
                 First name
@@ -256,7 +259,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                     <button
                       type="button"
                       onClick={() => setEditVerificationTarget("email")}
-                      className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
                     >
                       Send verification link
                     </button>
@@ -273,7 +276,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                       <button
                         type="button"
                         onClick={() => setEmailLocked(true)}
-                        className="rounded-lg border border-white/15 px-3 py-1 text-xs text-white/70 transition hover:text-white"
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:text-white"
                       >
                         Lock
                       </button>
@@ -290,7 +293,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                     <button
                       type="button"
                       onClick={() => setEditVerificationTarget("phone")}
-                      className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
+                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
                     >
                       Verify to edit
                     </button>
@@ -309,7 +312,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                       <button
                         type="button"
                         onClick={() => setPhoneLocked(true)}
-                        className="rounded-lg border border-white/15 px-3 py-1 text-xs text-white/70 transition hover:text-white"
+                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:text-white"
                       >
                         Lock
                       </button>
