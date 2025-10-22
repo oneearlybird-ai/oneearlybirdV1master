@@ -17,6 +17,13 @@ const toneStyles: Record<ActivityItem["tone"], string> = {
   sky: "border-sky-400/20 bg-sky-400/10 shadow-[0_16px_32px_rgba(56,189,248,0.18)]",
   amber: "border-amber-300/25 bg-amber-300/10 shadow-[0_16px_32px_rgba(251,191,36,0.22)]",
 };
+const callToneStyles: Record<"emerald" | "amber" | "rose" | "sky", string> = {
+  emerald: "text-emerald-300",
+  amber: "text-amber-300",
+  rose: "text-rose-300",
+  sky: "text-sky-300",
+};
+
 
 export default function Features03() {
   const phoneRef = useRef<HTMLDivElement | null>(null);
@@ -71,6 +78,16 @@ export default function Features03() {
     []
   );
 
+  const callTimeline = useMemo(
+    () => [
+      { time: "9:32a", caller: "Vicky (Repeat)", note: "Booked • HVAC tune-up", tone: "emerald" },
+      { time: "9:10a", caller: "Dr. Patel", note: "Escalated • VIP voicemail", tone: "amber" },
+      { time: "8:55a", caller: "Unknown", note: "Missed • SMS follow-up sent", tone: "rose" },
+      { time: "8:42a", caller: "Alicia (New)", note: "Qualified • Pricing request", tone: "sky" },
+    ],
+    []
+  );
+
   return (
     <section className="relative">
       {/* Blurred shape */}
@@ -102,7 +119,7 @@ export default function Features03() {
             <div data-aos="fade-down">
               <Highlighter className="group">
                 <HighlighterItem>
-                  <div className="relative h-full bg-slate-900 rounded-[inherit] z-20 overflow-hidden px-6 py-10">
+                  <div className="relative h-full bg-slate-900 rounded-[inherit] z-20 overflow-visible px-6 py-10">
                     {/* Radial gradient */}
                     <div className="absolute bottom-0 translate-y-1/2 left-1/2 -translate-x-1/2 pointer-events-none -z-10 w-1/2 aspect-square" aria-hidden="true">
                       <div className="absolute inset-0 translate-z-0 bg-purple-500 rounded-full blur-[120px]" />
@@ -169,14 +186,14 @@ export default function Features03() {
                           <div className="absolute inset-[14px] overflow-hidden rounded-[38px] border border-white/12 bg-[#05050b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
                             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(147,197,253,0.25),transparent_62%),radial-gradient(circle_at_90%_0%,rgba(192,132,252,0.2),transparent_60%)]" aria-hidden />
                             <div
-                              className="absolute inset-0 flex min-h-[220%] flex-col gap-4 px-4 py-5 text-white/85"
+                              className="absolute inset-0 flex min-h-[230%] flex-col gap-4 px-4 py-6 pt-12 text-white/85"
                               style={{ animation: isVisible ? "phone-screen-scroll 24s ease-in-out infinite" : "none" }}
                             >
-                              <div className="rounded-3xl border border-white/12 bg-white/10 p-3 shadow-[0_18px_34px_rgba(99,102,241,0.28)]">
+                              <section className="rounded-3xl border border-white/12 bg-gradient-to-br from-[#1f1f30] via-[#141422] to-[#0a0a15] p-4 shadow-[0_20px_36px_rgba(129,140,248,0.35)]">
                                 <div className="flex items-center justify-between">
                                   <div>
-                                    <p className="text-[10px] uppercase tracking-[0.32em] text-white/40">Today</p>
-                                    <p className="mt-2 text-[19px] font-semibold text-white">Morning briefing</p>
+                                    <p className="text-[10px] uppercase tracking-[0.34em] text-white/40">Briefing</p>
+                                    <p className="mt-1 text-[19px] font-semibold text-white">Front desk snapshot</p>
                                   </div>
                                   <span className="rounded-full border border-white/15 px-3 py-1 text-[9px] text-white/65">Live sync</span>
                                 </div>
@@ -194,8 +211,8 @@ export default function Features03() {
                                     <p>Escalations</p>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="grid grid-cols-2 gap-2">
+                              </section>
+                              <section className="grid grid-cols-2 gap-2">
                                 <div className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(99,102,241,0.25)]">
                                   <p className="text-[9px] uppercase tracking-wide text-purple-200/85">Capture rate</p>
                                   <div className="mt-1 text-[20px] font-semibold text-white">98%</div>
@@ -206,34 +223,70 @@ export default function Features03() {
                                   <div className="mt-1 text-[20px] font-semibold text-white">63</div>
                                   <p className="text-[9px] text-white/50">+12% vs last week</p>
                                 </div>
-                              </div>
-                              {[...activityFeed, ...activityFeed].map((item, idx) => (
-                                <div
-                                  key={`${item.title}-${idx}`}
-                                  className={`flex flex-col rounded-[18px] border px-3 py-3 text-left text-white/80 shadow transition ${toneStyles[item.tone]}`}
-                                >
-                                  <span className="text-[11px] font-semibold">{item.title}</span>
-                                  <span className="mt-1 text-[10px] text-white/60">{item.subtitle}</span>
-                                  <span className="mt-2 text-[9px] uppercase tracking-[0.18em] text-white/40">{item.meta}</span>
-                                </div>
-                              ))}
-                              <div className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(99,102,241,0.25)]">
+                              </section>
+                              <section className="rounded-2xl border border-white/12 bg-gradient-to-br from-[#222335] via-[#161727] to-[#0b0c15] p-4 shadow-[0_18px_32px_rgba(147,197,253,0.28)]">
                                 <div className="flex items-center justify-between text-[10px] text-white/55">
-                                  <span>Inbox</span>
-                                  <span className="rounded-full border border-white/15 px-2 py-0.5 text-[9px] text-white/70">12 new</span>
+                                  <span>Live pipeline</span>
+                                  <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] text-white/65">Top channels</span>
                                 </div>
-                                <div className="mt-3 space-y-2 text-[10px] text-white/60">
-                                  <div className="flex justify-between rounded-xl border border-white/10 bg-white/10 px-3 py-2">
-                                    <span>Health score</span>
-                                    <span className="font-semibold text-white">A+</span>
-                                  </div>
-                                  <div className="flex justify-between rounded-xl border border-white/10 bg-white/10 px-3 py-2">
-                                    <span>SLAs met</span>
-                                    <span className="font-semibold text-white">99.5%</span>
+                                <div className="mt-3 h-16 rounded-xl border border-white/10 bg-[radial-gradient(circle_at_top,rgba(99,102,241,0.35),transparent_70%)] px-3 py-2 text-[9px] text-white/55">
+                                  <div className="flex h-full items-end gap-2">
+                                    {[45, 60, 52, 70, 58, 76].map((value, idx) => (
+                                      <span
+                                        key={`bar-${idx}`}
+                                        className="flex-1 rounded-full bg-white/25"
+                                        style={{ height: `${value}%` }}
+                                      />
+                                    ))}
                                   </div>
                                 </div>
-                              </div>
-                              <div className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(251,191,36,0.22)]">
+                                <div className="mt-3 grid grid-cols-2 gap-2 text-[10px] text-white/60">
+                                  <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">
+                                    <p>Calls booked</p>
+                                    <p className="text-xs font-semibold text-white">28</p>
+                                  </div>
+                                  <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">
+                                    <p>Deflected to self-serve</p>
+                                    <p className="text-xs font-semibold text-white">7</p>
+                                  </div>
+                                </div>
+                              </section>
+                              <section className="rounded-2xl border border-white/12 bg-white/6 p-3 shadow-[0_18px_32px_rgba(147,197,253,0.2)]">
+                                <header className="flex items-center justify-between text-[10px] text-white/55">
+                                  <span>Activity feed</span>
+                                  <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] text-white/65">Live</span>
+                                </header>
+                                <div className="mt-3 space-y-2">
+                                  {activityFeed.map((item, idx) => (
+                                    <article
+                                      key={`${item.title}-${idx}`}
+                                      className={`flex flex-col rounded-[18px] border px-3 py-3 text-left text-white/80 shadow transition ${toneStyles[item.tone]}`}
+                                    >
+                                      <span className="text-[11px] font-semibold">{item.title}</span>
+                                      <span className="mt-1 text-[10px] text-white/60">{item.subtitle}</span>
+                                      <span className="mt-2 text-[9px] uppercase tracking-[0.18em] text-white/45">{item.meta}</span>
+                                    </article>
+                                  ))}
+                                </div>
+                              </section>
+                              <section className="rounded-2xl border border-white/12 bg-white/6 p-3 shadow-[0_18px_32px_rgba(59,130,246,0.2)]">
+                                <header className="flex items-center justify-between text-[10px] text-white/55">
+                                  <span>Recent callers</span>
+                                  <span className="rounded-full border border-white/10 px-2 py-0.5 text-[9px] text-white/65">Timeline</span>
+                                </header>
+                                <div className="mt-3 space-y-2">
+                                  {callTimeline.map((entry, idx) => (
+                                    <div key={`${entry.caller}-${idx}`} className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">
+                                      <div className="flex items-center justify-between text-[9px] text-white/45">
+                                        <span>{entry.time}</span>
+                                        <span className={`font-medium ${callToneStyles[entry.tone]}`}>{entry.note}</span>
+                                      </div>
+                                      <p className="text-[11px] font-semibold text-white">{entry.caller}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              </section>
+                              <section className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(251,191,36,0.22)]">
                                 <div className="flex items-center justify-between text-[10px] text-white/55">
                                   <span>Automation queue</span>
                                   <span className="rounded-full border border-white/15 px-2 py-0.5 text-[9px] text-white/70">3 escalations</span>
@@ -243,8 +296,8 @@ export default function Features03() {
                                   <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">Sync diagnostics to HubSpot • 5 mins</div>
                                   <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">SMS follow-up to booked leads • 3 mins</div>
                                 </div>
-                              </div>
-                              <div className="rounded-2xl border border-white/12 bg-white/8 p-3 text-[10px] text-white/60">
+                              </section>
+                              <section className="rounded-2xl border border-white/12 bg-white/8 p-3 text-[10px] text-white/60">
                                 <div className="flex items-center justify-between">
                                   <span className="text-white/50">Live agents</span>
                                   <span className="text-white font-semibold">4 online</span>
@@ -263,15 +316,15 @@ export default function Features03() {
                                     <p className="text-[9px] text-white/45">Reviewing transcripts · SLA 3m</p>
                                   </div>
                                 </div>
-                              </div>
-                              <div className="mb-10 flex items-center justify-between text-[10px] text-white/50">
+                              </section>
+                              <footer className="mb-10 flex items-center justify-between text-[10px] text-white/50">
                                 <span>View queue</span>
                                 <button className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-medium text-white/75 transition hover:bg-white/10 hover:text-white">
                                   Open dashboard
                                 </button>
-                              </div>
-                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#05050b]" />
+                              </footer>
                             </div>
+                            <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#05050b]" />
                           </div>
                         </div>
                       </div>
@@ -286,6 +339,14 @@ export default function Features03() {
                         }
                         88%, 100% {
                           transform: translateY(0);
+                        }
+                      }
+                      @keyframes float {
+                        0%, 100% {
+                          transform: translateY(0);
+                        }
+                        50% {
+                          transform: translateY(-8px);
                         }
                       }
                     `}</style>
