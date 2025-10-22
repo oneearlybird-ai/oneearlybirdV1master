@@ -124,7 +124,10 @@ export default function Features03() {
                           </div>
                           <div className="absolute inset-[14px] overflow-hidden rounded-[38px] border border-white/12 bg-[#05050b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
                             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(147,197,253,0.25),transparent_62%),radial-gradient(circle_at_90%_0%,rgba(192,132,252,0.2),transparent_60%)]" aria-hidden />
-                            <div className="relative flex h-full flex-col px-4 py-5 text-white/85">
+                            <div
+                              className="absolute inset-0 flex min-h-[220%] flex-col gap-4 px-4 py-5 text-white/85"
+                              style={{ animation: isVisible ? "phone-screen-scroll 24s ease-in-out infinite" : "none" }}
+                            >
                               <div className="flex items-center justify-between text-[11px] text-white/55">
                                 <span className="font-semibold tracking-[0.12em] text-white">9:41</span>
                                 <div className="flex items-center gap-2 text-white/45">
@@ -138,12 +141,12 @@ export default function Features03() {
                                   <span className="inline-flex h-3 w-4 rounded-sm border border-white/25" />
                                 </div>
                               </div>
-                              <div className="mt-3 rounded-3xl border border-white/12 bg-white/10 p-3 shadow-[0_18px_34px_rgba(99,102,241,0.28)]">
+                              <div className="rounded-3xl border border-white/12 bg-white/10 p-3 shadow-[0_18px_34px_rgba(99,102,241,0.28)]">
                                 <p className="text-[10px] uppercase tracking-[0.32em] text-white/40">Today</p>
                                 <p className="mt-2 text-[19px] font-semibold text-white">Welcome back, Taylor</p>
                                 <p className="text-[10px] text-white/55">3 live calls • 18 awaiting review</p>
                               </div>
-                              <div className="mt-3 grid grid-cols-2 gap-2">
+                              <div className="grid grid-cols-2 gap-2">
                                 <div className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(99,102,241,0.25)]">
                                   <p className="text-[9px] uppercase tracking-wide text-purple-200/85">Capture rate</p>
                                   <div className="mt-1 text-[20px] font-semibold text-white">98%</div>
@@ -155,46 +158,63 @@ export default function Features03() {
                                   <p className="text-[9px] text-white/50">+12% vs last week</p>
                                 </div>
                               </div>
-                              <div className="relative mt-4 flex-1 overflow-hidden rounded-2xl border border-white/12 bg-white/8">
-                                <div className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-[#0d0d19] via-transparent to-transparent" />
-                                <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-[#0d0d19] via-transparent to-transparent" />
+                              {[...activityFeed, ...activityFeed].map((item, idx) => (
                                 <div
-                                  className={`space-y-3 px-3 py-4 ${
-                                    isVisible ? "animate-[phone-scroll_18s_ease-in-out_infinite]" : ""
-                                  }`}
+                                  key={`${item.title}-${idx}`}
+                                  className={`flex flex-col rounded-[18px] border px-3 py-3 text-left text-white/80 shadow transition ${toneStyles[item.tone]}`}
                                 >
-                                  {[...activityFeed, ...activityFeed].map((item, idx) => (
-                                    <div
-                                      key={`${item.title}-${idx}`}
-                                      className={`flex flex-col rounded-[18px] border px-3 py-3 text-left text-white/80 shadow transition ${toneStyles[item.tone]}`}
-                                    >
-                                      <span className="text-[11px] font-semibold">{item.title}</span>
-                                      <span className="mt-1 text-[10px] text-white/60">{item.subtitle}</span>
-                                      <span className="mt-2 text-[9px] uppercase tracking-[0.18em] text-white/40">{item.meta}</span>
-                                    </div>
-                                  ))}
+                                  <span className="text-[11px] font-semibold">{item.title}</span>
+                                  <span className="mt-1 text-[10px] text-white/60">{item.subtitle}</span>
+                                  <span className="mt-2 text-[9px] uppercase tracking-[0.18em] text-white/40">{item.meta}</span>
+                                </div>
+                              ))}
+                              <div className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(99,102,241,0.25)]">
+                                <div className="flex items-center justify-between text-[10px] text-white/55">
+                                  <span>Inbox</span>
+                                  <span className="rounded-full border border-white/15 px-2 py-0.5 text-[9px] text-white/70">12 new</span>
+                                </div>
+                                <div className="mt-3 space-y-2 text-[10px] text-white/60">
+                                  <div className="flex justify-between rounded-xl border border-white/10 bg-white/10 px-3 py-2">
+                                    <span>Health score</span>
+                                    <span className="font-semibold text-white">A+</span>
+                                  </div>
+                                  <div className="flex justify-between rounded-xl border border-white/10 bg-white/10 px-3 py-2">
+                                    <span>SLAs met</span>
+                                    <span className="font-semibold text-white">99.5%</span>
+                                  </div>
                                 </div>
                               </div>
-                              <div className="mt-4 flex items-center justify-between text-[10px] text-white/50">
-                                <span>Inbox • 12 new</span>
+                              <div className="rounded-2xl border border-white/12 bg-white/8 p-3 shadow-[0_18px_32px_rgba(251,191,36,0.22)]">
+                                <div className="flex items-center justify-between text-[10px] text-white/55">
+                                  <span>Automation queue</span>
+                                  <span className="rounded-full border border-white/15 px-2 py-0.5 text-[9px] text-white/70">3 escalations</span>
+                                </div>
+                                <div className="mt-3 space-y-2 text-[10px] text-white/60">
+                                  <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">Transfer to after-hours crew • 2 mins</div>
+                                  <div className="rounded-xl border border-white/10 bg-white/10 px-3 py-2">Sync diagnostics to HubSpot • 5 mins</div>
+                                </div>
+                              </div>
+                              <div className="mb-10 flex items-center justify-between text-[10px] text-white/50">
+                                <span>View queue</span>
                                 <button className="rounded-full border border-white/10 px-3 py-1 text-[10px] font-medium text-white/75 transition hover:bg-white/10 hover:text-white">
-                                  View queue
+                                  Open dashboard
                                 </button>
                               </div>
+                              <div className="pointer-events-none absolute inset-0 bg-gradient-to-b from-transparent via-transparent to-[#05050b]" />
                             </div>
                           </div>
                         </div>
                       </div>
                     </div>
                     <style jsx>{`
-                      @keyframes phone-scroll {
-                        0%, 10% {
+                      @keyframes phone-screen-scroll {
+                        0%, 12% {
                           transform: translateY(0);
                         }
-                        45%, 55% {
-                          transform: translateY(-48%);
+                        48%, 60% {
+                          transform: translateY(-50%);
                         }
-                        90%, 100% {
+                        88%, 100% {
                           transform: translateY(0);
                         }
                       }
