@@ -57,7 +57,9 @@ export default function IntegrationsPage() {
     return () => { cancelled = true };
   }, []);
 
-  const items: Array<{ id: string; title: string; desc: string; oauth?: boolean; connectId?: string }> = [
+type IntegrationItem = { id: string; title: string; desc: string; oauth?: boolean; connectId?: string };
+
+const items: IntegrationItem[] = [
     { id: 'google-calendar', title: 'Calendar (Google)', desc: 'Scheduling on your business calendar', oauth: true, connectId: 'google-calendar' },
     { id: 'microsoft-365', title: 'Calendar (Microsoft 365)', desc: 'Outlook calendar support' },
     { id: 'hubspot', title: 'CRM (HubSpot)', desc: 'Log calls and leads automatically', oauth: true, connectId: 'hubspot' },
@@ -69,7 +71,7 @@ export default function IntegrationsPage() {
     { id: 'aws', title: 'AWS S3', desc: 'Secure storage and retrieval' },
   ];
 
-  const actionFor = (it: { id: string; oauth?: boolean; connectId?: string }) => {
+  const actionFor = (it: IntegrationItem) => {
     const p = providers[it.connectId || it.id];
     const connected = !!p?.connected;
     if (loading) return <div className="skeleton skeleton-badge" aria-hidden />;
