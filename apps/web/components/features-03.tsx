@@ -120,14 +120,34 @@ export default function Features03() {
                         {/* Floating brand badges */}
                         <div className="pointer-events-none absolute -left-36 top-12 hidden md:block animate-[float_12s_ease-in-out_infinite]">
                           <div className="flex flex-col gap-6 text-xs text-white/70">
-                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(59,130,246,0.2)]">CRM sync • HubSpot</span>
-                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(16,185,129,0.18)]">Calendar • Google Workspace</span>
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(59,130,246,0.2)]">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
+                                <img src="/logos/hubspot.svg" alt="HubSpot" className="h-4 w-4" />
+                              </span>
+                              CRM sync • HubSpot
+                            </span>
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(16,185,129,0.18)]">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
+                                <img src="/logos/google-calendar.svg" alt="Google Calendar" className="h-4 w-4" />
+                              </span>
+                              Calendar • Google Workspace
+                            </span>
                           </div>
                         </div>
                         <div className="pointer-events-none absolute -right-36 bottom-0 hidden md:block animate-[float_14s_ease-in-out_infinite]">
                           <div className="flex flex-col gap-6 text-xs text-white/70">
-                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(99,102,241,0.22)]">Payments • Stripe</span>
-                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(244,114,182,0.18)]">Messaging • Slack</span>
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(99,102,241,0.22)]">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
+                                <img src="/logos/stripe.svg" alt="Stripe" className="h-4 w-4" />
+                              </span>
+                              Payments • Stripe
+                            </span>
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(244,114,182,0.18)]">
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-white/10">
+                                <img src="/logos/slack.svg" alt="Slack" className="h-4 w-4" />
+                              </span>
+                              Messaging • Slack
+                            </span>
                           </div>
                         </div>
                           <div className="absolute inset-[3px] rounded-[52px] border border-white/20 bg-gradient-to-br from-[#121222] via-[#05050d] to-[#020206] shadow-[inset_0_2px_6px_rgba(255,255,255,0.06)]" />
