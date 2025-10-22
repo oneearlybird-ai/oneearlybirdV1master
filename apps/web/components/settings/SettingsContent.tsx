@@ -350,7 +350,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
         ) : null}
 
         {tab === "security" ? (
-          <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
+          <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 text-sm text-white/70 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
             <h2 className="text-lg font-semibold text-white">Security controls</h2>
             <p>Change email, password, and multi-factor authentication will live here. We’ll prompt for verification before enabling any of these options.</p>
             <p className="text-white/50">Security updates are coming soon. In the meantime, contact support if you need to update credentials.</p>
@@ -359,7 +359,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
 
         {tab === "business" ? (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
+            <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-white">Business profile</h2>
