@@ -116,6 +116,20 @@ export default function Features03() {
                       <div className="relative">
                         <div className="absolute -inset-x-8 -top-16 bottom-20 -z-10 rounded-[64px] bg-[radial-gradient(circle_at_top,rgba(147,197,253,0.35),transparent_65%)] blur-[90px] opacity-70" aria-hidden />
                         <div className="relative aspect-[9/19.5] w-full rounded-[56px] border border-white/25 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_70%)] shadow-[0_48px_110px_rgba(5,5,11,0.78)]">
+
+                        {/* Floating brand badges */}
+                        <div className="pointer-events-none absolute -left-36 top-12 hidden md:block animate-[float_12s_ease-in-out_infinite]">
+                          <div className="flex flex-col gap-6 text-xs text-white/70">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(59,130,246,0.2)]">CRM sync • HubSpot</span>
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(16,185,129,0.18)]">Calendar • Google Workspace</span>
+                          </div>
+                        </div>
+                        <div className="pointer-events-none absolute -right-36 bottom-0 hidden md:block animate-[float_14s_ease-in-out_infinite]">
+                          <div className="flex flex-col gap-6 text-xs text-white/70">
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(99,102,241,0.22)]">Payments • Stripe</span>
+                            <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(244,114,182,0.18)]">Messaging • Slack</span>
+                          </div>
+                        </div>
                           <div className="absolute inset-[3px] rounded-[52px] border border-white/20 bg-gradient-to-br from-[#121222] via-[#05050d] to-[#020206] shadow-[inset_0_2px_6px_rgba(255,255,255,0.06)]" />
                           <div className="absolute inset-y-[84px] -left-[4px] w-[4px] rounded-full bg-white/18" aria-hidden />
                           <div className="absolute inset-y-[140px] -right-[3px] w-[3px] rounded-full bg-white/12" aria-hidden />
@@ -134,28 +148,10 @@ export default function Features03() {
                           </div>
                           <div className="absolute inset-[14px] overflow-hidden rounded-[38px] border border-white/12 bg-[#05050b] shadow-[inset_0_1px_1px_rgba(255,255,255,0.04)]">
                             <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_20%_-10%,rgba(147,197,253,0.25),transparent_62%),radial-gradient(circle_at_90%_0%,rgba(192,132,252,0.2),transparent_60%)]" aria-hidden />
-                            <div className="pointer-events-none absolute inset-0 animate-[float_12s_ease-in-out_infinite]">
-                              <div className="absolute -top-14 -left-12 h-24 w-24 rounded-full border border-white/10 bg-white/10 backdrop-blur-sm" />
-                              <div className="absolute top-1/3 -right-14 h-20 w-20 rounded-full border border-white/10 bg-emerald-400/15 backdrop-blur-sm" />
-                              <div className="absolute bottom-6 -left-10 h-16 w-16 rounded-full border border-white/10 bg-sky-400/15 backdrop-blur-sm" />
-                            </div>
                             <div
                               className="absolute inset-0 flex min-h-[220%] flex-col gap-4 px-4 py-5 text-white/85"
                               style={{ animation: isVisible ? "phone-screen-scroll 24s ease-in-out infinite" : "none" }}
                             >
-                              <div className="flex items-center justify-between text-[11px] text-white/55">
-                                <span className="font-semibold tracking-[0.12em] text-white">9:41</span>
-                                <div className="flex items-center gap-2 text-white/45">
-                                  <span className="inline-flex h-2 w-3 rounded-sm bg-gradient-to-r from-white/45 to-white/15" />
-                                  <span className="inline-flex h-[8px] w-6 items-end gap-[2px]">
-                                    <span className="inline-block h-full w-[3px] rounded bg-white/45" />
-                                    <span className="inline-block h-[70%] w-[3px] rounded bg-white/35" />
-                                    <span className="inline-block h-[45%] w-[3px] rounded bg-white/25" />
-                                    <span className="inline-block h-[25%] w-[3px] rounded bg-white/18" />
-                                  </span>
-                                  <span className="inline-flex h-3 w-4 rounded-sm border border-white/25" />
-                                </div>
-                              </div>
                               <div className="rounded-3xl border border-white/12 bg-white/10 p-3 shadow-[0_18px_34px_rgba(99,102,241,0.28)]">
                                 <div className="flex items-center justify-between">
                                   <div>
