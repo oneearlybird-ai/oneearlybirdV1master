@@ -195,34 +195,53 @@ export default function Features() {
                 </div>
 
                 {/* Receptionist preview */}
-                <div className="space-y-5 lg:-mt-24 lg:w-[340px] lg:justify-self-center" data-aos="fade-left" data-aos-delay="200">
-                  <h3 className="h3 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">Meet your new receptionist</h3>
-                  <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-5 shadow-[0_14px_38px_rgba(15,14,32,0.45)] backdrop-blur">
-                    <div className="flex items-start justify-between gap-4">
-                      <div>
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.34rem] text-purple-200/80">Live demo</p>
-                        <p className="mt-1 text-base font-semibold text-white">See it work in real time</p>
-                      </div>
-                      <span className="inline-flex h-8 shrink-0 items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.28rem] text-purple-200">Live</span>
-                    </div>
-                    <p className="mt-3 text-sm text-white/70">
-                      Ask the agent a question, then watch transcripts, recordings, and follow-ups appear instantly—exactly how your team would see them.
-                    </p>
-                    <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40">
-                      {widgetReady ? (
-                        createElement('elevenlabs-convai', {
-                          'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
-                          style: { display: 'block', width: '100%', minHeight: '360px' },
-                        })
-                      ) : (
-                        <div className="flex h-[360px] items-center justify-center text-sm text-white/60">
-                          Initializing the live agent experience…
+                <div className="lg:-mt-24 lg:w-[340px] lg:justify-self-center">
+                  <h3 className="h3 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">
+                    Meet your new receptionist
+                  </h3>
+                  <div
+                    className="group rounded-[32px] border border-white/10 bg-white/[0.035] p-5 shadow-[0_18px_46px_rgba(15,14,32,0.48)] backdrop-blur transition-all duration-700"
+                    data-aos="fade-up"
+                    data-aos-delay="250"
+                  >
+                    <div className="space-y-5">
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.32rem] text-purple-200/80">Live demo</p>
+                          <p className="mt-1 text-base font-semibold text-white">Test the agent’s voice and brains</p>
                         </div>
-                      )}
+                        <span className="inline-flex h-8 shrink-0 items-center rounded-full border border-purple-500/35 bg-purple-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.26rem] text-purple-200">
+                          Live
+                        </span>
+                      </div>
+                      <p className="text-sm text-white/75" data-aos="fade-up" data-aos-delay="280">
+                        Say hello, hand it scenarios, or quiz it on your intake flow. Watch transcripts, intent tags, and hand-off notes update in real time.
+                      </p>
+                      <div
+                        className="overflow-hidden rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35"
+                        data-aos="fade-up"
+                        data-aos-delay="320"
+                      >
+                        {widgetReady ? (
+                          createElement('elevenlabs-convai', {
+                            'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
+                            style: { display: 'block', width: '100%', minHeight: '360px' },
+                          })
+                        ) : (
+                          <div className="flex h-[360px] items-center justify-center text-sm text-white/60">
+                            Initializing the voice agent…
+                          </div>
+                        )}
+                      </div>
+                      <div className="space-y-3" data-aos="fade-up" data-aos-delay="360">
+                        <div className="rounded-2xl border border-white/8 bg-white/[0.045] px-4 py-3 text-xs text-white/70 transition duration-500 group-hover:border-purple-400/30 group-hover:text-white">
+                          Enable your mic so EarlyBird can riff naturally—demo conversations stay private.
+                        </div>
+                        <div className="rounded-2xl border border-white/8 bg-white/[0.045] px-4 py-3 text-xs text-white/70 transition duration-500 group-hover:border-purple-400/30 group-hover:text-white">
+                          Pro tip: press “star” during the call to trigger a VIP escalation and see the hand-off notes populate instantly.
+                        </div>
+                      </div>
                     </div>
-                    <p className="mt-3 text-xs text-white/55">
-                      Tip: enable your microphone when prompted so EarlyBird can respond naturally. Conversations in this demo stay private.
-                    </p>
                   </div>
                 </div>
 
