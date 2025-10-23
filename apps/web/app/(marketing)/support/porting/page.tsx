@@ -6,12 +6,12 @@ const STEPS = [
   {
     step: "01",
     title: "Sign up & create your workspace",
-    description: "Use your work email, invite your team, and land on the dashboard home.",
+    description: "Use your work email, invite teammates, and land on the dashboard home.",
   },
   {
     step: "02",
     title: "Activate billing",
-    description: "Choose a plan that matches your volume. Billing unlocks the EarlyBird connect number.",
+    description: "Pick a plan that fits your volume. Billing unlocks the EarlyBird connect number.",
   },
   {
     step: "03",
@@ -21,7 +21,7 @@ const STEPS = [
   {
     step: "04",
     title: "Enable forwarding at your carrier",
-    description: "Update your portal or dial *72 to forward calls to the verified connect number.",
+    description: "Update your carrier portal or dial *72 to route calls to the verified connect number.",
   },
   {
     step: "05",
@@ -66,14 +66,19 @@ export default function ForwardingPage() {
   return (
     <div className="relative flex flex-col">
       <section className="relative overflow-hidden px-5 pb-12 pt-20 sm:px-6 md:pt-28">
-        <div className="absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.22),_transparent_60%)]" aria-hidden="true" />
+        <div className="absolute inset-0 -z-10" aria-hidden="true">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),_transparent_70%)]" />
+          <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.12),_transparent_62%)] blur-3xl" />
+          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,24,0)_0%,rgba(18,16,42,0.55)_100%)]" />
+          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 fill=%22none%22 viewBox=%220 0 200 200%22%3E%3Cpath stroke=%22rgba(148,163,184,0.06)%22 stroke-dasharray=%227%2027%22 stroke-width=%221.5%22 d=%22M0 100H200M100 0v200%22/%3E%3C/svg%3E')] opacity-40" />
+        </div>
         <div className="mx-auto flex max-w-5xl flex-col gap-10 text-center md:gap-16">
-          <div>
+          <div className="relative mx-auto max-w-3xl">
             <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Number forwarding</span>
             <h1 className="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
               Keep your numbers. Route every caller to EarlyBird.
             </h1>
-            <p className="mx-auto mt-6 max-w-2xl text-base text-white/70 md:text-lg">
+            <p className="mt-6 text-base text-white/70 md:text-lg">
               Forwarding keeps your carrier in place. Once your workspace is active you can point calls at EarlyBird in minutes with no downtime.
             </p>
             <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
@@ -82,18 +87,19 @@ export default function ForwardingPage() {
               </a>
               <Link
                 href="/login?tab=signin"
-                className="inline-flex items-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 transition hover:text-white"
+                className="inline-flex items-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/40 hover:text-white"
               >
                 Sign in to dashboard
               </Link>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2 md:gap-6">
+          <div className="relative grid gap-4 sm:grid-cols-2 md:gap-6">
+            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[32px] border border-white/10 bg-white/[0.035]" />
             {STEPS.map((step) => (
               <article
                 key={step.title}
-                className="group relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 shadow-[0_24px_70px_rgba(9,9,22,0.35)] transition hover:border-white/20 hover:bg-white/8"
+                className="group relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 shadow-[0_24px_70px_rgba(9,9,22,0.35)] transition hover:border-white/25 hover:bg-white/10"
               >
                 <div className="flex items-center gap-3">
                   <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold text-white/80">
@@ -108,10 +114,17 @@ export default function ForwardingPage() {
         </div>
       </section>
 
-      <section className="px-5 pb-16 sm:px-6 md:pb-24">
+      <section className="relative px-5 pb-16 sm:px-6 md:pb-24">
+        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 flex justify-center" aria-hidden="true">
+          <div className="h-full w-full max-w-6xl bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.18),_transparent_75%)]" />
+        </div>
+        <div className="pointer-events-none absolute inset-x-0 bottom-[-25%] -z-20 flex justify-center" aria-hidden="true">
+          <div className="h-[440px] w-full max-w-4xl rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.08),_transparent_62%)] blur-[140px]" />
+        </div>
         <div className="mx-auto flex max-w-5xl flex-col gap-12">
           <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr),minmax(0,1fr)]">
-            <article className="rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+            <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_65%)]" />
               <h3 className="text-xl font-semibold text-white">Forwarding checklist</h3>
               <ul className="mt-4 space-y-2 text-sm text-white/80">
                 {CHECKLIST.map((item) => (
@@ -123,7 +136,8 @@ export default function ForwardingPage() {
               </ul>
             </article>
 
-            <article className="rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+            <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_65%)]" />
               <h3 className="text-xl font-semibold text-white">Provider quick reference</h3>
               <div className="mt-4 space-y-5">
                 {PROVIDER_GROUPS.map((group) => (
@@ -143,7 +157,8 @@ export default function ForwardingPage() {
             </article>
           </div>
 
-          <article className="rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+          <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_65%)]" />
             <h3 className="text-xl font-semibold text-white">After forwarding</h3>
             <ul className="mt-4 space-y-2 text-sm text-white/80">
               {POST_FORWARDING.map((item) => (
