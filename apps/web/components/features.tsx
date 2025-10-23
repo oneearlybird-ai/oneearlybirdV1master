@@ -1,6 +1,6 @@
 'use client'
 
-import { createElement, useEffect, useState } from 'react'
+import { createElement, useCallback, useEffect, useRef, useState } from 'react'
 
 import Image from 'next/image'
 import { Transition } from '@headlessui/react'
@@ -10,6 +10,68 @@ import Illustration from '@/public/images/glow-top.svg'
 export default function Features() {
   const [tab, setTab] = useState<number>(1)
   const [widgetReady, setWidgetReady] = useState(false)
+  const widgetRef = useRef<HTMLElement | null>(null)
+  const setWidgetNode = useCallback((node: HTMLElement | null) => {
+    widgetRef.current = node
+  }, [])
+
+  const syncWidgetLayout = useCallback(() => {
+    const host = widgetRef.current
+    if (!host) {
+      return false
+    }
+
+    host.style.position = 'relative'
+    host.style.top = 'auto'
+    host.style.right = 'auto'
+    host.style.bottom = 'auto'
+    host.style.left = 'auto'
+    host.style.pointerEvents = 'auto'
+    host.style.display = 'block'
+    host.style.width = '100%'
+    host.style.height = '100%'
+    host.style.zIndex = 'auto'
+    host.style.margin = '0'
+    host.style.overflow = 'hidden'
+    host.style.setProperty('--el-overlay-padding', '0px')
+
+    const shadow = host.shadowRoot
+    if (!shadow) {
+      return false
+    }
+
+    const overlay = shadow.querySelector<HTMLElement>('.overlay')
+    if (!overlay) {
+      return false
+    }
+
+    overlay.style.position = 'absolute'
+    overlay.style.top = '0'
+    overlay.style.right = '0'
+    overlay.style.bottom = '0'
+    overlay.style.left = '0'
+    overlay.style.width = '100%'
+    overlay.style.height = '100%'
+    overlay.style.display = 'flex'
+    overlay.style.flexDirection = 'column'
+    overlay.style.justifyContent = 'stretch'
+    overlay.style.alignItems = 'stretch'
+    overlay.style.pointerEvents = 'auto'
+    overlay.style.margin = '0'
+
+    overlay.querySelectorAll<HTMLElement>('[class*="max-w"]').forEach((panel) => {
+      panel.style.maxWidth = '100%'
+      panel.style.maxHeight = '100%'
+      panel.style.width = '100%'
+      panel.style.height = '100%'
+      panel.style.top = '0'
+      panel.style.left = '0'
+      panel.style.position = 'relative'
+      panel.style.margin = '0'
+    })
+
+    return true
+  }, [])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
@@ -61,6 +123,43 @@ export default function Features() {
       script.removeEventListener('load', handleReady)
     }
   }, [])
+
+  useEffect(() => {
+    if (!widgetReady) {
+      return
+    }
+
+    let frame: number | undefined
+    let observer: MutationObserver | undefined
+
+    const attemptSync = () => {
+      if (!syncWidgetLayout()) {
+        frame = window.requestAnimationFrame(attemptSync)
+        return
+      }
+
+      const host = widgetRef.current
+      const shadow = host?.shadowRoot
+      if (!shadow) {
+        return
+      }
+
+      observer?.disconnect()
+      observer = new MutationObserver(() => {
+        syncWidgetLayout()
+      })
+      observer.observe(shadow, { childList: true, subtree: true, attributes: true })
+    }
+
+    attemptSync()
+
+    return () => {
+      if (frame) {
+        window.cancelAnimationFrame(frame)
+      }
+      observer?.disconnect()
+    }
+  }, [syncWidgetLayout, widgetReady])
 
   return (
     <section>
@@ -225,7 +324,13 @@ export default function Features() {
                         <div className="min-h-[360px] sm:min-h-[400px] lg:min-h-[460px]">
                           {widgetReady ? (
                             createElement('elevenlabs-convai', {
+                              ref: setWidgetNode,
                               'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
+                              variant: 'full',
+                              'always-expanded': 'true',
+                              'default-expanded': 'true',
+                              transcript: 'true',
+                              'text-input': 'true',
                               style: { display: 'block', width: '100%', height: '100%' },
                             })
                           ) : (
