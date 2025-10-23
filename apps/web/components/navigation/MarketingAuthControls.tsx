@@ -11,6 +11,7 @@ type Variant = "desktop" | "mobile";
 type Props = {
   variant?: Variant;
   onNavigate?: () => void;
+  signupLabel?: string;
 };
 
 
@@ -21,7 +22,7 @@ function baseClasses(variant: Variant) {
   return "flex items-center gap-2";
 }
 
-export default function MarketingAuthControls({ variant = "desktop", onNavigate }: Props) {
+export default function MarketingAuthControls({ variant = "desktop", onNavigate, signupLabel = "Start trial" }: Props) {
   const { status } = useAuthSession();
   const { open } = useAuthModal();
 
@@ -91,7 +92,7 @@ export default function MarketingAuthControls({ variant = "desktop", onNavigate 
             : "w-full inline-flex items-center justify-center rounded-xl bg-white px-4 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
         }
       >
-        Start trial
+        {signupLabel}
       </button>
     </div>
   );
