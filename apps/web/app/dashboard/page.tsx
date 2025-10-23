@@ -707,7 +707,7 @@ export default function DashboardPage() {
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
           <h2 className="font-medium">Get set up</h2>
           <ul className="mt-2 space-y-2 text-sm text-white/80">
-            <li>✅ Connect phone number (or <a className="underline" href="/support/porting">port your number</a>)</li>
+            <li>✅ Connect phone number (or <a className="underline" href="/support/porting">set up forwarding</a>)</li>
             <li>✅ Connect Google Calendar</li>
             <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
             <li>⬜ Customize greeting & FAQs</li>

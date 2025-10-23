@@ -10,23 +10,23 @@ const sections = [
     description:
       "Provision numbers, connect calendars, and invite your team. Everything in the dashboard mirrors what you see in the preview.",
     bullets: [
-      "Managed telephony — we host numbers or port your existing lines. No extra carrier account required.",
+      "Managed telephony — we can host numbers or forward your existing lines. No extra carrier account required.",
       "Single Stripe invoice for platform + usage. Taxes calculated automatically.",
       "Role-based access with OTP-backed step-up for sensitive actions.",
     ],
   },
   {
-    id: "porting",
-    title: "Porting your number",
-    description: "Bring your voice lines over without downtime. We coordinate with your current carrier and share FOC milestones.",
+    id: "forwarding",
+    title: "Forwarding your number",
+    description: "Keep your voice lines with the carrier you trust. Forward them to EarlyBird without downtime.",
     bullets: [
-      "Have your account number, service address, and port-out PIN ready.",
-      "Submit the request from the dashboard or email support@earlybird.ai.",
-      "Keep the existing service active until you receive the cutover confirmation.",
+      "Have your carrier login or forwarding codes (*72 / *73) ready.",
+      "Use the dashboard helper or email support@earlybird.ai if you need us on the line.",
+      "Place a live test call after forwarding and confirm the dashboard shows the new route before announcing it internally.",
     ],
     cta: {
       href: "/support/porting",
-      label: "Start a port request",
+      label: "Set up forwarding",
     },
   },
   {

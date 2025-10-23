@@ -17,19 +17,19 @@ const contacts = [
     ],
   },
   {
-    title: "Telephony & porting",
+    title: "Telephony & forwarding",
     description:
-      "We manage carriers for you. Request new numbers or port existing ones — usage and carrier fees roll into a single Stripe invoice.",
+      "Keep your carrier. Forward existing numbers or request a new EarlyBird line — usage and carrier fees roll into a single Stripe invoice.",
     cta: {
       href: "/support/porting",
-      label: "Start a port request",
+      label: "Set up forwarding",
     },
   },
 ];
 
 const tips = [
   "Include repro steps, expected vs. actual behavior, and call IDs when emailing support.",
-  "Keep the current carrier active during porting until we confirm the firm order commit (FOC) date.",
+  "Verify call forwarding inside your carrier portal or with their *72 code before announcing the new receptionist.",
   "Use the dashboard wizard to invite teammates securely; OTP step-up protects sensitive actions.",
 ];
 
