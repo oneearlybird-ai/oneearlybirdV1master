@@ -81,7 +81,7 @@ export default function SupportDrawer() {
               <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="mailto:support@oneearlybird.ai">Email support@oneearlybird.ai</a>
             </li>
             <li>
-              <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/support/porting">Request a number or forwarding help</a>
+              <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/support/porting">Review forwarding steps</a>
             </li>
             <li>
               <a className="block rounded-lg border border-white/15 bg-white/5 px-3 py-2 hover:bg-white/10" href="/support">Support Center</a>
