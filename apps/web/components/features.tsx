@@ -14,6 +14,84 @@ export default function Features() {
   const widgetElementRef = useRef<HTMLElement | null>(null)
   const widgetContainerRef = useRef<HTMLDivElement | null>(null)
 
+  const customizeWidget = useCallback((element?: HTMLElement) => {
+    const host = element ?? widgetElementRef.current
+    if (!host || !host.shadowRoot) {
+      return
+    }
+
+    const shadow = host.shadowRoot
+
+    const largeAvatarWrapper = Array.from(shadow.querySelectorAll('div')).find((element) => {
+      if (!(element instanceof HTMLElement)) {
+        return false
+      }
+      const className = element.className || ''
+      return className.includes('relative') && className.includes('w-16') && className.includes('h-16')
+    })
+    if (largeAvatarWrapper instanceof HTMLElement && !largeAvatarWrapper.dataset.ebWidgetAvatarHidden) {
+      largeAvatarWrapper.dataset.ebWidgetAvatarHidden = 'true'
+      largeAvatarWrapper.style.display = 'none'
+    }
+
+    const floatingContainers = Array.from(shadow.querySelectorAll('div')).filter((element) => {
+      if (!(element instanceof HTMLElement)) {
+        return false
+      }
+      const className = element.className || ''
+      return className.includes('absolute') && className.includes('translate-y-1/2') && className.includes('left-1/2')
+    }) as HTMLElement[]
+    floatingContainers.forEach((container) => {
+      if (!container.dataset.ebWidgetFloating) {
+        container.dataset.ebWidgetFloating = 'true'
+        container.style.opacity = '0'
+        container.style.pointerEvents = 'none'
+      }
+    })
+
+    shadow.querySelectorAll<HTMLButtonElement>('button[aria-label="Start call"]').forEach((button) => {
+      const container = button.closest('div')
+      const className = container?.className || ''
+      const isFloating = className.includes('translate-y-1/2') && className.includes('left-1/2')
+
+      if (isFloating) {
+        if (!button.dataset.ebWidgetCirclePrepared) {
+          button.dataset.ebWidgetCirclePrepared = 'true'
+          button.style.opacity = '0'
+          button.style.pointerEvents = 'none'
+        }
+        return
+      }
+
+      if (!button.dataset.ebWidgetPrimaryBound) {
+        button.dataset.ebWidgetPrimaryBound = 'true'
+        button.addEventListener(
+          'click',
+          () => {
+            const maxAttempts = 240
+            let attempts = 0
+            const tryClick = () => {
+              const floatingButton = shadow.querySelector<HTMLButtonElement>(
+                'div[data-eb-widget-floating="true"] button[aria-label="Start call"]',
+              )
+              if (floatingButton && !floatingButton.disabled) {
+                floatingButton.click()
+                return
+              }
+              attempts += 1
+              if (attempts < maxAttempts) {
+                requestAnimationFrame(tryClick)
+              }
+            }
+
+            requestAnimationFrame(tryClick)
+          },
+          { capture: true },
+        )
+      }
+    })
+  }, [])
+
   const syncWidgetLayout = useCallback((element?: HTMLElement) => {
     const host = element ?? widgetElementRef.current
     if (!host) {
@@ -68,8 +146,10 @@ export default function Features() {
       panel.style.margin = '0'
     })
 
+    customizeWidget(host)
+
     return true
-  }, [])
+  }, [customizeWidget])
 
   useEffect(() => {
     if (typeof window === 'undefined') {
