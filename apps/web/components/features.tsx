@@ -204,7 +204,7 @@ export default function Features() {
                     data-aos="fade-up"
                     data-aos-delay="250"
                   >
-                    <div className="space-y-6">
+                    <div className="space-y-7">
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.32rem] text-purple-200/80">Live demo</p>
@@ -222,24 +222,26 @@ export default function Features() {
                         data-aos="fade-up"
                         data-aos-delay="320"
                       >
-                        {widgetReady ? (
-                          createElement('elevenlabs-convai', {
-                            'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
-                            style: { display: 'block', width: '100%', minHeight: '360px' },
-                          })
-                        ) : (
-                          <div className="flex h-[360px] items-center justify-center text-sm text-white/60">
-                            Initializing the voice agent…
-                          </div>
-                        )}
+                        <div className="px-4 pb-5 pt-4">
+                          {widgetReady ? (
+                            createElement('elevenlabs-convai', {
+                              'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
+                              style: { display: 'block', width: '100%', minHeight: '320px' },
+                            })
+                          ) : (
+                            <div className="flex h-[320px] items-center justify-center text-sm text-white/60">
+                              Initializing the voice agent…
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <p
-                        className="text-xs text-white/70"
+                      <div
+                        className="rounded-2xl border border-white/8 bg-white/[0.045] px-4 py-3 text-xs text-white/70 transition duration-500 group-hover:border-purple-400/30 group-hover:text-white"
                         data-aos="fade-up"
-                        data-aos-delay="340"
+                        data-aos-delay="360"
                       >
                         Enable your microphone so EarlyBird can respond naturally. Demo conversations remain private.
-                      </p>
+                      </div>
                     </div>
                   </div>
                 </div>
