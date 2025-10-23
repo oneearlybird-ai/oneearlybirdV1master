@@ -1,31 +1,25 @@
 export const dynamic = "force-static";
 
 import Link from "next/link";
-import Section from "@/components/marketing/Section";
 
-export const metadata = {
-  title: "Forward calls to EarlyBird",
-  description: "Forward the numbers you already own. Once your workspace is active, EarlyBird picks up every caller.",
-};
-
-const steps = [
+const STEPS = [
   "Sign up with your work email and create your workspace.",
-  "Activate billing so the connect number unlocks in Dashboard → Numbers → Forwarding.",
-  "Place the verification call from the dashboard to confirm the destination.",
+  "Activate billing to unlock the connect number in Dashboard → Numbers → Forwarding.",
+  "Place the verification call from the dashboard so we know the destination is live.",
   "Update your carrier portal or dial *72 to forward to the connect number.",
-  "Flip the dashboard toggle so EarlyBird greets every caller.",
+  "Test a live call, then toggle EarlyBird as your receptionist.",
 ];
 
-const checklist = [
-  "Existing business number(s) and carrier account access.",
-  "Forwarding codes (*72 to enable, *73 to disable) or portal login.",
-  "EarlyBird connect number shown after verification.",
-  "Five minutes to verify and test a live call.",
+const CHECKLIST = [
+  "Existing business number(s) and carrier access.",
+  "Forwarding codes (*72 / *73) or portal login.",
+  "EarlyBird connect number after verification.",
+  "A few minutes to verify and test.",
 ];
 
-const providerTips = [
+const TIP_ITEMS = [
   "AT&T, Verizon, T-Mobile: Features → Call Forwarding → add the connect number.",
-  "RingCentral, Zoom Phone, Grasshopper: edit the main call handling rule and route to EarlyBird.",
+  "RingCentral, Zoom Phone, Grasshopper: edit the main call handling rule and forward to EarlyBird.",
   "Desk phones / PBX: dial *72 + connect number; use *73 to revert.",
 ];
 
@@ -34,10 +28,10 @@ export default function ForwardingPage() {
     <div className="flex flex-col">
       <section className="px-5 pt-20 pb-12 sm:px-6 md:pt-28">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="stellar-pill">Number forwarding</span>
+          <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Number forwarding</span>
           <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">Keep your numbers. Route calls to EarlyBird.</h1>
           <p className="mt-6 text-base text-white/70 md:text-lg">
-            Forwarding keeps your carrier in place. Once you verify your connect number, you can point every call at EarlyBird in minutes.
+            Forwarding keeps your carrier in place. After billing and verification you can point every call at EarlyBird in minutes.
           </p>
           <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
             <a
@@ -56,66 +50,68 @@ export default function ForwardingPage() {
         </div>
       </section>
 
-      <Section eyebrow="Forwarding playbook" title="Do this right after signup" className="pt-0">
-        <div className="flex flex-col gap-4">
-          {steps.map((step, index) => (
-            <article key={step} className="rounded-3xl border border-white/12 bg-white/5 p-5">
-              <div className="flex items-center gap-3">
-                <span className="inline-flex h-8 w-8 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold text-white/80">
-                  {(index + 1).toString().padStart(2, "0")}
-                </span>
-                <h3 className="text-base font-semibold text-white">Step {index + 1}</h3>
-              </div>
-              <p className="mt-2 text-sm text-white/75">{step}</p>
-            </article>
-          ))}
-        </div>
-      </Section>
+      <section className="px-5 pb-16 sm:px-6 md:pb-24">
+        <div className="mx-auto flex max-w-3xl flex-col gap-10">
+          <article className="rounded-3xl border border-white/12 bg-white/5 p-5">
+            <h2 className="text-lg font-semibold text-white">Forwarding playbook</h2>
+            <ul className="mt-4 space-y-2 text-sm text-white/80">
+              {STEPS.map((step, index) => (
+                <li key={step} className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
+                  <span>
+                    <strong className="text-white/70">Step {index + 1}.</strong> {step}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </article>
 
-      <Section eyebrow="What to gather" title="Checklist" className="pt-0">
-        <div className="stellar-grid-card bg-white/5">
-          <ul className="list-disc space-y-2 pl-5 text-sm text-white/80">
-            {checklist.map((item) => (
-              <li key={item}>{item}</li>
-            ))}
-          </ul>
-        </div>
-      </Section>
+          <article className="rounded-3xl border border-white/12 bg-white/5 p-5">
+            <h2 className="text-lg font-semibold text-white">Checklist</h2>
+            <ul className="mt-4 space-y-2 text-sm text-white/80">
+              {CHECKLIST.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
 
-      <Section eyebrow="Carrier tips" title="Where to toggle forwarding" className="pt-0">
-        <div className="stellar-grid-card bg-white/5">
-          <ul className="space-y-2 text-sm text-white/75">
-            {providerTips.map((tip) => (
-              <li key={tip} className="flex gap-2">
-                <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
-                <span>{tip}</span>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </Section>
+          <article className="rounded-3xl border border-white/12 bg-white/5 p-5">
+            <h2 className="text-lg font-semibold text-white">Carrier tips</h2>
+            <ul className="mt-4 space-y-2 text-sm text-white/80">
+              {TIP_ITEMS.map((tip) => (
+                <li key={tip} className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
+                  <span>{tip}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
 
-      <Section
-        eyebrow="Need help?"
-        title="Message us from the dashboard"
-        description="Support can join a quick call after you sign in — just open the help drawer and start a ticket."
-        className="pt-0"
-      >
-        <div className="flex flex-wrap gap-3">
-          <Link
-            href="/docs#forwarding"
-            className="inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
-          >
-            Read the guide
-          </Link>
-          <a
-            href="mailto:support@earlybird.ai"
-            className="inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
-          >
-            Email support
-          </a>
+          <article className="rounded-3xl border border-white/12 bg-white/5 p-5">
+            <h2 className="text-lg font-semibold text-white">Need help?</h2>
+            <p className="mt-2 text-sm text-white/75">
+              Message us from the dashboard support drawer after you sign in or email support@earlybird.ai. We’ll hop on a quick call if you want a walk-through.
+            </p>
+            <div className="mt-4 flex flex-wrap gap-3">
+              <Link
+                href="/docs#forwarding"
+                className="inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
+              >
+                Read the guide
+              </Link>
+              <a
+                href="mailto:support@earlybird.ai"
+                className="inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
+              >
+                Email support
+              </a>
+            </div>
+          </article>
         </div>
-      </Section>
+      </section>
     </div>
   );
 }
