@@ -225,15 +225,14 @@ export default function Features() {
                         {widgetReady ? (
                           createElement('elevenlabs-convai', {
                             'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
-                            style: { display: 'block', width: '100%', minHeight: '360px' },
+                            style: { display: 'block', width: '100%', minHeight: '468px' },
                           })
                         ) : (
-                          <div className="flex h-[360px] items-center justify-center text-sm text-white/60">
+                          <div className="flex h-[468px] items-center justify-center text-sm text-white/60">
                             Initializing the voice agent…
                           </div>
                         )}
                       </div>
-                      <div className="h-10" aria-hidden="true" />
                     </div>
                   </div>
                 </div>
