@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 import Highlighter, { HighlighterItem } from "./highlighter";
 
@@ -192,27 +193,29 @@ export default function Features03() {
                         <div className="relative aspect-[9/19.5] w-full rounded-[56px] border border-white/25 bg-[radial-gradient(circle_at_30%_20%,rgba(255,255,255,0.12),transparent_70%)] shadow-[0_48px_110px_rgba(5,5,11,0.78)]">
 
                         {/* Floating brand badges */}
-                        {floatingStatusEmojis.map((badge) => (
-                          <div
-                            key={badge.caption}
-                            className={`pointer-events-none absolute hidden md:flex animate-[float_16s_ease-in-out_infinite]`}
-                            aria-hidden="true"
-                            style={{
-                              [badge.side]: "calc(100% + 1.75rem)",
-                              top: badge.offset,
-                              animationDelay: badge.delay,
-                            }}
-                          >
-                            <span
-                              className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] text-white/80 backdrop-blur-sm ${badge.badgeClass}`}
+                        {floatingStatusEmojis.map((badge) => {
+                          const positionStyle: CSSProperties = {
+                            top: badge.offset,
+                            animationDelay: badge.delay,
+                            ...(badge.side === "left"
+                              ? { right: "calc(100% + 1.5rem)" }
+                              : { left: "calc(100% + 1.5rem)" }),
+                          };
+
+                          return (
+                            <div
+                              key={badge.caption}
+                              className="pointer-events-none absolute hidden md:flex animate-[float_16s_ease-in-out_infinite] md:z-30"
+                              aria-hidden="true"
+                              style={positionStyle}
                             >
-                              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-base leading-none">
-                                {badge.icon}
+                              <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-[11px] text-white/80 backdrop-blur-sm ${badge.badgeClass}`}>
+                                <span className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-white/15 text-base leading-none">{badge.icon}</span>
+                                {badge.caption}
                               </span>
-                              {badge.caption}
-                            </span>
-                          </div>
-                        ))}
+                            </div>
+                          );
+                        })}
                         <div className="pointer-events-none absolute -left-36 top-12 hidden md:block animate-[float_12s_ease-in-out_infinite]">
                           <div className="flex flex-col gap-6 text-xs text-white/70">
                             <span className="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 shadow-[0_12px_30px_rgba(59,130,246,0.2)]">
