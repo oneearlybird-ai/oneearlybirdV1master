@@ -1,6 +1,6 @@
 'use client'
 
-import { createElement, useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 import Image from 'next/image'
 import { Transition } from '@headlessui/react'
@@ -10,13 +10,12 @@ import Illustration from '@/public/images/glow-top.svg'
 export default function Features() {
   const [tab, setTab] = useState<number>(1)
   const [widgetReady, setWidgetReady] = useState(false)
-  const widgetRef = useRef<HTMLElement | null>(null)
-  const setWidgetNode = useCallback((node: HTMLElement | null) => {
-    widgetRef.current = node
-  }, [])
+  const [widgetMounted, setWidgetMounted] = useState(false)
+  const widgetElementRef = useRef<HTMLElement | null>(null)
+  const widgetContainerRef = useRef<HTMLDivElement | null>(null)
 
-  const syncWidgetLayout = useCallback(() => {
-    const host = widgetRef.current
+  const syncWidgetLayout = useCallback((element?: HTMLElement) => {
+    const host = element ?? widgetElementRef.current
     if (!host) {
       return false
     }
@@ -125,41 +124,84 @@ export default function Features() {
   }, [])
 
   useEffect(() => {
-    if (!widgetReady) {
+    if (!widgetReady || !widgetContainerRef.current) {
       return
     }
 
+    if (!widgetElementRef.current) {
+      const element = document.createElement('elevenlabs-convai')
+      element.setAttribute('agent-id', 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn')
+      element.setAttribute('variant', 'full')
+      element.setAttribute('always-expanded', 'true')
+      element.setAttribute('default-expanded', 'true')
+      element.setAttribute('transcript', 'true')
+      element.setAttribute('text-input', 'true')
+      element.style.display = 'block'
+      element.style.width = '100%'
+      element.style.height = '100%'
+      widgetContainerRef.current.appendChild(element)
+      widgetElementRef.current = element
+    }
+
+    const host = widgetElementRef.current
+    if (!host) {
+      return
+    }
+
+    let cancelled = false
     let frame: number | undefined
     let observer: MutationObserver | undefined
 
     const attemptSync = () => {
-      if (!syncWidgetLayout()) {
+      if (cancelled) {
+        return
+      }
+
+      if (!syncWidgetLayout(host)) {
         frame = window.requestAnimationFrame(attemptSync)
         return
       }
 
-      const host = widgetRef.current
-      const shadow = host?.shadowRoot
+      setWidgetMounted((prev) => (prev ? prev : true))
+
+      const shadow = host.shadowRoot
       if (!shadow) {
+        frame = window.requestAnimationFrame(attemptSync)
         return
       }
 
       observer?.disconnect()
       observer = new MutationObserver(() => {
-        syncWidgetLayout()
+        syncWidgetLayout(host)
       })
       observer.observe(shadow, { childList: true, subtree: true, attributes: true })
     }
 
     attemptSync()
 
+    const handleResize = () => {
+      syncWidgetLayout(host)
+    }
+    window.addEventListener('resize', handleResize)
+
     return () => {
+      cancelled = true
       if (frame) {
         window.cancelAnimationFrame(frame)
       }
       observer?.disconnect()
+      window.removeEventListener('resize', handleResize)
     }
   }, [syncWidgetLayout, widgetReady])
+
+  useEffect(() => {
+    return () => {
+      if (widgetElementRef.current) {
+        widgetElementRef.current.remove()
+        widgetElementRef.current = null
+      }
+    }
+  }, [])
 
   return (
     <section>
@@ -245,6 +287,28 @@ export default function Features() {
                               <div className="absolute inset-0 [background:repeating-linear-gradient(90deg,transparent,transparent_48px,var(--color-white)_48px,var(--color-white)_49px)] blur-[2px] opacity-20" />
                               <div className="absolute inset-0 [background:repeating-linear-gradient(90deg,transparent,transparent_48px,var(--color-purple-500)_48px,var(--color-purple-500)_49px)]" />
                             </div>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const widget = widgetElementRef.current
+                                if (!widget) {
+                                  return
+                                }
+                                widget.dispatchEvent(
+                                  new CustomEvent('elevenlabs-convai:call', {
+                                    bubbles: true,
+                                    composed: true,
+                                    detail: { action: 'expand' },
+                                  }),
+                                )
+                              }}
+                              className="mt-4 inline-flex items-center gap-2 rounded-full border border-purple-400/60 bg-purple-500/20 px-4 py-2 text-xs font-semibold uppercase tracking-[0.26rem] text-purple-100 shadow-[0_12px_30px_rgba(99,102,241,0.28)] transition hover:scale-[1.02] hover:border-purple-300 hover:bg-purple-500/30"
+                            >
+                              <span className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-purple-400/30 text-[11px] font-bold text-purple-100">
+                                ▶
+                              </span>
+                              Try Call Now
+                            </button>
                           </div>
                           {/* Icons */}
                           <Transition
@@ -321,20 +385,10 @@ export default function Features() {
                     </div>
                     <div className="rounded-[32px] border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)]">
                       <div className="rounded-[26px] border border-white/10 bg-slate-950/80 p-4 sm:p-5">
-                        <div className="min-h-[360px] sm:min-h-[400px] lg:min-h-[460px]">
-                          {widgetReady ? (
-                            createElement('elevenlabs-convai', {
-                              ref: setWidgetNode,
-                              'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
-                              variant: 'full',
-                              'always-expanded': 'true',
-                              'default-expanded': 'true',
-                              transcript: 'true',
-                              'text-input': 'true',
-                              style: { display: 'block', width: '100%', height: '100%' },
-                            })
-                          ) : (
-                            <div className="flex h-full w-full items-center justify-center text-sm text-white/60">
+                        <div className="relative min-h-[360px] sm:min-h-[400px] lg:min-h-[460px]">
+                          <div ref={widgetContainerRef} className="absolute inset-0" />
+                          {!widgetMounted && (
+                            <div className="absolute inset-0 flex items-center justify-center text-sm text-white/60">
                               Initializing the voice agent…
                             </div>
                           )}
