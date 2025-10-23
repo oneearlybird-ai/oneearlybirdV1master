@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect, useRef, useState } from "react";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 import { PLAN_DEFINITIONS, getPlanPriceLabel, getPlanTrialBadge } from "@/lib/plans";
 
@@ -40,6 +41,61 @@ const marketingPlans: DerivedPlan[] = PLAN_DEFINITIONS.filter((plan) => plan.slu
 });
 
 export default function Pricing() {
+  const [isMobile, setIsMobile] = useState(false);
+  const [activePlanIndex, setActivePlanIndex] = useState(0);
+  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      return;
+    }
+
+    const query = window.matchMedia("(max-width: 767px)");
+    const updateMatch = () => {
+      setIsMobile(query.matches);
+      if (!query.matches) {
+        setActivePlanIndex(-1);
+      } else {
+        setActivePlanIndex(0);
+      }
+    };
+
+    updateMatch();
+    query.addEventListener("change", updateMatch);
+
+    return () => {
+      query.removeEventListener("change", updateMatch);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isMobile || typeof window === "undefined") {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const index = Number((entry.target as HTMLElement).dataset.planIndex);
+            if (!Number.isNaN(index)) {
+              setActivePlanIndex(index);
+            }
+          }
+        });
+      },
+      { threshold: 0.55, rootMargin: "0px 0px -10% 0px" },
+    );
+
+    cardRefs.current.forEach((card) => {
+      if (card) {
+        observer.observe(card);
+      }
+    });
+
+    return () => observer.disconnect();
+  }, [isMobile]);
+
   return (
     <div className="relative">
       <div
@@ -92,13 +148,21 @@ export default function Pricing() {
           const highlightClassName = plan.highlight
             ? " border-purple-400/80 bg-purple-500/10 shadow-[0_20px_60px_rgba(102,51,153,0.35)] hover:bg-purple-500/20"
             : "";
-          const cardClassName = `${baseCardClassName}${highlightClassName}`;
+          const mobileActiveClassName =
+            isMobile && activePlanIndex === index
+              ? " border-purple-300 bg-purple-500/15 shadow-[0_18px_55px_rgba(102,51,153,0.28)] scale-[1.01]"
+              : "";
+          const cardClassName = `${baseCardClassName}${highlightClassName}${mobileActiveClassName}`;
           return (
             <div
               key={plan.id}
               className={cardClassName}
               data-aos="fade-up"
               data-aos-delay={150 + index * 80}
+              data-plan-index={index}
+              ref={(element) => {
+                cardRefs.current[index] = element;
+              }}
             >
               <div className="grow">
                 <div className="flex items-center justify-between gap-2">

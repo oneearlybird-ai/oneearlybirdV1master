@@ -82,7 +82,7 @@ export default function MobileMenu({ isAuthenticated }: { isAuthenticated: boole
       <nav
         id="mobile-nav"
         ref={mobileNav}
-        className="absolute top-full z-20 left-4 right-4 sm:left-6 sm:right-6 mt-3 overflow-hidden transition-all duration-300 ease-in-out"
+        className="absolute top-full right-4 sm:right-6 z-20 mt-3 w-[min(90vw,20rem)] overflow-hidden transition-all duration-300 ease-in-out"
         style={mobileNavOpen ? { maxHeight: mobileNav.current?.scrollHeight, opacity: 1 } : { maxHeight: 0, opacity: 0.8 }}
       >
         <div className="rounded-3xl border border-white/12 bg-[#05050b]/98 px-4 py-2 shadow-[0_30px_90px_rgba(5,5,11,0.55)] backdrop-blur">
