@@ -1,67 +1,66 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { createElement, useEffect, useState } from 'react'
 
 import Image from 'next/image'
 import { Transition } from '@headlessui/react'
 import Particles from './particles'
 import Illustration from '@/public/images/glow-top.svg'
-import { useRouter } from 'next/navigation'
-
-type ReceptionistCard = {
-  title: string
-  description: string
-  bullets: string[]
-}
 
 export default function Features() {
   const [tab, setTab] = useState<number>(1)
-  const [testStatus, setTestStatus] = useState<'idle' | 'prompting' | 'ready' | 'error' | 'unsupported'>('idle')
-  const router = useRouter()
+  const [widgetReady, setWidgetReady] = useState(false)
 
-  const receptionistCards = useMemo<ReceptionistCard[]>(
-    () => [
-      {
-        title: 'Answers & triages',
-        description: 'Greets callers in under a second, detects urgency, and follows the script you configure.',
-        bullets: ['Intent-aware greetings', 'Escalates VIPs instantly', 'Dynamic scripts per number'],
-      },
-      {
-        title: 'Books & updates',
-        description: 'Schedules, reschedules, and cancels visits across your calendars with no human hand-off.',
-        bullets: ['Two-way calendar sync', 'CRM & ServiceTitan handoff', 'Smart reminders and confirmations'],
-      },
-      {
-        title: 'Logs every detail',
-        description: 'Transcripts, tags, and recordings land in one place so ops, sales, and support stay aligned.',
-        bullets: ['Live transcript streaming', 'Auto-tags every conversation', 'Shareable recap links'],
-      },
-    ],
-    []
-  )
-
-  async function startReceptionistDemo() {
-    if (testStatus === 'prompting') return
-
-    if (!navigator?.mediaDevices?.getUserMedia) {
-      setTestStatus('unsupported')
+  useEffect(() => {
+    if (typeof window === 'undefined') {
       return
     }
 
-    try {
-      setTestStatus('prompting')
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      stream.getTracks().forEach((track) => track.stop())
-      setTestStatus('ready')
-
-      setTimeout(() => {
-        router.push('/preview?demo=voice')
-      }, 900)
-    } catch (error) {
-      console.warn('microphone_permission_denied', error)
-      setTestStatus('error')
+    if (window.customElements?.get('elevenlabs-convai')) {
+      setWidgetReady(true)
+      return
     }
-  }
+
+    const handleReady = () => setWidgetReady(true)
+    const existingScript = document.getElementById('elevenlabs-convai-script') as HTMLScriptElement | null
+
+    if (existingScript) {
+      if (existingScript.dataset.loaded === 'true') {
+        setWidgetReady(true)
+        return
+      }
+      existingScript.addEventListener('load', handleReady, { once: true })
+      return () => existingScript.removeEventListener('load', handleReady)
+    }
+
+    const script = document.createElement('script')
+    script.id = 'elevenlabs-convai-script'
+    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
+    script.async = true
+    script.type = 'text/javascript'
+    script.dataset.loaded = 'false'
+    script.addEventListener(
+      'load',
+      () => {
+        script.dataset.loaded = 'true'
+        handleReady()
+      },
+      { once: true },
+    )
+    script.addEventListener(
+      'error',
+      () => {
+        console.warn('convai_widget_failed_to_load')
+        setWidgetReady(false)
+      },
+      { once: true },
+    )
+    document.body.appendChild(script)
+
+    return () => {
+      script.removeEventListener('load', handleReady)
+    }
+  }, [])
 
   return (
     <section>
@@ -196,46 +195,33 @@ export default function Features() {
                 </div>
 
                 {/* Receptionist preview */}
-                <div className="space-y-5 lg:-mt-24 lg:w-[320px] lg:justify-self-center" data-aos="fade-left" data-aos-delay="200">
+                <div className="space-y-5 lg:-mt-24 lg:w-[340px] lg:justify-self-center" data-aos="fade-left" data-aos-delay="200">
                   <h3 className="h3 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">Meet your new receptionist</h3>
-                  <div className="space-y-4">
-                    {receptionistCards.map((card, index) => (
-                      <div
-                        key={card.title}
-                        className="rounded-2xl border border-white/12 bg-white/[0.05] p-5 shadow-[0_12px_32px_rgba(15,14,32,0.35)] backdrop-blur"
-                        data-aos="fade-left"
-                        data-aos-delay={260 + index * 120}
-                      >
-                        <h5 className="text-sm font-semibold text-white">{card.title}</h5>
-                        <p className="mt-2 text-sm text-white/65">{card.description}</p>
-                        <ul className="mt-3 space-y-1.5 text-xs text-white/60">
-                          {card.bullets.map((bullet) => (
-                            <li key={bullet} className="flex items-start gap-2">
-                              <span aria-hidden="true" className="mt-1 inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
-                              <span>{bullet}</span>
-                            </li>
-                          ))}
-                        </ul>
+                  <div className="rounded-3xl border border-white/12 bg-white/[0.04] p-5 shadow-[0_14px_38px_rgba(15,14,32,0.45)] backdrop-blur">
+                    <div className="flex items-start justify-between gap-4">
+                      <div>
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.34rem] text-purple-200/80">Live demo</p>
+                        <p className="mt-1 text-base font-semibold text-white">See it work in real time</p>
                       </div>
-                    ))}
-                  </div>
-                  <div>
-                    <button
-                      type="button"
-                      onClick={startReceptionistDemo}
-                      className="relative inline-flex w-full items-center justify-center overflow-hidden rounded-full border border-transparent px-6 py-3 text-sm font-semibold text-white transition duration-150 ease-in-out [background:linear-gradient(var(--color-purple-500),var(--color-purple-500))_padding-box,linear-gradient(var(--color-purple-500),var(--color-purple-200)_75%,transparent_100%)_border-box] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400 focus-visible:ring-offset-2 focus-visible:ring-offset-slate-900/80"
-                    >
-                      <span className="relative inline-flex items-center gap-2">
-                        <span>Test our agent now</span>
-                        <span aria-hidden="true" className="text-purple-200">→</span>
-                      </span>
-                    </button>
-                    <p className="mt-3 text-xs text-white/60" aria-live="polite">
-                      {testStatus === 'idle' && 'Click to grant microphone access and start a live call demo.'}
-                      {testStatus === 'prompting' && 'Requesting microphone access… allow it to continue.'}
-                      {testStatus === 'ready' && 'Microphone ready! Opening the preview experience…'}
-                      {testStatus === 'error' && 'We could not access the microphone. Check your browser permissions and try again.'}
-                      {testStatus === 'unsupported' && 'Your browser does not support microphone access. Switch to a modern browser to test the agent.'}
+                      <span className="inline-flex h-8 shrink-0 items-center rounded-full border border-purple-500/30 bg-purple-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.28rem] text-purple-200">Live</span>
+                    </div>
+                    <p className="mt-3 text-sm text-white/70">
+                      Ask the agent a question, then watch transcripts, recordings, and follow-ups appear instantly—exactly how your team would see them.
+                    </p>
+                    <div className="mt-4 overflow-hidden rounded-2xl border border-white/10 bg-slate-950/40">
+                      {widgetReady ? (
+                        createElement('elevenlabs-convai', {
+                          'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
+                          style: { display: 'block', width: '100%', minHeight: '360px' },
+                        })
+                      ) : (
+                        <div className="flex h-[360px] items-center justify-center text-sm text-white/60">
+                          Initializing the live agent experience…
+                        </div>
+                      )}
+                    </div>
+                    <p className="mt-3 text-xs text-white/55">
+                      Tip: enable your microphone when prompted so EarlyBird can respond naturally. Conversations in this demo stay private.
                     </p>
                   </div>
                 </div>

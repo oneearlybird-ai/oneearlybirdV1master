@@ -6,7 +6,6 @@ import Particles from './particles'
 import Illustration from '@/public/images/glow-bottom.svg'
 import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton'
 import { useAuthSession } from '@/components/auth/AuthSessionProvider'
-import AgentDemoLauncher from '@/components/AgentDemoLauncher'
 
 export default function Hero() {
   const { status } = useAuthSession()
@@ -49,11 +48,6 @@ export default function Hero() {
                     Start free trial <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
                   </AuthModalTriggerButton>
                 )}
-              </div>
-              <div>
-                <AgentDemoLauncher buttonClassName="btn w-full border border-white/15 bg-slate-900/30 text-slate-200 transition duration-150 ease-in-out hover:border-white/30 hover:bg-slate-900/45 hover:text-white">
-                  Try the demo agent
-                </AgentDemoLauncher>
               </div>
               <div>
                 <Link
