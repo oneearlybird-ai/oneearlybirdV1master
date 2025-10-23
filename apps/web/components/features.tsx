@@ -204,7 +204,7 @@ export default function Features() {
                     data-aos="fade-up"
                     data-aos-delay="250"
                   >
-                    <div className="space-y-5">
+                    <div className="space-y-6">
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.32rem] text-purple-200/80">Live demo</p>
@@ -215,7 +215,7 @@ export default function Features() {
                         </span>
                       </div>
                       <p className="text-sm text-white/75" data-aos="fade-up" data-aos-delay="280">
-                        Say hello, hand it scenarios, or quiz it on your intake flow. Watch transcripts, intent tags, and hand-off notes update in real time.
+                        Say hello, hand it scenarios, or quiz it on your intake flow. You can watch transcripts, intent tags, and hand-off notes update in real time.
                       </p>
                       <div
                         className="overflow-hidden rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35"
@@ -233,14 +233,13 @@ export default function Features() {
                           </div>
                         )}
                       </div>
-                      <div className="space-y-3" data-aos="fade-up" data-aos-delay="360">
-                        <div className="rounded-2xl border border-white/8 bg-white/[0.045] px-4 py-3 text-xs text-white/70 transition duration-500 group-hover:border-purple-400/30 group-hover:text-white">
-                          Enable your mic so EarlyBird can riff naturally—demo conversations stay private.
-                        </div>
-                        <div className="rounded-2xl border border-white/8 bg-white/[0.045] px-4 py-3 text-xs text-white/70 transition duration-500 group-hover:border-purple-400/30 group-hover:text-white">
-                          Pro tip: press “star” during the call to trigger a VIP escalation and see the hand-off notes populate instantly.
-                        </div>
-                      </div>
+                      <p
+                        className="text-xs text-white/70"
+                        data-aos="fade-up"
+                        data-aos-delay="340"
+                      >
+                        Enable your microphone so EarlyBird can respond naturally. Demo conversations remain private.
+                      </p>
                     </div>
                   </div>
                 </div>
