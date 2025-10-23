@@ -8,7 +8,7 @@ import Swiper, { Navigation } from "swiper";
 import "swiper/swiper.min.css";
 
 import Star from "@/public/images/star.svg";
-import { crmIntegrations } from "@/lib/crmIntegrations";
+import { allIntegrations } from "@/lib/crmIntegrations";
 
 Swiper.use([Navigation]);
 
@@ -40,7 +40,7 @@ export default function IntegrationsCarousel() {
     <>
       <div className="stellar-carousel swiper-container group">
         <div className="swiper-wrapper w-fit">
-          {crmIntegrations.map((integration) => (
+          {allIntegrations.map((integration) => (
             <div
               key={integration.slug}
               className="swiper-slide h-auto rounded-3xl border border-slate-800 bg-linear-to-tr from-slate-800 to-slate-800/25 transition-colors hover:border-slate-700/60"

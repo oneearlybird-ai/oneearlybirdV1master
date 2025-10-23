@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 
 import Star from "@/public/images/star.svg";
-import { crmIntegrations, type CRMIntegration } from "@/lib/crmIntegrations";
+import { calendarIntegrations, crmIntegrations, type CRMIntegration } from "@/lib/crmIntegrations";
 
 export default function IntegrationsList() {
   return (
@@ -11,22 +11,35 @@ export default function IntegrationsList() {
         <div className="pb-12 md:pb-20">
           <div className="flex flex-col gap-6 py-6 border-b [border-image:linear-gradient(to_right,transparent,var(--color-slate-800),transparent)1] md:flex-row md:items-end md:justify-between">
             <div>
-              <p className="text-sm font-semibold uppercase tracking-[0.25rem] text-slate-400">Crm integrations</p>
-              <h2 className="mt-3 text-2xl font-semibold text-white">Sync EarlyBird with the CRMs crews use daily</h2>
+              <p className="text-sm font-semibold uppercase tracking-[0.25rem] text-slate-400">Platform integrations</p>
+              <h2 className="mt-3 text-2xl font-semibold text-white">Sync EarlyBird with the CRMs and calendars crews use daily</h2>
             </div>
             <p className="text-sm text-slate-400 md:max-w-md">
-              Every integration is built for home services and revenue teams: instant transcripts, outcome tracking, and the follow-ups your humans care about.
+              Built-in connectors keep transcripts, bookings, and follow-ups exactly where your revenue, dispatch, and ops teams expect them.
             </p>
           </div>
 
-          <div className="mt-12 md:mt-16">
-            <h3 id="crms" className="scroll-mt-8 text-2xl font-bold inline-flex bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-8">
-              CRM integrations
-            </h3>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {crmIntegrations.map((item, index) => (
-                <IntegrationCard key={item.slug} item={item} index={index} />
-              ))}
+          <div className="mt-12 md:mt-16 space-y-12 md:space-y-16">
+            <div>
+              <h3 id="crms" className="scroll-mt-8 text-2xl font-bold inline-flex bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-8">
+                CRM integrations
+              </h3>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {crmIntegrations.map((item, index) => (
+                  <IntegrationCard key={item.slug} item={item} index={index} />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <h3 id="calendars" className="scroll-mt-8 text-2xl font-bold inline-flex bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-8">
+                Calendar & scheduling
+              </h3>
+              <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+                {calendarIntegrations.map((item, index) => (
+                  <IntegrationCard key={item.slug} item={item} index={index} />
+                ))}
+              </div>
             </div>
           </div>
         </div>

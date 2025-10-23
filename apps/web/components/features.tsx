@@ -199,39 +199,40 @@ export default function Features() {
                   <h3 className="h3 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">
                     Meet your new receptionist
                   </h3>
-                  <div
-                    className="group rounded-[32px] border border-white/10 bg-white/[0.035] p-5 pb-12 shadow-[0_18px_46px_rgba(15,14,32,0.48)] backdrop-blur transition-all duration-700"
-                    data-aos="fade-up"
-                    data-aos-delay="250"
-                  >
-                    <div className="space-y-8">
-                      <div className="flex items-start justify-between gap-4">
-                        <div>
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.32rem] text-purple-200/80">Live demo</p>
-                          <p className="mt-1 text-base font-semibold text-white">Test the agent’s voice and brains</p>
-                        </div>
-                        <span className="inline-flex h-8 shrink-0 items-center rounded-full border border-purple-500/35 bg-purple-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.26rem] text-purple-200">
-                          Live
-                        </span>
-                      </div>
-                      <p className="text-sm text-white/75">
-                        Say hello, hand it scenarios, or quiz it on your intake flow. You can watch transcripts, intent tags, and hand-off notes update in real time.
-                      </p>
-                      <div className="mt-6 rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35">
-                        <div className="rounded-[26px] border border-white/10 bg-slate-950/80 p-4 sm:p-5">
-                          <div className="min-h-[360px] sm:min-h-[400px] lg:min-h-[460px]">
-                            {widgetReady ? (
-                              createElement('elevenlabs-convai', {
-                                'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
-                                class: 'block h-full w-full',
-                                style: { display: 'block', width: '100%', height: '100%' },
-                              })
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center text-sm text-white/60">
-                                Initializing the voice agent…
-                              </div>
-                            )}
+                  <div className="space-y-6">
+                    <div
+                      className="group rounded-[32px] border border-white/10 bg-white/[0.035] p-5 pb-12 shadow-[0_18px_46px_rgba(15,14,32,0.48)] backdrop-blur transition-all duration-700"
+                      data-aos="fade-up"
+                      data-aos-delay="250"
+                    >
+                      <div className="space-y-6">
+                        <div className="flex items-start justify-between gap-4">
+                          <div>
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.32rem] text-purple-200/80">Live demo</p>
+                            <p className="mt-1 text-base font-semibold text-white">Test the agent’s voice and brains</p>
                           </div>
+                          <span className="inline-flex h-8 shrink-0 items-center rounded-full border border-purple-500/35 bg-purple-500/15 px-3 text-[11px] font-semibold uppercase tracking-[0.26rem] text-purple-200">
+                            Live
+                          </span>
+                        </div>
+                        <p className="text-sm text-white/75">
+                          Say hello, hand it scenarios, or quiz it on your intake flow. You can watch transcripts, intent tags, and hand-off notes update in real time.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="rounded-[32px] border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)]">
+                      <div className="rounded-[26px] border border-white/10 bg-slate-950/80 p-4 sm:p-5">
+                        <div className="min-h-[360px] sm:min-h-[400px] lg:min-h-[460px]">
+                          {widgetReady ? (
+                            createElement('elevenlabs-convai', {
+                              'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
+                              style: { display: 'block', width: '100%', height: '100%' },
+                            })
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-sm text-white/60">
+                              Initializing the voice agent…
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

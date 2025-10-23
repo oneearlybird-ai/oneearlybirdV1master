@@ -7,14 +7,14 @@ import Illustration from "@/public/images/page-illustration.svg";
 import Illustration02 from "@/public/images/page-illustration-02.svg";
 import IntegrationImg from "@/public/images/integration-image.png";
 import Particles from "@/components/particles";
-import { crmIntegrationMap, crmIntegrations } from "@/lib/crmIntegrations";
+import { allIntegrations, crmIntegrationMap } from "@/lib/crmIntegrations";
 
 type IntegrationParams = {
   slug: string;
 };
 
 export function generateStaticParams() {
-  return crmIntegrations.map((integration) => ({ slug: integration.slug }));
+  return allIntegrations.map((integration) => ({ slug: integration.slug }));
 }
 
 export function generateMetadata({ params }: { params: IntegrationParams }): Metadata {

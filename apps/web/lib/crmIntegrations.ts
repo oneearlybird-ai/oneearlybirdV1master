@@ -4,6 +4,9 @@ import hubspotLogo from "@/public/logos/integrations/hubspot.svg";
 import salesforceLogo from "@/public/logos/integrations/salesforce.svg";
 import servicetitanLogo from "@/public/logos/integrations/servicetitan.svg";
 import zohoLogo from "@/public/logos/integrations/zoho.svg";
+import googleCalendarLogo from "@/public/logos/google-calendar.svg";
+import microsoft365Logo from "@/public/logos/microsoft-365.svg";
+import outlookLogo from "@/public/logos/outlook.svg";
 
 export type CRMIntegration = {
   slug: string;
@@ -193,4 +196,134 @@ export const crmIntegrations: CRMIntegration[] = [
   },
 ];
 
-export const crmIntegrationMap = new Map(crmIntegrations.map((integration) => [integration.slug, integration]));
+export const calendarIntegrations: CRMIntegration[] = [
+  {
+    slug: "google-calendar",
+    name: "Google Calendar",
+    logo: googleCalendarLogo,
+    summary:
+      "Keep every booking that EarlyBird makes in perfect sync with the calendars your crews already live in.",
+    cardDescription:
+      "Write new events, edits, and cancellations directly into the Google calendars that power your day.",
+    carouselDescription:
+      "Block out rooms, trucks, and team members automatically whenever EarlyBird books an appointment.",
+    carouselHighlights: [
+      "Two-way event sync across shared calendars",
+      "Smart buffers so technicians have travel time",
+      "Color-coded event tags that match your playbook",
+    ],
+    overview: [
+      "EarlyBird acts like a front desk scheduler that never sleeps. Every booking, reschedule, or cancellation lands in the right Google calendar with the metadata your team needs to show up prepared.",
+      "Shared calendars for crews, rooms, or territories stay accurate minute by minute—no more double-booking or manual invites after hours.",
+    ],
+    syncHighlights: [
+      "Creates events with custom titles, attendee lists, and video links",
+      "Updates or cancels events when callers change their plans",
+      "Adds structured notes with transcript summaries and intent tags",
+      "Respects working hours, buffer rules, and resource calendars",
+      "Supports multi-calendar routing so dispatch knows who is next",
+    ],
+    setupSteps: [
+      "Connect your Google Workspace tenant or individual accounts with OAuth.",
+      "Choose which calendars represent availability for each location or crew.",
+      "Map call outcomes (booked, rescheduled, canceled) to calendar actions.",
+      "Decide which notes and follow-up tasks should be injected into the event body.",
+      "Run a live booking to confirm reminders and notifications flow correctly.",
+    ],
+    playbooks: [
+      "After-hours bookings drop on the morning install board with a transcript recap inside the event.",
+      "Reschedules shift a job automatically and ping the assigned crew in Slack.",
+      "Cancellations free the slot and trigger an outbound call list to refill the day.",
+    ],
+    website: "https://workspace.google.com/products/calendar/",
+    industry: "Scheduling & Productivity",
+    installBase: "3B+",
+  },
+  {
+    slug: "microsoft-365-calendar",
+    name: "Microsoft 365 Calendar",
+    logo: microsoft365Logo,
+    summary:
+      "Have EarlyBird coordinate bookings with the Microsoft 365 calendars your operations and leadership teams rely on.",
+    cardDescription:
+      "Log appointments, reschedules, and VIP escalations into shared O365 calendars without manual steps.",
+    carouselDescription:
+      "Route calls into the right team calendars, keep availability up to date, and sync notes for every visit.",
+    carouselHighlights: [
+      "Supports resource mailboxes and shared calendars",
+      "Drops transcript links inside event notes",
+      "Respects complex working-hour rules per technician",
+    ],
+    overview: [
+      "EarlyBird integrates with Microsoft 365 so every booking shows up in Outlook, Teams, and mobile devices instantly.",
+      "Operations teams see the same source of truth as the front desk, which keeps dispatch, sales, and leadership aligned on daily capacity.",
+    ],
+    syncHighlights: [
+      "Creates events with attendees, locations, and Teams video links when needed.",
+      "Automatically updates or cancels events when callers adjust their appointments.",
+      "Populates event bodies with transcript highlights, disposition codes, and follow-up tasks.",
+      "Supports color categories so crews can spot job types at a glance.",
+      "Handles recurring availability templates for preventive maintenance or consultation blocks.",
+    ],
+    setupSteps: [
+      "Authorize EarlyBird through Azure with the consented application provided by your admin.",
+      "Select the shared calendars (crews, rooms, territories) that represent bookable capacity.",
+      "Configure routing logic so different numbers or IVRs map to the right calendars.",
+      "Customize the event subject/body format to match internal reporting needs.",
+      "Test with a mock booking and confirm notifications arrive for every attendee.",
+    ],
+    playbooks: [
+      "Urgent calls create an event for the on-call technician and tag leadership for visibility.",
+      "Sales consultations drop into an SDR calendar with the transcript and CRM link attached.",
+      "Recurring maintenance plans auto-populate quarterly visits without back-and-forth emails.",
+    ],
+    website: "https://www.microsoft.com/microsoft-365/outlook/calendar",
+    industry: "Scheduling & Productivity",
+    installBase: "400M+",
+  },
+  {
+    slug: "outlook-calendar",
+    name: "Outlook Calendar",
+    logo: outlookLogo,
+    summary:
+      "If your team still runs on standalone Outlook calendars, EarlyBird keeps those books full and organized automatically.",
+    cardDescription:
+      "Create and adjust Outlook appointments with the same context your reps hear on the phone.",
+    carouselDescription:
+      "Stay aligned even when teams haven’t moved to Microsoft 365—EarlyBird updates legacy Outlook calendars on the fly.",
+    carouselHighlights: [
+      "Supports on-premises and hybrid Outlook setups",
+      "Attaches call recap links for quick reviews",
+      "Blocks personal calendars with buffer-aware events",
+    ],
+    overview: [
+      "EarlyBird can talk to classic Outlook deployments so the front desk and field teams stay aligned even during phased migrations.",
+      "Whether you use PST sharing or Exchange, bookings that happen overnight won’t surprise anyone the next morning.",
+    ],
+    syncHighlights: [
+      "Creates new appointments with precise start/end times based on SLA rules.",
+      "Updates existing Outlook entries when callers reschedule or cancel.",
+      "Keeps attendee lists in sync with the customer and assigned rep/technician.",
+      "Injects transcript summaries and callback reminders inside the appointment body.",
+      "Automatically color-codes events so teams can see priority levels.",
+    ],
+    setupSteps: [
+      "Authorize EarlyBird using your Exchange or Outlook credentials with the least privileges required.",
+      "Choose which shared calendars correspond to technicians, rooms, or service bays.",
+      "Define buffer rules and working hours so appointments respect on-site realities.",
+      "Customize the appointment subject format to match reporting conventions.",
+      "Place a live booking to verify reminders and cancellation notices are delivered.",
+    ],
+    playbooks: [
+      "VIP callers receive a calendar invite plus a follow-up task inside your CRM automatically.",
+      "Last-minute cancellations free the slot and trigger a waitlist call-out.",
+      "Multi-day jobs create a sequence of Outlook appointments so crews never miss a step.",
+    ],
+    website: "https://outlook.office.com/calendar/",
+    industry: "Scheduling & Productivity",
+    installBase: "500M+",
+  },
+];
+
+export const allIntegrations: CRMIntegration[] = [...crmIntegrations, ...calendarIntegrations];
+export const crmIntegrationMap = new Map(allIntegrations.map((integration) => [integration.slug, integration]));
