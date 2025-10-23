@@ -200,11 +200,11 @@ export default function Features() {
                     Meet your new receptionist
                   </h3>
                   <div
-                    className="group rounded-[32px] border border-white/10 bg-white/[0.035] p-5 shadow-[0_18px_46px_rgba(15,14,32,0.48)] backdrop-blur transition-all duration-700"
+                    className="group rounded-[32px] border border-white/10 bg-white/[0.035] p-5 pb-12 shadow-[0_18px_46px_rgba(15,14,32,0.48)] backdrop-blur transition-all duration-700"
                     data-aos="fade-up"
                     data-aos-delay="250"
                   >
-                    <div className="space-y-7">
+                    <div className="space-y-8">
                       <div className="flex items-start justify-between gap-4">
                         <div>
                           <p className="text-[11px] font-semibold uppercase tracking-[0.32rem] text-purple-200/80">Live demo</p>
@@ -218,7 +218,7 @@ export default function Features() {
                         Say hello, hand it scenarios, or quiz it on your intake flow. You can watch transcripts, intent tags, and hand-off notes update in real time.
                       </p>
                       <div
-                        className="overflow-hidden rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35"
+                        className="mt-4 overflow-hidden rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35"
                         data-aos="fade-up"
                         data-aos-delay="320"
                       >
