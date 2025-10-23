@@ -218,20 +218,22 @@ export default function Features() {
                         Say hello, hand it scenarios, or quiz it on your intake flow. You can watch transcripts, intent tags, and hand-off notes update in real time.
                       </p>
                       <div
-                        className="mt-4 overflow-hidden rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35"
+                        className="mt-5 rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35"
                         data-aos="fade-up"
                         data-aos-delay="320"
                       >
-                        {widgetReady ? (
-                          createElement('elevenlabs-convai', {
-                            'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
-                            style: { display: 'block', width: '100%', minHeight: '468px' },
-                          })
-                        ) : (
-                          <div className="flex h-[468px] items-center justify-center text-sm text-white/60">
-                            Initializing the voice agent…
-                          </div>
-                        )}
+                        <div className="rounded-[26px] border border-white/10 bg-slate-950/80 p-4">
+                          {widgetReady ? (
+                            createElement('elevenlabs-convai', {
+                              'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
+                              style: { display: 'block', width: '100%', minHeight: '420px' },
+                            })
+                          ) : (
+                            <div className="flex h-[420px] items-center justify-center text-sm text-white/60">
+                              Initializing the voice agent…
+                            </div>
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>
