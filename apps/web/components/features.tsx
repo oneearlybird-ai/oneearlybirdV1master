@@ -214,25 +214,24 @@ export default function Features() {
                           Live
                         </span>
                       </div>
-                      <p className="text-sm text-white/75" data-aos="fade-up" data-aos-delay="280">
+                      <p className="text-sm text-white/75">
                         Say hello, hand it scenarios, or quiz it on your intake flow. You can watch transcripts, intent tags, and hand-off notes update in real time.
                       </p>
-                      <div
-                        className="mt-5 rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35"
-                        data-aos="fade-up"
-                        data-aos-delay="320"
-                      >
-                        <div className="rounded-[26px] border border-white/10 bg-slate-950/80 p-4">
-                          {widgetReady ? (
-                            createElement('elevenlabs-convai', {
-                              'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
-                              style: { display: 'block', width: '100%', minHeight: '420px' },
-                            })
-                          ) : (
-                            <div className="flex h-[420px] items-center justify-center text-sm text-white/60">
-                              Initializing the voice agent…
-                            </div>
-                          )}
+                      <div className="mt-6 rounded-2xl border border-white/12 bg-slate-950/45 shadow-[0_12px_32px_rgba(99,102,241,0.22)] transition duration-500 group-hover:border-purple-500/35">
+                        <div className="rounded-[26px] border border-white/10 bg-slate-950/80 p-4 sm:p-5">
+                          <div className="min-h-[360px] sm:min-h-[400px] lg:min-h-[460px]">
+                            {widgetReady ? (
+                              createElement('elevenlabs-convai', {
+                                'agent-id': 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn',
+                                class: 'block h-full w-full',
+                                style: { display: 'block', width: '100%', height: '100%' },
+                              })
+                            ) : (
+                              <div className="flex h-full w-full items-center justify-center text-sm text-white/60">
+                                Initializing the voice agent…
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
