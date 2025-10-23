@@ -51,7 +51,6 @@ export default function Features() {
     overlay.style.left = '0'
     overlay.style.width = '100%'
     overlay.style.height = '100%'
-    overlay.style.display = 'flex'
     overlay.style.flexDirection = 'column'
     overlay.style.justifyContent = 'stretch'
     overlay.style.alignItems = 'stretch'
@@ -132,8 +131,8 @@ export default function Features() {
       const element = document.createElement('elevenlabs-convai')
       element.setAttribute('agent-id', 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn')
       element.setAttribute('variant', 'full')
-      element.setAttribute('always-expanded', 'true')
-      element.setAttribute('default-expanded', 'true')
+      element.setAttribute('always-expanded', 'false')
+      element.setAttribute('default-expanded', 'false')
       element.setAttribute('transcript', 'true')
       element.setAttribute('text-input', 'true')
       element.style.display = 'block'
