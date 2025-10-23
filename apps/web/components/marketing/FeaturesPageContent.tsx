@@ -368,19 +368,13 @@ export function FeaturesPageContent() {
             <p className="text-lg text-white/70">
               Connect your stack, preview the automations, and launch your agent without re-writing a single workflow.
             </p>
-            <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
+            <div className="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center">
               <AuthModalTriggerButton
                 mode="signup"
-                className="inline-flex items-center justify-center rounded-2xl bg-white px-6 py-3 text-base font-semibold text-black transition hover:bg-white/90"
+                className="btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white transition duration-150 ease-in-out"
               >
-                Start free trial
+                Start trial
               </AuthModalTriggerButton>
-              <Link
-                href="mailto:hello@oneearlybird.ai"
-                className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-6 py-3 text-base font-semibold text-white/85 transition hover:border-white/40 hover:text-white"
-              >
-                Talk with an implementation specialist
-              </Link>
             </div>
           </div>
         </div>

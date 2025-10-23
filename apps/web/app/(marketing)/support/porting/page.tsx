@@ -94,38 +94,46 @@ export default function ForwardingPage() {
             </div>
           </div>
 
-          <div className="relative grid gap-4 sm:grid-cols-2 md:gap-6">
-            <div className="pointer-events-none absolute inset-0 -z-10 rounded-[32px] border border-white/10 bg-white/[0.035]" />
-            {STEPS.map((step) => (
-              <article
-                key={step.title}
-                className="group relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 shadow-[0_24px_70px_rgba(9,9,22,0.35)] transition hover:border-white/25 hover:bg-white/10"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold text-white/80">
-                    {step.step}
-                  </span>
-                  <h2 className="text-lg font-semibold text-white">{step.title}</h2>
-                </div>
-                <p className="mt-3 text-sm text-white/75">{step.description}</p>
-              </article>
-            ))}
+          <div className="relative overflow-hidden rounded-[36px] border border-white/12 bg-white/5 px-6 py-6 md:px-8 md:py-8">
+            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_70%)]" />
+            <div className="grid gap-4 sm:grid-cols-2 md:gap-6">
+              {STEPS.map((step) => (
+                <article
+                  key={step.title}
+                  className="group relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 shadow-[0_24px_70px_rgba(9,9,22,0.25)] transition hover:border-white/20 hover:bg-white/10"
+                >
+                  <div className="flex items-center gap-3">
+                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold text-white/80">
+                      {step.step}
+                    </span>
+                    <h3 className="text-lg font-semibold text-white">{step.title}</h3>
+                  </div>
+                  <p className="mt-3 text-sm text-white/75">{step.description}</p>
+                </article>
+              ))}
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="relative px-5 pb-16 sm:px-6 md:pb-24">
+      <section className="relative mx-auto w-full max-w-6xl px-5 pb-16 sm:px-6 md:pb-24">
         <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 flex justify-center" aria-hidden="true">
-          <div className="h-full w-full max-w-6xl bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.18),_transparent_75%)]" />
+          <div className="h-full w-full max-w-6xl bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.2),_transparent_75%)]" />
         </div>
         <div className="pointer-events-none absolute inset-x-0 bottom-[-25%] -z-20 flex justify-center" aria-hidden="true">
           <div className="h-[440px] w-full max-w-4xl rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.08),_transparent_62%)] blur-[140px]" />
         </div>
-        <div className="mx-auto flex max-w-5xl flex-col gap-12">
-          <div className="grid gap-6 md:grid-cols-[minmax(0,1.2fr),minmax(0,1fr)]">
-            <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_65%)]" />
+
+        <div className="relative overflow-hidden rounded-[40px] border border-white/12 bg-white/5 px-6 py-12 md:px-12 md:py-16">
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_70%)]" />
+            <div className="absolute -left-10 top-16 h-40 w-40 rounded-full bg-purple-500/20 blur-[100px]" />
+            <div className="absolute -right-12 bottom-10 h-48 w-48 rounded-full bg-sky-500/20 blur-[120px]" />
+          </div>
+          <div className="grid gap-6 md:grid-cols-[minmax(0,1.15fr),minmax(0,1fr)]">
+            <article className="rounded-3xl border border-white/12 bg-white/5 p-6">
               <h3 className="text-xl font-semibold text-white">Forwarding checklist</h3>
+              <p className="mt-2 text-sm text-white/70">Gather these details before you hop into your carrier portal.</p>
               <ul className="mt-4 space-y-2 text-sm text-white/80">
                 {CHECKLIST.map((item) => (
                   <li key={item} className="flex gap-2">
@@ -136,13 +144,12 @@ export default function ForwardingPage() {
               </ul>
             </article>
 
-            <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
-              <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_65%)]" />
-              <h3 className="text-xl font-semibold text-white">Provider quick reference</h3>
+            <article className="rounded-3xl border border-white/12 bg-white/5 p-6">
+              <h3 className="text-xl font-semibold text-white">Carrier quick reference</h3>
               <div className="mt-4 space-y-5">
                 {PROVIDER_GROUPS.map((group) => (
                   <div key={group.title}>
-                    <h4 className="text-sm font-semibold uppercase tracking-wide text-white/60">{group.title}</h4>
+                    <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/50">{group.title}</h4>
                     <ul className="mt-2 space-y-2 text-sm text-white/80">
                       {group.items.map((item) => (
                         <li key={item} className="flex gap-2">
@@ -156,19 +163,32 @@ export default function ForwardingPage() {
               </div>
             </article>
           </div>
+        </div>
+      </section>
 
-          <article className="relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
-            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_65%)]" />
-            <h3 className="text-xl font-semibold text-white">After forwarding</h3>
-            <ul className="mt-4 space-y-2 text-sm text-white/80">
+      <section className="relative mx-auto w-full max-w-6xl px-5 pb-24 sm:px-6">
+        <div className="relative overflow-hidden rounded-[40px] border border-white/12 bg-white/5 px-6 py-12 md:px-12 md:py-16">
+          <div className="pointer-events-none absolute inset-0 -z-10">
+            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_70%)]" />
+            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(99,102,241,0.15),_rgba(14,13,35,0)_60%)]" />
+          </div>
+          <div className="mx-auto max-w-3xl text-center">
+            <span className="stellar-badge mb-5">After forwarding</span>
+            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">
+              What happens once calls hit EarlyBird
+            </h2>
+            <p className="text-lg text-white/70">
+              Forwarding is just the first step. Here’s what stays true once your agent picks up the phone.
+            </p>
+            <ul className="mt-8 space-y-2 text-left text-sm text-white/80 md:columns-2 md:gap-8">
               {POST_FORWARDING.map((item) => (
-                <li key={item} className="flex gap-2">
+                <li key={item} className="mb-2 flex items-start gap-2">
                   <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
                   <span>{item}</span>
                 </li>
               ))}
             </ul>
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href="/docs#forwarding"
                 className="inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
@@ -182,7 +202,7 @@ export default function ForwardingPage() {
                 Email support
               </a>
             </div>
-          </article>
+          </div>
         </div>
       </section>
     </div>

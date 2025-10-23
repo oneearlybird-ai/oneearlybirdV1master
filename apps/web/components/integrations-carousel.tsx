@@ -93,14 +93,14 @@ export default function IntegrationsCarousel() {
       <div className="mt-8 flex justify-end gap-3">
         <button className="carousel-prev relative z-20 flex h-12 w-12 items-center justify-center rounded-full border border-slate-700/60 bg-slate-800/40 transition hover:border-slate-600 hover:bg-slate-800/70">
           <span className="sr-only">Show previous CRM</span>
-          <svg className="h-4 w-4 fill-current text-slate-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-            <path d="M6.7 14.7 5.3 13.3 9.6 9H-2V7H9.6L5.3 2.7 6.7 1.3 13.4 8z" transform="scale(-1,1) translate(-16,0)" />
+          <svg className="h-4 w-4 text-slate-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10 4 6 8l4 4" />
           </svg>
         </button>
         <button className="carousel-next relative z-20 flex h-12 w-12 items-center justify-center rounded-full border border-slate-700/60 bg-slate-800/40 transition hover:border-slate-600 hover:bg-slate-800/70">
           <span className="sr-only">Show next CRM</span>
-          <svg className="h-4 w-4 fill-current text-slate-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
-            <path d="M6.7 14.7 8.1 13.3 3.8 9H16V7H3.8l4.3-4.3L6.7 1.3 0 8z" />
+          <svg className="h-4 w-4 text-slate-200" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="m6 4 4 4-4 4" />
           </svg>
         </button>
       </div>

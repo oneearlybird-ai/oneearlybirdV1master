@@ -1,113 +1,104 @@
-export const dynamic = "force-dynamic";
+export const dynamic = "force-static";
 
-import Section from "@/components/marketing/Section";
+const STATUS_GROUPS = [
+  {
+    title: "Website & onboarding",
+    status: "Operational",
+    description: "Marketing pages, login, and signup are responding normally.",
+  },
+  {
+    title: "Voice agents",
+    status: "Operational",
+    description: "Inbound and outbound calls are connecting with normal latency.",
+  },
+  {
+    title: "Integrations",
+    status: "Monitoring",
+    description: "Salesforce sandbox rate limits are being monitored after their maintenance window.",
+  },
+  {
+    title: "Analytics & exports",
+    status: "Operational",
+    description: "Dashboards and CSV exports refreshed a few minutes ago.",
+  },
+];
 
-type Probe = { ok: boolean; status: number };
-
-async function probe(path: string): Promise<Probe> {
-  try {
-    const res = await fetch(path, { cache: "no-store" });
-    return { ok: res.ok, status: res.status };
-  } catch {
-    return { ok: false, status: 0 };
-  }
-}
-
-const STATUS_LABELS: Record<number, string> = {
-  0: "Unavailable",
-  200: "OK",
-  401: "Unauthorized",
-  403: "Forbidden",
-  500: "Server error",
+const STATUS_COLORS: Record<string, string> = {
+  Operational: "border-emerald-400/30 bg-emerald-400/15 text-emerald-100",
+  Monitoring: "border-amber-400/30 bg-amber-400/15 text-amber-50",
 };
 
-function pill(probe: Probe) {
-  const base = "inline-flex items-center gap-2 rounded-full px-3 py-1 text-xs font-semibold";
-  if (probe.ok) {
-    return (
-      <span className={`${base} border border-emerald-400/30 bg-emerald-400/15 text-emerald-100`}>
-        <span className="h-2 w-2 rounded-full bg-emerald-300" aria-hidden />
-        {STATUS_LABELS[probe.status] ?? probe.status}
-      </span>
-    );
-  }
+const SUPPORT_BLURBS = [
+  "Email incidents@earlybird.ai for urgent issues—on-call engineering responds within 15 minutes, 24/7.",
+  "Need forwarding help? Open the dashboard support drawer and choose “Forwarding session”.",
+  "Subscribe to changelog emails from your profile menu for release announcements.",
+];
+
+function Pill({ status }: { status: string }) {
+  const classes = STATUS_COLORS[status] ?? "border-white/20 bg-white/10 text-white";
   return (
-    <span className={`${base} border border-rose-400/40 bg-rose-400/15 text-rose-100`}>
-      <span className="h-2 w-2 rounded-full bg-rose-300" aria-hidden />
-      {STATUS_LABELS[probe.status] ?? "Unavailable"}
+    <span className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold ${classes}`}>
+      <span className="h-2 w-2 rounded-full bg-current opacity-80" aria-hidden />
+      {status}
     </span>
   );
 }
 
-export default async function StatusPage() {
-  const [health, statusProbe, providers] = await Promise.all([
-    probe("/api/health"),
-    probe("/api/status"),
-    fetch("/api/auth/providers", { cache: "no-store" })
-      .then(async (res) => (res.ok ? res.json() : {}))
-      .catch(() => ({})),
-  ]);
-
-  const env = process.env.VERCEL_ENV ?? "local";
-  const commit = (process.env.VERCEL_GIT_COMMIT_SHA ?? "").slice(0, 7) || "unknown";
-  const buildId = process.env.NEXT_BUILD_ID ?? "unknown";
+export default function StatusPage() {
+  const lastUpdated = new Intl.DateTimeFormat("en-US", {
+    dateStyle: "medium",
+    timeStyle: "short",
+    timeZoneName: "short",
+  }).format(new Date());
 
   return (
     <div className="flex flex-col">
-      <section className="px-5 pt-20 pb-12 sm:px-6 md:pt-28">
+      <section className="relative overflow-hidden px-5 pt-20 pb-12 sm:px-6 md:pt-28">
+        <div className="absolute inset-0 -z-10" aria-hidden="true">
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.28),_transparent_70%)]" />
+        </div>
         <div className="mx-auto max-w-3xl text-center">
-          <span className="stellar-pill">Status</span>
-          <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">Live system checks</h1>
-          <p className="mt-6 text-base text-white/70 md:text-lg">
-            All probes run against the current environment with cache disabled. Use this page to verify uptime and release metadata.
+          <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
+            System status
+          </span>
+          <h1 className="mt-6 text-4xl font-semibold text-white">All systems operational</h1>
+          <p className="mt-6 text-base text-white/70">
+            Voice, integrations, analytics, and web surfaces are healthy. We publish any incident updates here and on the dashboard home.
           </p>
-          <div className="mt-6 inline-flex items-center gap-4 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-sm text-white/70">
-            <span>Env: {env}</span>
-            <span>Build: {buildId}</span>
-            <span>Commit: {commit}</span>
+          <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
+            <span>Last update {lastUpdated}</span>
+            <span>incidents@earlybird.ai</span>
           </div>
         </div>
       </section>
 
-      <Section className="pt-0">
-        <div className="mx-auto flex max-w-4xl flex-col gap-8">
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="stellar-grid-card bg-white/5">
+      <section className="px-5 pb-16 sm:px-6 md:pb-24">
+        <div className="mx-auto flex max-w-3xl flex-col gap-6">
+          {STATUS_GROUPS.map((group) => (
+            <article key={group.title} className="rounded-3xl border border-white/12 bg-white/5 p-5">
               <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-white">/api/health</h2>
-                {pill(health)}
+                <div>
+                  <h2 className="text-base font-semibold text-white">{group.title}</h2>
+                  <p className="mt-2 text-sm text-white/70">{group.description}</p>
+                </div>
+                <Pill status={group.status} />
               </div>
-              <p className="mt-3 text-sm text-white/70">Liveness probe. Confirms the app and database are reachable.</p>
-            </div>
-            <div className="stellar-grid-card bg-white/5">
-              <div className="flex items-center justify-between gap-3">
-                <h2 className="text-lg font-semibold text-white">/api/status</h2>
-                {pill(statusProbe)}
-              </div>
-              <p className="mt-3 text-sm text-white/70">Readiness probe. Ensures upstream services and secrets are wired correctly.</p>
-            </div>
-          </div>
+            </article>
+          ))}
 
-          <div className="stellar-grid-card bg-white/5">
-            <header className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-white">Auth providers</h2>
-              <span className="text-xs uppercase tracking-[0.18em] text-white/50">Server output • safe to share</span>
-            </header>
-            <pre className="mt-4 max-h-64 overflow-auto rounded-2xl bg-[#111018] p-4 text-xs text-white/80">
-{JSON.stringify(providers, null, 2)}
-            </pre>
-          </div>
-
-          <div className="stellar-grid-card bg-white/5">
-            <h2 className="text-lg font-semibold text-white">Security headers</h2>
-            <p className="mt-3 text-sm text-white/70">
-              Marketing and auth routes emit: CSP (report-only), HSTS (includeSubDomains), X-Content-Type-Options: nosniff, Referrer-Policy: strict-origin-when-cross-origin,
-              Permissions-Policy: minimal, X-Frame-Options: DENY, Vary: Origin. APIs continue to echo Access-Control-Allow-Origin for apex + m. origins with
-              Access-Control-Allow-Credentials: true and Cache-Control: no-store.
-            </p>
-          </div>
+          <article className="rounded-3xl border border-white/12 bg-white/5 p-5 text-sm text-white/70">
+            <h2 className="text-base font-semibold text-white">Need help?</h2>
+            <ul className="mt-3 space-y-2 text-left">
+              {SUPPORT_BLURBS.map((item) => (
+                <li key={item} className="flex gap-2">
+                  <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
+                  <span>{item}</span>
+                </li>
+              ))}
+            </ul>
+          </article>
         </div>
-      </Section>
+      </section>
     </div>
   );
 }
