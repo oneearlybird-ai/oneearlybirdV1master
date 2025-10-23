@@ -47,7 +47,29 @@ export default function Header() {
           )}
         </div>
 
-        <MobileMenu isAuthenticated={isAuthenticated} />
+        <div className="flex items-center gap-2 md:hidden">
+          {isAuthenticated ? (
+            <AccountDropdown />
+          ) : status === "loading" ? (
+            <span className="text-sm text-white/70">Checking session…</span>
+          ) : (
+            <div className="flex items-center gap-2">
+              <Link
+                className="inline-flex items-center justify-center rounded-lg border border-white/20 px-3 py-1.5 text-sm font-medium text-white/80 transition hover:border-white/40 hover:text-white"
+                href="/login"
+              >
+                Sign in
+              </Link>
+              <Link
+                className="inline-flex items-center justify-center rounded-lg bg-white px-3 py-1.5 text-sm font-semibold text-black transition hover:bg-white/90"
+                href="/login?tab=signup"
+              >
+                Sign up
+              </Link>
+            </div>
+          )}
+          <MobileMenu isAuthenticated={isAuthenticated} />
+        </div>
       </div>
     </header>
   );
