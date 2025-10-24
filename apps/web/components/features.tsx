@@ -7,16 +7,167 @@ import { Transition } from '@headlessui/react'
 import Particles from './particles'
 import Illustration from '@/public/images/glow-top.svg'
 
+type StartStatus = 'idle' | 'starting' | 'ready' | 'retry' | 'error'
+
+const AUTOSTART_MAX_FRAMES = 120
+const AUTOSTART_TIMEOUT_MS = 2000
+
+const isInteractive = (button: HTMLButtonElement | null): boolean => {
+  if (!button) {
+    return false
+  }
+  return (
+    !button.hasAttribute('disabled') &&
+    button.getAttribute('aria-disabled') !== 'true' &&
+    !button.classList.contains('disabled')
+  )
+}
+
 export default function Features() {
   const [tab, setTab] = useState<number>(1)
   const [widgetReady, setWidgetReady] = useState(false)
   const [widgetMounted, setWidgetMounted] = useState(false)
+  const [startStatus, setStartStatus] = useState<StartStatus>('idle')
+  const [startError, setStartError] = useState<string | null>(null)
+
   const widgetElementRef = useRef<HTMLElement | null>(null)
   const widgetContainerRef = useRef<HTMLDivElement | null>(null)
-  const floatingReadyRef = useRef(false)
+  const floatingButtonRef = useRef<HTMLButtonElement | null>(null)
   const pendingAutoClickRef = useRef(false)
   const observerRegistryRef = useRef<MutationObserver[]>([])
   const expandHandlerRef = useRef<(() => void) | null>(null)
+  const fallbackTimerRef = useRef<number | null>(null)
+  const audioContextRef = useRef<AudioContext | null>(null)
+
+  const clearPendingAutoClick = useCallback(() => {
+    pendingAutoClickRef.current = false
+    if (fallbackTimerRef.current !== null) {
+      window.clearTimeout(fallbackTimerRef.current)
+      fallbackTimerRef.current = null
+    }
+  }, [])
+
+  const invokeFloatingButton = useCallback(() => {
+    const floatingButton = floatingButtonRef.current
+    if (!isInteractive(floatingButton)) {
+      return false
+    }
+
+    floatingButton.click()
+    console.info('widget:start:sent')
+    clearPendingAutoClick()
+    setStartStatus('ready')
+    console.info('widget:ready')
+    return true
+  }, [clearPendingAutoClick])
+
+  const scheduleFloatingInvocation = useCallback(() => {
+    let attempts = 0
+    const attempt = () => {
+      if (!pendingAutoClickRef.current) {
+        return
+      }
+      if (invokeFloatingButton()) {
+        return
+      }
+      attempts += 1
+      if (attempts < AUTOSTART_MAX_FRAMES) {
+        requestAnimationFrame(attempt)
+      }
+    }
+    requestAnimationFrame(attempt)
+  }, [invokeFloatingButton])
+
+  const requestMicrophonePermission = useCallback(async () => {
+    if (!navigator?.mediaDevices?.getUserMedia) {
+      setStartError('Microphone access is not supported in this browser.')
+      console.info('mic:unsupported')
+      return false
+    }
+    console.info('mic:prompted')
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      stream.getTracks().forEach((track) => track.stop())
+      console.info('mic:granted')
+      return true
+    } catch (error) {
+      console.info('mic:denied', error)
+      setStartError('Microphone permission was denied. Allow access to continue.')
+      return false
+    }
+  }, [])
+
+  const ensureAudioContext = useCallback(async () => {
+    const AudioContextCtor = window.AudioContext || (window as any).webkitAudioContext
+    if (!AudioContextCtor) {
+      console.info('audio:context:missing')
+      return
+    }
+    if (!audioContextRef.current) {
+      audioContextRef.current = new AudioContextCtor()
+    }
+    if (audioContextRef.current.state === 'suspended') {
+      await audioContextRef.current.resume()
+    }
+    console.info('audio:resumed')
+  }, [])
+
+  const handleStartClick = useCallback(() => {
+    if (!widgetReady) {
+      return
+    }
+
+    const run = async () => {
+      clearPendingAutoClick()
+      setStartStatus('starting')
+      setStartError(null)
+
+      const micGranted = await requestMicrophonePermission()
+      if (!micGranted) {
+        setStartStatus('error')
+        return
+      }
+
+      await ensureAudioContext()
+
+      pendingAutoClickRef.current = true
+
+      if (invokeFloatingButton()) {
+        return
+      }
+
+      if (expandHandlerRef.current) {
+        window.removeEventListener('elevenlabs-agent:expand', expandHandlerRef.current)
+        expandHandlerRef.current = null
+      }
+
+      const handleExpand = () => {
+        scheduleFloatingInvocation()
+        expandHandlerRef.current = null
+      }
+
+      expandHandlerRef.current = handleExpand
+      window.addEventListener('elevenlabs-agent:expand', handleExpand, { once: true })
+
+      scheduleFloatingInvocation()
+
+      fallbackTimerRef.current = window.setTimeout(() => {
+        if (pendingAutoClickRef.current) {
+          pendingAutoClickRef.current = false
+          setStartStatus('retry')
+          setStartError('Starting… tap once more if prompted by your browser.')
+          console.info('widget:start:timeout')
+        }
+      }, AUTOSTART_TIMEOUT_MS)
+    }
+
+    run().catch((error) => {
+      console.error('widget:start:error', error)
+      clearPendingAutoClick()
+      setStartStatus('error')
+      setStartError('Something went wrong while starting the call. Try again.')
+    })
+  }, [clearPendingAutoClick, ensureAudioContext, invokeFloatingButton, requestMicrophonePermission, scheduleFloatingInvocation, widgetReady])
 
   const customizeWidget = useCallback((element?: HTMLElement) => {
     const host = element ?? widgetElementRef.current
@@ -26,51 +177,16 @@ export default function Features() {
 
     const shadow = host.shadowRoot
 
-    const largeAvatarWrapper = Array.from(shadow.querySelectorAll('div')).find((element) => {
-      if (!(element instanceof HTMLElement)) {
+    const largeAvatarWrapper = Array.from(shadow.querySelectorAll('div')).find((node) => {
+      if (!(node instanceof HTMLElement)) {
         return false
       }
-      const className = element.className || ''
+      const className = node.className || ''
       return className.includes('relative') && className.includes('w-16') && className.includes('h-16')
     })
     if (largeAvatarWrapper instanceof HTMLElement && !largeAvatarWrapper.dataset.ebWidgetAvatarHidden) {
       largeAvatarWrapper.dataset.ebWidgetAvatarHidden = 'true'
       largeAvatarWrapper.style.display = 'none'
-    }
-
-    const invokeFloatingButton = () => {
-      const floatingButton = shadow.querySelector<HTMLButtonElement>(
-        'div[data-eb-widget-floating="true"] button[aria-label="Start call"]',
-      )
-      if (floatingButton && !floatingButton.disabled && floatingButton.getAttribute('aria-disabled') !== 'true') {
-        const container = floatingButton.closest<HTMLElement>('div[data-eb-widget-floating="true"]')
-        const previousPointerEvents = container?.style.pointerEvents ?? ''
-
-        if (container) {
-          container.style.pointerEvents = 'auto'
-        }
-
-        try {
-          floatingButton.focus({ preventScroll: true })
-          const pointerOptions: PointerEventInit = { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse' }
-          const mouseOptions: MouseEventInit = { bubbles: true, cancelable: true }
-          floatingButton.dispatchEvent(new PointerEvent('pointerenter', pointerOptions))
-          floatingButton.dispatchEvent(new PointerEvent('pointerdown', pointerOptions))
-          floatingButton.dispatchEvent(new MouseEvent('mousedown', mouseOptions))
-          floatingButton.dispatchEvent(new PointerEvent('pointerup', pointerOptions))
-          floatingButton.dispatchEvent(new MouseEvent('mouseup', mouseOptions))
-          floatingButton.dispatchEvent(new MouseEvent('click', mouseOptions))
-          floatingButton.click()
-        } finally {
-          if (container) {
-            container.style.pointerEvents = previousPointerEvents || 'none'
-          }
-        }
-
-        pendingAutoClickRef.current = false
-        return true
-      }
-      return false
     }
 
     const floatingContainers = Array.from(shadow.querySelectorAll('div')).filter((node) => {
@@ -82,35 +198,27 @@ export default function Features() {
     }) as HTMLElement[]
 
     floatingContainers.forEach((container) => {
-      if (!container.dataset.ebWidgetFloating) {
-        container.dataset.ebWidgetFloating = 'true'
-        container.style.opacity = '0'
-        container.style.pointerEvents = 'none'
-      }
+      container.style.opacity = '0'
+      container.style.pointerEvents = 'none'
+      container.setAttribute('aria-hidden', 'true')
+      container.setAttribute('tabindex', '-1')
 
       const floatingButton = container.querySelector<HTMLButtonElement>('button[aria-label="Start call"]')
-      if (floatingButton && !floatingButton.dataset.ebWidgetCircleObserver) {
-        floatingButton.dataset.ebWidgetCircleObserver = 'true'
-        const observer = new MutationObserver(() => {
-          const disabledAttr = floatingButton.hasAttribute('disabled')
-          const ariaDisabled = floatingButton.getAttribute('aria-disabled') === 'true'
-          const classDisabled = floatingButton.classList.contains('disabled')
-          const isInteractive = !(disabledAttr || ariaDisabled || classDisabled)
-          if (isInteractive) {
-            floatingReadyRef.current = true
+      if (floatingButton) {
+        floatingButtonRef.current = floatingButton
+        if (!floatingButton.dataset.ebWidgetCircleObserver) {
+          floatingButton.dataset.ebWidgetCircleObserver = 'true'
+          const observer = new MutationObserver(() => {
             if (pendingAutoClickRef.current) {
-              invokeFloatingButton()
+              scheduleFloatingInvocation()
             }
-          }
-        })
-        observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'class'] })
-        observerRegistryRef.current.push(observer)
+          })
+          observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'class'] })
+          observerRegistryRef.current.push(observer)
+        }
 
-        if (!floatingButton.disabled && floatingButton.getAttribute('aria-disabled') !== 'true') {
-          floatingReadyRef.current = true
-          if (pendingAutoClickRef.current) {
-            invokeFloatingButton()
-          }
+        if (pendingAutoClickRef.current && isInteractive(floatingButton)) {
+          invokeFloatingButton()
         }
       }
     })
@@ -121,11 +229,6 @@ export default function Features() {
       const isFloating = className.includes('translate-y-1/2') && className.includes('left-1/2')
 
       if (isFloating) {
-        if (!button.dataset.ebWidgetCirclePrepared) {
-          button.dataset.ebWidgetCirclePrepared = 'true'
-          button.style.opacity = '0'
-          button.style.pointerEvents = 'none'
-        }
         return
       }
 
@@ -133,37 +236,16 @@ export default function Features() {
         button.dataset.ebWidgetPrimaryBound = 'true'
         button.addEventListener(
           'click',
-          () => {
-            if (invokeFloatingButton()) {
-              return
-            }
-
-            pendingAutoClickRef.current = true
-
-            if (expandHandlerRef.current) {
-              window.removeEventListener('elevenlabs-agent:expand', expandHandlerRef.current)
-              expandHandlerRef.current = null
-            }
-
-            const handleExpand = () => {
-              invokeFloatingButton()
-              expandHandlerRef.current = null
-            }
-
-            expandHandlerRef.current = handleExpand
-            window.addEventListener('elevenlabs-agent:expand', handleExpand, { once: true })
-
-            window.setTimeout(() => {
-              if (pendingAutoClickRef.current) {
-                pendingAutoClickRef.current = false
-              }
-            }, 1500)
+          (event) => {
+            event.preventDefault()
+            event.stopPropagation()
+            handleStartClick()
           },
           { capture: true },
         )
       }
     })
-  }, [])
+  }, [handleStartClick, invokeFloatingButton, scheduleFloatingInvocation])
 
   const syncWidgetLayout = useCallback((element?: HTMLElement) => {
     const host = element ?? widgetElementRef.current
@@ -240,10 +322,12 @@ export default function Features() {
     if (existingScript) {
       if (existingScript.dataset.loaded === 'true') {
         setWidgetReady(true)
-        return
+      } else {
+        existingScript.addEventListener('load', handleReady, { once: true })
       }
-      existingScript.addEventListener('load', handleReady, { once: true })
-      return () => existingScript.removeEventListener('load', handleReady)
+      return () => {
+        existingScript.removeEventListener('load', handleReady)
+      }
     }
 
     const script = document.createElement('script')
@@ -302,7 +386,7 @@ export default function Features() {
 
     let cancelled = false
     let frame: number | undefined
-    let observer: MutationObserver | undefined
+    let mutationObserver: MutationObserver | undefined
 
     const attemptSync = () => {
       if (cancelled) {
@@ -322,11 +406,11 @@ export default function Features() {
         return
       }
 
-      observer?.disconnect()
-      observer = new MutationObserver(() => {
+      mutationObserver?.disconnect()
+      mutationObserver = new MutationObserver(() => {
         syncWidgetLayout(host)
       })
-      observer.observe(shadow, { childList: true, subtree: true, attributes: true })
+      mutationObserver.observe(shadow, { childList: true, subtree: true, attributes: true })
     }
 
     attemptSync()
@@ -334,6 +418,7 @@ export default function Features() {
     const handleResize = () => {
       syncWidgetLayout(host)
     }
+
     window.addEventListener('resize', handleResize)
 
     return () => {
@@ -341,7 +426,7 @@ export default function Features() {
       if (frame) {
         window.cancelAnimationFrame(frame)
       }
-      observer?.disconnect()
+      mutationObserver?.disconnect()
       window.removeEventListener('resize', handleResize)
     }
   }, [syncWidgetLayout, widgetReady])
@@ -355,6 +440,11 @@ export default function Features() {
 
       observerRegistryRef.current.forEach((observer) => observer.disconnect())
       observerRegistryRef.current = []
+
+      if (fallbackTimerRef.current !== null) {
+        window.clearTimeout(fallbackTimerRef.current)
+      }
+      fallbackTimerRef.current = null
       pendingAutoClickRef.current = false
 
       if (expandHandlerRef.current) {
@@ -524,6 +614,30 @@ export default function Features() {
                     Meet your new receptionist
                   </h3>
                   <div className="space-y-6">
+                    <button
+                      type="button"
+                      onClick={handleStartClick}
+                      className="w-full rounded-full bg-white px-5 py-2 text-sm font-semibold text-slate-900 transition hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
+                    >
+                      Start a call
+                    </button>
+                    <div className="text-xs text-white/60">
+                      {startStatus === 'starting' && 'Starting… allow the microphone prompt if you see it.'}
+                      {startStatus === 'ready' && 'Call starting. The agent will join momentarily.'}
+                      {startStatus === 'retry' && (
+                        <span className="inline-flex items-center gap-2">
+                          {startError ?? 'Starting… tap once more if prompted by your browser.'}
+                          <button
+                            type="button"
+                            onClick={handleStartClick}
+                            className="rounded-full border border-white/20 px-3 py-1 text-xs text-white hover:border-white/40"
+                          >
+                            Try again
+                          </button>
+                        </span>
+                      )}
+                      {startStatus === 'error' && <span className="text-rose-300">{startError}</span>}
+                    </div>
                     <div
                       className="group rounded-[32px] border border-white/10 bg-white/[0.035] p-5 pb-12 shadow-[0_18px_46px_rgba(15,14,32,0.48)] backdrop-blur transition-all duration-700"
                       data-aos="fade-up"
