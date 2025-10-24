@@ -18,3 +18,12 @@
   - Vercel deployment: Pending (auto after pushing main)
   - Google chooser + redirect to `/account/pending`: Pending (verify in production incognito once deploy is live)
   - Session cookie scope `.oneearlybird.ai`: Pending (check post-deploy)
+
+- **Timestamp (UTC)**: 2025-10-24T21:37:04Z
+- **Commit**: 317a61f
+- **Summary**: Routed dashboard/auth data through new `/api/dashboard/*` proxies to eliminate `/tenants/profile` and `/usage/summary` 404s; added inline 401 handling.
+- **Verification**:
+  - Lint/build locally: ✅ (`npm --prefix apps/web run lint`, `npm --prefix apps/web run build`)
+  - Vercel deployment: Pending (await production build)
+  - Network check: Pending (verify no requests to `/tenants/profile` or `/usage/summary` post-deploy)
+  - Dashboard data: Pending (confirm usage/profile widgets hydrate via new API routes)
