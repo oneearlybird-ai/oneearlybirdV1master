@@ -28,7 +28,7 @@ pnpm -C apps/web dev
 ## Deploy
 - **API**: AWS (EC2/ECS) — containerized via Dockerfile; Fly-specific configs removed.
 - **Web**: Vercel; set `Root Directory` = `apps/web` and `NEXT_PUBLIC_API_URL` to your API base URL.
-- **Frontend**: Single-branch workflow (commit and push directly to `main` after lint/build checks; no feature branches). Last deployment: 2025-10-24 — commit `7d3205f`.
+- **Frontend**: Single-branch workflow (commit and push directly to `main` after lint/build checks; no feature branches). Last deployment: 2025-10-24 — commit `b4150cb`.
 
 ## Environment
 See `.env.example` and `apps/api/.env.example` for required secrets.
