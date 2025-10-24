@@ -10,15 +10,13 @@ import { redirectTo } from "@/lib/clientNavigation";
 import { openPopup } from "@/lib/popup";
 import {
   buildGoogleStartUrl,
-  getDashboardPath,
+  getAccountPendingPath,
   getMagicVerifyPath,
-  getProfileCapturePath,
 } from "@/lib/authPaths";
 import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
 import { apiFetch } from "@/lib/http";
 import { setActiveAuthFlow } from "@/lib/authFlow";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
-import { hasCompletedName } from "@/lib/profile";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
@@ -151,23 +149,7 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
   }, [signupEmail]);
 
   async function resolvePostAuthPath(): Promise<string> {
-    try {
-      const response = await fetch(apiUrl("/tenants/profile"), {
-        method: "GET",
-        credentials: "include",
-        cache: "no-store",
-        headers: { "cache-control": "no-store" },
-      });
-      if (response.ok) {
-        const data = (await response.json()) as { firstName?: string | null; lastName?: string | null };
-        if (!hasCompletedName(data)) {
-          return getProfileCapturePath();
-        }
-      }
-    } catch (error) {
-      console.warn("post_auth_profile_failed", { message: (error as Error)?.message });
-    }
-    return getDashboardPath();
+    return getAccountPendingPath();
   }
 
   const attemptLogin = useCallback(async () => {

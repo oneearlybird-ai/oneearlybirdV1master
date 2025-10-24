@@ -25,6 +25,13 @@ export function getDashboardPath(): string {
   return isMobileHostname(hostname) ? "/m/dashboard" : "/dashboard";
 }
 
+export function getAccountPendingPath(): string {
+  const hostname = getCurrentHostname();
+  const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
+  const mobileContext = isMobileHostname(hostname) || path.startsWith("/m/");
+  return mobileContext ? "/m/account/pending" : "/account/pending";
+}
+
 export function getProfileCapturePath(): string {
   const hostname = getCurrentHostname();
   const path = typeof window !== "undefined" ? window.location?.pathname ?? "" : "";
@@ -92,7 +99,9 @@ export function buildGoogleStartUrl(intent: GoogleIntent, options: { returnPath?
       : "/auth/oauth/google/signin";
   const returnPath = options.returnPath ?? fallbackReturn;
   const url = new URL(GOOGLE_START_BASE);
-  url.searchParams.set("prompt", intent === "signup" ? "consent" : "select_account");
+  url.searchParams.set("prompt", "select_account");
+  url.searchParams.set("access_type", "offline");
+  url.searchParams.set("response_type", "code");
   url.searchParams.set("return_host", targetHost);
   url.searchParams.set("return_path", returnPath);
   url.searchParams.set("intent", intent);

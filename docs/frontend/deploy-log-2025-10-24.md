@@ -9,3 +9,12 @@
   - Signup → Pending → Active flow: Pending (to validate on production once deploy completes)
   - One-click call demo (desktop/iOS): Pending validation post-deploy
   - Dashboard read-only gating while Pending: Pending validation post-deploy
+
+- **Timestamp (UTC)**: 2025-10-24T19:50:17Z
+- **Commit**: f6fe154
+- **Summary**: Forced Google OAuth chooser, send all post-auth flows through `/account/pending`, and tightened middleware exclusions to prevent auth loops.
+- **Verification**:
+  - Lint/build locally: ✅ (`npm --prefix apps/web run lint`, `npm --prefix apps/web run build`)
+  - Vercel deployment: Pending (auto after pushing main)
+  - Google chooser + redirect to `/account/pending`: Pending (verify in production incognito once deploy is live)
+  - Session cookie scope `.oneearlybird.ai`: Pending (check post-deploy)

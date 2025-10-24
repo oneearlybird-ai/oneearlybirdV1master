@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { getAccountCreatePath, getDashboardPath } from "@/lib/authPaths";
+import { getAccountPendingPath } from "@/lib/authPaths";
 import { redirectTo } from "@/lib/clientNavigation";
 import { clearActiveAuthFlow } from "@/lib/authFlow";
 
@@ -28,7 +28,7 @@ export function GoogleOauthCallbackView({ intent }: { intent: GoogleCallbackInte
       }
       return null;
     })();
-    const nextPath = intent === "signup" ? getAccountCreatePath() : getDashboardPath();
+    const nextPath = getAccountPendingPath();
     const baseOrigins = new Set<string>([origin, ...Array.from(PROD_ALLOWED_ORIGINS)]);
     if (referrerOrigin) {
       baseOrigins.add(referrerOrigin);

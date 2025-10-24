@@ -5,13 +5,16 @@ const MOBILE_UA = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Min
 const PRIMARY_HOST = "oneearlybird.ai";
 
 function isAssetPath(pathname: string): boolean {
-  return (
-    pathname.startsWith("/api") ||
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/favicon") ||
-    pathname.startsWith("/fonts") ||
-    pathname.includes(".")
-  );
+  if (pathname.startsWith("/api/auth/")) return true;
+  if (pathname.startsWith("/_next/")) return true;
+  if (pathname === "/favicon.ico") return true;
+  if (pathname.startsWith("/images")) return true;
+  if (pathname.startsWith("/assets")) return true;
+  if (pathname.startsWith("/api")) return true;
+  if (pathname.startsWith("/_next")) return true;
+  if (pathname.startsWith("/favicon")) return true;
+  if (pathname.startsWith("/fonts")) return true;
+  return pathname.includes(".");
 }
 
 function toMobileInternalPath(pathname: string): string {
@@ -68,5 +71,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/((?!_next|api|static|.*\\..*).*)"],
+  matcher: ["/((?!api/auth/|_next/|favicon\\.ico|images(?:/.*)?|assets(?:/.*)?|.*\\..*).*)"],
 };
