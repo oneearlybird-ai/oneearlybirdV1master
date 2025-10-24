@@ -1,163 +1,487 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
 import Illustration from '@/public/images/glow-top.svg'
 
-type ReceptionistCard = {
-  title: string;
-  description: string;
-  bullets: string[];
-};
+type FeaturePane = {
+  title: string
+  description: string
+  bullets: string[]
+}
+
+type Testimony = {
+  label: string
+  value: string
+}
 
 export default function Features() {
   const [tab, setTab] = useState<number>(1)
-  const [testStatus, setTestStatus] = useState<'idle' | 'prompting' | 'ready' | 'error' | 'unsupported'>('idle')
-  const router = useRouter()
+  const [widgetReady, setWidgetReady] = useState(false)
+  const [widgetMounted, setWidgetMounted] = useState(false)
 
-  const receptionistCards = useMemo<ReceptionistCard[]>(
+  const widgetElementRef = useRef<HTMLElement | null>(null)
+  const widgetContainerRef = useRef<HTMLDivElement | null>(null)
+  const floatingReadyRef = useRef(false)
+  const pendingAutoClickRef = useRef(false)
+  const observerRegistryRef = useRef<MutationObserver[]>([])
+  const expandHandlerRef = useRef<(() => void) | null>(null)
+
+  const panes = useMemo<FeaturePane[]>(
     () => [
       {
         title: 'Answers & triages',
-        description: 'Picks up within a second, follows your playbook, and qualifies callers before your phone ever rings.',
-        bullets: ['Intent-aware greetings', 'Escalates VIPs instantly', 'Dynamic scripts by line'],
+        description: 'Greets callers in under a second, follows your playbook, and hands off VIPs instantly.',
+        bullets: ['Intent-aware greetings', 'Escalates the right calls', 'Conversational routing'],
       },
       {
         title: 'Books & updates',
-        description: 'Schedules, reschedules, and cancels visits through your calendars without a human in the loop.',
-        bullets: ['Two-way calendar sync', 'CRM + ServiceTitan handoff', 'Smart reminders for no-shows'],
+        description: 'Schedules, reschedules, and cancels visits across your live calendars without human support.',
+        bullets: ['Two-way calendar sync', 'Seamless CRM handoff', 'Automated reminders'],
       },
       {
         title: 'Logs every detail',
-        description: 'Transcripts, tags, and recordings land in one place so ops and sales stay aligned.',
+        description: 'Transcripts, tags, and recordings live in one place so ops and sales always stay aligned.',
         bullets: ['Live transcript streaming', 'Auto-tag every conversation', 'Shareable recap links'],
       },
     ],
-    []
+    [],
   )
 
-  async function startReceptionistDemo() {
-    if (testStatus === 'prompting') return
+  const metrics = useMemo<Testimony[]>(
+    () => [
+      { label: 'Avg. pickup', value: '0.9s' },
+      { label: 'Bookings captured', value: '+37%' },
+      { label: 'Call coverage', value: '24 / 7' },
+    ],
+    [],
+  )
 
-    if (!navigator?.mediaDevices?.getUserMedia) {
-      setTestStatus('unsupported')
+  const customizeWidget = useCallback(
+    (element?: HTMLElement) => {
+      const host = element ?? widgetElementRef.current
+      if (!host || !host.shadowRoot) {
+        return
+      }
+
+      const shadow = host.shadowRoot
+
+      const avatarWrapper = Array.from(shadow.querySelectorAll('div')).find((node) => {
+        if (!(node instanceof HTMLElement)) return false
+        const className = node.className || ''
+        return className.includes('relative') && className.includes('w-16') && className.includes('h-16')
+      })
+      if (avatarWrapper instanceof HTMLElement && !avatarWrapper.dataset.ebWidgetAvatarHidden) {
+        avatarWrapper.dataset.ebWidgetAvatarHidden = 'true'
+        avatarWrapper.style.display = 'none'
+      }
+
+      const invokeFloatingButton = () => {
+        const floatingButton = shadow.querySelector<HTMLButtonElement>(
+          'div[data-eb-widget-floating="true"] button[aria-label="Start call"]',
+        )
+        if (floatingButton && !floatingButton.disabled) {
+          floatingButton.click()
+          pendingAutoClickRef.current = false
+          return true
+        }
+        return false
+      }
+
+      const floatingContainers = Array.from(shadow.querySelectorAll('div')).filter((node) => {
+        if (!(node instanceof HTMLElement)) return false
+        const className = node.className || ''
+        return className.includes('absolute') && className.includes('translate-y-1/2') && className.includes('left-1/2')
+      }) as HTMLElement[]
+
+      floatingContainers.forEach((container) => {
+        if (!container.dataset.ebWidgetFloating) {
+          container.dataset.ebWidgetFloating = 'true'
+          container.style.opacity = '0'
+          container.style.pointerEvents = 'none'
+        }
+
+        const floatingButton = container.querySelector<HTMLButtonElement>('button[aria-label="Start call"]')
+        if (floatingButton && !floatingButton.dataset.ebWidgetCircleObserver) {
+          floatingButton.dataset.ebWidgetCircleObserver = 'true'
+          const observer = new MutationObserver(() => {
+            const disabled = floatingButton.hasAttribute('disabled')
+            if (!disabled) {
+              floatingReadyRef.current = true
+              if (pendingAutoClickRef.current) {
+                requestAnimationFrame(() => {
+                  invokeFloatingButton()
+                })
+              }
+            }
+          })
+          observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled'] })
+          observerRegistryRef.current.push(observer)
+
+          if (!floatingButton.disabled) {
+            floatingReadyRef.current = true
+          }
+        }
+      })
+
+      shadow.querySelectorAll<HTMLButtonElement>('button[aria-label="Start call"]').forEach((button) => {
+        const container = button.closest('div')
+        const className = container?.className || ''
+        const isFloating = className.includes('translate-y-1/2') && className.includes('left-1/2')
+
+        if (isFloating) {
+          if (!button.dataset.ebWidgetCirclePrepared) {
+            button.dataset.ebWidgetCirclePrepared = 'true'
+            button.style.opacity = '0'
+            button.style.pointerEvents = 'none'
+          }
+          return
+        }
+
+        if (!button.dataset.ebWidgetPrimaryBound) {
+          button.dataset.ebWidgetPrimaryBound = 'true'
+          button.addEventListener(
+            'click',
+            () => {
+              if (invokeFloatingButton()) {
+                return
+              }
+
+              pendingAutoClickRef.current = true
+
+              if (expandHandlerRef.current) {
+                window.removeEventListener('elevenlabs-agent:expand', expandHandlerRef.current)
+                expandHandlerRef.current = null
+              }
+
+              const handleExpand = () => {
+                const tryClick = () => {
+                  if (invokeFloatingButton()) {
+                    expandHandlerRef.current = null
+                    return
+                  }
+                  if (pendingAutoClickRef.current) {
+                    requestAnimationFrame(tryClick)
+                  }
+                }
+
+                requestAnimationFrame(tryClick)
+              }
+
+              expandHandlerRef.current = handleExpand
+              window.addEventListener('elevenlabs-agent:expand', handleExpand, { once: true })
+            },
+            { capture: true },
+          )
+        }
+      })
+    },
+    [],
+  )
+
+  const syncWidgetLayout = useCallback(
+    (element?: HTMLElement) => {
+      const host = element ?? widgetElementRef.current
+      if (!host) {
+        return false
+      }
+
+      host.style.position = 'relative'
+      host.style.top = 'auto'
+      host.style.right = 'auto'
+      host.style.bottom = 'auto'
+      host.style.left = 'auto'
+      host.style.pointerEvents = 'auto'
+      host.style.display = 'block'
+      host.style.width = '100%'
+      host.style.height = '100%'
+      host.style.zIndex = 'auto'
+      host.style.margin = '0'
+      host.style.overflow = 'hidden'
+      host.style.setProperty('--el-overlay-padding', '0px')
+
+      const shadow = host.shadowRoot
+      if (!shadow) {
+        return false
+      }
+
+      const overlay = shadow.querySelector<HTMLElement>('.overlay')
+      if (!overlay) {
+        return false
+      }
+
+      overlay.style.position = 'absolute'
+      overlay.style.top = '0'
+      overlay.style.right = '0'
+      overlay.style.bottom = '0'
+      overlay.style.left = '0'
+      overlay.style.width = '100%'
+      overlay.style.height = '100%'
+      overlay.style.flexDirection = 'column'
+      overlay.style.justifyContent = 'stretch'
+      overlay.style.alignItems = 'stretch'
+      overlay.style.pointerEvents = 'auto'
+      overlay.style.margin = '0'
+
+      overlay.querySelectorAll<HTMLElement>('[class*="max-w"]').forEach((panel) => {
+        panel.style.maxWidth = '100%'
+        panel.style.maxHeight = '100%'
+        panel.style.width = '100%'
+        panel.style.height = '100%'
+        panel.style.top = '0'
+        panel.style.left = '0'
+        panel.style.position = 'relative'
+        panel.style.margin = '0'
+      })
+
+      customizeWidget(host)
+
+      return true
+    },
+    [customizeWidget],
+  )
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
       return
     }
 
-    try {
-      setTestStatus('prompting')
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
-      stream.getTracks().forEach((track) => track.stop())
-      setTestStatus('ready')
+    const handleReady = () => setWidgetReady(true)
+    const existingScript = document.getElementById('elevenlabs-convai-script') as HTMLScriptElement | null
 
-      setTimeout(() => {
-        router.push('/preview?demo=voice')
-      }, 900)
-    } catch (error) {
-      console.warn('microphone_permission_denied', error)
-      setTestStatus('error')
+    if (existingScript) {
+      if (existingScript.dataset.loaded === 'true') {
+        setWidgetReady(true)
+      } else {
+        existingScript.addEventListener('load', handleReady, { once: true })
+      }
+      return () => existingScript.removeEventListener('load', handleReady)
     }
-  }
+
+    const script = document.createElement('script')
+    script.id = 'elevenlabs-convai-script'
+    script.src = 'https://unpkg.com/@elevenlabs/convai-widget-embed'
+    script.async = true
+    script.type = 'text/javascript'
+    script.dataset.loaded = 'false'
+    script.addEventListener(
+      'load',
+      () => {
+        script.dataset.loaded = 'true'
+        handleReady()
+      },
+      { once: true },
+    )
+    script.addEventListener(
+      'error',
+      () => {
+        console.warn('convai_widget_failed_to_load')
+        setWidgetReady(false)
+      },
+      { once: true },
+    )
+
+    document.body.appendChild(script)
+
+    return () => {
+      script.removeEventListener('load', handleReady)
+    }
+  }, [])
+
+  useEffect(() => {
+    if (!widgetReady || !widgetContainerRef.current) {
+      return
+    }
+
+    if (!widgetElementRef.current) {
+      const element = document.createElement('elevenlabs-convai')
+      element.setAttribute('agent-id', 'agent_7601k7z0n6a0ex9t8tfta2vqs6jn')
+      element.setAttribute('variant', 'full')
+      element.setAttribute('always-expanded', 'false')
+      element.setAttribute('default-expanded', 'false')
+      element.setAttribute('transcript', 'true')
+      element.setAttribute('text-input', 'true')
+      element.style.display = 'block'
+      element.style.width = '100%'
+      element.style.height = '100%'
+      widgetContainerRef.current.appendChild(element)
+      widgetElementRef.current = element
+    }
+
+    const host = widgetElementRef.current
+    if (!host) {
+      return
+    }
+
+    let cancelled = false
+    let frame: number | undefined
+    let mutationObserver: MutationObserver | undefined
+
+    const attemptSync = () => {
+      if (cancelled) {
+        return
+      }
+
+      if (!syncWidgetLayout(host)) {
+        frame = window.requestAnimationFrame(attemptSync)
+        return
+      }
+
+      setWidgetMounted((prev) => (prev ? prev : true))
+
+      const shadow = host.shadowRoot
+      if (!shadow) {
+        frame = window.requestAnimationFrame(attemptSync)
+        return
+      }
+
+      mutationObserver?.disconnect()
+      mutationObserver = new MutationObserver(() => {
+        syncWidgetLayout(host)
+      })
+      mutationObserver.observe(shadow, { childList: true, subtree: true, attributes: true })
+    }
+
+    attemptSync()
+
+    const handleResize = () => {
+      syncWidgetLayout(host)
+    }
+
+    window.addEventListener('resize', handleResize)
+
+    return () => {
+      cancelled = true
+      if (frame) {
+        window.cancelAnimationFrame(frame)
+      }
+      mutationObserver?.disconnect()
+      window.removeEventListener('resize', handleResize)
+    }
+  }, [syncWidgetLayout, widgetReady])
+
+  useEffect(() => {
+    return () => {
+      if (widgetElementRef.current) {
+        widgetElementRef.current.remove()
+        widgetElementRef.current = null
+      }
+
+      observerRegistryRef.current.forEach((observer) => observer.disconnect())
+      observerRegistryRef.current = []
+      pendingAutoClickRef.current = false
+
+      if (expandHandlerRef.current) {
+        window.removeEventListener('elevenlabs-agent:expand', expandHandlerRef.current)
+        expandHandlerRef.current = null
+      }
+    }
+  }, [])
 
   return (
-    <section>
-      <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
-
-        {/* Illustration */}
-        <div className="absolute inset-0 -z-10 -mx-28 rounded-t-[3rem] pointer-events-none overflow-hidden" aria-hidden="true">
-          <div className="absolute left-1/2 -translate-x-1/2 top-0 -z-10">
-            <Image src={Illustration} className="max-w-none" width={1404} height={658} alt="Features Illustration" />
-          </div>
+    <section className="relative overflow-hidden">
+      <div className="mx-auto max-w-6xl px-4 sm:px-6">
+        <div className="absolute inset-0 -z-10 -mx-24 rounded-t-[3rem] bg-gradient-to-b from-[#0C1120] via-[#0C0F1A] to-[#06070E]" aria-hidden="true">
+          <Image src={Illustration} alt="Background glow" className="absolute inset-x-0 -top-12 w-full opacity-70" />
         </div>
 
-        <div className="pt-16 pb-12 md:pt-52 md:pb-20">
-
-          <div>
-
-            {/* Section content */}
-            <div className="max-w-xl mx-auto md:max-w-none flex flex-col md:flex-row md:space-x-8 lg:space-x-16 xl:space-x-20 space-y-8 space-y-reverse md:space-y-0">
-
-              {/* Content */}
-              <div className="md:w-7/12 lg:w-1/2 order-1 md:order-none max-md:text-center" data-aos="fade-down">
-                {/* Content #1 */}
-                <div>
-                  <div className="inline-flex font-medium bg-clip-text text-transparent bg-linear-to-r from-purple-500 to-purple-200 pb-3">Built for always-on operations</div>
-                </div>
-                <h3 className="h3 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-3">Every inbound call handled end-to-end</h3>
-                <p className="text-lg text-slate-400 mb-8">EarlyBird answers in under a second, schedules visits, hands off hot leads, and logs transcripts so your team never misses revenue or context.</p>
-                <div className="mt-8 max-w-xs max-md:mx-auto space-y-2">
-                  <button className={`flex items-center text-sm font-medium text-slate-50 rounded-sm border bg-slate-800/25 w-full px-3 py-2 transition duration-150 ease-in-out hover:opacity-100 ${tab !== 1 ? 'border-slate-700 opacity-50' : 'border-purple-700 shadow-sm shadow-purple-500/25'}`} onClick={() => setTab(1)}>
-                    <svg className="shrink-0 fill-slate-300 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="M14 0a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h12Zm0 14V2H2v12h12Zm-3-7H5a1 1 0 1 1 0-2h6a1 1 0 0 1 0 2Zm0 4H5a1 1 0 0 1 0-2h6a1 1 0 0 1 0 2Z" />
-                    </svg>
-                    <span>24/7 coverage</span>
-                  </button>
-                  <button className={`flex items-center text-sm font-medium text-slate-50 rounded-sm border bg-slate-800/25 w-full px-3 py-2 transition duration-150 ease-in-out hover:opacity-100 ${tab !== 2 ? 'border-slate-700 opacity-50' : 'border-purple-700 shadow-sm shadow-purple-500/25'}`} onClick={() => setTab(2)}>
-                    <svg className="shrink-0 fill-slate-300 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="M2 6H0V2a2 2 0 0 1 2-2h4v2H2v4ZM16 6h-2V2h-4V0h4a2 2 0 0 1 2 2v4ZM14 16h-4v-2h4v-4h2v4a2 2 0 0 1-2 2ZM6 16H2a2 2 0 0 1-2-2v-4h2v4h4v2Z" />
-                    </svg>
-                    <span>Booking & routing</span>
-                  </button>
-                  <button className={`flex items-center text-sm font-medium text-slate-50 rounded-sm border bg-slate-800/25 w-full px-3 py-2 transition duration-150 ease-in-out hover:opacity-100 ${tab !== 3 ? 'border-slate-700 opacity-50' : 'border-purple-700 shadow-sm shadow-purple-500/25'}`} onClick={() => setTab(3)}>
-                    <svg className="shrink-0 fill-slate-300 mr-3" xmlns="http://www.w3.org/2000/svg" width="16" height="16">
-                      <path d="M14.3.3c.4-.4 1-.4 1.4 0 .4.4.4 1 0 1.4l-8 8c-.2.2-.4.3-.7.3-.3 0-.5-.1-.7-.3-.4-.4-.4-1 0-1.4l8-8ZM15 7c.6 0 1 .4 1 1 0 4.4-3.6 8-8 8s-8-3.6-8-8 3.6-8 8-8c.6 0 1 .4 1 1s-.4 1-1 1C4.7 2 2 4.7 2 8s2.7 6 6 6 6-2.7 6-6c0-.6.4-1 1-1Z" />
-                    </svg>
-                    <span>CRM & analytics</span>
-                  </button>
-                </div>
-              </div>
-
-              {/* Interactive preview */}
-              <div className="md:w-5/12 lg:w-1/2 space-y-5" data-aos="fade-left" data-aos-delay="150">
-                <div className="rounded-3xl border border-white/10 bg-white/5 p-6">
-                  <h4 className="text-lg font-semibold text-white">Meet your new receptionist</h4>
-                  <p className="mt-3 text-sm text-white/70">Say hello to the agent that not only answers, but also routes, books, and documents every conversation.</p>
-                  <div className="mt-6 space-y-4">
-                    {receptionistCards.map((card, index) => (
-                      <div
-                        key={card.title}
-                        className="rounded-2xl border border-white/12 bg-white/[0.04] p-5"
-                        data-aos="fade-left"
-                        data-aos-delay={200 + index * 80}
-                      >
-                        <h5 className="text-sm font-semibold text-white">{card.title}</h5>
-                        <p className="mt-2 text-sm text-white/65">{card.description}</p>
-                        <ul className="mt-3 space-y-1.5 text-xs text-white/60">
-                          {card.bullets.map((bullet) => (
-                            <li key={bullet} className="flex items-start gap-2">
-                              <span aria-hidden="true" className="mt-1 inline-flex h-1.5 w-1.5 shrink-0 rounded-full bg-purple-400" />
-                              <span>{bullet}</span>
-                            </li>
-                          ))}
-                        </ul>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="mt-6">
-                    <button
-                      type="button"
-                      onClick={startReceptionistDemo}
-                      className="btn w-full justify-center bg-white text-slate-900 hover:bg-white/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-purple-400"
-                    >
-                      Test our agent now
-                    </button>
-                    <p className="mt-3 text-xs text-white/60" aria-live="polite">
-                      {testStatus === 'idle' && 'Click to grant microphone access and connect with the live demo.'}
-                      {testStatus === 'prompting' && 'Requesting microphone access… allow access to continue.'}
-                      {testStatus === 'ready' && 'Microphone ready! Opening the live preview…'}
-                      {testStatus === 'error' && 'We could not access your microphone. Check your browser permissions and try again.'}
-                      {testStatus === 'unsupported' && 'This browser is missing microphone access support. Try updating or switching browsers.'}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
+        <div className="grid gap-10 py-20 lg:grid-cols-[minmax(0,1fr)_380px] lg:gap-16">
+          <div className="space-y-10">
+            <div className="space-y-6">
+              <span className="inline-flex rounded-full border border-white/10 bg-white/5 px-4 py-1 text-xs uppercase tracking-[0.4rem] text-white/60">
+                Always-on front desk
+              </span>
+              <h2 className="text-3xl font-semibold text-white sm:text-4xl lg:text-[2.8rem]">
+                Stop missing revenue. Let EarlyBird answer, qualify, and book every call 24/7.
+              </h2>
+              <p className="max-w-xl text-base text-white/70">
+                The voice agent that sounds on-brand, handles objections, books jobs on your calendars, and posts the transcript everywhere your team works.
+              </p>
             </div>
 
+            <div className="flex flex-wrap gap-3 text-sm text-white/70">
+              {metrics.map((metric) => (
+                <div key={metric.label} className="flex min-w-[140px] flex-col rounded-2xl border border-white/10 bg-white/5 px-4 py-3">
+                  <span className="text-2xl font-semibold text-white">{metric.value}</span>
+                  <span className="text-xs uppercase tracking-[0.2rem] text-white/40">{metric.label}</span>
+                </div>
+              ))}
+            </div>
+
+            <div className="rounded-3xl border border-white/10 bg-white/[0.03] p-6">
+              <div className="flex items-start justify-between">
+                <div className="space-y-2">
+                  <span className="inline-flex rounded-full border border-purple-500/30 bg-purple-500/15 px-3 py-1 text-[10px] uppercase tracking-[0.3rem] text-purple-100">
+                    Playbooks covered
+                  </span>
+                  <h3 className="text-lg font-semibold text-white">Every scenario, one agent</h3>
+                </div>
+                <div className="inline-flex h-10 items-center rounded-full border border-white/10 bg-white/5 px-4 text-xs uppercase tracking-[0.3rem] text-white/60">
+                  Live preview
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-col gap-3">
+                {panes.map((pane, index) => (
+                  <button
+                    key={pane.title}
+                    type="button"
+                    onClick={() => setTab(index + 1)}
+                    className={`flex flex-col rounded-2xl border px-4 py-3 text-left transition ${
+                      tab === index + 1
+                        ? 'border-purple-500/60 bg-purple-500/15 text-white'
+                        : 'border-white/10 bg-white/5 text-white/70 hover:border-white/20 hover:text-white'
+                    }`}
+                  >
+                    <span className="text-sm font-semibold">{pane.title}</span>
+                    <span className="mt-1 text-xs">{pane.description}</span>
+                    <div className="mt-2 flex flex-wrap gap-2 text-[11px] text-white/50">
+                      {pane.bullets.map((bullet) => (
+                        <span key={bullet} className="inline-flex items-center gap-1 rounded-full border border-white/10 bg-white/5 px-3 py-1">
+                          <span className="inline-block h-1.5 w-1.5 rounded-full bg-purple-400" />
+                          {bullet}
+                        </span>
+                      ))}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
 
+          <div className="flex flex-col gap-6">
+            <div className="rounded-[32px] border border-white/10 bg-white/5 p-6">
+              <div className="flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.4rem] text-purple-200/80">Live demo</p>
+                  <p className="mt-1 text-base font-semibold text-white">Start a call with the agent</p>
+                  <p className="mt-2 text-xs text-white/60">
+                    Click “Start a call” in the panel to test the voice, booking flow, and notes. No downloads or extensions required.
+                  </p>
+                </div>
+                <span className="inline-flex h-8 items-center rounded-full border border-purple-400/35 bg-purple-500/10 px-3 text-[10px] font-semibold uppercase tracking-[0.3rem] text-purple-100">
+                  Live
+                </span>
+              </div>
+
+              <div className="mt-6 rounded-[24px] border border-white/10 bg-slate-950/80 p-4">
+                <div className="relative min-h-[360px] sm:min-h-[420px]">
+                  <div ref={widgetContainerRef} className="absolute inset-0" />
+                  {!widgetMounted && (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 text-sm text-white/70">
+                      <span className="h-10 w-10 animate-spin rounded-full border-2 border-white/30 border-t-transparent" />
+                      <span>Loading the voice agent…</span>
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              <p className="mt-3 text-[11px] text-white/45">
+                Tip: allow the microphone prompt when it appears. The agent stays in this window, so there’s no new tab or awkward pop-up.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     </section>
