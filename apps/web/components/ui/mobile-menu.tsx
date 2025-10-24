@@ -2,16 +2,12 @@
 
 import { useState, useRef, useEffect } from 'react'
 import Link from 'next/link'
-import { useAuthSession } from '@/components/auth/AuthSessionProvider'
 import SignOutButton from '@/components/auth/SignOutButton'
 import { getDashboardPath } from '@/lib/authPaths'
-import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton'
+import MarketingAuthControls from '@/components/navigation/MarketingAuthControls'
 
-export default function MobileMenu() {
+export default function MobileMenu({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [mobileNavOpen, setMobileNavOpen] = useState<boolean>(false)
-  const { status } = useAuthSession()
-  const isAuthenticated = status === 'authenticated'
-  const dashboardHref = getDashboardPath()
 
   const trigger = useRef<HTMLButtonElement>(null)
   const mobileNav = useRef<HTMLDivElement>(null)
@@ -36,6 +32,15 @@ export default function MobileMenu() {
     document.addEventListener('keydown', keyHandler)
     return () => document.removeEventListener('keydown', keyHandler)
   })
+
+  const menuItems = [
+    { href: '/', label: 'Home' },
+    { href: '/how-it-works', label: 'How it works' },
+    { href: '/pricing', label: 'Pricing' },
+    { href: '/preview', label: 'Preview' },
+    { href: '/docs', label: 'Docs' },
+    { href: '/support', label: 'Support' },
+  ]
 
   return (
     <div className="md:hidden flex items-center ml-4">
@@ -77,40 +82,40 @@ export default function MobileMenu() {
       <nav
         id="mobile-nav"
         ref={mobileNav}
-        className="absolute top-full z-20 left-0 w-full px-4 sm:px-6 overflow-hidden transition-all duration-300 ease-in-out"
+        className="absolute top-full right-4 sm:right-6 z-20 mt-3 w-[min(90vw,20rem)] overflow-hidden transition-all duration-300 ease-in-out"
         style={mobileNavOpen ? { maxHeight: mobileNav.current?.scrollHeight, opacity: 1 } : { maxHeight: 0, opacity: 0.8 }}
       >
-        <ul className="border border-transparent [background:linear-gradient(var(--color-slate-900),var(--color-slate-900))_padding-box,conic-gradient(var(--color-slate-400),var(--color-slate-700)_25%,var(--color-slate-700)_75%,var(--color-slate-400)_100%)_border-box] rounded-lg px-4 py-1.5 space-y-0.5">
-          <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/">Home</Link>
-          </li>
-          <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/how-it-works">How it works</Link>
-          </li>
-          <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/pricing">Pricing</Link>
-          </li>
-          <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/docs">Docs</Link>
-          </li>
-          <li>
-            <Link className="flex font-medium text-sm text-slate-300 hover:text-white py-1.5" href="/support">Support</Link>
-          </li>
-          {isAuthenticated ? (
-            <li className="border-t border-slate-800 mt-2 pt-3 flex flex-col gap-2">
-              <Link className="flex h-11 items-center justify-center rounded-xl border border-white/15 text-sm font-semibold text-white/85 transition hover:text-white" href={dashboardHref} onClick={() => setMobileNavOpen(false)}>
-                Dashboard
-              </Link>
-              <SignOutButton fullWidth variant="ghost" className="h-11 border-white/20 text-white/85 hover:text-white" onBeforeSignOut={() => setMobileNavOpen(false)} />
-            </li>
-          ) : (
-            <li className="border-t border-slate-800 mt-2 pt-3 flex gap-2">
-              <AuthModalTriggerButton mode="signin" className="flex-1 btn text-slate-200 hover:text-white bg-slate-900/30">Sign in</AuthModalTriggerButton>
-              <AuthModalTriggerButton mode="signup" className="flex-1 btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white">Start trial</AuthModalTriggerButton>
-            </li>
-          )}
-
-        </ul>
+        <div className="rounded-3xl border border-white/12 bg-[#05050b]/98 px-4 py-2 shadow-[0_30px_90px_rgba(5,5,11,0.55)] backdrop-blur">
+          <ul className="space-y-1">
+            {menuItems.map((item) => (
+              <li key={item.href}>
+                <Link
+                  className="flex items-center rounded-2xl px-3 py-3 text-sm font-medium text-slate-200 transition hover:bg-white/10 hover:text-white"
+                  href={item.href}
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  {item.label}
+                </Link>
+              </li>
+            ))}
+          </ul>
+          <div className="mt-3 border-t border-white/10 pt-3">
+            {isAuthenticated ? (
+              <div className="flex flex-col gap-2">
+                <Link
+                  href={getDashboardPath()}
+                  className="flex h-11 items-center justify-center rounded-2xl border border-white/15 text-sm font-semibold text-white/85 transition hover:bg-white/10 hover:text-white"
+                  onClick={() => setMobileNavOpen(false)}
+                >
+                  Dashboard
+                </Link>
+                <SignOutButton fullWidth variant="ghost" className="h-11 border-white/20 text-white/85 hover:text-white" onBeforeSignOut={() => setMobileNavOpen(false)} />
+              </div>
+            ) : (
+              <MarketingAuthControls variant="mobile" onNavigate={() => setMobileNavOpen(false)} />
+            )}
+          </div>
+        </div>
       </nav>
     </div>
   )

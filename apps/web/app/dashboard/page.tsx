@@ -180,7 +180,7 @@ function Kpi({
   footer?: ReactNode;
 }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
       <div className="text-xs text-white/60">{label}</div>
       <div className="mt-1 text-2xl font-semibold">{value}</div>
       {hint ? <div className="mt-1 text-xs text-white/50">{hint}</div> : null}
@@ -203,7 +203,7 @@ function Kpi({
 
 function KpiSkeleton() {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 animate-pulse" aria-hidden>
+    <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur animate-pulse" aria-hidden>
       <div className="h-3 w-20 rounded bg-white/10" />
       <div className="mt-3 h-7 w-24 rounded bg-white/10" />
       <div className="mt-2 h-3 w-16 rounded bg-white/5" />
@@ -294,7 +294,12 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
-    const allowedOrigins = new Set(["https://oneearlybird.ai", "https://m.oneearlybird.ai"]);
+    const allowedOrigins = new Set([
+      "https://oneearlybird.ai",
+      "https://m.oneearlybird.ai",
+      "https://www.oneearlybird.ai",
+      "https://api.oneearlybird.ai",
+    ]);
     const currentOrigin = typeof window !== "undefined" ? window.location.origin : "https://oneearlybird.ai";
     const allowedOrigin = allowedOrigins.has(currentOrigin) ? currentOrigin : "https://oneearlybird.ai";
     const refresh = () => {
@@ -313,7 +318,13 @@ export default function DashboardPage() {
       window.opener.postMessage({ type: "billing:portal:returned" }, allowedOrigin);
       window.close();
     } else if (window.opener && window.name === "oauth-google") {
+      window.opener.postMessage(
+        { type: "oauthResult", provider: "google", success: true },
+        allowedOrigin,
+      );
+      window.opener.postMessage({ type: "auth-success" }, allowedOrigin);
       window.opener.postMessage({ type: "auth:success" }, allowedOrigin);
+      window.opener.postMessage("auth-success", allowedOrigin);
       window.close();
     }
     if (sessionId) {
@@ -519,7 +530,7 @@ export default function DashboardPage() {
         </span>
       </div>
       <PortingBanner />
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 p-4 flex items-center justify-between">
+      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur flex items-center justify-between">
         <div className="flex items-center gap-3">
           <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
           <div>
@@ -645,7 +656,7 @@ export default function DashboardPage() {
           }}
         />
       ) : (
-        <div className="mt-6 rounded-2xl border border-dashed border-white/15 bg-white/5 p-6 text-sm text-white/60">
+        <div className="mt-6 rounded-2xl border border-dashed border-white/20 bg-white/5 p-6 text-sm text-white/60 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
           No usage yet. Once calls start flowing, live insights will appear here.
         </div>
       )}
@@ -657,7 +668,7 @@ export default function DashboardPage() {
         </div>
       ) : null}
 
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
         <h2 className="font-medium">Quick links</h2>
         <div className="mt-3 flex flex-wrap gap-3 text-sm">
           <a href="/docs" className="btn btn-outline">
@@ -683,7 +694,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
           <a className="text-sm text-white/80 hover:text-white" href="/dashboard/calls">
@@ -693,10 +704,10 @@ export default function DashboardPage() {
         <RecentCallsPreview />
       </div>
 
-        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
           <h2 className="font-medium">Get set up</h2>
           <ul className="mt-2 space-y-2 text-sm text-white/80">
-            <li>✅ Connect phone number (or <a className="underline" href="/support/porting">port your number</a>)</li>
+            <li>✅ Connect phone number (or <a className="underline" href="/support/porting">set up forwarding</a>)</li>
             <li>✅ Connect Google Calendar</li>
             <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
             <li>⬜ Customize greeting & FAQs</li>
@@ -746,13 +757,13 @@ function ThisWeekPanel({
   totals: { answered: string; booked: string; deflected: string; avgDuration: string };
 }) {
   return (
-    <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+    <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
       <div className="flex items-center justify-between">
         <h2 className="font-medium">This week</h2>
         <span className="text-sm text-white/60">Live snapshot</span>
       </div>
       <div className="mt-3 grid gap-3 sm:grid-cols-4">
-        <div className="rounded-lg border border-white/10 p-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 shadow-[0_16px_45px_rgba(5,8,20,0.35)] backdrop-blur">
           <div className="text-xs text-white/60">Answered (sparkline)</div>
           <svg viewBox="0 0 100 30" className="mt-1 h-12 w-full">
             {sparklinePoints ? (
@@ -762,15 +773,15 @@ function ThisWeekPanel({
             )}
           </svg>
         </div>
-        <div className="rounded-lg border border-white/10 p-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 shadow-[0_16px_45px_rgba(5,8,20,0.35)] backdrop-blur">
           <div className="text-xs text-white/60">Booked appts</div>
           <div className="text-lg font-semibold">{totals.booked}</div>
         </div>
-        <div className="rounded-lg border border-white/10 p-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 shadow-[0_16px_45px_rgba(5,8,20,0.35)] backdrop-blur">
           <div className="text-xs text-white/60">Voicemail deflected</div>
           <div className="text-lg font-semibold">{totals.deflected}</div>
         </div>
-        <div className="rounded-lg border border-white/10 p-3">
+        <div className="rounded-xl border border-white/10 bg-white/5 p-3 shadow-[0_16px_45px_rgba(5,8,20,0.35)] backdrop-blur">
           <div className="text-xs text-white/60">Avg duration</div>
           <div className="text-lg font-semibold">{totals.avgDuration}</div>
         </div>

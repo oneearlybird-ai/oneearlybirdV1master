@@ -7,15 +7,15 @@ import "./globals.css";
 import { displayFont, sansFont, stellarFont } from "./fonts";
 
 export const metadata: Metadata = {
-  title: "(EB) EarlyBird AI",
+  title: "EarlyBird AI",
   description: "AI voice receptionist for your business",
   icons: {
     icon: [
-      { url: "/brand/favicon.svg", type: "image/svg+xml" },
-      { url: "/brand/icon.svg", type: "image/svg+xml", sizes: "any" },
+      { url: "/brand/favicon.png", type: "image/png", sizes: "32x32" },
+      { url: "/brand/icon.png", type: "image/png", sizes: "192x192" },
     ],
-    shortcut: [{ url: "/brand/favicon.svg", type: "image/svg+xml" }],
-    apple: [{ url: "/brand/icon.svg", type: "image/svg+xml" }],
+    shortcut: [{ url: "/brand/favicon.png", type: "image/png" }],
+    apple: [{ url: "/brand/icon.png", type: "image/png", sizes: "180x180" }],
   },
 };
 
@@ -26,6 +26,17 @@ export const revalidate = 0;
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className="scroll-smooth">
+      <head>
+        <script async src="https://www.googletagmanager.com/gtag/js?id=G-7JKBFQ2RHZ" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', 'G-7JKBFQ2RHZ');`,
+          }}
+        />
+      </head>
       <body
         className={`${sansFont.variable} ${displayFont.variable} ${stellarFont.variable} min-h-dvh bg-[#05050b] text-white antialiased overflow-x-hidden`}
       >

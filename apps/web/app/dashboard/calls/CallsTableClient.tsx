@@ -45,30 +45,55 @@ export default function CallsTableClient({ rows }: { rows: ApiCall[] }) {
 
   return (
     <>
-      <div className="overflow-x-auto rounded-2xl border border-white/10 bg-white/5">
-        <table className="w-full text-sm">
-          <thead className="text-left text-white/60">
+      <div className="overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
+        <table className="w-full text-sm text-white/80">
+          <thead className="bg-white/10 text-left text-white/60">
             <tr>
-              <th className="px-4 py-3">Time</th>
-              <th className="px-4 py-3">Caller</th>
-              <th className="px-4 py-3">Outcome</th>
-              <th className="px-4 py-3">Sentiment</th>
-              <th className="px-4 py-3">Duration</th>
-              <th className="px-4 py-3">Cost</th>
-              <th className="px-4 py-3">Actions</th>
+              <th className="px-5 py-3">Time</th>
+              <th className="px-5 py-3">Caller</th>
+              <th className="px-5 py-3">Outcome</th>
+              <th className="px-5 py-3">Sentiment</th>
+              <th className="px-5 py-3">Duration</th>
+              <th className="px-5 py-3">Cost</th>
+              <th className="px-5 py-3 text-right">Actions</th>
             </tr>
           </thead>
           <tbody>
             {rows.map((r) => (
-              <tr key={r.id} className="border-t border-white/10">
-                <td className="px-4 py-3 whitespace-nowrap">{new Date(r.startedAt).toLocaleString()}</td>
-                <td className="px-4 py-3">{r.callerMasked}</td>
-                <td className="px-4 py-3">{r.outcome === 'booked' ? <Badge tone="success">Booked</Badge> : r.outcome === 'qualified' ? <Badge>Qualified</Badge> : r.outcome === 'voicemail' ? <Badge tone="warn">Voicemail</Badge> : <Badge tone="danger">Missed</Badge>}</td>
-                <td className="px-4 py-3">{r.sentiment === 'pos' ? <Badge tone="success">Positive</Badge> : r.sentiment === 'neg' ? <Badge tone="danger">Negative</Badge> : <Badge>Neutral</Badge>}</td>
-                <td className="px-4 py-3">{String(Math.floor(r.durationSec/60)).padStart(2,'0')}:{String(r.durationSec%60).padStart(2,'0')}</td>
-                <td className="px-4 py-3">${(r.costCents/100).toFixed(2)}</td>
-                <td className="px-4 py-3">
-                  <button onClick={() => setOpenId(r.id)} className="rounded-lg border border-white/20 px-3 py-1 text-sm hover:-translate-y-0.5 motion-safe:transition-transform">View</button>
+              <tr key={r.id} className="border-t border-white/10 transition hover:bg-white/10">
+                <td className="whitespace-nowrap px-5 py-3">{new Date(r.startedAt).toLocaleString()}</td>
+                <td className="px-5 py-3">{r.callerMasked}</td>
+                <td className="px-5 py-3">
+                  {r.outcome === "booked" ? (
+                    <Badge tone="success">Booked</Badge>
+                  ) : r.outcome === "qualified" ? (
+                    <Badge>Qualified</Badge>
+                  ) : r.outcome === "voicemail" ? (
+                    <Badge tone="warn">Voicemail</Badge>
+                  ) : (
+                    <Badge tone="danger">Missed</Badge>
+                  )}
+                </td>
+                <td className="px-5 py-3">
+                  {r.sentiment === "pos" ? (
+                    <Badge tone="success">Positive</Badge>
+                  ) : r.sentiment === "neg" ? (
+                    <Badge tone="danger">Negative</Badge>
+                  ) : (
+                    <Badge>Neutral</Badge>
+                  )}
+                </td>
+                <td className="px-5 py-3">
+                  {String(Math.floor(r.durationSec / 60)).padStart(2, "0")}:{String(r.durationSec % 60).padStart(2, "0")}
+                </td>
+                <td className="px-5 py-3">${(r.costCents / 100).toFixed(2)}</td>
+                <td className="px-5 py-3 text-right">
+                  <button
+                    onClick={() => setOpenId(r.id)}
+                    className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:-translate-y-0.5 hover:text-white"
+                  >
+                    View
+                  </button>
                 </td>
               </tr>
             ))}
@@ -78,11 +103,16 @@ export default function CallsTableClient({ rows }: { rows: ApiCall[] }) {
 
       {openId && (
         <div className="fixed inset-0 z-50">
-          <div className="absolute inset-0 bg-black/60" onClick={() => setOpenId(null)} />
-          <div className="absolute right-0 top-0 h-full w-full max-w-xl bg-neutral-950 border-l border-white/10 p-4 overflow-y-auto">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setOpenId(null)} />
+          <div className="absolute right-0 top-0 h-full w-full max-w-xl overflow-y-auto border-l border-white/10 bg-[#05050b]/95 px-6 py-5 shadow-[0_0_60px_rgba(5,8,20,0.7)]">
             <div className="flex items-center justify-between">
               <div className="font-medium">Call Detail</div>
-              <button onClick={() => setOpenId(null)} className="rounded-lg border border-white/20 px-2 py-1 text-xs">Close</button>
+              <button
+                onClick={() => setOpenId(null)}
+                className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 transition hover:text-white"
+              >
+                Close
+              </button>
             </div>
             {loading ? (
               <div className="mt-4 text-sm text-white/70">Loading…</div>

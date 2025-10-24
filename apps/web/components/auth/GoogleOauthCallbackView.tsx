@@ -34,12 +34,13 @@ export function GoogleOauthCallbackView({ intent }: { intent: GoogleCallbackInte
       baseOrigins.add(referrerOrigin);
     }
     const targets = Array.from(baseOrigins);
-    const payload = { type: "oauth:success", provider: "google", intent, nextPath } as const;
+    const payload = { type: "auth-success", provider: "google", intent, nextPath } as const;
     try {
       if (opener) {
         targets.forEach((target) => {
           try {
             opener.postMessage(payload, target);
+            opener.postMessage("auth-success", target);
             opener.postMessage("oauth:success", target);
           } catch (innerError) {
             console.warn("oauth_callback_postmessage_target_failed", {

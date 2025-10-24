@@ -17,24 +17,24 @@ export default function Testimonials02() {
   const items: Item[] = [
     {
       img: Testimonial01,
-      name: 'Mary Janiczak',
-      role: 'Data Engineer',
+      name: 'Harbor Clinics',
+      role: 'Regional Operations',
       twitter: '#0',
-      quote: "The pace of change and velocity of the product force you to pick up new skills, experiment with new tactics, and walk in a variety of users' shoes.",
+      quote: "Weekend coverage was always a scramble. EarlyBird sounds like our front desk, books follow-ups, and drops transcripts into HubSpot before our nurses clock in.",
     },
     {
       img: Testimonial02,
-      name: 'Jack Smith',
-      role: 'Software Engineer',
+      name: 'BrightRoute HVAC',
+      role: 'Dispatch Lead',
       twitter: '#0',
-      quote: "The pace of change and velocity of the product force you to pick up new skills, experiment with new tactics, and walk in a variety of users' shoes.",
+      quote: "We route emergencies with schedules, not sticky notes. The AI qualifies, prices, and pages on-call techs while logging every action for QA.",
     },
     {
       img: Testimonial03,
-      name: 'Anna Johnson',
-      role: 'Product Designer',
+      name: 'Beacon Storage',
+      role: 'Customer Success',
       twitter: '#0',
-      quote: "The pace of change and velocity of the product force you to pick up new skills, experiment with new tactics, and walk in a variety of users' shoes.",
+      quote: "Every missed call used to be a churn risk. Now we have recordings, tags, and follow-ups in Slack within minutes — zero guesswork for the team.",
     },
   ]
 
@@ -50,8 +50,8 @@ export default function Testimonials02() {
         <div className="py-12 md:py-20">
           {/* Content */}
           <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">Hear from our people</h2>
-            <p className="text-lg text-slate-400">Our company is comprised of people who make bold choices for our clients and the security sector. It's in our DNA to push our limits and make bold changes.</p>
+            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">How teams use EarlyBird every day</h2>
+            <p className="text-lg text-slate-400">From healthcare to home services, customers rely on EarlyBird AI to greet callers instantly, capture revenue, and deliver call evidence their teams can act on.</p>
           </div>
           {/* Grid */}
           <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 max-w-xs mx-auto lg:max-w-none">

@@ -43,6 +43,7 @@ export type TenantProfile = {
   website?: string | null;
   businessProfileComplete?: boolean | null;
   stepUpOkUntil?: string | null;
+  needsAccountCreate?: boolean | null;
   [key: string]: unknown;
 };
 
@@ -54,7 +55,7 @@ type RefreshOptions = {
 type AuthSessionValue = {
   status: SessionStatus;
   profile: TenantProfile | null;
-  refresh: (options?: RefreshOptions) => Promise<void>;
+  refresh: (options?: RefreshOptions) => Promise<TenantProfile | null>;
   markUnauthenticated: () => void;
 };
 
@@ -64,27 +65,42 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   const [status, setStatus] = useState<SessionStatus>("loading");
   const [profile, setProfile] = useState<TenantProfile | null>(null);
 
-  const fetchProfile = useCallback(async (): Promise<"ok" | "unauthorized" | "error"> => {
+  type FetchResult =
+    | { kind: "ok"; profile: TenantProfile | null }
+    | { kind: "unauthorized" }
+    | { kind: "error" };
+
+  const fetchProfile = useCallback(async (): Promise<FetchResult> => {
     try {
       const response = await dashboardFetch("/tenants/profile", { cache: "no-store", suppressAuthRedirect: true });
       if (response.ok) {
-        const data = (await response.json()) as TenantProfile;
-        setProfile(data);
+        const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
+        const authenticated = typeof data.authenticated === "boolean" ? data.authenticated : true;
+        if (!authenticated) {
+          setProfile(null);
+          setStatus("unauthenticated");
+          return { kind: "unauthorized" };
+        }
+        let profileData = ("profile" in data ? (data.profile as TenantProfile | null) : (data as TenantProfile | null)) ?? null;
+        if (profileData && typeof data.needsAccountCreate === "boolean") {
+          profileData = { ...profileData, needsAccountCreate: data.needsAccountCreate };
+        }
+        setProfile(profileData);
         setStatus("authenticated");
-        return "ok";
+        return { kind: "ok", profile: profileData };
       }
       if (response.status === 401) {
         setProfile(null);
         setStatus("unauthenticated");
-        return "unauthorized";
+        return { kind: "unauthorized" };
       }
       setProfile(null);
       setStatus("unauthenticated");
-      return "error";
+      return { kind: "error" };
     } catch {
       setProfile(null);
       setStatus("unauthenticated");
-      return "error";
+      return { kind: "error" };
     }
   }, []);
 
@@ -94,10 +110,12 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
         setStatus("loading");
       }
       const result = await fetchProfile();
-      if (result === "unauthorized" && retryOnUnauthorized) {
+      if (result.kind === "unauthorized" && retryOnUnauthorized) {
         await new Promise((resolve) => setTimeout(resolve, 350));
-        await fetchProfile();
+        const retryResult = await fetchProfile();
+        return retryResult.kind === "ok" ? retryResult.profile : null;
       }
+      return result.kind === "ok" ? result.profile : null;
     },
     [fetchProfile],
   );
