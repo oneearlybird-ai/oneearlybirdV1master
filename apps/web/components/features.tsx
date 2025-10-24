@@ -43,7 +43,30 @@ export default function Features() {
         'div[data-eb-widget-floating="true"] button[aria-label="Start call"]',
       )
       if (floatingButton && !floatingButton.disabled && floatingButton.getAttribute('aria-disabled') !== 'true') {
-        floatingButton.click()
+        const container = floatingButton.closest<HTMLElement>('div[data-eb-widget-floating="true"]')
+        const previousPointerEvents = container?.style.pointerEvents ?? ''
+
+        if (container) {
+          container.style.pointerEvents = 'auto'
+        }
+
+        try {
+          floatingButton.focus({ preventScroll: true })
+          const pointerOptions: PointerEventInit = { bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse' }
+          const mouseOptions: MouseEventInit = { bubbles: true, cancelable: true }
+          floatingButton.dispatchEvent(new PointerEvent('pointerenter', pointerOptions))
+          floatingButton.dispatchEvent(new PointerEvent('pointerdown', pointerOptions))
+          floatingButton.dispatchEvent(new MouseEvent('mousedown', mouseOptions))
+          floatingButton.dispatchEvent(new PointerEvent('pointerup', pointerOptions))
+          floatingButton.dispatchEvent(new MouseEvent('mouseup', mouseOptions))
+          floatingButton.dispatchEvent(new MouseEvent('click', mouseOptions))
+          floatingButton.click()
+        } finally {
+          if (container) {
+            container.style.pointerEvents = previousPointerEvents || 'none'
+          }
+        }
+
         pendingAutoClickRef.current = false
         return true
       }
@@ -75,8 +98,9 @@ export default function Features() {
           const isInteractive = !(disabledAttr || ariaDisabled || classDisabled)
           if (isInteractive) {
             floatingReadyRef.current = true
-            pendingAutoClickRef.current = false
-            floatingButton.click()
+            if (pendingAutoClickRef.current) {
+              invokeFloatingButton()
+            }
           }
         })
         observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'class'] })
@@ -84,6 +108,9 @@ export default function Features() {
 
         if (!floatingButton.disabled && floatingButton.getAttribute('aria-disabled') !== 'true') {
           floatingReadyRef.current = true
+          if (pendingAutoClickRef.current) {
+            invokeFloatingButton()
+          }
         }
       }
     })
