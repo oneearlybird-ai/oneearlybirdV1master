@@ -13,6 +13,10 @@ export default function Features() {
   const [widgetMounted, setWidgetMounted] = useState(false)
   const widgetElementRef = useRef<HTMLElement | null>(null)
   const widgetContainerRef = useRef<HTMLDivElement | null>(null)
+  const floatingReadyRef = useRef(false)
+  const pendingAutoClickRef = useRef(false)
+  const observerRegistryRef = useRef<MutationObserver[]>([])
+  const expandHandlerRef = useRef<(() => void) | null>(null)
 
   const customizeWidget = useCallback((element?: HTMLElement) => {
     const host = element ?? widgetElementRef.current
@@ -34,18 +38,53 @@ export default function Features() {
       largeAvatarWrapper.style.display = 'none'
     }
 
-    const floatingContainers = Array.from(shadow.querySelectorAll('div')).filter((element) => {
-      if (!(element instanceof HTMLElement)) {
+    const invokeFloatingButton = () => {
+      const floatingButton = shadow.querySelector<HTMLButtonElement>(
+        'div[data-eb-widget-floating="true"] button[aria-label="Start call"]',
+      )
+      if (floatingButton && !floatingButton.disabled) {
+        floatingButton.click()
+        pendingAutoClickRef.current = false
+        return true
+      }
+      return false
+    }
+
+    const floatingContainers = Array.from(shadow.querySelectorAll('div')).filter((node) => {
+      if (!(node instanceof HTMLElement)) {
         return false
       }
-      const className = element.className || ''
+      const className = node.className || ''
       return className.includes('absolute') && className.includes('translate-y-1/2') && className.includes('left-1/2')
     }) as HTMLElement[]
+
     floatingContainers.forEach((container) => {
       if (!container.dataset.ebWidgetFloating) {
         container.dataset.ebWidgetFloating = 'true'
         container.style.opacity = '0'
         container.style.pointerEvents = 'none'
+      }
+
+      const floatingButton = container.querySelector<HTMLButtonElement>('button[aria-label="Start call"]')
+      if (floatingButton && !floatingButton.dataset.ebWidgetCircleObserver) {
+        floatingButton.dataset.ebWidgetCircleObserver = 'true'
+        const observer = new MutationObserver(() => {
+          const disabled = floatingButton.hasAttribute('disabled')
+          if (!disabled) {
+            floatingReadyRef.current = true
+            if (pendingAutoClickRef.current) {
+              requestAnimationFrame(() => {
+                invokeFloatingButton()
+              })
+            }
+          }
+        })
+        observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled'] })
+        observerRegistryRef.current.push(observer)
+
+        if (!floatingButton.disabled) {
+          floatingReadyRef.current = true
+        }
       }
     })
 
@@ -68,23 +107,33 @@ export default function Features() {
         button.addEventListener(
           'click',
           () => {
-            const maxAttempts = 240
-            let attempts = 0
-            const tryClick = () => {
-              const floatingButton = shadow.querySelector<HTMLButtonElement>(
-                'div[data-eb-widget-floating="true"] button[aria-label="Start call"]',
-              )
-              if (floatingButton && !floatingButton.disabled) {
-                floatingButton.click()
-                return
-              }
-              attempts += 1
-              if (attempts < maxAttempts) {
-                requestAnimationFrame(tryClick)
-              }
+            if (invokeFloatingButton()) {
+              return
             }
 
-            requestAnimationFrame(tryClick)
+            pendingAutoClickRef.current = true
+
+            if (expandHandlerRef.current) {
+              window.removeEventListener('elevenlabs-agent:expand', expandHandlerRef.current)
+              expandHandlerRef.current = null
+            }
+
+            const handleExpand = () => {
+              const tryClick = () => {
+                if (invokeFloatingButton()) {
+                  expandHandlerRef.current = null
+                  return
+                }
+                if (pendingAutoClickRef.current) {
+                  requestAnimationFrame(tryClick)
+                }
+              }
+
+              requestAnimationFrame(tryClick)
+            }
+
+            expandHandlerRef.current = handleExpand
+            window.addEventListener('elevenlabs-agent:expand', handleExpand, { once: true })
           },
           { capture: true },
         )
@@ -278,6 +327,15 @@ export default function Features() {
       if (widgetElementRef.current) {
         widgetElementRef.current.remove()
         widgetElementRef.current = null
+      }
+
+      observerRegistryRef.current.forEach((observer) => observer.disconnect())
+      observerRegistryRef.current = []
+      pendingAutoClickRef.current = false
+
+      if (expandHandlerRef.current) {
+        window.removeEventListener('elevenlabs-agent:expand', expandHandlerRef.current)
+        expandHandlerRef.current = null
       }
     }
   }, [])
@@ -474,6 +532,9 @@ export default function Features() {
                         </div>
                       </div>
                     </div>
+                    <p className="text-xs text-white/60">
+                      Allow the microphone prompt when it appears—your call stays right inside this panel.
+                    </p>
                   </div>
                 </div>
 
