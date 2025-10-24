@@ -1,6 +1,3 @@
-import Image from 'next/image'
-import Team from '@/public/images/team.jpg'
-
 export default function Story() {
   return (
     <section className="relative">
@@ -24,29 +21,22 @@ export default function Story() {
 
             {/* Section header */}
             <div className="max-w-3xl mx-auto text-center pb-12 md:pb-20">
-              <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60">Our story (so far)</h2>
+              <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60">Built for operators from day one</h2>
             </div>
 
-            <div className="md:flex justify-between space-x-6 md:space-x-8 lg:space-x-14">
-              <figure className="min-w-[240px]">
-                <Image className="sticky top-8 mx-auto mb-12 md:mb-0 rounded-lg -rotate-[4deg]" src={Team} width={420} height={280} alt="Team" />
-              </figure>
-              <div className="max-w-[548px] mx-auto">
-                <div className="text-slate-400 space-y-6">
-                  <p>
-                    EarlyBird AI started as a small experiment inside a service business that could never keep up with the phone. Missed calls meant missed revenue, so we built an assistant that sounds like our best operator and never sleeps.
-                  </p>
-                  <p>
-                    Today that assistant powers hundreds of support and sales teams. <strong className="text-slate-50 font-medium">We combine natural conversation, live CRM context, and booking automations</strong> so every caller is greeted, qualified, and routed in seconds.
-                  </p>
-                  <p>
-                    The product keeps learning from every interaction. Customers can review recordings, tweak flows, and launch new skills without touching a line of code. EarlyBird AI becomes a true teammate that scales with your business.
-                  </p>
-                  <p>
-                    Our team ships fast, listens obsessively, and treats reliability as a feature. Whether you run a boutique agency or a national home services brand, EarlyBird AI gives you the confidence that someone trustworthy is always answering.
-                  </p>
-                </div>
-              </div>
+            <div className="max-w-3xl mx-auto text-slate-400 space-y-6">
+              <p>
+                EarlyBird AI was founded in 2025 near Loudoun County, Virginia, the data center capital of the world. Surrounded by massive infrastructure, we saw local home services, healthcare, and logistics teams still juggling ringing phones and missed opportunities. We knew AI could close that gap without sacrificing the personal touch customers expect.
+              </p>
+              <p>
+                The first version of EarlyBird answered a single HVAC line. Within days it was booking jobs after hours, sending summaries to Slack, and giving the owner proof of every conversation. Word spread and more businesses asked for the same superpower: a receptionist that never sleeps, speaks like the brand, and respects their existing workflows.
+              </p>
+              <p>
+                Today EarlyBird powers thousands of conversations every week. We focus on three principles: <strong className="text-slate-50 font-medium">sound human, integrate deeply, and provide evidence</strong>. Every transcript, tag, and booking is auditable so operators can trust the AI they deploy.
+              </p>
+              <p>
+                We remain a small, product-obsessed company dedicated to the operators who keep phones ringing and calendars full. If your team is stretched thin or you simply refuse to miss another call, EarlyBird is for you.
+              </p>
             </div>
 
           </div>

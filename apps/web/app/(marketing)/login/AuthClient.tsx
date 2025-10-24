@@ -17,6 +17,7 @@ import {
 import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
 import { apiFetch } from "@/lib/http";
 import { setActiveAuthFlow } from "@/lib/authFlow";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { hasCompletedName } from "@/lib/profile";
 
 const LOGIN_EVENT_KEY = "__ob_login";
@@ -46,6 +47,7 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
   const loginEmailRef = useRef<HTMLInputElement | null>(null);
   const signupEmailRef = useRef<HTMLInputElement | null>(null);
   const googlePopupMonitorRef = useRef<number | null>(null);
+  const popupRef = useRef<Window | null>(null);
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -57,6 +59,7 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
   const [signupMessage, setSignupMessage] = useState<string | null>(null);
 
   const [googlePending, setGooglePending] = useState(false);
+  const { refresh } = useAuthSession();
 
   const clearGooglePopupMonitor = useCallback(() => {
     if (googlePopupMonitorRef.current !== null) {
@@ -69,21 +72,57 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
     const handleAuthSuccess = () => {
       clearGooglePopupMonitor();
       setGooglePending(false);
+      popupRef.current = null;
       try {
         localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
       } catch (error) {
         console.warn("google_login_storage_failed", { message: (error as Error)?.message });
       }
+      void refresh({ showLoading: true, retryOnUnauthorized: true });
     };
     window.addEventListener("ob:auth:success", handleAuthSuccess);
     return () => {
       window.removeEventListener("ob:auth:success", handleAuthSuccess);
     };
-  }, [clearGooglePopupMonitor]);
+  }, [clearGooglePopupMonitor, refresh]);
+
+  useEffect(() => {
+    const allowedOrigins = new Set<string>(["https://oneearlybird.ai", "https://m.oneearlybird.ai", "https://www.oneearlybird.ai"]);
+    if (typeof window !== "undefined") {
+      allowedOrigins.add(window.location.origin);
+      try {
+        if (document.referrer) {
+          const refOrigin = new URL(document.referrer).origin;
+          allowedOrigins.add(refOrigin);
+        }
+      } catch {
+        /* ignore */
+      }
+    }
+    const handleMessage = (event: MessageEvent) => {
+      if (!allowedOrigins.has(event.origin)) return;
+      const type = typeof event.data === "string" ? event.data : (event.data as { type?: string } | null)?.type;
+      if (type !== "auth-success" && type !== "oauth:success") return;
+      popupRef.current = null;
+      clearGooglePopupMonitor();
+      setGooglePending(false);
+      try {
+        localStorage.setItem(LOGIN_EVENT_KEY, String(Date.now()));
+      } catch (error) {
+        console.warn("google_login_storage_failed", { message: (error as Error)?.message });
+      }
+      void refresh({ showLoading: true, retryOnUnauthorized: true });
+    };
+    window.addEventListener("message", handleMessage);
+    return () => {
+      window.removeEventListener("message", handleMessage);
+    };
+  }, [clearGooglePopupMonitor, refresh]);
 
   useEffect(() => {
     return () => {
       clearGooglePopupMonitor();
+      popupRef.current = null;
     };
   }, [clearGooglePopupMonitor]);
 
@@ -239,16 +278,18 @@ export default function AuthClient({ initialTab }: { initialTab: PanelMode }) {
       setActiveAuthFlow(intent === "signup" ? "google-signup" : "google-signin");
       setGooglePending(true);
       clearGooglePopupMonitor();
-      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "oauth:success" });
+      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "auth-success" });
       if (!popup) {
         setGooglePending(false);
         window.location.href = url;
         return;
       }
+      popupRef.current = popup;
       googlePopupMonitorRef.current = window.setInterval(() => {
         if (!popup || popup.closed) {
           clearGooglePopupMonitor();
           setGooglePending(false);
+          popupRef.current = null;
         }
       }, 500);
     },

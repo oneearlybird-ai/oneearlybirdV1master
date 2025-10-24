@@ -1,4 +1,5 @@
 import { API_BASE } from "@/lib/config";
+import { getMockResponse, shouldUseDashboardMocks } from "@/lib/dashboardMocks";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 export interface HttpJson<T> { ok: boolean; data?: T; error?: string; }
@@ -36,6 +37,12 @@ export function toApiUrl(path: string): string {
 export async function apiFetch(path: string, init: ApiFetchInit = {}): Promise<Response> {
   const { suppressAuthRedirect = false, ...rest } = init;
   const url = toApiUrl(path);
+  if (shouldUseDashboardMocks()) {
+    const mock = await getMockResponse(path, init);
+    if (mock) {
+      return mock;
+    }
+  }
   const headers = new Headers(rest.headers as HeadersInit | undefined);
   const method = (rest.method || "GET").toUpperCase();
   if (!headers.has("content-type") && method !== "GET" && method !== "HEAD") {

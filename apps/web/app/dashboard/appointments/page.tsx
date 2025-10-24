@@ -121,13 +121,13 @@ export default function AppointmentsPage() {
   return (
     <section>
       <h1 className="text-xl font-semibold tracking-tight">Appointments</h1>
-      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm">
+      <div className="mt-4 flex flex-wrap items-center gap-3 text-sm text-white/70">
         <label className="flex items-center gap-2">
-          <span className="text-white/70">Window</span>
+          <span>Window</span>
           <select
             value={windowFilter}
             onChange={(e) => setWindowFilter(e.target.value as typeof windowFilter)}
-            className="rounded-md border border-white/15 bg-white/5 px-3 py-1.5 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+            className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
           >
             <option value="day">Today</option>
             <option value="week">This week</option>
@@ -136,7 +136,7 @@ export default function AppointmentsPage() {
         </label>
         <button
           type="button"
-          className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white disabled:opacity-40"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25 disabled:opacity-40"
           onClick={() => void fetchBookings(windowFilter)}
           disabled={loading}
         >
@@ -150,18 +150,18 @@ export default function AppointmentsPage() {
         </div>
       ) : null}
 
-      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
-        <div className="flex items-center justify-between p-4">
+      <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
+        <div className="flex items-center justify-between border-b border-white/10 bg-white/10 px-5 py-4">
           <h2 className="font-medium">Upcoming</h2>
           <span className="text-xs text-white/60">
             {items.length} appointments{loading ? " (loading…)" : ""}
           </span>
         </div>
-        <div className="px-4 pb-4 space-y-3">
+        <div className="space-y-3 px-5 pb-5 pt-4">
           {loading && items.length === 0 ? (
             <div className="space-y-2" aria-hidden>
               {Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="rounded border border-white/10 p-3">
+                <div key={i} className="rounded-xl border border-white/10 bg-white/5 p-3 shadow-[0_16px_45px_rgba(5,8,20,0.35)]">
                   <div className="skeleton skeleton-line w-40" />
                   <div className="mt-1 skeleton skeleton-line w-52" />
                   <div className="mt-1 skeleton skeleton-line w-32" />
@@ -169,10 +169,15 @@ export default function AppointmentsPage() {
               ))}
             </div>
           ) : items.length === 0 ? (
-            <div className="text-sm text-white/60">No appointments in this window.</div>
+            <div className="rounded-xl border border-dashed border-white/15 bg-white/5 p-4 text-sm text-white/60">
+              No appointments in this window.
+            </div>
           ) : (
             items.map((booking) => (
-              <div key={booking.id} className="rounded border border-white/10 p-3 text-sm text-white/80">
+              <div
+                key={booking.id}
+                className="rounded-xl border border-white/10 bg-white/5 p-4 text-sm text-white/80 shadow-[0_16px_45px_rgba(5,8,20,0.35)] transition hover:border-white/20"
+              >
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <div className="font-medium">{booking.title}</div>
                   <div className="text-xs text-white/60">{booking.status ?? "—"}</div>
@@ -180,14 +185,16 @@ export default function AppointmentsPage() {
                 <div className="mt-1 text-white/70">{formatTimestamp(booking.ts)}</div>
                 {booking.attendee ? <div className="text-xs text-white/60">Attendee: {booking.attendee}</div> : null}
                 <div className="mt-2 flex flex-wrap items-center gap-2">
-                  <span className="rounded bg-white/10 px-2 py-1 text-xs text-white/60">Source: {booking.source ?? "agent"}</span>
+                  <span className="rounded-full border border-white/10 bg-white/10 px-3 py-1 text-xs text-white/70">
+                    Source: {booking.source ?? "agent"}
+                  </span>
                   {booking.notes ? <span className="text-xs text-white/60">Notes: {booking.notes}</span> : null}
                 </div>
                 <div className="mt-2 flex gap-2">
                   <button
                     type="button"
                     onClick={() => void cancelBooking(booking)}
-                    className="rounded border border-white/20 px-3 py-1 text-xs text-white/80 hover:text-white disabled:opacity-40"
+                    className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 transition hover:text-white disabled:opacity-40"
                     disabled={cancelingId === booking.id}
                   >
                     {cancelingId === booking.id ? "Cancelling…" : "Cancel"}
@@ -199,7 +206,7 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
         <h2 className="font-medium">Create appointment</h2>
         <form className="mt-3 space-y-3" onSubmit={submitCreate}>
           <div>
@@ -212,7 +219,7 @@ export default function AppointmentsPage() {
               required
               value={form.title}
               onChange={(e) => setForm((prev) => ({ ...prev, title: e.target.value }))}
-              className="mt-1 w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
             />
           </div>
           <div>
@@ -224,7 +231,7 @@ export default function AppointmentsPage() {
               type="text"
               value={form.attendee}
               onChange={(e) => setForm((prev) => ({ ...prev, attendee: e.target.value }))}
-              className="mt-1 w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
               placeholder="Optional (name, phone, or email)"
             />
           </div>
@@ -238,21 +245,21 @@ export default function AppointmentsPage() {
               required
               value={form.ts}
               onChange={(e) => setForm((prev) => ({ ...prev, ts: e.target.value }))}
-              className="mt-1 w-full rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="mt-1 w-full rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
             />
           </div>
           {createError ? <div className="text-xs text-red-300">Error: {createError}</div> : null}
           <div className="flex gap-2">
             <button
               type="submit"
-              className="rounded bg-white px-4 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-40"
+              className="rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black shadow-glow-md transition hover:bg-white/90 disabled:opacity-40"
               disabled={creating}
             >
               {creating ? "Creating…" : "Create appointment"}
             </button>
             <button
               type="button"
-              className="rounded border border-white/20 px-4 py-2 text-sm text-white/80 hover:text-white"
+              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white"
               onClick={() => setForm({ title: "", attendee: "", ts: "" })}
             >
               Clear

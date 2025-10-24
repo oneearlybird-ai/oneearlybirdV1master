@@ -84,12 +84,12 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
   };
 
   return (
-    <section>
+    <section className="mx-auto max-w-5xl">
       <div className="flex items-center justify-between">
-        <h1 className="text-xl font-semibold tracking-tight">Call details</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-white">Call details</h1>
         <Link
           href="/dashboard/calls"
-          className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white hover:-translate-y-0.5 transition-transform"
+          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:-translate-y-0.5 hover:text-white"
         >
           Back
         </Link>
@@ -97,7 +97,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
 
       {state.loading ? (
         <div className="mt-6 space-y-4">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
             <div className="skeleton skeleton-line w-40" />
             <div className="mt-3 skeleton skeleton-box h-24" />
           </div>
@@ -105,18 +105,18 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
       ) : state.error ? (
         <div className="mt-6 rounded-2xl border border-red-500/40 bg-red-500/10 p-4 text-sm text-red-200">{state.error}</div>
       ) : call ? (
-        <div className="mt-6 grid gap-4 grid-cols-1 lg:grid-cols-3">
-          <div className="lg:col-span-2 rounded-2xl border border-white/10 bg-white/5 p-4 space-y-4">
+        <div className="mt-6 grid grid-cols-1 gap-4 lg:grid-cols-3">
+          <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur lg:col-span-2">
             <div className="text-sm text-white/70">
               {formatCallTimestamp(call.ts)} — {normalisePhone(call.from)} — {formatCallDuration(call.durationSec)}
             </div>
-            <div className="rounded-lg border border-white/10 p-3 space-y-2">
+            <div className="space-y-2 rounded-xl border border-white/10 bg-white/5 p-4 shadow-[0_16px_45px_rgba(5,8,20,0.35)]">
               <div className="flex items-center justify-between">
                 <div className="font-medium">Recording</div>
                 <button
                   disabled={signing}
                   onClick={() => void requestSignedUrl(call.recordingKey)}
-                  className="rounded border border-white/20 px-2 py-1 text-xs text-white/80 hover:text-white disabled:opacity-40"
+                  className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-medium text-white/80 transition hover:text-white disabled:opacity-40"
                 >
                   {signing ? "Requesting…" : "Get signed URL"}
                 </button>
@@ -144,7 +144,7 @@ export default function CallDetailPage({ params }: { params: { id: string } }) {
               </p>
             </div>
           </div>
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
             <div className="font-medium">Summary</div>
             <ul className="mt-2 text-sm text-white/80 space-y-1">
               <li>Outcome: {outcomeLabel(call.outcome)}</li>

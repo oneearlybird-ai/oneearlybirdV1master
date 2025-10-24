@@ -63,7 +63,7 @@ export default function Footer() {
                 <a className="text-slate-400 hover:text-slate-200 transition duration-150 ease-in-out" href="/status">Status</a>
               </li>
               <li>
-                <a className="text-slate-400 hover:text-slate-200 transition duration-150 ease-in-out" href="/support/porting">Number porting</a>
+                <a className="text-slate-400 hover:text-slate-200 transition duration-150 ease-in-out" href="/support/porting">Number forwarding</a>
               </li>
             </ul>
           </div>

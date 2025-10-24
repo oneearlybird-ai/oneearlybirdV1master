@@ -46,7 +46,7 @@ function formatDate(value: string | null | undefined): string {
 
 function SectionCard({ title, children, footer }: { title: string; children: React.ReactNode; footer?: React.ReactNode }) {
   return (
-    <section className="rounded-2xl border border-white/10 bg-white/5 p-6">
+    <section className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
       <header>
         <h2 className="text-lg font-semibold text-white">{title}</h2>
       </header>
@@ -295,14 +295,14 @@ export default function PhoneAndAgentPage() {
               placeholder="(555) 555-1234"
               value={connectNumber}
               onChange={(event) => setConnectNumber(event.target.value)}
-              className="flex-1 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+              className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
               autoComplete="tel"
             />
             <button
               type="button"
               onClick={handleConnect}
               disabled={connectPending}
-              className="shrink-0 rounded-md bg-white px-3 py-2 text-sm font-medium text-black hover:bg-white/90 disabled:opacity-60"
+              className="shrink-0 rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black shadow-glow-md transition hover:bg-white/90 disabled:opacity-60"
             >
               {connectPending ? "Sending…" : "Send code"}
             </button>
@@ -312,15 +312,15 @@ export default function PhoneAndAgentPage() {
             <div
               role="group"
               aria-label="Verification delivery method"
-              className="inline-flex rounded-md border border-white/15 bg-white/5 p-0.5"
+              className="inline-flex rounded-2xl border border-white/10 bg-white/5 p-0.5"
             >
               <button
                 type="button"
                 onClick={() => setConnectChannel("call")}
                 disabled={connectPending}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                className={`rounded-2xl px-3.5 py-1.5 text-sm font-medium transition ${
                   connectChannel === "call"
-                    ? "bg-white text-black shadow"
+                    ? "bg-white text-black shadow-glow-md"
                     : "text-white/70 hover:text-white"
                 } disabled:cursor-not-allowed disabled:opacity-60`}
               >
@@ -330,9 +330,9 @@ export default function PhoneAndAgentPage() {
                 type="button"
                 onClick={() => setConnectChannel("sms")}
                 disabled={connectPending}
-                className={`rounded-md px-3 py-1.5 text-sm font-medium transition ${
+                className={`rounded-2xl px-3.5 py-1.5 text-sm font-medium transition ${
                   connectChannel === "sms"
-                    ? "bg-white text-black shadow"
+                    ? "bg-white text-black shadow-glow-md"
                     : "text-white/70 hover:text-white"
                 } disabled:cursor-not-allowed disabled:opacity-60`}
               >
@@ -354,7 +354,7 @@ export default function PhoneAndAgentPage() {
                 placeholder="6-digit code"
                 value={verifyCode}
                 onChange={(event) => setVerifyCode(event.target.value)}
-                className="flex-1 rounded-md border border-white/15 bg-white/5 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-white/20"
+                className="flex-1 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
                 inputMode="numeric"
                 pattern="[0-9]*"
               />
@@ -362,7 +362,7 @@ export default function PhoneAndAgentPage() {
                 type="button"
                 onClick={handleVerify}
                 disabled={verifyPending}
-                className="shrink-0 rounded-md border border-white/20 px-3 py-2 text-sm text-white/80 hover:text-white disabled:opacity-60"
+                className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white disabled:opacity-60"
               >
                 {verifyPending ? "Verifying…" : "Verify"}
               </button>
@@ -403,7 +403,11 @@ export default function PhoneAndAgentPage() {
                   type="button"
                   onClick={() => updateRouting(mode.value)}
                   disabled={routingPending}
-                  className={`rounded-md border px-3 py-1.5 text-sm ${profile.routingMode === mode.value ? "border-white/60 bg-white/10 text-white" : "border-white/20 text-white/70 hover:text-white"} disabled:opacity-60`}
+                  className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
+                    profile.routingMode === mode.value
+                      ? "border-white/40 bg-white/10 text-white shadow-[0_12px_32px_rgba(5,8,20,0.35)]"
+                      : "border-white/15 text-white/70 hover:text-white"
+                  } disabled:opacity-60`}
                 >
                   {mode.label}
                 </button>
@@ -420,7 +424,11 @@ export default function PhoneAndAgentPage() {
                 type="button"
                 onClick={() => updateAgent(true)}
                 disabled={agentPending}
-                className={`rounded-md border px-3 py-1.5 text-sm ${profile.agentEnabled ? "border-white/60 bg-white/10 text-white" : "border-white/20 text-white/70 hover:text-white"} disabled:opacity-60`}
+                className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
+                  profile.agentEnabled
+                    ? "border-white/40 bg-white/10 text-white shadow-[0_12px_32px_rgba(5,8,20,0.35)]"
+                    : "border-white/15 text-white/70 hover:text-white"
+                } disabled:opacity-60`}
               >
                 On
               </button>
@@ -428,7 +436,11 @@ export default function PhoneAndAgentPage() {
                 type="button"
                 onClick={() => updateAgent(false)}
                 disabled={agentPending}
-                className={`rounded-md border px-3 py-1.5 text-sm ${profile.agentEnabled === false ? "border-white/60 bg-white/10 text-white" : "border-white/20 text-white/70 hover:text-white"} disabled:opacity-60`}
+                className={`rounded-xl border px-4 py-2 text-sm font-medium transition ${
+                  profile.agentEnabled === false
+                    ? "border-white/40 bg-white/10 text-white shadow-[0_12px_32px_rgba(5,8,20,0.35)]"
+                    : "border-white/15 text-white/70 hover:text-white"
+                } disabled:opacity-60`}
               >
                 Off
               </button>
