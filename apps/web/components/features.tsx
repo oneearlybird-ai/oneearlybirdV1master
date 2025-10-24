@@ -50,25 +50,6 @@ export default function Features() {
       return false
     }
 
-    const scheduleFloatingTrigger = () => {
-      let attempts = 0
-      const attempt = () => {
-        if (!pendingAutoClickRef.current) {
-          return
-        }
-        if (invokeFloatingButton()) {
-          return
-        }
-        attempts += 1
-        if (attempts < 480) {
-          requestAnimationFrame(attempt)
-        } else {
-          pendingAutoClickRef.current = false
-        }
-      }
-      requestAnimationFrame(attempt)
-    }
-
     const floatingContainers = Array.from(shadow.querySelectorAll('div')).filter((node) => {
       if (!(node instanceof HTMLElement)) {
         return false
@@ -94,9 +75,8 @@ export default function Features() {
           const isInteractive = !(disabledAttr || ariaDisabled || classDisabled)
           if (isInteractive) {
             floatingReadyRef.current = true
-            if (pendingAutoClickRef.current) {
-              scheduleFloatingTrigger()
-            }
+            pendingAutoClickRef.current = false
+            floatingButton.click()
           }
         })
         observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'class'] })
@@ -139,13 +119,18 @@ export default function Features() {
             }
 
             const handleExpand = () => {
-              scheduleFloatingTrigger()
+              invokeFloatingButton()
+              expandHandlerRef.current = null
             }
 
             expandHandlerRef.current = handleExpand
             window.addEventListener('elevenlabs-agent:expand', handleExpand, { once: true })
 
-            scheduleFloatingTrigger()
+            window.setTimeout(() => {
+              if (pendingAutoClickRef.current) {
+                pendingAutoClickRef.current = false
+              }
+            }, 1500)
           },
           { capture: true },
         )
