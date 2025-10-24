@@ -42,12 +42,31 @@ export default function Features() {
       const floatingButton = shadow.querySelector<HTMLButtonElement>(
         'div[data-eb-widget-floating="true"] button[aria-label="Start call"]',
       )
-      if (floatingButton && !floatingButton.disabled) {
+      if (floatingButton && !floatingButton.disabled && floatingButton.getAttribute('aria-disabled') !== 'true') {
         floatingButton.click()
         pendingAutoClickRef.current = false
         return true
       }
       return false
+    }
+
+    const scheduleFloatingTrigger = () => {
+      let attempts = 0
+      const attempt = () => {
+        if (!pendingAutoClickRef.current) {
+          return
+        }
+        if (invokeFloatingButton()) {
+          return
+        }
+        attempts += 1
+        if (attempts < 480) {
+          requestAnimationFrame(attempt)
+        } else {
+          pendingAutoClickRef.current = false
+        }
+      }
+      requestAnimationFrame(attempt)
     }
 
     const floatingContainers = Array.from(shadow.querySelectorAll('div')).filter((node) => {
@@ -69,20 +88,21 @@ export default function Features() {
       if (floatingButton && !floatingButton.dataset.ebWidgetCircleObserver) {
         floatingButton.dataset.ebWidgetCircleObserver = 'true'
         const observer = new MutationObserver(() => {
-          const disabled = floatingButton.hasAttribute('disabled')
-          if (!disabled) {
+          const disabledAttr = floatingButton.hasAttribute('disabled')
+          const ariaDisabled = floatingButton.getAttribute('aria-disabled') === 'true'
+          const classDisabled = floatingButton.classList.contains('disabled')
+          const isInteractive = !(disabledAttr || ariaDisabled || classDisabled)
+          if (isInteractive) {
             floatingReadyRef.current = true
             if (pendingAutoClickRef.current) {
-              requestAnimationFrame(() => {
-                invokeFloatingButton()
-              })
+              scheduleFloatingTrigger()
             }
           }
         })
-        observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled'] })
+        observer.observe(floatingButton, { attributes: true, attributeFilter: ['disabled', 'aria-disabled', 'class'] })
         observerRegistryRef.current.push(observer)
 
-        if (!floatingButton.disabled) {
+        if (!floatingButton.disabled && floatingButton.getAttribute('aria-disabled') !== 'true') {
           floatingReadyRef.current = true
         }
       }
@@ -119,21 +139,13 @@ export default function Features() {
             }
 
             const handleExpand = () => {
-              const tryClick = () => {
-                if (invokeFloatingButton()) {
-                  expandHandlerRef.current = null
-                  return
-                }
-                if (pendingAutoClickRef.current) {
-                  requestAnimationFrame(tryClick)
-                }
-              }
-
-              requestAnimationFrame(tryClick)
+              scheduleFloatingTrigger()
             }
 
             expandHandlerRef.current = handleExpand
             window.addEventListener('elevenlabs-agent:expand', handleExpand, { once: true })
+
+            scheduleFloatingTrigger()
           },
           { capture: true },
         )
