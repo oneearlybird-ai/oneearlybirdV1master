@@ -12,7 +12,7 @@ type StartStatus = 'idle' | 'starting' | 'ready' | 'retry' | 'error'
 const AUTOSTART_MAX_FRAMES = 120
 const AUTOSTART_TIMEOUT_MS = 2000
 
-const isInteractive = (button: HTMLButtonElement | null): boolean => {
+const isInteractive = (button: HTMLButtonElement | null): button is HTMLButtonElement => {
   if (!button) {
     return false
   }
@@ -48,12 +48,15 @@ export default function Features() {
   }, [])
 
   const invokeFloatingButton = useCallback(() => {
-    const floatingButton = floatingButtonRef.current
-    if (!isInteractive(floatingButton)) {
+    const buttonCandidate = floatingButtonRef.current
+    if (!(buttonCandidate instanceof HTMLButtonElement)) {
+      return false
+    }
+    if (!isInteractive(buttonCandidate)) {
       return false
     }
 
-    floatingButton.click()
+    buttonCandidate.click()
     console.info('widget:start:sent')
     clearPendingAutoClick()
     setStartStatus('ready')

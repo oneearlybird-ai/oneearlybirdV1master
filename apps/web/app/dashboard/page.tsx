@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { dashboardFetch } from "@/lib/dashboardFetch";
+import { useProvisioningStatus } from "@/hooks/useProvisioningStatus";
 import { LiveStatusBadge, RecentCallsPreview } from "@/components/RecentCallsPreview";
 import CopyDiagnostics from "@/components/CopyDiagnostics";
 import CopyOrgIdButton from "@/components/CopyOrgIdButton";
@@ -101,6 +102,24 @@ const initialState = <T,>(): FetchState<T> => ({
   loading: false,
   error: null,
 });
+
+const SUPPORT_EMAIL = "support@oneearlybird.ai";
+
+function formatRelativeTimeLabel(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const parsed = Date.parse(iso);
+  if (Number.isNaN(parsed)) return null;
+  const now = Date.now();
+  const delta = Math.max(0, now - parsed);
+  if (delta < 45_000) return "just now";
+  if (delta < 90_000) return "about a minute ago";
+  const minutes = Math.round(delta / 60_000);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+  const hours = Math.round(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+  const days = Math.round(hours / 24);
+  return `${days} day${days === 1 ? '' : 's'} ago`;
+}
 
 
 function formatMinutes(value: number | null | undefined): string {
@@ -228,6 +247,22 @@ export default function DashboardPage() {
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [trialPlan, setTrialPlan] = useState<PlanDefinition | null>(null);
+
+  const provisioning = useProvisioningStatus(true);
+  const provisioningStatusCode = provisioning.status?.status ?? (provisioning.loading ? "Pending" : null);
+  const provisioningStatusLabel = provisioningStatusCode ?? "Pending";
+  const isProvisioningPending = provisioningStatusLabel === "Pending";
+  const isProvisioningFailed = provisioningStatusLabel === "Failed";
+  const lockInteractive = isProvisioningPending || isProvisioningFailed;
+  const provisioningLastUpdatedLabel = useMemo(
+    () => formatRelativeTimeLabel(provisioning.status?.lastUpdated ?? null),
+    [provisioning.status?.lastUpdated],
+  );
+  const provisioningErrorMessage = useMemo(() => {
+    if (!provisioning.error) return null;
+    if (provisioning.error.kind === "auth") return null;
+    return provisioning.error.message;
+  }, [provisioning.error]);
 
   useEffect(() => {
     return () => {
@@ -465,6 +500,71 @@ export default function DashboardPage() {
   const hasMinutesCap = typeof planCapForUsage === "number" && Number.isFinite(planCapForUsage) && planCapForUsage > 0;
   const minutesThresholds = hasMinutesCap ? [0.5, 0.8, 0.95] : [];
   const minutesProgressClass = minutesProgress >= 0.95 ? "bg-rose-400" : minutesProgress >= 0.8 ? "bg-amber-400" : minutesProgress >= 0.5 ? "bg-amber-300" : "bg-emerald-400";
+  const usedMinutesValue = Number(usage?.monthlyMinutes ?? usage?.usedMinutes ?? 0);
+  const minutesUsagePercent =
+    hasMinutesCap && planCapForUsage && planCapForUsage > 0 ? Math.max(0, Math.min(1, usedMinutesValue / planCapForUsage)) : null;
+  const minutesAlert = useMemo(() => {
+    if (!hasMinutesCap || minutesUsagePercent === null) return null;
+    if (minutesUsagePercent >= 0.95) {
+      return {
+        tone: "critical" as const,
+        message: "You’ve used about 95% of your monthly minutes. Reach out if you need a top-up.",
+      };
+    }
+    if (minutesUsagePercent >= 0.8) {
+      return {
+        tone: "warning" as const,
+        message: "You’re past 80% of your minutes. We’ll email the account owner if you approach the cap.",
+      };
+    }
+    if (minutesUsagePercent >= 0.5) {
+      return {
+        tone: "info" as const,
+        message: "Halfway through this month’s minutes. Keep an eye on usage below.",
+      };
+    }
+    return null;
+  }, [hasMinutesCap, minutesUsagePercent]);
+  const minutesAlertClass =
+    minutesAlert?.tone === "critical"
+      ? "border-rose-500/40 bg-rose-500/10 text-rose-100"
+      : minutesAlert?.tone === "warning"
+        ? "border-amber-400/40 bg-amber-400/10 text-amber-100"
+        : minutesAlert?.tone === "info"
+          ? "border-sky-400/30 bg-sky-400/10 text-sky-100"
+          : "";
+  const provisioningStatusToneClass = isProvisioningFailed ? "text-rose-300" : isProvisioningPending ? "text-amber-300" : "text-emerald-300";
+  const provisioningStatusDotClass = isProvisioningFailed ? "bg-rose-400" : isProvisioningPending ? "bg-amber-400" : "bg-emerald-400";
+  const provisioningStatusCardClass = isProvisioningFailed
+    ? "border-rose-500/50 bg-rose-500/10"
+    : isProvisioningPending
+      ? "border-amber-400/40 bg-amber-400/10"
+      : "border-emerald-400/40 bg-emerald-400/10";
+  const provisioningStatusHeadline = isProvisioningFailed
+    ? "Setup needs attention"
+    : isProvisioningPending
+      ? "Automation is finishing setup"
+      : "AI Receptionist is live";
+  const provisioningStatusSubtext = isProvisioningFailed
+    ? "Retry provisioning from the setup page or contact support."
+    : isProvisioningPending
+      ? "We’re wiring Twilio and IAM policies. Metrics unlock automatically once ready."
+      : "Answering, booking, and logging into your CRM.";
+  const provisioningActions = useMemo(() => {
+    if (isProvisioningFailed) {
+      return [
+        { href: "/account/pending", label: "View setup run", primary: true },
+        { href: `mailto:${SUPPORT_EMAIL}?subject=Provisioning%20failure`, label: "Contact support", primary: false },
+      ];
+    }
+    if (isProvisioningPending) {
+      return [{ href: "/account/pending", label: "Track setup", primary: true }];
+    }
+    return [
+      { href: "/dashboard/calls", label: "View calls", primary: true },
+      { href: "/dashboard/integrations", label: "Integrations", primary: false },
+    ];
+  }, [isProvisioningFailed, isProvisioningPending]);
 
   const isSuspended = (profile?.status ?? "").toLowerCase() === "suspended";
   const showCardOnFileBanner = !isSuspended && planStatus === "trial-active" && summary?.hasPaymentMethod === true;
@@ -505,58 +605,104 @@ export default function DashboardPage() {
     if (trialCountdownLabel) hints.push(trialCountdownLabel);
     return hints.length > 0 ? hints.join(" • ") : undefined;
   }, [planDisplay?.hint, trialCountdownLabel]);
+  const integrationStubs = useMemo(
+    () => [
+      {
+        id: "google-calendar",
+        title: "Google Calendar",
+        description: "Two-way availability sync and instant booking updates.",
+      },
+      {
+        id: "microsoft-365",
+        title: "Microsoft 365",
+        description: "Keep Outlook calendars aligned with agent bookings.",
+      },
+      {
+        id: "calendly",
+        title: "Calendly",
+        description: "Embed team scheduling links for overflow scenarios.",
+      },
+      {
+        id: "crm-suite",
+        title: "CRM (HubSpot & Salesforce)",
+        description: "Auto-log calls, outcomes, and follow-ups in your pipeline.",
+      },
+    ],
+    [],
+  );
 
   return (
     <>
       <section className="mx-auto max-w-6xl px-6 py-8">
-      <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome back</h1>
-      <p className="mt-2 text-white/70">
-        Your AI receptionist is{" "}
-        <span className="text-emerald-400">Active</span> and handling calls.{" "}
-        <span className="ml-2">
-          <LiveStatusBadge />
-        </span>
-      </p>
-      <div className="mt-1 flex items-center gap-3 text-xs text-white/60">
-        <span>
-          What’s new:{" "}
-          <a className="underline" href="/changelog">
-            See latest updates
-          </a>
-        </span>
-        <span className="hidden sm:inline">•</span>
-        <span className="hidden sm:inline">
-          <CopyPageLinkButton label="Copy dashboard link" />
-        </span>
-      </div>
-      <PortingBanner />
-      <div className="mt-4 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <span className="inline-flex h-2 w-2 rounded-full bg-emerald-400" />
-          <div>
-            <div className="font-medium">AI Receptionist is live</div>
-            <div className="text-sm text-white/60">Answering, booking, and logging into your CRM</div>
+        <h1 className="text-2xl md:text-3xl font-semibold tracking-tight">Welcome back</h1>
+        <div className="mt-2 flex flex-col gap-2 text-sm text-white/70 md:flex-row md:items-center md:gap-4">
+          <span>
+            Provisioning status:
+            <span className={`ml-2 font-semibold ${provisioningStatusToneClass}`}>{provisioningStatusLabel}</span>
+            {provisioningLastUpdatedLabel ? <span className="ml-2 text-white/40">Updated {provisioningLastUpdatedLabel}</span> : null}
+          </span>
+          <span className="flex items-center gap-2 text-xs text-white/60">
+            <LiveStatusBadge />
+          </span>
+        </div>
+        <p className="mt-1 text-sm text-white/60 md:max-w-2xl">
+          {isProvisioningFailed
+            ? "Automation is paused—retry from the setup page below or reach out if you need help."
+            : isProvisioningPending
+              ? "We’re finishing the automation run. Metrics and actions unlock automatically once Twilio is provisioned."
+              : "Your AI receptionist is handling inbound calls, booking appointments, and updating your CRM."}
+        </p>
+        {provisioningErrorMessage ? (
+          <div className="mt-2 inline-flex items-center gap-2 rounded-full border border-rose-500/40 bg-rose-500/10 px-3 py-1 text-xs text-rose-100">
+            <span className="h-1.5 w-1.5 rounded-full bg-rose-400" />
+            {provisioningErrorMessage}
+          </div>
+        ) : null}
+        <div className="mt-1 flex items-center gap-3 text-xs text-white/60">
+          <span>
+            What’s new:{" "}
+            <a className="underline" href="/changelog">
+              See latest updates
+            </a>
+          </span>
+          <span className="hidden sm:inline">•</span>
+          <span className="hidden sm:inline">
+            <CopyPageLinkButton label="Copy dashboard link" />
+          </span>
+        </div>
+        <PortingBanner />
+        <div className={`mt-4 rounded-2xl border px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur ${provisioningStatusCardClass}`}>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div className="flex items-start gap-3">
+              <span className={`mt-1 inline-flex h-2 w-2 rounded-full ${provisioningStatusDotClass}`} />
+              <div>
+                <div className="font-medium text-white">{provisioningStatusHeadline}</div>
+                <div className="text-sm text-white/70">{provisioningStatusSubtext}</div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-2">
+              {provisioningActions.map((action) => (
+                <a key={action.label} href={action.href} className={action.primary ? "btn btn-primary" : "btn btn-outline"}>
+                  {action.label}
+                </a>
+              ))}
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          <a href="/dashboard/calls" className="btn btn-primary">
-            View Calls
-          </a>
-          <a href="/dashboard/integrations" className="btn btn-outline">
-            Integrations
-          </a>
-        </div>
-      </div>
 
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
-        {planLoaded && planDisplay ? (
+        {lockInteractive ? (
+          <KpiSkeleton />
+        ) : planLoaded && planDisplay ? (
           <Kpi label="Current plan" value={planDisplay.value} hint={planHint} />
         ) : (profileState.error || summaryState.error) ? (
           <InlineErrorCard message="We couldn’t load your plan details. Please refresh." />
         ) : (
           <KpiSkeleton />
         )}
-        {usageState.loading ? (
+        {lockInteractive ? (
+          <KpiSkeleton />
+        ) : usageState.loading ? (
           <KpiSkeleton />
         ) : usageState.error ? (
           <InlineErrorCard message="Usage data is unavailable right now. Please try again." />
@@ -571,7 +717,9 @@ export default function DashboardPage() {
             footer={trialCountdownLabel ? <span>{trialCountdownLabel}</span> : undefined}
           />
         )}
-        {usageState.loading ? (
+        {lockInteractive ? (
+          <KpiSkeleton />
+        ) : usageState.loading ? (
           <KpiSkeleton />
         ) : usageState.error ? (
           <InlineErrorCard message="We couldn’t load call metrics. Refresh to retry." />
@@ -582,7 +730,9 @@ export default function DashboardPage() {
             hint={concurrencyCap ? `Concurrency cap ${concurrencyCap}` : undefined}
           />
         )}
-        {usageState.loading ? (
+        {lockInteractive ? (
+          <KpiSkeleton />
+        ) : usageState.loading ? (
           <KpiSkeleton />
         ) : usageState.error ? (
           <InlineErrorCard message="Bookings will reappear once data reloads." />
@@ -590,6 +740,11 @@ export default function DashboardPage() {
           <Kpi label="Booked (7d)" value={bookedLabel} hint={`Voicemail deflected ${deflectedLabel}`} />
         )}
       </div>
+      {!lockInteractive && minutesAlert ? (
+        <div className={`mt-3 rounded-2xl border px-4 py-3 text-sm ${minutesAlertClass}`}>
+          {minutesAlert.message}
+        </div>
+      ) : null}
       <div className="mt-3 space-y-3">
         {isSuspended ? (
           <div className="flex flex-col gap-3 rounded-2xl border border-rose-500/50 bg-rose-500/10 px-4 py-4 text-sm text-rose-100 sm:flex-row sm:items-center sm:justify-between">
@@ -624,7 +779,11 @@ export default function DashboardPage() {
             />
           </div>
         ) : null}
-        {planLoaded ? (
+        {lockInteractive ? (
+          <div className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white/70 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
+            Plan and billing actions unlock once provisioning finishes.
+          </div>
+        ) : planLoaded ? (
           <PlanActionButtons summary={summary} profile={profile} onRefresh={fetchAll} onRequestTrial={openTrialModal} />
         ) : (profileState.error || summaryState.error) ? (
           <InlineErrorCard message="Plan actions unavailable while we reconnect. Try refreshing the page." />
@@ -644,7 +803,11 @@ export default function DashboardPage() {
         </p>
       ) : null}
 
-      {usageHasData ? (
+      {lockInteractive ? (
+        <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
+          Provisioning is still running. Live usage charts unlock once the setup branch completes.
+        </div>
+      ) : usageHasData ? (
         <ThisWeekPanel
           periods={usage?.periods ?? []}
           sparklinePoints={sparklinePoints}
@@ -694,6 +857,27 @@ export default function DashboardPage() {
         </div>
       </div>
 
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
+        <h2 className="font-medium">Integrations</h2>
+        <p className="mt-1 text-sm text-white/60">
+          Preview the upcoming connections. Buttons route to the integrations workspace; tonight’s flows are UI-only.
+        </p>
+        <div className="mt-4 grid gap-3 sm:grid-cols-2">
+          {integrationStubs.map((stub) => (
+            <div key={stub.id} className="rounded-2xl border border-white/10 bg-white/5 px-4 py-4 text-sm text-white/70">
+              <div className="text-base font-semibold text-white">{stub.title}</div>
+              <p className="mt-1 text-xs text-white/60">{stub.description}</p>
+              <a
+                href={`/dashboard/integrations?focus=${encodeURIComponent(stub.id)}`}
+                className="mt-3 inline-flex items-center justify-center rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-xs font-medium text-white transition hover:border-white/30"
+              >
+                Open integrations
+              </a>
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
         <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
@@ -701,7 +885,11 @@ export default function DashboardPage() {
             View all
           </a>
         </div>
-        <RecentCallsPreview />
+        {lockInteractive ? (
+          <div className="px-5 pb-6 text-sm text-white/60">We’ll populate recent calls once provisioning finishes.</div>
+        ) : (
+          <RecentCallsPreview />
+        )}
       </div>
 
         <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur">
@@ -710,6 +898,7 @@ export default function DashboardPage() {
             <li>✅ Connect phone number (or <a className="underline" href="/support/porting">set up forwarding</a>)</li>
             <li>✅ Connect Google Calendar</li>
             <li>⬜ Connect CRM (HubSpot/Salesforce)</li>
+            <li>⬜ Add Calendly handoff (coming soon)</li>
             <li>⬜ Customize greeting & FAQs</li>
             <li>⬜ Make a test call</li>
           </ul>
