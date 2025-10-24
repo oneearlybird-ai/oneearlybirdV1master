@@ -21,7 +21,11 @@ export async function dashboardFetch(path: string, init: ApiFetchInit = {}): Pro
   let response: Response | null = null;
 
   while (attempt <= RETRY_DELAYS_MS.length) {
-    response = await apiFetch(path, init);
+    const requestInit: ApiFetchInit = {
+      ...init,
+      suppressAuthRedirect: init.suppressAuthRedirect ?? true,
+    };
+    response = await apiFetch(path, requestInit);
     if (response.status !== 503) {
       return response;
     }

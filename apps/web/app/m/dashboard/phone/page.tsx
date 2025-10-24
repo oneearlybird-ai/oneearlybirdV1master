@@ -32,7 +32,7 @@ export default function MobilePhonePage() {
   const refreshProfile = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await dashboardFetch("/tenants/profile", { cache: "no-store" });
+      const res = await dashboardFetch("/api/dashboard/profile", { cache: "no-store" });
       if (!res.ok) {
         const text = await res.text();
         throw new Error(text || `profile_${res.status}`);

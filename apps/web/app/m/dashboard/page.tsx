@@ -120,9 +120,9 @@ export default function MobileDashboardPage() {
     setCalls((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const [profileRes, summaryRes, usageRes, callsRes] = await Promise.all([
-        dashboardFetch("/tenants/profile", { cache: "no-store" }),
+        dashboardFetch("/api/dashboard/profile", { cache: "no-store" }),
         dashboardFetch("/billing/summary", { cache: "no-store" }),
-        dashboardFetch("/usage/summary?window=week", { cache: "no-store" }),
+        dashboardFetch("/api/dashboard/usage?window=week", { cache: "no-store" }),
         dashboardFetch("/calls/list", {
           method: "POST",
           cache: "no-store",

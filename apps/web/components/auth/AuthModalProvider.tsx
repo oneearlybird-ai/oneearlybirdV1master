@@ -38,9 +38,9 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   const warmDashboardData = useCallback(async () => {
     try {
       await Promise.all([
-        apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/api/dashboard/profile", { cache: "no-store" }),
         apiFetch("/billing/summary", { cache: "no-store" }),
-        apiFetch("/usage/summary?window=week", { cache: "no-store" }),
+        apiFetch("/api/dashboard/usage?window=week", { cache: "no-store" }),
       ]);
     } catch (error) {
       console.warn("auth_refresh_failed", {
@@ -52,7 +52,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   const refreshBillingState = useCallback(async () => {
     try {
       await Promise.all([
-        apiFetch("/tenants/profile", { cache: "no-store" }),
+        apiFetch("/api/dashboard/profile", { cache: "no-store" }),
         apiFetch("/billing/summary", { cache: "no-store" }),
       ]);
     } catch (error) {

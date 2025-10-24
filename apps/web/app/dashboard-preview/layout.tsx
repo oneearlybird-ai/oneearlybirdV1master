@@ -25,7 +25,7 @@ export default function DashboardPreviewLayout({ children }: { children: ReactNo
   const [build, setBuild] = useState<string|undefined>(undefined);
   useEffect(() => {
     let cancelled = false;
-    fetch('/api/usage/summary', { cache: 'no-store' })
+    fetch('/api/api/dashboard/usage', { cache: 'no-store' })
       .then(async r => r.ok ? (await r.json()) : null)
       .then((j) => { if (!cancelled && j?.version) setBuild(String(j.version).slice(0,7)); })
       .catch(() => {});

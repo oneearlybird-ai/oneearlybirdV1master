@@ -3,7 +3,7 @@ export const dynamic = "force-dynamic";
 
 async function getSummary() {
   try {
-    const res = await dashboardFetch('/usage/summary', { cache: 'no-store' });
+    const res = await dashboardFetch('/api/dashboard/usage', { cache: 'no-store' });
     if (!res.ok) return { ok: false };
     return await res.json();
   } catch {

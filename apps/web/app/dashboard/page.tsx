@@ -276,8 +276,8 @@ export default function DashboardPage() {
     setSummaryState((prev) => ({ ...prev, loading: true, error: null }));
     try {
       const [profileRes, usageRes, summaryRes] = await Promise.all([
-        dashboardFetch("/tenants/profile", { cache: "no-store" }),
-        dashboardFetch("/usage/summary?window=week", { cache: "no-store" }),
+        dashboardFetch("/api/dashboard/profile", { cache: "no-store" }),
+        dashboardFetch("/api/dashboard/usage?window=week", { cache: "no-store" }),
         dashboardFetch("/billing/summary", { cache: "no-store" }),
       ]);
       if (!mountedRef.current) return;

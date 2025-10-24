@@ -114,7 +114,7 @@ function UsageOverviewCard() {
   const [state, setState] = React.useState<{ loading: boolean; ok?: boolean; version?: string }>({ loading: true });
   React.useEffect(() => {
     let cancelled = false;
-    fetch('/api/usage/summary', { cache: 'no-store' })
+    fetch('/api/api/dashboard/usage', { cache: 'no-store' })
       .then(async r => ({ ok: r.ok, body: r.ok ? await r.json() : null }))
       .then(({ ok, body }) => { if (!cancelled) setState({ loading: false, ok, version: body?.version }); })
       .catch(() => { if (!cancelled) setState({ loading: false, ok: false }); });

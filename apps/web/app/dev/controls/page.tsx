@@ -28,7 +28,7 @@ export default function DevControls() {
       <section className={styles.section}>
         <button onClick={() => call('/api/status')}>GET /api/status</button>
         <button onClick={() => call('/api/routes/manifest')}>GET /api/routes/manifest</button>
-        <button onClick={() => call('/api/usage/summary')}>GET /api/usage/summary</button>
+        <button onClick={() => call('/api/dashboard/usage')}>GET /api/dashboard/usage</button>
         <button onClick={() => call('/api/ratelimit-test')}>GET /api/ratelimit-test</button>
         <button onClick={() => call('/api/voice/incoming', { method:'POST' })}>POST /api/voice/incoming</button>
         <button onClick={() => call('/api/stripe/webhook', { method:'POST' })}>POST /api/stripe/webhook</button>

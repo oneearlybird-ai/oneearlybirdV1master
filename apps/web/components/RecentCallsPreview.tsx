@@ -398,7 +398,7 @@ export function LiveStatusBadge() {
 
   useEffect(() => {
     let cancelled = false;
-    apiFetch("/usage/summary?window=week", { cache: "no-store" })
+    apiFetch("/api/dashboard/usage?window=week", { cache: "no-store" })
       .then(async (res) => {
         if (cancelled) return;
         if (!res.ok) {

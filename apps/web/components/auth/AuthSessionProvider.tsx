@@ -72,7 +72,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
 
   const fetchProfile = useCallback(async (): Promise<FetchResult> => {
     try {
-      const response = await dashboardFetch("/tenants/profile", { cache: "no-store", suppressAuthRedirect: true });
+      const response = await dashboardFetch("/api/dashboard/profile", { cache: "no-store", suppressAuthRedirect: true });
       if (response.ok) {
         const data = (await response.json().catch(() => ({}))) as Record<string, unknown>;
         const authenticated = typeof data.authenticated === "boolean" ? data.authenticated : true;

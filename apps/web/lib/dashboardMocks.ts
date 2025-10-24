@@ -179,14 +179,14 @@ function safeJsonParse(value: string | undefined | null): any | undefined {
 const resolvers: MockResolver[] = [
   (pathname, searchParams, init) => {
     const method = (init.method || "GET").toUpperCase();
-    if (pathname === "/tenants/profile" && method === "GET") {
+    if (pathname === "/api/dashboard/profile" && method === "GET") {
       return jsonResponse(mockProfile);
     }
     return null;
   },
   (pathname, searchParams, init) => {
     const method = (init.method || "GET").toUpperCase();
-    if (pathname === "/usage/summary" && method === "GET") {
+    if (pathname === "/api/dashboard/usage" && method === "GET") {
       const windowParam = searchParams.get("window");
       if (windowParam) {
         return jsonResponse({ ...mockUsageSummary, window: windowParam });

@@ -29,8 +29,7 @@ function resolveBase(): string {
 function normalisePath(path: string): string {
   if (!path) return "/";
   if (/^https?:\/\//i.test(path)) return path;
-  const prefixed = path.startsWith("/") ? path : `/${path}`;
-  return prefixed.replace(/^\/api\//, "/");
+  return path.startsWith("/") ? path : `/${path}`;
 }
 
 export function toApiUrl(path: string): string {

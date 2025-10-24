@@ -184,7 +184,7 @@ export default function BillingPage() {
     setPlanError(null);
     try {
       const [profileRes, summaryRes] = await Promise.all([
-        dashboardFetch("/tenants/profile", { cache: "no-store" }),
+        dashboardFetch("/api/dashboard/profile", { cache: "no-store" }),
         dashboardFetch("/billing/summary", { cache: "no-store" }),
       ]);
       if (!mountedRef.current) return;

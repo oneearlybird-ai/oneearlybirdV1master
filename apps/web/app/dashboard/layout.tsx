@@ -31,7 +31,7 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const guardNotifiedRef = useRef(false);
   useEffect(() => {
     let cancelled = false;
-    dashboardFetch('/usage/summary', { cache: 'no-store' })
+    dashboardFetch('/api/dashboard/usage', { cache: 'no-store' })
       .then(async r => r.ok ? (await r.json()) : null)
       .then((j) => { if (!cancelled && j?.version) setBuild(String(j.version).slice(0,7)); })
       .catch(() => { return; });

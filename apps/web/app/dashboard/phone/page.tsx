@@ -105,7 +105,7 @@ export default function PhoneAndAgentPage() {
     setLoading(true);
     setError(null);
     try {
-      const res = await dashboardFetch("/tenants/profile", { cache: "no-store" });
+      const res = await dashboardFetch("/api/dashboard/profile", { cache: "no-store" });
       if (!res.ok) throw new Error(`profile_${res.status}`);
       const data = (await res.json()) as Record<string, unknown> & PhoneProfile;
       const routing =
