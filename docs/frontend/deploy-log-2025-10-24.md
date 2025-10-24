@@ -11,7 +11,7 @@
   - Dashboard read-only gating while Pending: Pending validation post-deploy
 
 - **Timestamp (UTC)**: 2025-10-24T19:50:17Z
-- **Commit**: f6fe154
+- **Commit**: ae26a5f
 - **Summary**: Forced Google OAuth chooser, send all post-auth flows through `/account/pending`, and tightened middleware exclusions to prevent auth loops.
 - **Verification**:
   - Lint/build locally: ✅ (`npm --prefix apps/web run lint`, `npm --prefix apps/web run build`)
