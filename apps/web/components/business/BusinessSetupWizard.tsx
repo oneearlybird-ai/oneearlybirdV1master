@@ -7,6 +7,7 @@ import StepUpDialog from "@/components/business/StepUpDialog";
 import { toast } from "@/components/Toasts";
 import { formatAddressLine, formatDisplayPhone, formatE164Input } from "@/lib/format";
 import Sheet from "@/components/mobile/Sheet";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 
 type AddressNormalized = {
   line1: string;
@@ -96,6 +97,7 @@ function WizardContainer({ open, onClose, variant = "modal", children }: { open:
 }
 
 export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, variant = "modal" }: BusinessSetupWizardProps) {
+  const { status: sessionStatus, profile } = useAuthSession();
   const [step, setStep] = useState(0);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +122,8 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
   const [locations, setLocations] = useState<number | "" | null>(seed?.locations ?? 1);
   const [website, setWebsite] = useState(seed?.website ?? "");
 
+  const tenantReady = useMemo(() => sessionStatus === "authenticated" && Boolean(profile?.tenantId), [profile?.tenantId, sessionStatus]);
+
   useEffect(() => {
     if (!open) {
       setStep(0);
@@ -137,28 +141,50 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
   }, [open, seed?.aiConsent, seed?.businessEmail, seed?.businessName, seed?.businessPhone, seed?.contactEmail, seed?.phoneE164, seed?.timezone]);
 
   useEffect(() => {
-    if (!open) return undefined;
+    if (!open || !tenantReady) {
+      setSuggestions([]);
+      setLoadingSuggestions(false);
+      return undefined;
+    }
     if (query.trim().length < 3) {
       setSuggestions([]);
       return undefined;
     }
+    const controller = new AbortController();
     const handle = window.setTimeout(async () => {
       setLoadingSuggestions(true);
+      setError(null);
       try {
-        const res = await apiFetch(`/places/suggest?q=${encodeURIComponent(query.trim())}&limit=5`, { cache: "no-store" });
+        const res = await apiFetch(`/places/suggest?q=${encodeURIComponent(query.trim())}&limit=5`, {
+          cache: "no-store",
+          suppressAuthRedirect: true,
+          signal: controller.signal,
+          headers: { accept: "application/json" },
+        });
+        if (res.status === 401 || res.status === 403) {
+          setError("Can’t verify address yet. Check your connection or try again.");
+          setSuggestions([]);
+          return;
+        }
         if (!res.ok) {
           throw new Error(`suggest_${res.status}`);
         }
         const json = (await res.json()) as { items?: Suggestion[] };
         setSuggestions(Array.isArray(json?.items) ? json.items : []);
-      } catch {
+      } catch (err) {
+        if ((err as Error)?.name === "AbortError") {
+          return;
+        }
         setSuggestions([]);
       } finally {
         setLoadingSuggestions(false);
       }
     }, 320);
-    return () => window.clearTimeout(handle);
-  }, [open, query]);
+    return () => {
+      controller.abort();
+      window.clearTimeout(handle);
+    };
+  }, [open, query, tenantReady]);
 
   const resetFieldError = useCallback((field: string) => {
     setFieldErrors((prev) => {
@@ -169,18 +195,28 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
   }, []);
 
   const selectSuggestion = async (item: Suggestion) => {
+    if (!tenantReady) {
+      setError("We’re still finalising your account. Try again shortly.");
+      return;
+    }
     try {
       setPending(true);
       setError(null);
       const token = await fetchCsrfToken();
       const res = await apiFetch("/places/resolve", {
         method: "POST",
+        suppressAuthRedirect: true,
         headers: {
           "content-type": "application/json",
           "x-csrf-token": token,
+          accept: "application/json",
         },
         body: JSON.stringify({ id: item.id }),
       });
+      if (res.status === 401 || res.status === 403) {
+        setError("Can’t verify address yet. Check your connection or try again.");
+        return;
+      }
       if (!res.ok) {
         throw new Error(`resolve_${res.status}`);
       }
