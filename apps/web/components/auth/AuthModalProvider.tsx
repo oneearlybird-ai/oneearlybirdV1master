@@ -117,13 +117,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   useEffect(() => {
     if (typeof window === "undefined") return undefined;
     const currentOrigin = window.location.origin;
-    const allowedOrigins = new Set<string>([
-      "https://oneearlybird.ai",
-      "https://m.oneearlybird.ai",
-      "https://www.oneearlybird.ai",
-      "https://api.oneearlybird.ai",
-      currentOrigin,
-    ]);
+    const allowedOrigins = new Set<string>(["https://oneearlybird.ai", "https://m.oneearlybird.ai", currentOrigin]);
 
     const dispatchAppEvent = (
       type: "auth:success" | "auth:logout" | "billing:checkout:success" | "billing:portal:returned",
@@ -149,8 +143,6 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
     };
 
     const handleOAuthSuccess = () => {
-      resolvePopupMessage("oauthResult");
-      resolvePopupMessage("auth-success");
       resolvePopupMessage("oauth:success");
       const flow = consumeActiveAuthFlow();
       void warmDashboardData();
@@ -182,8 +174,6 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
 
     const handleNormalizedEvent = (type: string) => {
       switch (type) {
-        case "oauthResult":
-          return;
         case "oauth:success":
         case "auth:success":
           handleOAuthSuccess();

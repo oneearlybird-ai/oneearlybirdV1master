@@ -11,7 +11,7 @@ type Provider = { id: string; name: string; connected: boolean };
 function Logo({ id, alt }: { id: string; alt: string }) {
   const src = resolveLogoSrc(id) ?? `/logos/${id}.svg`;
   return (
-    <div className="flex h-12 w-36 items-center justify-center overflow-hidden rounded-xl border border-white/10 bg-white/90 px-3 py-2 shadow-[0_16px_45px_rgba(5,8,20,0.35)]">
+    <div className="h-10 w-32 overflow-hidden rounded-lg border border-white/10 bg-white px-3 py-1.5 flex items-center justify-center">
       <img
         src={src}
         className="block max-h-6 max-w-full object-contain"
@@ -25,16 +25,16 @@ function Logo({ id, alt }: { id: string; alt: string }) {
 
 function Card({ title, desc, action, logo }: { title: string; desc: string; action: React.ReactNode; logo?: React.ReactNode }) {
   return (
-    <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
-      <div className="flex items-center justify-between gap-3">
+    <div className="rounded-2xl border border-white/10 bg-white/5 p-4 eb-surface">
+      <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           {logo}
           <div className="font-medium">{title}</div>
         </div>
         {/* status removed per request */}
       </div>
-      <div className="mt-2 text-sm text-white/70">{desc}</div>
-      <div className="mt-4">{action}</div>
+      <div className="text-sm text-white/70 mt-1">{desc}</div>
+      <div className="mt-3">{action}</div>
     </div>
   );
 }
@@ -57,9 +57,7 @@ export default function IntegrationsPage() {
     return () => { cancelled = true };
   }, []);
 
-type IntegrationItem = { id: string; title: string; desc: string; oauth?: boolean; connectId?: string };
-
-const items: IntegrationItem[] = [
+  const items: Array<{ id: string; title: string; desc: string; oauth?: boolean; connectId?: string }> = [
     { id: 'google-calendar', title: 'Calendar (Google)', desc: 'Scheduling on your business calendar', oauth: true, connectId: 'google-calendar' },
     { id: 'microsoft-365', title: 'Calendar (Microsoft 365)', desc: 'Outlook calendar support' },
     { id: 'hubspot', title: 'CRM (HubSpot)', desc: 'Log calls and leads automatically', oauth: true, connectId: 'hubspot' },
@@ -71,20 +69,11 @@ const items: IntegrationItem[] = [
     { id: 'aws', title: 'AWS S3', desc: 'Secure storage and retrieval' },
   ];
 
-  const actionFor = (it: IntegrationItem) => {
+  const actionFor = (it: { id: string; oauth?: boolean; connectId?: string }) => {
     const p = providers[it.connectId || it.id];
     const connected = !!p?.connected;
     if (loading) return <div className="skeleton skeleton-badge" aria-hidden />;
-    if (connected)
-      return (
-        <button
-          className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/70 transition disabled:cursor-not-allowed"
-          disabled
-          aria-disabled
-        >
-          Connected
-        </button>
-      );
+    if (connected) return <button className="btn btn-outline btn-sm" disabled aria-disabled>Connected</button>;
     if (it.oauth && it.connectId) {
       const onConnect = async () => {
         try {
@@ -101,27 +90,9 @@ const items: IntegrationItem[] = [
           toast('Connect failed', 'error');
         }
       };
-      return (
-        <button
-          className="inline-flex items-center justify-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-black shadow-glow-md transition hover:bg-white/90"
-          type="button"
-          onClick={onConnect}
-          title={`Connect to ${it.title}`}
-        >
-          Connect
-        </button>
-      );
+      return <button className="btn btn-primary btn-sm" type="button" onClick={onConnect} title="Connect to {it.title}">Connect</button>;
     }
-    return (
-      <button
-        className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/60 transition disabled:cursor-not-allowed"
-        disabled
-        aria-disabled
-        title="Coming soon"
-      >
-        Coming soon
-      </button>
-    );
+    return <button className="btn btn-outline btn-sm" disabled aria-disabled title="Coming soon">Coming soon</button>;
   };
 
   return (

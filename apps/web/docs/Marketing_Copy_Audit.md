@@ -8,7 +8,7 @@
 | `/m` | ✅ Mobile hero & step cards reflect EarlyBird workflows. | ✅ Mobile card structure + safe-area padding maintained. | CTA destinations unchanged. |
 | `/m/pricing` | ✅ Plan blurbs/features align with updated desktop copy. | ✅ Only text within `MobileCardContent` edited. | CTA remains `/m/dashboard/billing`. |
 | `/docs` | ⚙️ Already EarlyBird; no changes required. | ✅ | References managed telephony + security guardrails. |
-| `/support` & `/support/porting` | ✅ Copy references EarlyBird support emails + forwarding steps. | ✅ Layout left untouched. | No new assets. |
+| `/support` & `/support/porting` | ✅ Copy references EarlyBird support emails + LOA steps. | ✅ Layout left untouched. | No new assets. |
 | `/changelog` | ✅ Entries reference EarlyBird releases. | ✅ | No edits needed. |
 | `/status` | ✅ Messaging matches EarlyBird monitoring/security stance. | ✅ | No changes needed. |
 

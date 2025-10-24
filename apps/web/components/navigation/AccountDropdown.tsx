@@ -73,7 +73,7 @@ export function AccountDropdown() {
   }
 
   return (
-    <div className="relative inline-block flex-none" ref={containerRef}>
+    <div className="relative" ref={containerRef}>
       <button
         type="button"
         onClick={() => setOpen((prev) => !prev)}
@@ -92,34 +92,32 @@ export function AccountDropdown() {
       {open ? (
         <div
           role="menu"
-          className="absolute right-0 top-full z-50 mt-2 w-fit min-w-[12rem] overflow-hidden rounded-3xl border border-white/12 bg-[#05050b]/97 py-3 text-sm shadow-[0_28px_70px_rgba(5,5,11,0.45)] backdrop-blur sm:min-w-[14rem] sm:max-w-[calc(100vw-2.5rem)] md:w-64 md:max-w-none"
+          className="absolute right-0 z-50 mt-2 w-64 max-w-xs rounded-2xl border border-white/15 bg-neutral-950/95 p-2 text-sm shadow-2xl shadow-black/30"
         >
-          <div className="px-4 pb-2 text-xs uppercase tracking-wide text-white/50">Account</div>
-          <div className="space-y-0.5">
-            <Link
-              role="menuitem"
-              href={getDashboardPath()}
-              className="flex items-center gap-2 rounded-2xl px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
-              onClick={() => setOpen(false)}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                <path d="M3 12l7-7 7 7M5 10v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" strokeLinecap="round" strokeLinejoin="round" />
-              </svg>
-              Dashboard
-            </Link>
-            <Link
-              role="menuitem"
-              href={getProfileCapturePath()}
-              className="flex items-center gap-2 rounded-2xl px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
-              onClick={() => setOpen(false)}
-            >
-              <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
-                <path d="M12 14c3.866 0 7-1.79 7-4s-3.134-4-7-4-7 1.79-7 4 3.134 4 7 4Z" />
-                <path d="M5 10v4c0 2.21 3.134 4 7 4s7-1.79 7-4v-4" />
-              </svg>
-              Profile details
-            </Link>
-          </div>
+          <div className="px-3 py-2 text-xs uppercase tracking-wide text-white/50">Account</div>
+          <Link
+            role="menuitem"
+            href={getDashboardPath()}
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
+            onClick={() => setOpen(false)}
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <path d="M3 12l7-7 7 7M5 10v8a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-8" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+            Dashboard
+          </Link>
+          <Link
+            role="menuitem"
+            href={getProfileCapturePath()}
+            className="flex items-center gap-2 rounded-xl px-3 py-2 text-white/80 transition hover:bg-white/10 hover:text-white"
+            onClick={() => setOpen(false)}
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
+              <path d="M12 14c3.866 0 7-1.79 7-4s-3.134-4-7-4-7 1.79-7 4 3.134 4 7 4Z" />
+              <path d="M5 10v4c0 2.21 3.134 4 7 4s7-1.79 7-4v-4" />
+            </svg>
+            Profile details
+          </Link>
           <button
             type="button"
             role="menuitem"
@@ -127,7 +125,7 @@ export function AccountDropdown() {
               void handleSignOut();
             }}
             disabled={signingOut}
-            className="mt-2 flex w-full items-center gap-2 rounded-2xl px-3 py-2 text-left text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-100 disabled:opacity-60"
+            className="mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-left text-rose-300 transition hover:bg-rose-500/10 hover:text-rose-200 disabled:opacity-60"
           >
             <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
               <path d="M15 12H3" strokeLinecap="round" strokeLinejoin="round" />

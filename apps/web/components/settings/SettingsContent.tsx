@@ -170,10 +170,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
     { id: "business", label: "Business" },
   ];
 
-  const containerClass =
-    variant === "mobile"
-      ? "mx-auto max-w-3xl px-4 py-8 text-white"
-      : "mx-auto max-w-4xl px-6 py-10 text-white";
+  const containerClass = variant === "mobile" ? "mx-auto max-w-3xl px-4 py-8 text-white" : "mx-auto max-w-4xl px-6 py-10 text-white";
 
   return (
     <div className={containerClass}>
@@ -185,11 +182,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
       </div>
 
       <div className="mt-6 overflow-x-auto">
-        <div
-          role="tablist"
-          aria-label="Settings sections"
-          className="inline-flex rounded-2xl border border-white/10 bg-white/5 p-1 text-sm text-white/70 shadow-[0_16px_45px_rgba(5,8,20,0.35)] backdrop-blur"
-        >
+        <div role="tablist" aria-label="Settings sections" className="inline-flex rounded-full border border-white/15 bg-white/5 p-1 text-sm text-white/70">
           {tabs.map((item) => {
             const active = tab === item.id;
             return (
@@ -198,9 +191,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                 type="button"
                 role="tab"
                 aria-selected={active}
-                className={`rounded-xl px-4 py-2 text-sm font-medium transition ${
-                  active ? "bg-white text-black shadow-glow-md" : "text-white/70 hover:text-white"
-                }`}
+                className={`rounded-full px-4 py-2 transition ${active ? "bg-white text-black" : "hover:text-white"}`}
                 onClick={() => setTab(item.id)}
               >
                 {item.label}
@@ -212,10 +203,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
 
       <div className="mt-6">
         {tab === "account" ? (
-          <form
-            onSubmit={handleAccountSubmit}
-            className="max-w-2xl space-y-5 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur"
-          >
+          <form onSubmit={handleAccountSubmit} className="space-y-4 max-w-2xl">
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
                 First name
@@ -259,7 +247,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                     <button
                       type="button"
                       onClick={() => setEditVerificationTarget("email")}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
+                      className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
                     >
                       Send verification link
                     </button>
@@ -276,7 +264,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                       <button
                         type="button"
                         onClick={() => setEmailLocked(true)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:text-white"
+                        className="rounded-lg border border-white/15 px-3 py-1 text-xs text-white/70 transition hover:text-white"
                       >
                         Lock
                       </button>
@@ -293,7 +281,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                     <button
                       type="button"
                       onClick={() => setEditVerificationTarget("phone")}
-                      className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
+                      className="rounded-lg border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white"
                     >
                       Verify to edit
                     </button>
@@ -312,7 +300,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
                       <button
                         type="button"
                         onClick={() => setPhoneLocked(true)}
-                        className="rounded-xl border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70 transition hover:text-white"
+                        className="rounded-lg border border-white/15 px-3 py-1 text-xs text-white/70 transition hover:text-white"
                       >
                         Lock
                       </button>
@@ -350,7 +338,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
         ) : null}
 
         {tab === "security" ? (
-          <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 text-sm text-white/70 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
+          <div className="space-y-4 rounded-2xl border border-white/10 bg-white/5 p-6 text-sm text-white/70">
             <h2 className="text-lg font-semibold text-white">Security controls</h2>
             <p>Change email, password, and multi-factor authentication will live here. We’ll prompt for verification before enabling any of these options.</p>
             <p className="text-white/50">Security updates are coming soon. In the meantime, contact support if you need to update credentials.</p>
@@ -359,7 +347,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
 
         {tab === "business" ? (
           <div className="space-y-4">
-            <div className="rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-6">
               <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
                 <div>
                   <h2 className="text-lg font-semibold text-white">Business profile</h2>

@@ -1,210 +1,81 @@
 export const dynamic = "force-static";
 
 import Link from "next/link";
+import Section from "@/components/marketing/Section";
+import PortingFormClient from "./PortingFormClient";
 
-const STEPS = [
-  {
-    step: "01",
-    title: "Sign up & create your workspace",
-    description: "Use your work email, invite teammates, and land on the dashboard home.",
-  },
-  {
-    step: "02",
-    title: "Activate billing",
-    description: "Pick a plan that fits your volume. Billing unlocks the EarlyBird connect number.",
-  },
-  {
-    step: "03",
-    title: "Verify the connect number",
-    description: "Dashboard → Numbers → Forwarding. Place the short verification call so we know the destination is live.",
-  },
-  {
-    step: "04",
-    title: "Enable forwarding at your carrier",
-    description: "Update your carrier portal or dial *72 to route calls to the verified connect number.",
-  },
-  {
-    step: "05",
-    title: "Flip EarlyBird live",
-    description: "Test a call, then toggle EarlyBird as the receptionist. Analytics and transcripts start instantly.",
-  },
+export const metadata = {
+  title: "Port your numbers to EarlyBird",
+  description: "Start a managed porting request. We coordinate with your carrier and keep you updated at every step.",
+};
+
+const requirements = [
+  "Organization name and primary contact (name, email, phone).",
+  "Numbers to port (local or toll-free) with current carrier information.",
+  "Account number, port-out PIN/passcode, and service address for LOA.",
+  "Preferred caller ID name (CNAM) and whether SMS/MMS should stay enabled.",
+  "Desired port window and timezone — we’ll coordinate to avoid downtime.",
 ];
 
-const CHECKLIST = [
-  "Existing business number(s) your customers already call.",
-  "Carrier portal login or forwarding codes (*72 / *73).",
-  "The connect number surfaced after verification.",
-  "A few minutes to place the verification and test calls.",
+const notes = [
+  "Local ports typically complete within 2–10 business days; toll-free can vary by carrier.",
+  "Keep your existing service active until we confirm the firm order commit (FOC) date.",
+  "We provide a pre-filled LOA for e-signature and send status updates at each milestone.",
 ];
 
-const PROVIDER_GROUPS = [
-  {
-    title: "Wireless & VoIP",
-    items: [
-      "AT&T, Verizon, T-Mobile, Spectrum: Features → Call Forwarding → add the connect number → save.",
-      "RingCentral, Zoom Phone, Grasshopper: edit the main call handling rule and route to EarlyBird.",
-      "Teams Phone, Dialpad, 8x8: update the auto-attendant or hunt group to forward to EarlyBird.",
-    ],
-  },
-  {
-    title: "PBX / on-prem",
-    items: [
-      "Desk phones: dial *72 + connect number to enable; *73 to disable.",
-      "Legacy PBX: add a permanent forward or ask your carrier to apply it for you.",
-      "Need SIP help? Open a support ticket from the dashboard and we’ll hop on a call.",
-    ],
-  },
-];
-
-const POST_FORWARDING = [
-  "Keep your carrier account active — forwarding doesn’t move billing.",
-  "Analytics, recordings, and transcripts appear in EarlyBird immediately.",
-  "Add more connect numbers anytime for departments or after-hours routing.",
-];
-
-export default function ForwardingPage() {
+export default function PortingPage() {
   return (
-    <div className="relative flex flex-col">
-      <section className="relative overflow-hidden px-5 pb-12 pt-20 sm:px-6 md:pt-28">
-        <div className="absolute inset-0 -z-10" aria-hidden="true">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.35),_transparent_70%)]" />
-          <div className="absolute left-1/2 top-1/2 h-[420px] w-[420px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.12),_transparent_62%)] blur-3xl" />
-          <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(10,9,24,0)_0%,rgba(18,16,42,0.55)_100%)]" />
-          <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22 fill=%22none%22 viewBox=%220 0 200 200%22%3E%3Cpath stroke=%22rgba(148,163,184,0.06)%22 stroke-dasharray=%227%2027%22 stroke-width=%221.5%22 d=%22M0 100H200M100 0v200%22/%3E%3C/svg%3E')] opacity-40" />
-        </div>
-        <div className="mx-auto flex max-w-5xl flex-col gap-10 text-center md:gap-16">
-          <div className="relative mx-auto max-w-3xl">
-            <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/60">Number forwarding</span>
-            <h1 className="mt-6 text-4xl font-semibold leading-tight text-white md:text-5xl">
-              Keep your numbers. Route every caller to EarlyBird.
-            </h1>
-            <p className="mt-6 text-base text-white/70 md:text-lg">
-              Forwarding keeps your carrier in place. Once your workspace is active you can point calls at EarlyBird in minutes with no downtime.
-            </p>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <a href="/signup" className="inline-flex items-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90">
-                Create your account
-              </a>
-              <Link
-                href="/login?tab=signin"
-                className="inline-flex items-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 transition hover:border-white/40 hover:text-white"
-              >
-                Sign in to dashboard
-              </Link>
-            </div>
-          </div>
-
-          <div className="relative overflow-hidden rounded-[36px] border border-white/12 bg-white/5 px-6 py-6 md:px-8 md:py-8">
-            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_70%)]" />
-            <div className="grid gap-4 sm:grid-cols-2 md:gap-6">
-              {STEPS.map((step) => (
-                <article
-                  key={step.title}
-                  className="group relative overflow-hidden rounded-3xl border border-white/12 bg-white/5 p-6 shadow-[0_24px_70px_rgba(9,9,22,0.25)] transition hover:border-white/20 hover:bg-white/10"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-sm font-semibold text-white/80">
-                      {step.step}
-                    </span>
-                    <h3 className="text-lg font-semibold text-white">{step.title}</h3>
-                  </div>
-                  <p className="mt-3 text-sm text-white/75">{step.description}</p>
-                </article>
-              ))}
-            </div>
-          </div>
+    <div className="flex flex-col">
+      <section className="px-5 pt-20 pb-12 sm:px-6 md:pt-28">
+        <div className="mx-auto max-w-3xl text-center">
+          <span className="stellar-pill">Number porting</span>
+          <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">Bring your existing phone numbers to EarlyBird.</h1>
+          <p className="mt-6 text-base text-white/70 md:text-lg">
+            We operate managed telephony and route calls directly to your AI receptionist. Billing stays on a single Stripe invoice — no separate
+            carrier to manage.
+          </p>
         </div>
       </section>
 
-      <section className="relative mx-auto w-full max-w-6xl px-5 pb-16 sm:px-6 md:pb-24">
-        <div className="pointer-events-none absolute inset-x-0 top-0 -z-20 flex justify-center" aria-hidden="true">
-          <div className="h-full w-full max-w-6xl bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.2),_transparent_75%)]" />
-        </div>
-        <div className="pointer-events-none absolute inset-x-0 bottom-[-25%] -z-20 flex justify-center" aria-hidden="true">
-          <div className="h-[440px] w-full max-w-4xl rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.08),_transparent_62%)] blur-[140px]" />
-        </div>
-
-        <div className="relative overflow-hidden rounded-[40px] border border-white/12 bg-white/5 px-6 py-12 md:px-12 md:py-16">
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_70%)]" />
-            <div className="absolute -left-10 top-16 h-40 w-40 rounded-full bg-purple-500/20 blur-[100px]" />
-            <div className="absolute -right-12 bottom-10 h-48 w-48 rounded-full bg-sky-500/20 blur-[120px]" />
-          </div>
-          <div className="grid gap-6 md:grid-cols-[minmax(0,1.15fr),minmax(0,1fr)]">
-            <article className="rounded-3xl border border-white/12 bg-white/5 p-6">
-              <h3 className="text-xl font-semibold text-white">Forwarding checklist</h3>
-              <p className="mt-2 text-sm text-white/70">Gather these details before you hop into your carrier portal.</p>
-              <ul className="mt-4 space-y-2 text-sm text-white/80">
-                {CHECKLIST.map((item) => (
-                  <li key={item} className="flex gap-2">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
-                    <span>{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </article>
-
-            <article className="rounded-3xl border border-white/12 bg-white/5 p-6">
-              <h3 className="text-xl font-semibold text-white">Carrier quick reference</h3>
-              <div className="mt-4 space-y-5">
-                {PROVIDER_GROUPS.map((group) => (
-                  <div key={group.title}>
-                    <h4 className="text-xs font-semibold uppercase tracking-[0.25em] text-white/50">{group.title}</h4>
-                    <ul className="mt-2 space-y-2 text-sm text-white/80">
-                      {group.items.map((item) => (
-                        <li key={item} className="flex gap-2">
-                          <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
-                          <span>{item}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                ))}
-              </div>
-            </article>
-          </div>
-        </div>
-      </section>
-
-      <section className="relative mx-auto w-full max-w-6xl px-5 pb-24 sm:px-6">
-        <div className="relative overflow-hidden rounded-[40px] border border-white/12 bg-white/5 px-6 py-12 md:px-12 md:py-16">
-          <div className="pointer-events-none absolute inset-0 -z-10">
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.08),_transparent_70%)]" />
-            <div className="absolute inset-0 bg-[linear-gradient(135deg,rgba(99,102,241,0.15),_rgba(14,13,35,0)_60%)]" />
-          </div>
-          <div className="mx-auto max-w-3xl text-center">
-            <span className="stellar-badge mb-5">After forwarding</span>
-            <h2 className="h2 bg-clip-text text-transparent bg-linear-to-r from-slate-200/60 via-slate-200 to-slate-200/60 pb-4">
-              What happens once calls hit EarlyBird
-            </h2>
-            <p className="text-lg text-white/70">
-              Forwarding is just the first step. Here’s what stays true once your agent picks up the phone.
-            </p>
-            <ul className="mt-8 space-y-2 text-left text-sm text-white/80 md:columns-2 md:gap-8">
-              {POST_FORWARDING.map((item) => (
-                <li key={item} className="mb-2 flex items-start gap-2">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
-                  <span>{item}</span>
-                </li>
+      <Section className="pt-0">
+        <div className="mx-auto flex max-w-3xl flex-col gap-8">
+          <article className="stellar-grid-card bg-white/5">
+            <h2 className="text-xl font-semibold text-white">What we need</h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-white/80">
+              {requirements.map((item) => (
+                <li key={item}>{item}</li>
               ))}
             </ul>
-            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
-              <Link
-                href="/docs#forwarding"
-                className="inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
-              >
-                Read the forwarding guide
-              </Link>
+            <div className="mt-6 flex flex-wrap gap-3">
               <a
-                href="mailto:support@earlybird.ai"
-                className="inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
+                href="mailto:support@earlybird.ai?subject=Port%20my%20number%20to%20EarlyBird"
+                className="inline-flex items-center rounded-2xl bg-white px-5 py-3 text-sm font-semibold text-black transition hover:bg-white/90"
               >
-                Email support
+                Start via email
               </a>
+              <Link
+                href="/support"
+                className="inline-flex items-center rounded-2xl border border-white/20 px-5 py-3 text-sm font-semibold text-white/80 transition hover:text-white"
+              >
+                Back to Support
+              </Link>
             </div>
-          </div>
+          </article>
+
+          <article className="stellar-grid-card bg-white/5">
+            <h2 className="text-xl font-semibold text-white">Notes</h2>
+            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-white/80">
+              {notes.map((item) => (
+                <li key={item}>{item}</li>
+              ))}
+            </ul>
+          </article>
+
+          <article className="rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+            <PortingFormClient />
+          </article>
         </div>
-      </section>
+      </Section>
     </div>
   );
 }

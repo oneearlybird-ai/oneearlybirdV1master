@@ -35,19 +35,19 @@ export default function Faqs() {
             {/* Item */}
             <div className="space-y-2">
               <h4 className="font-semibold">What is EarlyBird AI?</h4>
-              <p className="text-slate-400">EarlyBird AI is a virtual front-desk teammate that answers every call with human-like clarity. We equip service-focused teams with an AI receptionist that can greet callers, qualify opportunities, and keep schedules full without adding headcount.</p>
+              <p className="text-slate-400">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis enim lobortis scelerisque fermentum.</p>
             </div>
 
             {/* Item */}
             <div className="space-y-2">
               <h4 className="font-semibold">How quickly can I launch EarlyBird AI?</h4>
-              <p className="text-slate-400">You can be live in minutes. Create your account, choose the plan that matches your call volume, and toggle call forwarding inside the dashboard. Flip it on when you want coverage, switch it off when your team is available, and never miss a lead again.</p>
+              <p className="text-slate-400">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis enim lobortis scelerisque fermentum.</p>
             </div>
 
             {/* Item */}
             <div className="space-y-2">
               <h4 className="font-semibold">Can I customize the EarlyBird AI experience?</h4>
-              <p className="text-slate-400">Absolutely. Set operating hours for 24/7 coverage or business-hour routing, upload service menus and pricing, and plug into the CRMs and calendars your team already uses. EarlyBird AI follows your brand voice while booking, rescheduling, or canceling appointments on cue.</p>
+              <p className="text-slate-400">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis enim lobortis scelerisque fermentum.</p>
             </div>
 
           </div>
@@ -57,20 +57,20 @@ export default function Faqs() {
 
             {/* Item */}
             <div className="space-y-2">
-              <h4 className="font-semibold">How does EarlyBird AI safeguard caller information?</h4>
-              <p className="text-slate-400">We only gather the essentials needed to help each caller, store every interaction securely, and surface it back to you as clean call summaries. Role-based access and audit trails keep your team informed while protecting sensitive details.</p>
+              <h4 className="font-semibold">What kind of data can I collect from my customers?</h4>
+              <p className="text-slate-400">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis enim lobortis scelerisque fermentum.</p>
             </div>
 
             {/* Item */}
             <div className="space-y-2">
               <h4 className="font-semibold">Can I trial EarlyBird AI for free?</h4>
-              <p className="text-slate-400">Yes, start with a 14-day trial that includes 100 minutes of talk time. Explore the dashboard, fine-tune your agent, and if you cancel before the window closes—or before you exceed the minutes—you will not be charged.</p>
+              <p className="text-slate-400">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis enim lobortis scelerisque fermentum.</p>
             </div>
 
             {/* Item */}
             <div className="space-y-2">
               <h4 className="font-semibold">Is EarlyBird AI affordable for small businesses?</h4>
-              <p className="text-slate-400">Definitely. EarlyBird AI captures calls, books revenue-generating appointments, and handles routine questions so your in-person staff can focus on walk-ins. Predictable pricing delivers a return that beats the cost of missed calls or additional hires.</p>
+              <p className="text-slate-400">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Quis enim lobortis scelerisque fermentum.</p>
             </div>
 
           </div>

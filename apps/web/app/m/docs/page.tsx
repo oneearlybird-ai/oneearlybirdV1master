@@ -1,143 +1,135 @@
 export const dynamic = "force-static";
 
-import Link from "next/link";
+import CopyLinkButton from "@/components/CopyLinkButton";
+import Section from "@/components/marketing/Section";
 
-const GUIDE_SECTIONS = [
+const sections = [
   {
-    title: "Workspace setup",
-    summary: "Invite teammates, brand the receptionist, and review call defaults.",
+    id: "getting-started",
+    title: "Getting started",
+    description:
+      "Provision numbers, connect calendars, and invite your team. Everything in the dashboard mirrors what you see in the preview.",
     bullets: [
-      "Send invites with role-based approvals and OTP step-up.",
-      "Upload greeting audio and review fallback routing.",
-      "Confirm calendar sources before connecting integrations.",
+      "Managed telephony — we host numbers or port your existing lines. No extra carrier account required.",
+      "Single Stripe invoice for platform + usage. Taxes calculated automatically.",
+      "Role-based access with OTP-backed step-up for sensitive actions.",
     ],
   },
   {
-    title: "Telephony & forwarding",
-    summary: "Keep your carrier. Point calls at EarlyBird in minutes.",
+    id: "porting",
+    title: "Porting your number",
+    description: "Bring your voice lines over without downtime. We coordinate with your current carrier and share FOC milestones.",
     bullets: [
-      "Verify the connect number after billing is active.",
-      "Follow the forwarding steps for AT&T, Verizon, RingCentral, or PBXs.",
-      "Run a live test call and watch analytics populate instantly.",
+      "Have your account number, service address, and port-out PIN ready.",
+      "Submit the request from the dashboard or email support@earlybird.ai.",
+      "Keep the existing service active until you receive the cutover confirmation.",
     ],
-    link: { label: "Forwarding checklist", href: "/support/porting" },
+    cta: {
+      href: "/support/porting",
+      label: "Start a port request",
+    },
   },
   {
-    title: "Integrations",
-    summary: "Sync call outcomes into the tools ops already trusts.",
+    id: "authentication",
+    title: "Authentication",
+    description:
+      "Frontend stays cookie-auth only. The server validates via JWKS. No JWT parsing or token storage happens in the browser.",
     bullets: [
-      "Authorize HubSpot, Salesforce, ServiceTitan, and Zoho via secure OAuth.",
-      "Map dispositions to deals, tickets, and jobs with a few clicks.",
-      "Toggle transcript + recording attachments for QA and coaching.",
+      "Three httpOnly cookies on .oneearlybird.ai · Secure · SameSite=Lax · Path=/.",
+      "Google OAuth start URL always includes identity_provider=Google, prompt=select_account, max_age=0, return_host, return_path.",
+      "Fallback redirect mirrors popup flow if window.open is blocked; listeners resolve via postMessage or custom events.",
     ],
   },
   {
-    title: "Automation & analytics",
-    summary: "Automate hand-offs and monitor the AI like any teammate.",
+    id: "api",
+    title: "Key API endpoints",
+    description: "Server-side calls only; marketing surfaces never ship with embedded secrets.",
     bullets: [
-      "Trigger follow-up texts, emails, or Slack alerts on qualified calls.",
-      "Inspect answer rate, booking conversion, and hand-offs from the live dashboard.",
-      "Export transcripts, tags, and sentiment for deeper reporting.",
+      "POST /api/v1/calls — create and route a new call.",
+      "GET /api/v1/calls/:id — retrieve status, transcript, and metadata.",
+      "POST /api/v1/customers — upsert customers with segmentation tags.",
     ],
   },
 ];
 
-const SECURITY_POINTS = [
-  "Cookie-only auth with Secure, httpOnly, SameSite=Lax flags.",
-  "CSP, HSTS, Referrer-Policy, and Permissions-Policy enforced by default.",
-  "Signed webhooks and workspace-scoped API keys with HMAC signatures.",
-];
-
-const API_ENDPOINTS = [
-  "POST /v1/calls",
-  "GET /v1/calls/{id}",
-  "POST /v1/customers",
-  "GET /v1/customers/{id}",
-  "POST /v1/automation/triggers",
+const guardrails = [
+  "Cache-Control: no-store on every auth-protected response.",
+  "Access-Control-Allow-Origin echoes the requesting origin (.oneearlybird.ai or m.oneearlybird.ai) with Access-Control-Allow-Credentials: true.",
+  "Strict CSP (Report-Only today) with nonce-based scripts and Trusted Types reporting.",
+  "HSTS (includeSubDomains, no preload yet), Referrer-Policy: strict-origin-when-cross-origin, X-Frame-Options: DENY, minimal Permissions-Policy.",
+  "Signed webhooks, short-lived presigned URLs, and limited logging (no PHI).",
 ];
 
 export default function DocsPage() {
-  const lastUpdated = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date());
-
   return (
     <div className="flex flex-col">
-      <section className="relative overflow-hidden px-5 pt-20 pb-12 sm:px-6 md:pt-28">
-        <div className="absolute inset-0 -z-10" aria-hidden="true">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.32),_transparent_68%)]" />
-          <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,_rgba(255,255,255,0.1),_transparent_60%)] blur-2xl" />
-        </div>
-        <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-            Doc hub
-          </span>
-          <h1 className="mt-6 text-4xl font-semibold text-white">Launch EarlyBird with confidence</h1>
-          <p className="mt-6 text-base text-white/70">
-            Configure forwarding, integrations, and automations in minutes. These notes map exactly to the dashboard flow—no filler.
+      <section className="px-5 pt-20 pb-12 sm:px-6 md:pt-28">
+        <div className="mx-auto max-w-3xl">
+          <span className="stellar-pill">Documentation</span>
+          <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">Everything you need to launch EarlyBird.</h1>
+          <p className="mt-6 text-base text-white/70 md:text-lg">
+            These docs match the EarlyBird AI rollout: cookie-auth, security headers, dashboard guardrails, and onboarding tasks. Bookmark this page —
+            we append dated updates as the platform evolves.
           </p>
-          <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-            <span>Updated {lastUpdated}</span>
-          </div>
+          <nav className="mt-8 flex flex-wrap gap-3 text-sm text-white/70" aria-label="On this page">
+            {sections.map((section) => (
+              <a key={section.id} className="rounded-full border border-white/15 bg-white/5 px-3 py-1 transition hover:border-white/25 hover:text-white" href={`#${section.id}`}>
+                {section.title}
+              </a>
+            ))}
+            <a className="rounded-full border border-white/15 bg-white/5 px-3 py-1 transition hover:border-white/25 hover:text-white" href="#guardrails">
+              Security guardrails
+            </a>
+          </nav>
         </div>
       </section>
 
-      <section className="relative px-5 pb-16 sm:px-6 md:pb-24">
-        <div className="mx-auto flex max-w-3xl flex-col gap-8">
-          {GUIDE_SECTIONS.map((section) => (
-            <article key={section.title} className="rounded-3xl border border-white/12 bg-white/5 p-5">
-              <h2 className="text-lg font-semibold text-white">{section.title}</h2>
-              <p className="mt-2 text-sm text-white/70">{section.summary}</p>
-              <ul className="mt-4 space-y-2 text-sm text-white/80">
+      <Section>
+        <div className="mx-auto flex max-w-3xl flex-col gap-12">
+          {sections.map((section) => (
+            <article key={section.id} id={section.id} className="rounded-3xl border border-white/12 bg-white/5 p-6 md:p-8">
+              <header className="flex items-start justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-semibold text-white">{section.title}</h2>
+                  <p className="mt-3 text-sm text-white/70">{section.description}</p>
+                </div>
+                <CopyLinkButton anchorId={section.id} />
+              </header>
+              <ul className="mt-6 list-disc space-y-3 pl-5 text-sm text-white/80">
                 {section.bullets.map((bullet) => (
-                  <li key={bullet} className="flex gap-2">
-                    <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
-                    <span>{bullet}</span>
-                  </li>
+                  <li key={bullet}>{bullet}</li>
                 ))}
               </ul>
-              {section.link ? (
-                <Link
-                  href={section.link.href}
-                  className="mt-4 inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
+              {section.cta ? (
+                <a
+                  href={section.cta.href}
+                  className="mt-6 inline-flex items-center rounded-2xl border border-white/20 px-4 py-2 text-sm font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
                 >
-                  {section.link.label}
-                </Link>
+                  {section.cta.label}
+                </a>
               ) : null}
             </article>
           ))}
-
-          <article className="rounded-3xl border border-white/12 bg-white/5 p-5" id="security">
-            <h2 className="text-lg font-semibold text-white">Security & compliance</h2>
-            <ul className="mt-4 space-y-2 text-sm text-white/80">
-              {SECURITY_POINTS.map((point) => (
-                <li key={point} className="flex gap-2">
-                  <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
-                  <span>{point}</span>
-                </li>
-              ))}
-            </ul>
-            <p className="mt-3 text-xs text-white/60">
-              Need evidence for your security review? Email <a className="underline decoration-dotted underline-offset-4" href="mailto:security@earlybird.ai">security@earlybird.ai</a>.
-            </p>
-          </article>
-
-          <article className="rounded-3xl border border-white/12 bg-white/5 p-5" id="api">
-            <h2 className="text-lg font-semibold text-white">API quick reference</h2>
-            <p className="mt-2 text-sm text-white/70">Workspace-scoped API keys authenticate every request. All payloads accept JSON.</p>
-            <ul className="mt-4 space-y-2 text-sm text-white/80">
-              {API_ENDPOINTS.map((endpoint) => (
-                <li key={endpoint} className="rounded-xl border border-white/15 bg-white/[0.06] px-4 py-2 font-mono text-xs uppercase tracking-[0.2em] text-purple-200/80">
-                  {endpoint}
-                </li>
-              ))}
-            </ul>
-          </article>
-
-          <article className="rounded-3xl border border-white/12 bg-white/5 p-5 text-sm text-white/70">
-            <h2 className="text-lg font-semibold text-white">Still stuck?</h2>
-            <p className="mt-2">Open the support drawer in the dashboard or email <a className="underline decoration-dotted underline-offset-4" href="mailto:support@earlybird.ai">support@earlybird.ai</a>. Engineers reply within business hours and on-call handles urgent issues nights and weekends.</p>
-          </article>
         </div>
-      </section>
+      </Section>
+
+      <Section
+        id="guardrails"
+        eyebrow="Security & guardrails"
+        title="What stays true across marketing, auth, and dashboard surfaces"
+        description="The EarlyBird AI port keeps the same contracts you rely on today. When we flip CSP to enforcement, these controls remain identical."
+      >
+        <div className="stellar-grid-card bg-white/5">
+          <ul className="list-disc space-y-2 pl-5 text-sm text-white/80">
+            {guardrails.map((item) => (
+              <li key={item}>{item}</li>
+            ))}
+          </ul>
+          <p className="mt-6 text-xs text-white/55">
+            Need anything clarified? Email <a className="underline decoration-dotted underline-offset-4" href="mailto:security@oneearlybird.ai">security@oneearlybird.ai</a>.
+          </p>
+        </div>
+      </Section>
     </div>
   );
 }

@@ -127,13 +127,11 @@ function PlanTile({
   }
 
   return (
-    <div
-      className={`rounded-2xl border ${isCurrent ? "border-white/20" : "border-white/10"} bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur`}
-    >
+    <div className={`rounded-2xl border ${isCurrent ? "border-white/30" : "border-white/10"} bg-white/5 p-4`}>
       <div className="flex items-center justify-between">
         <div className="text-lg font-semibold">{plan.name}</div>
         {plan.tag ? (
-          <span className="rounded-full border border-white/10 bg-white/10 px-2 py-0.5 text-xs text-white/80">{plan.tag}</span>
+          <span className="rounded-full border border-white/20 px-2 py-0.5 text-xs text-white/80">{plan.tag}</span>
         ) : null}
       </div>
       <div className="mt-1 text-white/90">{priceLabel}</div>
@@ -311,7 +309,7 @@ export default function BillingPage() {
       </p>
 
       <div className="mt-6 grid gap-4 grid-cols-[repeat(auto-fit,minmax(280px,1fr))]">
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
           <div className="text-sm text-white/60">Current plan</div>
           <div className="mt-2 text-2xl font-semibold text-white">
             {planLoading ? "Loading…" : planDisplay.value}
@@ -345,7 +343,7 @@ export default function BillingPage() {
             />
             <a
               href="/pricing"
-              className="shrink-0 rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+              className="shrink-0 rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white"
             >
               View pricing
             </a>
@@ -362,7 +360,7 @@ export default function BillingPage() {
           ) : null}
         </div>
 
-        <div className="rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur md:col-span-2">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-4 md:col-span-2">
           <div className="font-medium">Compare plans</div>
           <div className="mt-3 grid gap-4 grid-cols-[repeat(auto-fit,minmax(220px,1fr))]">
             {PLAN_DEFINITIONS.map((plan) => (
@@ -378,27 +376,27 @@ export default function BillingPage() {
         </div>
       </div>
 
-      <div className="mt-8 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
-        <div className="flex items-center justify-between border-b border-white/10 bg-white/10 px-5 py-4">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
+        <div className="flex items-center justify-between">
           <div className="font-medium">Billing history</div>
           {historyLoading ? <div className="text-xs text-white/50">Loading…</div> : null}
         </div>
         {historyError ? (
-          <div className="flex flex-wrap items-center gap-3 px-5 py-3 text-xs text-rose-300" role="alert">
+          <div className="mt-3 flex flex-wrap items-center gap-3 text-xs text-rose-300" role="alert">
             <span>{historyError.replace(/_/g, " ")}</span>
             <button
               type="button"
               onClick={() => void loadHistory(undefined, true)}
-              className="rounded-xl border border-rose-300/40 bg-rose-400/10 px-2 py-1 text-xs text-rose-100 transition hover:border-rose-200 hover:text-rose-50"
+              className="rounded border border-rose-300/40 px-2 py-1 text-xs text-rose-100 transition hover:border-rose-200 hover:text-rose-50"
               disabled={historyLoading}
             >
               Retry
             </button>
           </div>
         ) : null}
-        <div className="px-5 pb-5 pt-4 overflow-x-auto">
+        <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[580px] text-sm text-white/80">
-            <thead className="text-left text-white/60">
+            <thead className="text-left text-white/50">
               <tr>
                 <th className="pb-2">Date</th>
                 <th className="pb-2">Status</th>
@@ -410,7 +408,7 @@ export default function BillingPage() {
               {historyItems.map((item) => {
                 const created = formatIsoDate(item.created);
                 return (
-                  <tr key={item.id} className="border-t border-white/10 text-white/80 transition hover:bg-white/10">
+                  <tr key={item.id} className="border-t border-white/5">
                     <td className="py-2 align-middle">{created ?? "—"}</td>
                     <td className="py-2 align-middle">{formatStatus(item.status)}</td>
                     <td className="py-2 align-middle">{formatCurrency(item.amountTotal, item.currency)}</td>
@@ -442,12 +440,12 @@ export default function BillingPage() {
           </table>
         </div>
         {historyCursor ? (
-          <div className="border-t border-white/10 bg-white/10 px-5 py-3">
+          <div className="mt-4">
             <button
               type="button"
               onClick={() => loadHistory(historyCursor)}
               disabled={historyLoading}
-              className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white disabled:opacity-60"
+              className="rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white disabled:opacity-60"
             >
               {historyLoading ? "Loading…" : "Load more"}
             </button>
@@ -455,7 +453,7 @@ export default function BillingPage() {
         ) : null}
       </div>
 
-      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 px-5 py-4 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
+      <div className="mt-8 rounded-2xl border border-white/10 bg-white/5 p-4">
         <h2 className="text-lg font-semibold text-white">Need something custom?</h2>
         <p className="mt-2 text-sm text-white/70">
           Enterprise plans include SSO, custom integrations, and dedicated onboarding. Reach out and we’ll tailor a
@@ -463,7 +461,7 @@ export default function BillingPage() {
         </p>
         <a
           href="mailto:hello@oneearlybird.ai"
-          className="mt-4 inline-flex rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white"
+          className="mt-4 inline-flex rounded-md border border-white/20 px-3 py-1.5 text-sm text-white/80 hover:text-white"
         >
           Contact sales
         </a>

@@ -1,5 +1,4 @@
 import { apiFetch, type ApiFetchInit } from "@/lib/http";
-import { getMockResponse, shouldUseDashboardMocks } from "@/lib/dashboardMocks";
 
 const RETRY_DELAYS_MS = [250, 600];
 
@@ -10,13 +9,6 @@ function delay(ms: number): Promise<void> {
 }
 
 export async function dashboardFetch(path: string, init: ApiFetchInit = {}): Promise<Response> {
-  if (shouldUseDashboardMocks()) {
-    const mock = await getMockResponse(path, init);
-    if (mock) {
-      return mock;
-    }
-  }
-
   let attempt = 0;
   let response: Response | null = null;
 

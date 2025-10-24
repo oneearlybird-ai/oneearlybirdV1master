@@ -6,6 +6,7 @@ export const metadata = {
 import Hero from '@/components/hero'
 import Clients from '@/components/clients'
 import Features from '@/components/features'
+import Features02 from '@/components/features-02'
 import Features03 from '@/components/features-03'
 import Features04 from '@/components/features-04'
 import Pricing from './pricing-section'
@@ -18,6 +19,7 @@ export default function Home() {
       <Hero />
       <Clients />
       <Features />
+      <Features02 />
       <Features03 />
       <Features04 />
       <Pricing />

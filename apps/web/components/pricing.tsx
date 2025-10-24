@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect, useRef, useState } from "react";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
 import { PLAN_DEFINITIONS, getPlanPriceLabel, getPlanTrialBadge } from "@/lib/plans";
 
@@ -9,7 +8,6 @@ type DerivedPlan = {
   name: string;
   blurb: string;
   priceLabel: string;
-  minutesLabel: string;
   trialBadge: string | null;
   features: string[];
   highlight: boolean;
@@ -29,7 +27,6 @@ const marketingPlans: DerivedPlan[] = PLAN_DEFINITIONS.filter((plan) => plan.slu
     name: plan.name,
     blurb: plan.blurb ?? "",
     priceLabel,
-    minutesLabel: `${plan.includedMinutes} minutes per month`,
     trialBadge,
     features: plan.features,
     highlight: plan.popular === true || typeof plan.tag === "string",
@@ -41,61 +38,6 @@ const marketingPlans: DerivedPlan[] = PLAN_DEFINITIONS.filter((plan) => plan.slu
 });
 
 export default function Pricing() {
-  const [isMobile, setIsMobile] = useState(false);
-  const [activePlanIndex, setActivePlanIndex] = useState(0);
-  const cardRefs = useRef<(HTMLDivElement | null)[]>([]);
-
-  useEffect(() => {
-    if (typeof window === "undefined") {
-      return;
-    }
-
-    const query = window.matchMedia("(max-width: 767px)");
-    const updateMatch = () => {
-      setIsMobile(query.matches);
-      if (!query.matches) {
-        setActivePlanIndex(-1);
-      } else {
-        setActivePlanIndex(0);
-      }
-    };
-
-    updateMatch();
-    query.addEventListener("change", updateMatch);
-
-    return () => {
-      query.removeEventListener("change", updateMatch);
-    };
-  }, []);
-
-  useEffect(() => {
-    if (!isMobile || typeof window === "undefined") {
-      return;
-    }
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting) {
-            const index = Number((entry.target as HTMLElement).dataset.planIndex);
-            if (!Number.isNaN(index)) {
-              setActivePlanIndex(index);
-            }
-          }
-        });
-      },
-      { threshold: 0.55, rootMargin: "0px 0px -10% 0px" },
-    );
-
-    cardRefs.current.forEach((card) => {
-      if (card) {
-        observer.observe(card);
-      }
-    });
-
-    return () => observer.disconnect();
-  }, [isMobile]);
-
   return (
     <div className="relative">
       <div
@@ -143,26 +85,18 @@ export default function Pricing() {
 
         {marketingPlans.map((plan, index) => {
           const purchaseDisabled = !plan.hasPriceId || plan.allowTrial;
-          const baseCardClassName =
-            "flex flex-col justify-between rounded-3xl border px-6 py-6 transition duration-200 border-slate-800 bg-slate-800/25 hover:border-purple-300 hover:bg-purple-500/10 hover:shadow-[0_20px_60px_rgba(102,51,153,0.25)]";
-          const highlightClassName = plan.highlight
-            ? " border-purple-400/80 bg-purple-500/10 shadow-[0_20px_60px_rgba(102,51,153,0.35)] hover:bg-purple-500/20"
-            : "";
-          const mobileActiveClassName =
-            isMobile && activePlanIndex === index
-              ? " border-purple-300 bg-purple-500/15 shadow-[0_18px_55px_rgba(102,51,153,0.28)] scale-[1.01]"
-              : "";
-          const cardClassName = `${baseCardClassName}${highlightClassName}${mobileActiveClassName}`;
+          const cardClassName = [
+            "flex flex-col justify-between rounded-3xl border px-6 py-6 transition duration-200",
+            plan.highlight
+              ? "border-slate-800 bg-slate-800/25 hover:border-purple-300 hover:bg-purple-500/10 hover:shadow-[0_20px_60px_rgba(102,51,153,0.25)]"
+              : "border-slate-800 bg-slate-800/20 hover:border-purple-400/60 hover:bg-slate-800/40",
+          ].join(" ");
           return (
             <div
               key={plan.id}
               className={cardClassName}
               data-aos="fade-up"
               data-aos-delay={150 + index * 80}
-              data-plan-index={index}
-              ref={(element) => {
-                cardRefs.current[index] = element;
-              }}
             >
               <div className="grow">
                 <div className="flex items-center justify-between gap-2">
@@ -176,7 +110,7 @@ export default function Pricing() {
                   ) : null}
                 </div>
                 <div className="mt-2 text-3xl font-semibold text-slate-50">{plan.priceLabel}</div>
-                <div className="mt-2 text-xs font-medium uppercase tracking-wide text-purple-200">{plan.minutesLabel}</div>
+                {plan.trialBadge ? <div className="mt-2 text-xs font-medium uppercase tracking-wide text-purple-200">{plan.trialBadge}</div> : null}
                 <p className="mt-3 text-sm text-slate-300">{plan.blurb}</p>
                 <ul className="mt-5 space-y-2 text-slate-200">
                   {plan.features.map((feature) => (
@@ -198,10 +132,8 @@ export default function Pricing() {
                   purchaseLabel="Select plan"
                   trialLabel="Start free trial"
                 />
-                {plan.trialBadge ? (
-                  <span className="mt-3 inline-flex items-center rounded-full border border-purple-400/60 bg-purple-500/20 px-3 py-1 text-xs font-semibold text-purple-100">
-                    {plan.trialBadge}
-                  </span>
+                {!plan.hasPriceId ? (
+                  <p className="mt-2 text-xs text-slate-400">Set the Stripe price IDs in the environment to enable checkout.</p>
                 ) : null}
               </div>
             </div>

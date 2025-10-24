@@ -12,5 +12,5 @@
 - Pricing grid continues to use `PlanCheckoutButtons` with existing checkout endpoints.
 
 ## Other Notes
-- `/support/porting` remains a marketing surface; the forwarding helper generates a mailto or clipboard copy only (no new API routes).
+- `/support/porting` remains a marketing surface; form actions generate a mailto or clipboard copy only (no new API routes).
 - `/roi` now redirects to `/how-it-works`; `/signup` redirects to `/login?tab=signup`.

@@ -8,8 +8,8 @@
 | `/how-it-works` | ✅ Complete | ROI metrics, call playbook, guardrail checklist, Stellar sections.
 | `/docs` | ✅ Complete | Content reorganized with Section components, CopyLink anchors, security guardrail summary.
 | `/changelog` | ✅ Complete | Release timeline refreshed with Stellar cards + anchor links.
-| `/support` | ✅ Complete | Contact, telephony guidance, link to forwarding page.
-| `/support/porting` | ✅ Complete | Forwarding guide with mailto/copy helper; no backend routes added.
+| `/support` | ✅ Complete | Contact, telephony guidance, link to porting page.
+| `/support/porting` | ✅ Complete | Marketing-only form generates mailto/copy; no backend routes added.
 | `/privacy` | ✅ Complete | Stellar cards summarizing data usage + contact.
 | `/terms` | ✅ Complete | Stellar cards for usage, billing, liability, contact.
 | `/status` | ✅ Complete | Live probe display + security header notes in Stellar layout.

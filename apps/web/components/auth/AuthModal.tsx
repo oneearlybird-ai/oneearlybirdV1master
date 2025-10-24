@@ -6,13 +6,12 @@ import Logo from "@/components/ui/logo";
 import OfficialGoogleIcon from "@/components/OfficialGoogleIcon";
 import { API_BASE } from "@/lib/config";
 import { redirectTo } from "@/lib/clientNavigation";
-import { openPopup, resolvePopupMessage } from "@/lib/popup";
+import { openPopup } from "@/lib/popup";
 import { useAuthModal } from "@/components/auth/AuthModalProvider";
 import { apiFetch } from "@/lib/http";
 import { buildGoogleStartUrl, getDashboardPath, getMagicVerifyPath } from "@/lib/authPaths";
 import { fetchCsrfToken, invalidateCsrfToken } from "@/lib/security";
-import { consumeActiveAuthFlow, setActiveAuthFlow } from "@/lib/authFlow";
-import { useOAuthFinalizer } from "@/hooks/useOAuthFinalizer";
+import { setActiveAuthFlow } from "@/lib/authFlow";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 const GOOGLE_POPUP_NAME = "oauth-google";
@@ -55,7 +54,6 @@ export default function AuthModal() {
   const dialogRef = useRef<HTMLDivElement | null>(null);
   const initialFocusRef = useRef<HTMLInputElement | null>(null);
   const googlePopupMonitorRef = useRef<number | null>(null);
-  const popupRef = useRef<Window | null>(null);
 
   const [signInEmail, setSignInEmail] = useState("");
   const [signInPassword, setSignInPassword] = useState("");
@@ -69,7 +67,6 @@ export default function AuthModal() {
   const [googlePending, setGooglePending] = useState(false);
 
   const isSignIn = mode === "signin";
-  const finalizeOAuth = useOAuthFinalizer();
 
   const warmDashboardData = useCallback(async () => {
     try {
@@ -90,65 +87,12 @@ export default function AuthModal() {
     }
   }, []);
 
-const clearGooglePopupMonitor = useCallback(() => {
-  if (googlePopupMonitorRef.current !== null) {
-    window.clearInterval(googlePopupMonitorRef.current);
-    googlePopupMonitorRef.current = null;
-  }
-}, []);
-
-  useEffect(() => {
-    const allowedOrigins = new Set<string>([
-      "https://oneearlybird.ai",
-      "https://m.oneearlybird.ai",
-      "https://www.oneearlybird.ai",
-      "https://api.oneearlybird.ai",
-    ]);
-    if (typeof window !== "undefined") {
-      allowedOrigins.add(window.location.origin);
-      try {
-        if (document.referrer) {
-          const refOrigin = new URL(document.referrer).origin;
-          allowedOrigins.add(refOrigin);
-        }
-      } catch {
-        /* ignore */
-      }
+  const clearGooglePopupMonitor = useCallback(() => {
+    if (googlePopupMonitorRef.current !== null) {
+      window.clearInterval(googlePopupMonitorRef.current);
+      googlePopupMonitorRef.current = null;
     }
-
-    const handleMessage = (event: MessageEvent) => {
-      if (!allowedOrigins.has(event.origin)) return;
-      const payload = typeof event.data === "object" ? (event.data as Record<string, unknown>) : {};
-      const type =
-        typeof payload?.type === "string"
-          ? payload.type
-          : typeof event.data === "string"
-            ? event.data
-            : undefined;
-      if (type !== "oauthResult") return;
-      resolvePopupMessage("oauthResult");
-      consumeActiveAuthFlow();
-      popupRef.current = null;
-      clearGooglePopupMonitor();
-      setGooglePending(false);
-      triggerLoginEvent();
-      const needsAccountCreate =
-        typeof payload?.needsAccountCreate === "boolean"
-          ? (payload.needsAccountCreate as boolean)
-          : payload?.needsAccountCreate === "1";
-      const redirectPath =
-        typeof payload?.redirectPath === "string" ? (payload.redirectPath as string) : undefined;
-      void finalizeOAuth({
-        needsAccountCreate,
-        redirectPath,
-      });
-    };
-
-    window.addEventListener("message", handleMessage);
-    return () => {
-      window.removeEventListener("message", handleMessage);
-    };
-  }, [clearGooglePopupMonitor, finalizeOAuth, triggerLoginEvent]);
+  }, []);
 
   useEffect(() => {
     const handleAuthSuccess = () => {
@@ -326,18 +270,16 @@ const clearGooglePopupMonitor = useCallback(() => {
       setActiveAuthFlow(intent === "signup" ? "google-signup" : "google-signin");
       setGooglePending(true);
       clearGooglePopupMonitor();
-      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "oauthResult" });
+      const popup = openPopup(url, GOOGLE_POPUP_NAME, { w: 540, h: 680, expectedMessageType: "oauth:success" });
       if (!popup) {
         setGooglePending(false);
         window.location.href = url;
         return;
       }
-      popupRef.current = popup;
       googlePopupMonitorRef.current = window.setInterval(() => {
         if (!popup || popup.closed) {
           clearGooglePopupMonitor();
           setGooglePending(false);
-          popupRef.current = null;
         }
       }, 500);
     },

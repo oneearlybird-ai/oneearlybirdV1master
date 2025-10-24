@@ -1,92 +1,71 @@
-const PRIVACY_SECTIONS = [
+import Section from "@/components/marketing/Section";
+
+const privacyPoints = [
   {
-    title: "Information we collect",
+    title: "Data we collect",
     bullets: [
-      "Account details (name, email, organization, billing contact).",
-      "Telephony metadata such as numbers dialed, timestamps, routing outcomes, and retry counts.",
-      "Content you enable: recordings, transcripts, tags, and automation payloads.",
-      "Usage signals for security and abuse detection.",
+      "Account details: name, email, organization, and billing contact.",
+      "Operational metadata for call handling (timestamps, routing outcomes, retry counts).",
+      "Usage and billing metrics required for invoicing and fraud prevention.",
     ],
   },
   {
-    title: "How we use it",
+    title: "How we use data",
     bullets: [
-      "Operate the AI receptionist, integrations, analytics, and support.",
-      "Provide audit trails and incident response when you request help.",
-      "Process invoices and comply with legal obligations.",
-      "Improve quality using aggregated, de-identified metrics—never by selling data.",
+      "Deliver, troubleshoot, and improve the EarlyBird service.",
+      "Provide dashboards, analytics, and audit trails for your team.",
+      "Process payments and enforce abuse safeguards.",
     ],
   },
   {
-    title: "Retention & deletion",
-    paragraphs: [
-      "Recordings and transcripts follow the retention schedule you configure (180 days by default).", 
-      "Email privacy@earlybird.ai to export or delete your workspace. Verified deletion completes within 30 days unless law requires longer retention." ,
-    ],
-  },
-  {
-    title: "AI & human oversight",
-    paragraphs: [
-      "Agents run in isolated sandboxes. Prompts, transcripts, and automations are versioned so you can audit behaviour.",
-      "We never train public models on your data. Any evaluations use de-identified snippets by employees under NDA." ,
-    ],
+    title: "Your choices",
+    description:
+      "Request export or deletion at any time by emailing privacy@earlybird.ai. We respond within two business days and provide a secure handoff.",
   },
 ];
 
 export const metadata = {
   title: "Privacy Policy",
-  description: "How EarlyBird collects, uses, and protects customer data.",
+  description: "What data EarlyBird collects, how it is used, and how you can exercise control over it.",
 };
 
 export default function PrivacyPage() {
-  const lastUpdated = new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(new Date());
-
   return (
     <div className="flex flex-col">
-      <section className="relative overflow-hidden px-5 pt-20 pb-12 sm:px-6 md:pt-28">
-        <div className="absolute inset-0 -z-10" aria-hidden="true">
-          <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(99,102,241,0.28),_transparent_70%)]" />
-        </div>
+      <section className="px-5 pt-20 pb-12 sm:px-6 md:pt-28">
         <div className="mx-auto max-w-3xl text-center">
-          <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-4 py-1 text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-            Privacy
-          </span>
-          <h1 className="mt-6 text-4xl font-semibold text-white">Your callers. Your data.</h1>
-          <p className="mt-6 text-base text-white/70">
-            We collect the minimum required to route calls and support your workspace. Retention stays in your control.
+          <span className="stellar-pill">Privacy</span>
+          <h1 className="mt-6 text-4xl font-semibold text-white md:text-5xl">We protect caller and business data by default.</h1>
+          <p className="mt-6 text-base text-white/70 md:text-lg">
+            EarlyBird only collects the information required to operate the service. We never sell data, and we keep PHI out of logs.
           </p>
-          <div className="mt-6 inline-flex items-center gap-3 rounded-2xl border border-white/15 bg-white/5 px-4 py-2 text-xs font-semibold uppercase tracking-[0.2em] text-white/50">
-            <span>Updated {lastUpdated}</span>
-          </div>
         </div>
       </section>
 
-      <section className="px-5 pb-16 sm:px-6 md:pb-24">
-        <div className="mx-auto flex max-w-3xl flex-col gap-6">
-          {PRIVACY_SECTIONS.map((section) => (
-            <article key={section.title} className="rounded-3xl border border-white/12 bg-white/5 p-5 text-sm text-white/75">
-              <h2 className="text-lg font-semibold text-white">{section.title}</h2>
-              {section.paragraphs?.map((paragraph) => (
-                <p key={paragraph} className="mt-3">{paragraph}</p>
-              ))}
-              {section.bullets ? (
-                <ul className="mt-3 space-y-2 text-left text-white/80">
-                  {section.bullets.map((bullet) => (
-                    <li key={bullet} className="flex gap-2">
-                      <span className="mt-1 h-2 w-2 rounded-full bg-purple-400/70" />
-                      <span>{bullet}</span>
-                    </li>
+      <Section className="pt-0">
+        <div className="mx-auto flex max-w-3xl flex-col gap-8">
+          {privacyPoints.map((point) => (
+            <article key={point.title} className="stellar-grid-card bg-white/5">
+              <h2 className="text-xl font-semibold text-white">{point.title}</h2>
+              {point.description ? (
+                <p className="mt-3 text-sm text-white/70">{point.description}</p>
+              ) : (
+                <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-white/80">
+                  {point.bullets?.map((entry) => (
+                    <li key={entry}>{entry}</li>
                   ))}
                 </ul>
-              ) : null}
+              )}
             </article>
           ))}
-          <article className="rounded-3xl border border-white/12 bg-white/5 p-5 text-sm text-white/70">
-            <h2 className="text-lg font-semibold text-white">Contact</h2>
-            <p className="mt-2">Email <a className="underline decoration-dotted underline-offset-4" href="mailto:privacy@earlybird.ai">privacy@earlybird.ai</a> for data requests. We respond within two business days.</p>
+          <article className="stellar-grid-card bg-white/5">
+            <h2 className="text-xl font-semibold text-white">Contact</h2>
+            <p className="mt-3 text-sm text-white/70">
+              Email <a className="underline decoration-dotted underline-offset-4" href="mailto:privacy@earlybird.ai">privacy@earlybird.ai</a> for any privacy question.
+            </p>
           </article>
         </div>
-      </section>
+      </Section>
     </div>
   );
 }

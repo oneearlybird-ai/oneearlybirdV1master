@@ -112,13 +112,13 @@ export default function CallsPage() {
           aria-label="Search calls"
           value={filters.search}
           onChange={(e) => setFilters((prev) => ({ ...prev, search: e.target.value }))}
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white placeholder-white/40 transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-white/20"
         />
         <select
           aria-label="Outcome filter"
           value={filters.outcome}
           onChange={(e) => setFilters((prev) => ({ ...prev, outcome: e.target.value }))}
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
         >
           <option value="all">All outcomes</option>
           <option value="answered">Answered</option>
@@ -130,33 +130,33 @@ export default function CallsPage() {
           type="date"
           value={filters.from}
           onChange={(e) => setFilters((prev) => ({ ...prev, from: e.target.value }))}
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
           aria-label="Start date"
         />
         <input
           type="date"
           value={filters.to}
           onChange={(e) => setFilters((prev) => ({ ...prev, to: e.target.value }))}
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm text-white transition focus:border-white/20 focus:outline-none focus:ring-2 focus:ring-stellar-accent/40"
+          className="bg-white/5 border border-white/10 rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20"
           aria-label="End date"
         />
         <button
-          className="rounded-xl border border-white/10 bg-white/5 px-4 py-2 text-sm font-medium text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+          className="rounded-md border border-white/20 px-3 py-2 text-sm text-white/80 hover:text-white"
           onClick={() => setFilters({ search: "", outcome: "all", from: "", to: "" })}
         >
           Clear filters
         </button>
       </div>
 
-      <div className="mt-6 overflow-hidden rounded-2xl border border-white/10 bg-white/5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur">
-        <div className="flex items-center justify-between border-b border-white/10 bg-white/10 px-5 py-4">
+      <div className="mt-6 rounded-2xl border border-white/10 bg-white/5">
+        <div className="flex items-center justify-between p-4">
           <h2 className="font-medium">Recent calls</h2>
           <span className="text-xs text-white/60">
             {items.length} results{loading ? " (loading…)" : ""}
           </span>
         </div>
-        <div className="px-5 pb-5 pt-4">
-          <div className="grid grid-cols-[1.2fr,1fr,0.6fr,0.9fr,0.8fr] gap-3 border-b border-white/10 pb-2 text-xs text-white/60">
+        <div className="px-4 pb-4">
+          <div className="grid grid-cols-[1.2fr,1fr,0.6fr,0.9fr,0.8fr] gap-3 text-xs text-white/60 border-b border-white/10 pb-2">
             <div>Time</div>
             <div>Caller</div>
             <div>Duration</div>
@@ -189,7 +189,7 @@ export default function CallsPage() {
               {items.map((call) => (
                 <button
                   key={call.id}
-                  className="grid w-full grid-cols-[1.2fr,1fr,0.6fr,0.9fr,0.8fr] items-center gap-3 py-3 text-left hover:bg-white/10 motion-safe:transition-colors"
+                  className="grid w-full grid-cols-[1.2fr,1fr,0.6fr,0.9fr,0.8fr] items-center gap-3 py-3 text-left hover:bg-white/[0.03] motion-safe:transition-colors"
                   onClick={() => setOpenId(call.id)}
                   aria-haspopup="dialog"
                 >
@@ -197,7 +197,7 @@ export default function CallsPage() {
                   <div className="text-sm text-white/80 truncate">{normalisePhone(call.from)}</div>
                   <div className="text-sm text-white/60">{formatCallDuration(call.durationSec)}</div>
                   <div className="text-sm">
-                    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-2 py-0.5 text-white/80">
+                    <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-2 py-0.5 text-white/80">
                       {outcomeLabel(call.outcome)}
                     </span>
                   </div>
@@ -209,7 +209,7 @@ export default function CallsPage() {
           <div className="mt-4 flex items-center justify-between">
             <button
               type="button"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 transition hover:text-white disabled:opacity-40"
+              className="rounded border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:text-white disabled:opacity-40"
               onClick={() => void fetchCalls("replace")}
               disabled={loading}
             >
@@ -217,7 +217,7 @@ export default function CallsPage() {
             </button>
             <button
               type="button"
-              className="rounded-xl border border-white/10 bg-white/5 px-3 py-1.5 text-sm text-white/80 transition hover:text-white disabled:opacity-40"
+              className="rounded border border-white/15 px-3 py-1.5 text-sm text-white/80 hover:text-white disabled:opacity-40"
               onClick={() => void fetchCalls("append", nextCursor ?? undefined)}
               disabled={loading || !nextCursor}
             >

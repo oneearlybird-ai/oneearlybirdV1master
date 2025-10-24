@@ -1,16 +1,10 @@
-'use client'
-
 import Image from 'next/image'
-import Link from 'next/link'
 import Particles from './particles'
 import Illustration from '@/public/images/glow-bottom.svg'
 import AuthModalTriggerButton from '@/components/auth/AuthModalTriggerButton'
-import { useAuthSession } from '@/components/auth/AuthSessionProvider'
+import Link from 'next/link'
 
 export default function Hero() {
-  const { status } = useAuthSession()
-  const isAuthenticated = status === 'authenticated'
-
   return (
     <section>
       <div className="relative max-w-6xl mx-auto px-4 sm:px-6">
@@ -33,21 +27,12 @@ export default function Hero() {
             <p className="text-lg text-slate-300 mb-8" data-aos="fade-down" data-aos-delay="200">Never miss another call—EarlyBird answers in seconds, books appointments, and handles client questions around the clock so your team can stay focused.</p>
             <div className="max-w-xs mx-auto sm:max-w-none sm:inline-flex sm:justify-center space-y-4 sm:space-y-0 sm:space-x-4" data-aos="fade-down" data-aos-delay="400">
               <div>
-                {isAuthenticated ? (
-                  <Link
-                    href="/dashboard"
-                    className="btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white w-full transition duration-150 ease-in-out"
-                  >
-                    Go to dashboard
-                  </Link>
-                ) : (
-                  <AuthModalTriggerButton
-                    mode="signup"
-                    className="btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white w-full transition duration-150 ease-in-out group"
-                  >
-                    Start free trial <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
-                  </AuthModalTriggerButton>
-                )}
+                <AuthModalTriggerButton
+                  mode="signup"
+                  className="btn text-slate-900 bg-linear-to-r from-white/80 via-white to-white/80 hover:bg-white w-full transition duration-150 ease-in-out group"
+                >
+                  Start free trial <span className="tracking-normal text-purple-500 group-hover:translate-x-0.5 transition-transform duration-150 ease-in-out ml-1">-&gt;</span>
+                </AuthModalTriggerButton>
               </div>
               <div>
                 <Link
