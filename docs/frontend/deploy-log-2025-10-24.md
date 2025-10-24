@@ -1,7 +1,7 @@
 # Frontend Deploy Log — 2025-10-24
 
 - **Timestamp (UTC)**: 2025-10-24T17:27:20Z
-- **Commit**: 789c533
+- **Commit**: 7d3205f
 - **Summary**: Finalized provisioning pending flow, dashboard gating, integrations preview, and one-click call demo adjustments.
 - **Verification**:
   - Lint/build locally: ✅ (`npm --prefix apps/web run lint`, `npm --prefix apps/web run build`)
