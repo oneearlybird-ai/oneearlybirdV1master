@@ -18,7 +18,8 @@ const REPORT_ONLY_DIRECTIVES = [
   "form-action 'self'",
 ];
 
-const CSP_REPORT_ONLY_VALUE = REPORT_ONLY_DIRECTIVES.join("; ") + "; report-to csp-endpoint";
+
+const CSP_REPORT_ONLY_VALUE = REPORT_ONLY_DIRECTIVES.join('; ') + '; report-to csp-endpoint';
 
 const REPORTING_HEADERS = [
   { key: "Reporting-Endpoints", value: "csp-endpoint=\"https://reports.oneearlybird.ai/csp\"" },

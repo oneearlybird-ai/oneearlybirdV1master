@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { dashboardFetch } from "@/lib/dashboardFetch";
 
 const SESSION_COOKIE_REGEX = /(?:^|;\s*)(?:__Host-)?(?:__Secure-)?ob_session[\w-]*=/;
@@ -67,9 +67,20 @@ type AuthSessionValue = {
 
 const AuthSessionContext = createContext<AuthSessionValue | null>(null);
 
-export function AuthSessionProvider({ children }: { children: React.ReactNode }) {
-  const [status, setStatus] = useState<SessionStatus>("loading");
-  const [profile, setProfile] = useState<TenantProfile | null>(null);
+type AuthSessionProviderProps = {
+  children: ReactNode;
+  initialStatus?: SessionStatus;
+  initialProfile?: TenantProfile | null;
+};
+
+export function AuthSessionProvider({
+  children,
+  initialStatus = "loading",
+  initialProfile = null,
+}: AuthSessionProviderProps) {
+  const [status, setStatus] = useState<SessionStatus>(initialStatus);
+  const [profile, setProfile] = useState<TenantProfile | null>(initialProfile);
+  const initialStatusRef = useRef(initialStatus);
 
   type FetchResult =
     | { kind: "ok"; profile: TenantProfile | null }
@@ -142,7 +153,7 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
   }, []);
 
   useEffect(() => {
-    void refresh({ showLoading: true });
+    void refresh({ showLoading: initialStatusRef.current === "loading" });
   }, [refresh]);
 
   useEffect(() => {

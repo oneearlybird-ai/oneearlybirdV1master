@@ -3,6 +3,7 @@ import { ReactNode } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import AuthModalProvider from "@/components/auth/AuthModalProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
+import { loadServerSession } from "@/lib/server/loadSession";
 import "./globals.css";
 import { displayFont, sansFont, stellarFont } from "./fonts";
 
@@ -23,24 +24,15 @@ export const metadata: Metadata = {
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  const session = await loadServerSession();
+
   return (
     <html lang="en" className="scroll-smooth">
-      <head>
-        <script async src="https://www.googletagmanager.com/gtag/js?id=G-7JKBFQ2RHZ" />
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `window.dataLayer = window.dataLayer || [];
-function gtag(){dataLayer.push(arguments);}
-gtag('js', new Date());
-gtag('config', 'G-7JKBFQ2RHZ');`,
-          }}
-        />
-      </head>
       <body
         className={`${sansFont.variable} ${displayFont.variable} ${stellarFont.variable} min-h-dvh bg-[#05050b] text-white antialiased overflow-x-hidden`}
       >
-        <AuthSessionProvider>
+        <AuthSessionProvider initialStatus={session.status} initialProfile={session.profile}>
           <AuthModalProvider>
             <div className="flex min-h-screen flex-col overflow-hidden supports-[overflow:clip]:overflow-clip">
               {children}
