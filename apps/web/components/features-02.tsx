@@ -1,4 +1,3 @@
-
 import type { ReactNode } from "react";
 import Image from "next/image";
 import Particles from "./particles";
@@ -11,9 +10,8 @@ type FeatureItem = {
   icon: ReactNode;
 };
 
-const FEATURE_ITEMS: FeatureItem[] = [
-
-{
+const FEATURES: FeatureItem[] = [
+  {
     title: "Call routing controls",
     description: "Direct after-hours, overflow, and VIP calls based on business rules—no IVR trees.",
     icon: (
@@ -87,12 +85,12 @@ const FEATURE_ITEMS: FeatureItem[] = [
   },
 ];
 
-const CARD_BASE_CLASSES =
-  'flex h-full flex-col gap-3 rounded-3xl border border-slate-800 bg-slate-800/25 px-6 py-6 transition duration-200 hover:border-purple-300 hover:bg-purple-500/10 hover:shadow-[0_20px_60px_rgba(102,51,153,0.25)]';
+const CARD_BASE_CLASS =
+  "flex h-full flex-col justify-between rounded-3xl border border-slate-800 bg-slate-800/25 px-6 py-6 transition duration-200 hover:-translate-y-1 hover:border-purple-300 hover:bg-purple-500/10 hover:shadow-[0_20px_60px_rgba(102,51,153,0.25)]";
 
 export default function Features02() {
-  const leftFeatures = FEATURE_ITEMS.slice(0, 3);
-  const rightFeatures = FEATURE_ITEMS.slice(3);
+  const leftColumn = FEATURES.slice(0, 3);
+  const rightColumn = FEATURES.slice(3);
 
   return (
     <section className="relative">
@@ -102,26 +100,26 @@ export default function Features02() {
 
       <div className="mx-auto max-w-6xl px-4 sm:px-6">
         <div className="pt-16 md:pt-32">
-          <div className="grid items-start gap-6 md:grid-cols-3">
+          <div className="grid gap-8 md:grid-cols-[minmax(0,1fr)_minmax(0,18rem)_minmax(0,1fr)]">
             <div className="flex flex-col gap-6">
-              {leftFeatures.map((feature, index) => (
-                <FeatureCard key={feature.title} feature={feature} animation="right" delay={index * 80} />
+              {leftColumn.map((feature, index) => (
+                <FeatureCard key={feature.title} feature={feature} animation="fade-right" delay={index * 80} />
               ))}
             </div>
 
             <div className="flex justify-center" data-aos="zoom-in" data-aos-delay="160">
-              <div className="relative mx-auto w-full max-w-[260px] rounded-3xl border border-slate-800 bg-slate-900/40 px-6 py-12 shadow-[0_24px_60px_rgba(15,23,42,0.45)] transition duration-200 hover:border-purple-300 hover:bg-purple-500/10">
+              <div className="relative mx-auto w-full max-w-[240px] rounded-3xl border border-slate-800 bg-slate-900/40 px-5 py-10 shadow-[0_24px_60px_rgba(15,23,42,0.45)] transition duration-200 hover:border-purple-300 hover:bg-purple-500/10">
                 <div className="pointer-events-none absolute inset-0 rounded-3xl bg-gradient-to-b from-white/10 via-transparent to-transparent" aria-hidden="true" />
-                <div className="absolute -top-12 left-1/2 h-40 w-40 -translate-x-1/2 rounded-full bg-purple-500/20 blur-3xl" aria-hidden="true" />
+                <div className="absolute -top-12 left-1/2 h-44 w-44 -translate-x-1/2 rounded-full bg-purple-500/25 blur-3xl" aria-hidden="true" />
                 <div className="relative flex items-center justify-center">
-                  <Image src={FeatureImg01} alt="EarlyBird live call preview" className="w-full max-w-[220px]" priority />
+                  <Image src={FeatureImg01} alt="EarlyBird live call preview" className="w-full" priority />
                 </div>
               </div>
             </div>
 
             <div className="flex flex-col gap-6">
-              {rightFeatures.map((feature, index) => (
-                <FeatureCard key={feature.title} feature={feature} animation="left" delay={index * 80} />
+              {rightColumn.map((feature, index) => (
+                <FeatureCard key={feature.title} feature={feature} animation="fade-left" delay={index * 80} />
               ))}
             </div>
           </div>
@@ -137,20 +135,18 @@ function FeatureCard({
   delay,
 }: {
   feature: FeatureItem;
-  animation: 'left' | 'right';
+  animation: "fade-left" | "fade-right";
   delay?: number;
 }) {
-  const animationDirection = animation === 'left' ? 'fade-left' : 'fade-right';
-
   return (
-    <div className={CARD_BASE_CLASSES} data-aos={animationDirection} data-aos-delay={delay ?? 0}>
+    <div className={CARD_BASE_CLASS} data-aos={animation} data-aos-delay={delay ?? 0}>
       <div className="flex items-start gap-3">
         <div className="flex h-10 w-10 items-center justify-center rounded-full bg-white/10 text-slate-100">
           {feature.icon}
         </div>
         <h3 className="text-base font-semibold text-slate-100">{feature.title}</h3>
       </div>
-      <p className="text-sm text-slate-300">{feature.description}</p>
+      <p className="mt-3 text-sm text-slate-300">{feature.description}</p>
     </div>
   );
 }
