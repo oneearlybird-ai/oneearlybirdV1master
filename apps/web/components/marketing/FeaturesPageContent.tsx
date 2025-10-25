@@ -1,7 +1,6 @@
 'use client'
 
 import { type ReactNode, useMemo, useState } from "react";
-import Link from "next/link";
 import Section from "@/components/marketing/Section";
 import Particles from "@/components/particles";
 import AuthModalTriggerButton from "@/components/auth/AuthModalTriggerButton";
@@ -160,12 +159,6 @@ export function FeaturesPageContent() {
             >
               Start free trial
             </AuthModalTriggerButton>
-            <Link
-              href="/preview"
-              className="inline-flex items-center justify-center rounded-2xl border border-white/20 px-6 py-3 text-base font-semibold text-white/80 transition hover:border-white/35 hover:text-white"
-            >
-              Watch the live preview
-            </Link>
           </div>
         </div>
       </section>
