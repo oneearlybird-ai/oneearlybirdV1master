@@ -11,7 +11,7 @@ export async function GET() {
   const incoming = headers();
   const cookie = incoming.get("cookie") ?? "";
 
-  const response = await fetch(`${UPSTREAM}/dashboard/profile`, {
+  const response = await fetch(`${UPSTREAM}/tenants/profile`, {
     method: "GET",
     headers: {
       cookie,
