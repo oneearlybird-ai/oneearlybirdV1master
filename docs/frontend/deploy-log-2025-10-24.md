@@ -27,3 +27,12 @@
   - Vercel deployment: Pending (await production build)
   - Network check: Pending (verify no requests to `/tenants/profile` or `/usage/summary` post-deploy)
   - Dashboard data: Pending (confirm usage/profile widgets hydrate via new API routes)
+
+- **Timestamp (UTC)**: 2025-10-25T00:32:49Z
+- **Commit**: 9f96a2f
+- **Summary**: Cleared skip-worktree flags so staged auth redirect and API proxy updates ship with main; reran lint/build before production push.
+- **Verification**:
+  - Lint/build locally: ✅ (`npm --prefix apps/web run lint`, `npm --prefix apps/web run build`)
+  - Vercel production URL: https://earlybird-ai.vercel.app (auto deploy from main push at 2025-10-25T00:32Z; monitor for completion)
+  - Incognito auth flow `/account/pending` → `/dashboard`: Pending (run once deployment finishes)
+  - Network check (only `/api/dashboard/*` + `/api/places/*` calls): Pending (confirm in prod DevTools)
