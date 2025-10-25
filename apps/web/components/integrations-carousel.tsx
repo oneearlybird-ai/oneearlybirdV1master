@@ -4,15 +4,11 @@ import { useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 
-import Swiper from "swiper";
-import { Navigation } from "swiper/modules";
-import "swiper/css";
-import "swiper/css/navigation";
+import Swiper from "swiper/bundle";
+import "swiper/css/bundle";
 
 import Star from "@/public/images/star.svg";
 import { allIntegrations } from "@/lib/crmIntegrations";
-
-Swiper.use([Navigation]);
 
 export default function IntegrationsCarousel() {
   useEffect(() => {
