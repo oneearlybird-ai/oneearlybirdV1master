@@ -30,18 +30,28 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
   const searchRef = useRef<HTMLInputElement | null>(null);
   const guardNotifiedRef = useRef(false);
   useEffect(() => {
+    if (status !== "authenticated") {
+      return undefined;
+    }
     let cancelled = false;
-    dashboardFetch('/api/dashboard/usage', { cache: 'no-store' })
-      .then(async r => r.ok ? (await r.json()) : null)
-      .then((j) => { if (!cancelled && j?.version) setBuild(String(j.version).slice(0,7)); })
-      .catch(() => { return; });
+    dashboardFetch('/api/dashboard/usage', { cache: 'no-store', suppressAuthRedirect: true })
+      .then(async (r) => (r.ok ? await r.json() : null))
+      .then((j) => {
+        if (!cancelled && j?.version) setBuild(String(j.version).slice(0, 7));
+      })
+      .catch(() => {
+        return;
+      });
     // Demo unread updates badge (persist dismiss per session)
     try {
       const k = 'eb_unread_demo';
       const v = sessionStorage.getItem(k);
       const n = v ? Number(v) : 3;
-      if (!Number.isFinite(n) || n < 0) setUnread(0); else setUnread(n);
-    } catch (e) { void e; }
+      if (!Number.isFinite(n) || n < 0) setUnread(0);
+      else setUnread(n);
+    } catch (e) {
+      void e;
+    }
     const onKey = (e: KeyboardEvent) => {
       const tag = (e.target as HTMLElement)?.tagName || '';
       const isTyping = tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement)?.isContentEditable;
@@ -51,8 +61,11 @@ export default function DashboardLayout({ children }: { children: ReactNode }) {
       }
     };
     window.addEventListener('keydown', onKey);
-    return () => { cancelled = true };
-  }, []);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('keydown', onKey);
+    };
+  }, [status]);
   useEffect(() => {
     if (status === "authenticated") {
       guardNotifiedRef.current = false;

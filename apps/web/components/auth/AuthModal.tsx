@@ -74,8 +74,8 @@ export default function AuthModal() {
   const warmDashboardData = useCallback(async () => {
     try {
       await Promise.all([
-        apiFetch("/api/dashboard/profile", { cache: "no-store" }),
-        apiFetch("/api/dashboard/usage?window=week", { cache: "no-store" }),
+        apiFetch("/api/dashboard/profile", { cache: "no-store", suppressAuthRedirect: true }),
+        apiFetch("/api/dashboard/usage?window=week", { cache: "no-store", suppressAuthRedirect: true }),
       ]);
     } catch (error) {
       console.warn("auth_refresh_failed", { message: (error as Error)?.message });

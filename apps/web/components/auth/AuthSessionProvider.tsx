@@ -1,14 +1,20 @@
 "use client";
 
-import {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useMemo,
-  useState,
-} from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { dashboardFetch } from "@/lib/dashboardFetch";
+
+const SESSION_COOKIE_REGEX = /(?:^|;\s*)(?:__Host-)?(?:__Secure-)?ob_session[\w-]*=/;
+
+function hasAuthSessionCookie(): boolean {
+  if (typeof document === "undefined") {
+    return false;
+  }
+  const raw = document.cookie ?? "";
+  if (!raw) {
+    return false;
+  }
+  return SESSION_COOKIE_REGEX.test(raw);
+}
 
 export type SessionStatus = "loading" | "authenticated" | "unauthenticated";
 
@@ -71,6 +77,11 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
     | { kind: "error" };
 
   const fetchProfile = useCallback(async (): Promise<FetchResult> => {
+    if (!hasAuthSessionCookie()) {
+      setProfile(null);
+      setStatus("unauthenticated");
+      return { kind: "unauthorized" };
+    }
     try {
       const response = await dashboardFetch("/api/dashboard/profile", { cache: "no-store", suppressAuthRedirect: true });
       if (response.ok) {
@@ -106,6 +117,11 @@ export function AuthSessionProvider({ children }: { children: React.ReactNode })
 
   const refresh = useCallback(
     async ({ showLoading = false, retryOnUnauthorized = false }: RefreshOptions = {}) => {
+      if (!hasAuthSessionCookie()) {
+        setProfile(null);
+        setStatus("unauthenticated");
+        return null;
+      }
       if (showLoading) {
         setStatus("loading");
       }

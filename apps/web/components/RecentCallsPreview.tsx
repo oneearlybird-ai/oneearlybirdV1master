@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 import { apiFetch } from "@/lib/http";
 import { formatCallDuration, formatCallTimestamp, normalisePhone, outcomeLabel } from "@/lib/call-format";
 
@@ -394,42 +395,47 @@ export function CallDrawer({
 }
 
 export function LiveStatusBadge() {
-  const [status, setStatus] = useState<{ ok: boolean; window?: string } | null>(null);
+  const { status: sessionStatus } = useAuthSession();
+  const [liveStatus, setLiveStatus] = useState<{ ok: boolean; window?: string } | null>(null);
 
   useEffect(() => {
+    if (sessionStatus !== "authenticated") {
+      setLiveStatus(null);
+      return;
+    }
     let cancelled = false;
-    apiFetch("/api/dashboard/usage?window=week", { cache: "no-store" })
+    apiFetch("/api/dashboard/usage?window=week", { cache: "no-store", suppressAuthRedirect: true })
       .then(async (res) => {
         if (cancelled) return;
         if (!res.ok) {
-          setStatus({ ok: false });
+          setLiveStatus({ ok: false });
           return;
         }
         const json = await res.json();
-        setStatus({ ok: true, window: json?.window });
+        setLiveStatus({ ok: true, window: json?.window });
       })
       .catch(() => {
-        if (!cancelled) setStatus({ ok: false });
+        if (!cancelled) setLiveStatus({ ok: false });
       });
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [sessionStatus]);
 
-  if (!status) {
+  if (!liveStatus) {
     return <span className="text-sm text-white/60">Checking live status…</span>;
   }
   return (
     <span className="text-sm">
       <span
         className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 border ${
-          status.ok ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-red-500/30 bg-red-500/10 text-red-300"
+          liveStatus.ok ? "border-emerald-500/30 bg-emerald-500/10 text-emerald-300" : "border-red-500/30 bg-red-500/10 text-red-300"
         }`}
       >
-        <span className={`h-1.5 w-1.5 rounded-full ${status.ok ? "bg-emerald-400" : "bg-red-400"}`} />
-        {status.ok ? "Live" : "Offline"}
+        <span className={`h-1.5 w-1.5 rounded-full ${liveStatus.ok ? "bg-emerald-400" : "bg-red-400"}`} />
+        {liveStatus.ok ? "Live" : "Offline"}
       </span>
-      {status.window ? <span className="ml-2 text-white/50">window: {status.window}</span> : null}
+      {liveStatus.window ? <span className="ml-2 text-white/50">window: {liveStatus.window}</span> : null}
     </span>
   );
 }

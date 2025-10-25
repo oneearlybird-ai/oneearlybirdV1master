@@ -25,20 +25,63 @@ async function proxyToUpstream(request: NextRequest): Promise<NextResponse> {
 
   const init: RequestInit = {
     method: request.method,
-    headers: stripHopByHop(request.headers),
+    headers: buildUpstreamHeaders(request),
     cache: "no-store",
     redirect: "manual",
+    credentials: "include",
   };
 
   if (request.method !== "GET" && request.method !== "HEAD") {
     init.body = request.body;
   }
 
-  const upstream = await fetch(target, init);
-  const headers = new Headers(upstream.headers);
-  headers.delete("transfer-encoding");
+  try {
+    const upstream = await fetch(target, init);
+    const headers = stripHopByHop(upstream.headers);
+    return new NextResponse(upstream.body, { status: upstream.status, headers });
+  } catch (error) {
+    console.error("dashboard_usage_proxy_error", {
+      message: (error as Error)?.message ?? "unknown_error",
+    });
+    return NextResponse.json({ ok: false, error: "upstream_unreachable" }, { status: 502 });
+  }
+}
 
-  return new NextResponse(upstream.body, { status: upstream.status, headers });
+function buildUpstreamHeaders(request: NextRequest): Headers {
+  const headers = new Headers();
+  const forward = (key: string) => {
+    const value = request.headers.get(key);
+    if (value) {
+      headers.set(key, value);
+    }
+  };
+  ["accept", "accept-language", "cookie", "user-agent"].forEach(forward);
+  if (request.headers.has("content-type")) {
+    headers.set("content-type", request.headers.get("content-type")!);
+  }
+  if (request.headers.has("authorization")) {
+    headers.set("authorization", request.headers.get("authorization")!);
+  }
+  const forwardedFor = request.headers.get("x-forwarded-for");
+  if (forwardedFor || request.ip) {
+    const combined = [forwardedFor, request.ip].filter(Boolean).join(", ");
+    if (combined) {
+      headers.set("x-forwarded-for", combined);
+    }
+  }
+  const forwardedProto = request.headers.get("x-forwarded-proto");
+  if (forwardedProto) {
+    headers.set("x-forwarded-proto", forwardedProto);
+  }
+  const forwardedHost = request.headers.get("x-forwarded-host") ?? request.headers.get("host");
+  if (forwardedHost) {
+    headers.set("x-forwarded-host", forwardedHost);
+  }
+  const referer = request.headers.get("referer");
+  if (referer) {
+    headers.set("referer", referer);
+  }
+  return headers;
 }
 
 function stripHopByHop(headers: Headers): Headers {

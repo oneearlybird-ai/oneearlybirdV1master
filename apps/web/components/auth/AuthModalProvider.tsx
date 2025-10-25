@@ -38,9 +38,9 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   const warmDashboardData = useCallback(async () => {
     try {
       await Promise.all([
-        apiFetch("/api/dashboard/profile", { cache: "no-store" }),
-        apiFetch("/api/billing/summary", { cache: "no-store" }),
-        apiFetch("/api/dashboard/usage?window=week", { cache: "no-store" }),
+        apiFetch("/api/dashboard/profile", { cache: "no-store", suppressAuthRedirect: true }),
+        apiFetch("/api/billing/summary", { cache: "no-store", suppressAuthRedirect: true }),
+        apiFetch("/api/dashboard/usage?window=week", { cache: "no-store", suppressAuthRedirect: true }),
       ]);
     } catch (error) {
       console.warn("auth_refresh_failed", {
@@ -52,8 +52,8 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
   const refreshBillingState = useCallback(async () => {
     try {
       await Promise.all([
-        apiFetch("/api/dashboard/profile", { cache: "no-store" }),
-        apiFetch("/api/billing/summary", { cache: "no-store" }),
+        apiFetch("/api/dashboard/profile", { cache: "no-store", suppressAuthRedirect: true }),
+        apiFetch("/api/billing/summary", { cache: "no-store", suppressAuthRedirect: true }),
       ]);
     } catch (error) {
       console.warn("billing_refresh_failed", {
