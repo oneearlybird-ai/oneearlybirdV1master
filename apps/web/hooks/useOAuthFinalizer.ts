@@ -3,7 +3,7 @@
 import { useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useAuthSession } from "@/components/auth/AuthSessionProvider";
-import { getAccountCreatePath, getDashboardPath, getLandingPath } from "@/lib/authPaths";
+import { getAccountPendingPath, getLandingPath } from "@/lib/authPaths";
 
 const LOGIN_EVENT_KEY = "__ob_login";
 
@@ -18,17 +18,11 @@ export function useOAuthFinalizer() {
   const { refresh } = useAuthSession();
 
   return useCallback(
-    async ({ needsAccountCreate, redirectPath, onSuccess }: FinalizeOptions = {}) => {
+    async ({ redirectPath, onSuccess }: FinalizeOptions = {}) => {
       try {
-        const profile = await refresh({ showLoading: true, retryOnUnauthorized: true });
-        const shouldCreateAccount =
-          typeof needsAccountCreate === "boolean"
-            ? needsAccountCreate
-            : Boolean(profile?.needsAccountCreate);
+        await refresh({ showLoading: true, retryOnUnauthorized: true });
 
-        const destination =
-          redirectPath ??
-          (shouldCreateAccount ? getAccountCreatePath() : getDashboardPath());
+        const destination = redirectPath ?? getAccountPendingPath();
 
         onSuccess?.();
         try {

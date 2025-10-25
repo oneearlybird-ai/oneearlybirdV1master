@@ -39,7 +39,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
     try {
       await Promise.all([
         apiFetch("/api/dashboard/profile", { cache: "no-store" }),
-        apiFetch("/billing/summary", { cache: "no-store" }),
+        apiFetch("/api/billing/summary", { cache: "no-store" }),
         apiFetch("/api/dashboard/usage?window=week", { cache: "no-store" }),
       ]);
     } catch (error) {
@@ -53,7 +53,7 @@ export default function AuthModalProvider({ children }: { children: React.ReactN
     try {
       await Promise.all([
         apiFetch("/api/dashboard/profile", { cache: "no-store" }),
-        apiFetch("/billing/summary", { cache: "no-store" }),
+        apiFetch("/api/billing/summary", { cache: "no-store" }),
       ]);
     } catch (error) {
       console.warn("billing_refresh_failed", {
