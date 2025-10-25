@@ -1,75 +1,48 @@
-import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
+import { NextResponse, type NextRequest } from "next/server";
 
-const MOBILE_UA = /Mobile|Android|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i;
-const PRIMARY_HOST = "oneearlybird.ai";
+const REPORTING_ENDPOINT = "csp-endpoint=\"https://reports.oneearlybird.ai/csp\"";
 
-function isAssetPath(pathname: string): boolean {
-  if (pathname.startsWith("/api/auth/")) return true;
-  if (pathname.startsWith("/_next/")) return true;
-  if (pathname === "/favicon.ico") return true;
-  if (pathname.startsWith("/images")) return true;
-  if (pathname.startsWith("/assets")) return true;
-  if (pathname.startsWith("/api")) return true;
-  if (pathname.startsWith("/_next")) return true;
-  if (pathname.startsWith("/favicon")) return true;
-  if (pathname.startsWith("/fonts")) return true;
-  return pathname.includes(".");
-}
-
-function toMobileInternalPath(pathname: string): string {
-  if (pathname === "/" || pathname === "") return "/m";
-  if (pathname.startsWith("/m")) return pathname;
-  return `/m${pathname}`;
-}
+const CSP_DIRECTIVES = (
+  nonce: string,
+) => [
+  "default-src 'self'",
+  "base-uri 'none'",
+  "object-src 'none'",
+  `script-src 'self' 'nonce-${nonce}' https://js.stripe.com https://unpkg.com`,
+  "script-src-attr 'none'",
+  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+  "img-src 'self' data: blob: https:",
+  "font-src 'self' https://fonts.gstatic.com",
+  "connect-src 'self' https://api.oneearlybird.ai",
+  "frame-src 'self' https://js.stripe.com https://checkout.stripe.com https://accounts.google.com https://*.stripe.com",
+  "frame-ancestors 'none'",
+  "form-action 'self' https://checkout.stripe.com",
+  "media-src 'self' https:"
+].join("; ");
 
 export function middleware(request: NextRequest) {
-  const url = request.nextUrl.clone();
-  const pathname = url.pathname;
-  const hostHeader = request.headers.get("host");
-  const hostname = (hostHeader ?? url.hostname).toLowerCase();
+  const nonceArray = new Uint8Array(16);
+  crypto.getRandomValues(nonceArray);
+  const nonce = btoa(String.fromCharCode(...nonceArray));
+  const requestHeaders = new Headers(request.headers);
+  requestHeaders.set("x-nonce", nonce);
 
-  if (isAssetPath(pathname)) {
-    return NextResponse.next();
-  }
+  const response = NextResponse.next({
+    request: {
+      headers: requestHeaders,
+    },
+  });
 
-  const isMobileHost = hostname.startsWith("m.");
+  response.headers.set("Content-Security-Policy-Report-Only", CSP_DIRECTIVES(nonce));
+  response.headers.set("Reporting-Endpoints", REPORTING_ENDPOINT);
+  response.headers.set("Cross-Origin-Opener-Policy", "same-origin-allow-popups");
+  response.headers.set("Cross-Origin-Embedder-Policy", "unsafe-none");
 
-  if (isMobileHost) {
-    const targetPath = toMobileInternalPath(pathname);
-    if (targetPath !== pathname) {
-      const rewriteUrl = request.nextUrl.clone();
-      rewriteUrl.pathname = targetPath;
-      return NextResponse.rewrite(rewriteUrl);
-    }
-    return NextResponse.next();
-  }
-
-  const desktopQuery = url.searchParams.get("desktop");
-  const hasDesktopCookie = request.cookies.get("eb_desktop")?.value === "1";
-
-  if (desktopQuery === "1") {
-    const cleaned = url.clone();
-    cleaned.searchParams.delete("desktop");
-    const response = NextResponse.redirect(cleaned, 307);
-    response.cookies.set("eb_desktop", "1", { path: "/", maxAge: 24 * 60 * 60 });
-    return response;
-  }
-
-  const userAgent = request.headers.get("user-agent") ?? "";
-  const isMobileUa = MOBILE_UA.test(userAgent);
-
-  if (isMobileUa && !hasDesktopCookie) {
-    const target = new URL(url.toString());
-    target.hostname = `m.${PRIMARY_HOST}`;
-    const response = NextResponse.redirect(target, 307);
-    response.cookies.delete("eb_mobile", { path: "/" });
-    return response;
-  }
-
-  return NextResponse.next();
+  return response;
 }
 
 export const config = {
-  matcher: ["/((?!api/auth/|_next/|favicon\\.ico|images(?:/.*)?|assets(?:/.*)?|.*\\..*).*)"],
+  matcher: [
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.jpg$|.*\\.jpeg$|.*\\.svg$|.*\\.ico$|.*\\.webmanifest$).*)",
+  ],
 };

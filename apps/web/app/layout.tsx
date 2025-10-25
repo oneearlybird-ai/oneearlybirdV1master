@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
-import { Analytics } from "@vercel/analytics/react";
 import AuthModalProvider from "@/components/auth/AuthModalProvider";
 import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
 import { loadServerSession } from "@/lib/server/loadSession";
@@ -37,7 +36,6 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
             <div className="flex min-h-screen flex-col overflow-hidden supports-[overflow:clip]:overflow-clip">
               {children}
             </div>
-            <Analytics />
           </AuthModalProvider>
         </AuthSessionProvider>
       </body>
