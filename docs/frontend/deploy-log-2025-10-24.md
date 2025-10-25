@@ -36,3 +36,12 @@
   - Vercel production URL: https://earlybird-ai.vercel.app (auto deploy from main push at 2025-10-25T00:32Z; monitor for completion)
   - Incognito auth flow `/account/pending` → `/dashboard`: Pending (run once deployment finishes)
   - Network check (only `/api/dashboard/*` + `/api/places/*` calls): Pending (confirm in prod DevTools)
+
+- **Timestamp (UTC)**: 2025-10-25T20:48:10Z
+- **Commit**: (pending main push — SSR session redirect + proxy update)
+- **Summary**: SSR session loader forwards cookies to `/api/dashboard/profile`, header renders authenticated state on first paint, and Google OAuth done routes redirect server-side without client flashes.
+- **Verification**:
+  - Lint/build locally: ✅ (`npm run lint`, `npm run build`)
+  - `npm run dev`: ❌ (root script fails — `pnpm` rejects `packageManager: "npm@10"`; tracked in `/tmp/fe-dev.log`)
+  - `npm --prefix apps/web run dev`: ✅ (`curl -i http://localhost:3000/api/dashboard/profile` → `500 upstream_unconfigured`, expected without local `API_UPSTREAM`)
+  - Production follow-up: validate incognito OAuth flow hits `/account/create` 302 then `/dashboard`; capture screenshots for `docs/frontend/auth-session-ssr.md`

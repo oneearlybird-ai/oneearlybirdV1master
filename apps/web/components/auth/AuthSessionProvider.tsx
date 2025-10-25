@@ -153,7 +153,14 @@ export function AuthSessionProvider({
   }, []);
 
   useEffect(() => {
-    void refresh({ showLoading: initialStatusRef.current === "loading" });
+    initialStatusRef.current = initialStatus;
+  }, [initialStatus]);
+
+  useEffect(() => {
+    if (initialStatusRef.current !== "loading") {
+      return;
+    }
+    void refresh({ showLoading: true });
   }, [refresh]);
 
   useEffect(() => {
@@ -214,6 +221,8 @@ export function AuthSessionProvider({
 
   return <AuthSessionContext.Provider value={value}>{children}</AuthSessionContext.Provider>;
 }
+
+export default AuthSessionProvider;
 
 export function useAuthSession(): AuthSessionValue {
   const ctx = useContext(AuthSessionContext);

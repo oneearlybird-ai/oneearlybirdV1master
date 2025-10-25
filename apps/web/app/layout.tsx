@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ReactNode } from "react";
 import AuthModalProvider from "@/components/auth/AuthModalProvider";
-import { AuthSessionProvider } from "@/components/auth/AuthSessionProvider";
+import AuthSessionProvider from "@/components/auth/AuthSessionProvider";
 import { loadServerSession } from "@/lib/server/loadSession";
 import "./globals.css";
 import { displayFont, sansFont, stellarFont } from "./fonts";
