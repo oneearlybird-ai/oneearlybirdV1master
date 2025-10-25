@@ -22,12 +22,6 @@ export default function ThanksPage() {
       <Section className="pt-0">
         <div className="mx-auto flex max-w-2xl flex-col gap-4">
           <Link
-            href="/preview"
-            className="stellar-grid-card bg-white/5 text-center text-sm font-semibold text-white transition hover:border-white/25"
-          >
-            Watch the live preview
-          </Link>
-          <Link
             href="/docs"
             className="stellar-grid-card bg-white/5 text-center text-sm font-semibold text-white transition hover:border-white/25"
           >

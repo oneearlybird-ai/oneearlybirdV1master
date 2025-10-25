@@ -21,7 +21,6 @@ type NavItem = {
 const marketingLinks: NavItem[] = [
   { label: "Home", href: "/m", match: (pathname) => pathname === "/m" },
   { label: "How it works", href: "/m#how-it-works", match: (pathname, hash) => pathname === "/m" && hash === "#how-it-works" },
-  { label: "Preview demo", href: "/preview" },
   { label: "Pricing", href: "/m/pricing", match: (pathname) => pathname === "/m/pricing" },
   { label: "Docs", href: "/docs" },
   { label: "Support", href: "/support" },

@@ -25,9 +25,6 @@ export default function Header() {
           <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/pricing">
             Pricing
           </Link>
-          <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/preview">
-            Preview
-          </Link>
           <Link className="rounded-xl px-4 py-2 text-sm font-medium text-white/70 transition hover:text-white" href="/docs">
             Docs
           </Link>
