@@ -171,14 +171,17 @@ export default function MobileDashboardPage() {
     void loadData();
   }, [loadData]);
 
+  const allowedPlanStatuses = useMemo(() => new Set(["trial-active", "active"]), []);
   const needsBusinessSetup = useMemo(() => {
-    if (profile.loading) return false;
+    if (profile.loading || summary.loading) return false;
     const data = profile.data;
     if (!data) return false;
+    const planStatus = summary.data?.status ?? "none";
+    if (!allowedPlanStatuses.has(planStatus)) return false;
     if (data.businessProfileComplete === true) return false;
     if (data.businessProfileComplete === false) return true;
     return !data.businessName || !data.addressNormalized;
-  }, [profile.data, profile.loading]);
+  }, [allowedPlanStatuses, profile.data, profile.loading, summary.data?.status, summary.loading]);
 
   useEffect(() => {
     if (needsBusinessSetup && !wizardDismissed) {
