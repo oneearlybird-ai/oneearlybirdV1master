@@ -5,7 +5,7 @@ import { guardUpstream } from "@/lib/rate-limit";
 
 const UPSTREAM = (process.env.API_UPSTREAM || process.env.API_BASE || "").replace(/\/\/+$/, "");
 
-export async function POST(request: NextRequest): Promise<NextResponse> {
+export async function GET(request: NextRequest): Promise<NextResponse> {
   return proxyToUpstream(request);
 }
 
@@ -19,14 +19,13 @@ async function proxyToUpstream(request: NextRequest): Promise<NextResponse> {
     return new NextResponse("Too Many Requests", { status: 429, headers: guard.headers });
   }
 
-  const target = new URL(`${UPSTREAM}/places/resolve`);
+  const target = new URL(`${UPSTREAM}/places/resolve${request.nextUrl.search}`);
 
   const init: RequestInit = {
     method: request.method,
     headers: stripHopByHop(request.headers),
     cache: "no-store",
     redirect: "manual",
-    body: request.body,
   };
 
   const upstream = await fetch(target, init);

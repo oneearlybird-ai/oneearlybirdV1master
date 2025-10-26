@@ -202,16 +202,13 @@ export default function BusinessSetupWizard({ open, onClose, onCompleted, seed, 
     try {
       setPending(true);
       setError(null);
-      const token = await fetchCsrfToken();
-      const res = await apiFetch("/places/resolve", {
-        method: "POST",
+      const url = `/places/resolve?id=${encodeURIComponent(item.id ?? "")}`;
+      const res = await apiFetch(url, {
+        method: "GET",
         suppressAuthRedirect: true,
         headers: {
-          "content-type": "application/json",
-          "x-csrf-token": token,
           accept: "application/json",
         },
-        body: JSON.stringify({ id: item.id }),
       });
       if (res.status === 401 || res.status === 403) {
         setError("Can’t verify address yet. Check your connection or try again.");
