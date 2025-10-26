@@ -387,13 +387,17 @@ export default function DashboardPage() {
   }, [fetchAll]);
 
   const profile = profileState.data;
+  const summary = summaryState.data;
   const needsBusinessSetup = useMemo(() => {
-    if (profileState.loading) return false;
+    if (profileState.loading || summaryState.loading) return false;
     if (!profile) return false;
+    const planStatus = summary?.status ?? "none";
+    const planAllowsSetup = planStatus === "trial-active" || planStatus === "active";
+    if (!planAllowsSetup) return false;
     if (profile.businessProfileComplete === true) return false;
     if (profile.businessProfileComplete === false) return true;
     return !profile.businessName || !profile.addressNormalized;
-  }, [profile, profileState.loading]);
+  }, [profile, profileState.loading, summary?.status, summaryState.loading]);
 
   useEffect(() => {
     if (needsBusinessSetup && !wizardDismissed) {
@@ -449,7 +453,6 @@ export default function DashboardPage() {
   }, [profile]);
 
   const usage = usageState.data;
-  const summary = summaryState.data;
 
   const handleWizardClose = useCallback(
     (_completed: boolean) => {
