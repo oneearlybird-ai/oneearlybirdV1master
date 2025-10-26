@@ -18,6 +18,8 @@ import { redirectTo } from "@/lib/clientNavigation";
 import { toast } from "@/components/Toasts";
 import type { PlanDefinition } from "@/lib/plans";
 
+const WIZARD_ALLOWED_PLAN_STATUSES = new Set(["trial-active", "active"]);
+
 const PortingBanner = dynamic(() => import("@/components/PortingBanner"), { ssr: false });
 
 type TenantProfile = {
@@ -387,13 +389,17 @@ export default function DashboardPage() {
   }, [fetchAll]);
 
   const profile = profileState.data;
+  const summary = summaryState.data;
+  const planStatus = summary?.status ?? "none";
+  const hasEligiblePlan = WIZARD_ALLOWED_PLAN_STATUSES.has(planStatus);
   const needsBusinessSetup = useMemo(() => {
-    if (profileState.loading) return false;
+    if (profileState.loading || summaryState.loading) return false;
     if (!profile) return false;
+    if (!hasEligiblePlan) return false;
     if (profile.businessProfileComplete === true) return false;
     if (profile.businessProfileComplete === false) return true;
     return !profile.businessName || !profile.addressNormalized;
-  }, [profile, profileState.loading]);
+  }, [hasEligiblePlan, profile, profileState.loading, summaryState.loading]);
 
   useEffect(() => {
     if (needsBusinessSetup && !wizardDismissed) {
@@ -449,7 +455,6 @@ export default function DashboardPage() {
   }, [profile]);
 
   const usage = usageState.data;
-  const summary = summaryState.data;
 
   const handleWizardClose = useCallback(
     (_completed: boolean) => {
@@ -481,7 +486,6 @@ export default function DashboardPage() {
   const planIncludedMinutes = planDefinition?.includedMinutes ?? null;
   const planLoaded = !profileState.loading && !summaryState.loading;
   const planDisplay = planLoaded ? derivePlanDisplay(summary ?? null, profile ?? null) : null;
-  const planStatus = summary?.status ?? "none";
   const trialEndLabel = planStatus === "trial-cancelled" ? formatIsoDate(summary?.trialEnd ?? null) : null;
 
   const minutesCap = profile?.minutesCap ?? null;
