@@ -142,7 +142,10 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
   };
 
   const [businessWizardOpen, setBusinessWizardOpen] = useState(false);
-  const planStatus = profile?.status ?? "none";
+  const planStatus = useMemo(() => {
+    const rawStatus = (profile?.planStatus ?? profile?.status) as unknown;
+    return typeof rawStatus === "string" && rawStatus.length > 0 ? rawStatus : "none";
+  }, [profile?.planStatus, profile?.status]);
   const businessSeed = useMemo(() => {
     if (!profile) return null;
     return {
