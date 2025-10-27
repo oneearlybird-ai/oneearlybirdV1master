@@ -10,6 +10,8 @@ import StepUpDialog from "@/components/business/StepUpDialog";
 import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
 import { toast } from "@/components/Toasts";
 
+const WIZARD_ALLOWED_PLAN_STATUSES = new Set(["trial-active", "active"]);
+
 type AccountFormState = {
   firstName: string;
   lastName: string;
@@ -140,6 +142,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
   };
 
   const [businessWizardOpen, setBusinessWizardOpen] = useState(false);
+  const planStatus = profile?.status ?? "none";
   const businessSeed = useMemo(() => {
     if (!profile) return null;
     return {
@@ -157,10 +160,11 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
 
   const businessNeedsSetup = useMemo(() => {
     if (!profile) return false;
+    if (!WIZARD_ALLOWED_PLAN_STATUSES.has(planStatus)) return false;
     if (profile.businessProfileComplete === true) return false;
     if (profile.businessProfileComplete === false) return true;
     return !profile.businessName || !profile.addressNormalized;
-  }, [profile]);
+  }, [planStatus, profile]);
 
   const addressDisplay = useMemo(() => formatAddressLine(profile?.addressNormalized), [profile?.addressNormalized]);
 

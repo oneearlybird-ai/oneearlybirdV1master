@@ -15,6 +15,8 @@ import { fallbackNameFromEmail, maskAccountNumber } from "@/lib/format";
 import { toast } from "@/components/Toasts";
 import type { PlanDefinition } from "@/lib/plans";
 
+const WIZARD_ALLOWED_PLAN_STATUSES = new Set(["trial-active", "active"]);
+
 type TenantProfile = {
   planKey?: string | null;
   planPriceId?: string | null;
@@ -172,13 +174,14 @@ export default function MobileDashboardPage() {
   }, [loadData]);
 
   const needsBusinessSetup = useMemo(() => {
-    if (profile.loading) return false;
+    if (profile.loading || summary.loading) return false;
+    if (!summary.data || !WIZARD_ALLOWED_PLAN_STATUSES.has(summary.data.status)) return false;
     const data = profile.data;
     if (!data) return false;
     if (data.businessProfileComplete === true) return false;
     if (data.businessProfileComplete === false) return true;
     return !data.businessName || !data.addressNormalized;
-  }, [profile.data, profile.loading]);
+  }, [profile.data, profile.loading, summary.data, summary.loading]);
 
   useEffect(() => {
     if (needsBusinessSetup && !wizardDismissed) {
