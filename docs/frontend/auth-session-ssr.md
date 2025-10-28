@@ -21,6 +21,7 @@
 
 ## Environment
 - Ensure Vercel production env includes:
+  - `NEXT_PUBLIC_BASE_URL=https://oneearlybird.ai`
   - `API_UPSTREAM=https://api.oneearlybird.ai`
   - `NEXT_PUBLIC_API_BASE=https://api.oneearlybird.ai`
 - No backend changes performed in this run.

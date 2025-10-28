@@ -1,11 +1,14 @@
 export const dynamic = "force-dynamic";
 
+import { getSiteBaseUrl } from "@/lib/config";
+
 type Rec = { id: string; startedAt: string; durationSec: number; summary: string }
 
 async function fetchList(): Promise<Rec[]> {
   try {
-    const base = process.env.NEXT_PUBLIC_SITE_URL || ''
-    const res = await fetch(`${base}/api/recordings/list`, { cache: 'no-store' })
+    const configuredBase = getSiteBaseUrl();
+    const target = configuredBase ? `${configuredBase}/api/recordings/list` : '/api/recordings/list';
+    const res = await fetch(target, { cache: 'no-store' })
     if (!res.ok) return []
     const data = await res.json()
     return Array.isArray(data?.rows) ? data.rows : []

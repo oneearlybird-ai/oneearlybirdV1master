@@ -1,6 +1,7 @@
 "use server";
 
 import { cookies, headers } from "next/headers";
+import { getSiteBaseUrl } from "@/lib/config";
 import type { TenantProfile } from "@/components/auth/AuthSessionProvider";
 
 type ServerSession = {
@@ -15,7 +16,7 @@ export async function loadServerSession(): Promise<ServerSession> {
   const incoming = await headers();
   const proto = incoming.get("x-forwarded-proto") ?? "https";
   const host = incoming.get("x-forwarded-host") ?? incoming.get("host") ?? undefined;
-  const fallbackBase = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/+$/, "");
+  const fallbackBase = getSiteBaseUrl();
   const base = host ? `${proto}://${host}` : fallbackBase;
   const target = base ? `${base}${PROFILE_PATH}` : PROFILE_PATH;
 
