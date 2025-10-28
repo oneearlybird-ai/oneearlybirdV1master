@@ -34,6 +34,7 @@ function maskSensitivePhone(value: string | null | undefined): string {
 
 export default function SettingsContent({ variant = "desktop" }: SettingsContentProps) {
   const { profile, refresh } = useAuthSession();
+  const supportAccountId = profile?.supportAccountId ?? null;
   const searchParams = useSearchParams();
   const [tab, setTab] = useState<"account" | "security" | "business">("account");
   const accountDefaults = useMemo<AccountFormState>(
@@ -55,6 +56,20 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
   const [accountFieldErrors, setAccountFieldErrors] = useState<Record<string, string>>({});
   const [stepUpOpen, setStepUpOpen] = useState(false);
   const [queuedPayload, setQueuedPayload] = useState<Record<string, unknown> | null>(null);
+
+  const handleCopySupportId = useCallback(() => {
+    if (!supportAccountId || typeof window === "undefined") return;
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard
+        .writeText(supportAccountId)
+        .then(() => {
+          toast("Copied support ID", "success");
+        })
+        .catch(() => {
+          toast("Copy failed", "error");
+        });
+    }
+  }, [supportAccountId]);
   useEffect(() => {
     const requested = searchParams?.get("tab");
     if (requested === "account" || requested === "security" || requested === "business") {
@@ -223,6 +238,20 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
             onSubmit={handleAccountSubmit}
             className="max-w-2xl space-y-5 rounded-2xl border border-white/10 bg-white/5 px-6 py-5 shadow-[0_24px_70px_rgba(5,8,20,0.45)] backdrop-blur"
           >
+            <div className="flex items-center justify-between rounded-xl border border-white/10 bg-white/10 px-4 py-3 text-sm">
+              <div>
+                <div className="text-xs uppercase tracking-wide text-white/50">Support account ID</div>
+                <div className="mt-1 font-mono text-sm text-white">{supportAccountId ?? "Pending"}</div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCopySupportId}
+                disabled={!supportAccountId}
+                className="rounded-xl border border-white/20 px-3 py-1 text-xs font-semibold text-white/80 transition hover:text-white disabled:opacity-50"
+              >
+                Copy
+              </button>
+            </div>
             <div className="grid gap-4 md:grid-cols-2">
               <label className="block text-xs font-medium uppercase tracking-wide text-white/60">
                 First name

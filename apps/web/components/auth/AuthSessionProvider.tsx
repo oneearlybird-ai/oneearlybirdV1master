@@ -48,6 +48,7 @@ export type TenantProfile = {
   locations?: number | null;
   website?: string | null;
   businessProfileComplete?: boolean | null;
+  supportAccountId?: string | null;
   stepUpOkUntil?: string | null;
   needsAccountCreate?: boolean | null;
   [key: string]: unknown;
