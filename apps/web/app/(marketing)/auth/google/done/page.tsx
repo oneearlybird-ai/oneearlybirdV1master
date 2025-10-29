@@ -5,7 +5,17 @@ import { isTenantActive } from "@/lib/isTenantActive";
 const ACCOUNT_CREATE_PATH = "/account/create";
 const DASHBOARD_PATH = "/dashboard";
 
-export default async function GoogleDonePage() {
+type GoogleDonePageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default async function GoogleDonePage({ searchParams }: GoogleDonePageProps) {
+  const redirectParam = coerceRelativePath(searchParams?.redirect);
+  const needsAccountCreate = toBoolean(searchParams?.needsAccountCreate);
+
+  if (redirectParam) redirect(redirectParam);
+  if (needsAccountCreate) redirect(ACCOUNT_CREATE_PATH);
+
   const { status, profile } = await loadServerSession();
 
   if (status === "authenticated") {
@@ -22,4 +32,19 @@ export default async function GoogleDonePage() {
       </a>
     </main>
   );
+}
+
+function coerceRelativePath(value: string | string[] | undefined): string | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  return raw;
+}
+
+function toBoolean(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return false;
+  const normalised = raw.trim().toLowerCase();
+  return normalised === "1" || normalised === "true" || normalised === "yes";
 }

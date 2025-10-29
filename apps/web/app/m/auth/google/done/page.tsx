@@ -5,7 +5,17 @@ import { isTenantActive } from "@/lib/isTenantActive";
 const ACCOUNT_CREATE_PATH = "/m/account/create";
 const DASHBOARD_PATH = "/m/dashboard";
 
-export default async function GoogleDoneMobilePage() {
+type GoogleDoneMobilePageProps = {
+  searchParams?: Record<string, string | string[] | undefined>;
+};
+
+export default async function GoogleDoneMobilePage({ searchParams }: GoogleDoneMobilePageProps) {
+  const redirectParam = coerceRelativeMobilePath(searchParams?.redirect);
+  const needsAccountCreate = toBoolean(searchParams?.needsAccountCreate);
+
+  if (redirectParam) redirect(redirectParam);
+  if (needsAccountCreate) redirect(ACCOUNT_CREATE_PATH);
+
   const { status, profile } = await loadServerSession();
 
   if (status === "authenticated") {
@@ -22,4 +32,19 @@ export default async function GoogleDoneMobilePage() {
       </a>
     </main>
   );
+}
+
+function coerceRelativeMobilePath(value: string | string[] | undefined): string | null {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return null;
+  if (!raw.startsWith("/")) return null;
+  if (raw.startsWith("//")) return null;
+  return raw.startsWith("/m/") ? raw : null;
+}
+
+function toBoolean(value: string | string[] | undefined): boolean {
+  const raw = Array.isArray(value) ? value[0] : value;
+  if (!raw) return false;
+  const normalised = raw.trim().toLowerCase();
+  return normalised === "1" || normalised === "true" || normalised === "yes";
 }
