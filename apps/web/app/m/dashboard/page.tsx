@@ -10,6 +10,7 @@ import { MobileCard, MobileCardContent, MobileCardHeader, MobileCardFooter } fro
 import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
+import { getAccountCreatePath } from "@/lib/authPaths";
 import type { CallItem } from "@/components/RecentCallsPreview";
 import { fallbackNameFromEmail, maskAccountNumber } from "@/lib/format";
 import { toast } from "@/components/Toasts";
@@ -23,7 +24,9 @@ type TenantProfile = {
   minutesCap?: number | null;
   concurrencyCap?: number | null;
   did?: string | null;
+  tenantId?: string | null;
   accountNumber?: string | null;
+  needsAccountCreate?: boolean | null;
   firstName?: string | null;
   displayName?: string | null;
   contactEmail?: string | null;
@@ -113,6 +116,9 @@ export default function MobileDashboardPage() {
   const [wizardDismissed, setWizardDismissed] = useState(false);
   const [trialModalOpen, setTrialModalOpen] = useState(false);
   const [trialPlan, setTrialPlan] = useState<PlanDefinition | null>(null);
+  const needsAccountCreate = profile.data?.needsAccountCreate === true;
+  const accountCreatePath = getAccountCreatePath();
+
 
 
   const loadData = useCallback(async () => {
@@ -176,12 +182,13 @@ export default function MobileDashboardPage() {
   const needsBusinessSetup = useMemo(() => {
     if (profile.loading || summary.loading) return false;
     if (!summary.data || !WIZARD_ALLOWED_PLAN_STATUSES.has(summary.data.status)) return false;
+    if (needsAccountCreate) return false;
     const data = profile.data;
     if (!data) return false;
     if (data.businessProfileComplete === true) return false;
     if (data.businessProfileComplete === false) return true;
     return !data.businessName || !data.addressNormalized;
-  }, [profile.data, profile.loading, summary.data, summary.loading]);
+  }, [needsAccountCreate, profile.data, profile.loading, summary.data, summary.loading]);
 
   useEffect(() => {
     if (needsBusinessSetup && !wizardDismissed) {
@@ -334,22 +341,29 @@ export default function MobileDashboardPage() {
     return fallbackNameFromEmail(email);
   }, [profile.data]);
 
-  const accountNumberMask = useMemo(() => maskAccountNumber(profile.data?.accountNumber ?? null), [profile.data?.accountNumber]);
+  const supportAccountId = profile.data?.accountNumber ?? profile.data?.tenantId ?? null;
+  const accountNumberMask = useMemo(() => {
+    if (!supportAccountId) return null;
+    if (profile.data?.accountNumber) {
+      return maskAccountNumber(profile.data.accountNumber) ?? profile.data.accountNumber;
+    }
+    return supportAccountId;
+  }, [profile.data?.accountNumber, supportAccountId]);
 
   const handleCopyAccount = useCallback(async () => {
-    const value = profile.data?.accountNumber;
+    const value = supportAccountId;
     if (!value) return;
     try {
       if (!navigator?.clipboard?.writeText) {
         throw new Error("clipboard_unavailable");
       }
       await navigator.clipboard.writeText(value);
-      toast("Account number copied", "success");
+      toast("Support ID copied", "success");
     } catch (err) {
       console.error("account_copy_failed", err);
-      toast("Couldn’t copy account number", "error");
+      toast("Couldn’t copy support ID", "error");
     }
-  }, [profile.data?.accountNumber]);
+  }, [supportAccountId]);
 
   return (
     <>
@@ -363,14 +377,20 @@ export default function MobileDashboardPage() {
               type="button"
               onClick={handleCopyAccount}
               className="mt-2 inline-flex w-fit items-center gap-2 rounded-full border border-white/15 bg-white/5 px-3 py-1.5 text-xs text-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-              aria-label="Copy account number"
+              aria-label="Copy support ID"
             >
               <svg className="h-3 w-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={1.5}>
                 <rect x="9" y="9" width="13" height="13" rx="2" />
                 <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
               </svg>
-              <span className="font-medium">{accountNumberMask}</span>
+              <span className="font-medium">Support ID: {accountNumberMask}</span>
             </button>
+          ) : null}
+          {needsAccountCreate ? (
+            <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-4 text-sm text-amber-100">
+              <div className="text-white">Finish setting up your account to unlock billing, routing, and verification.</div>
+              <a href={accountCreatePath} className="btn btn-primary w-full sm:w-auto">Complete account</a>
+            </div>
           ) : null}
         </div>
 

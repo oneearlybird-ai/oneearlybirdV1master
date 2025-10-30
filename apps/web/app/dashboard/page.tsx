@@ -13,10 +13,12 @@ import PlanActionButtons from "@/components/PlanActionButtons";
 import BusinessSetupWizard from "@/components/business/BusinessSetupWizard";
 import TrialConfirmationModal from "@/components/billing/TrialConfirmationModal";
 import PlanCheckoutButtons from "@/components/PlanCheckoutButtons";
-import { getAccountSettingsPath } from "@/lib/authPaths";
+import { getAccountCreatePath, getAccountSettingsPath } from "@/lib/authPaths";
 import { redirectTo } from "@/lib/clientNavigation";
 import { toast } from "@/components/Toasts";
 import type { PlanDefinition } from "@/lib/plans";
+import { maskAccountNumber } from "@/lib/format";
+import { useAuthSession } from "@/components/auth/AuthSessionProvider";
 
 const WIZARD_ALLOWED_PLAN_STATUSES = new Set(["trial-active", "active"]);
 
@@ -241,6 +243,9 @@ function InlineErrorCard({ message }: { message: string }) {
 }
 
 export default function DashboardPage() {
+  const { profile: sessionProfile } = useAuthSession();
+  const sessionNeedsAccountCreate = sessionProfile?.needsAccountCreate === true;
+  const accountCreatePath = getAccountCreatePath();
   const mountedRef = useRef(true);
   const [profileState, setProfileState] = useState<FetchState<TenantProfile>>(() => initialState<TenantProfile>());
   const [usageState, setUsageState] = useState<FetchState<UsageSummary>>(() => initialState<UsageSummary>());
@@ -396,10 +401,11 @@ export default function DashboardPage() {
     if (profileState.loading || summaryState.loading) return false;
     if (!profile) return false;
     if (!hasEligiblePlan) return false;
+    if (sessionNeedsAccountCreate) return false;
     if (profile.businessProfileComplete === true) return false;
     if (profile.businessProfileComplete === false) return true;
     return !profile.businessName || !profile.addressNormalized;
-  }, [hasEligiblePlan, profile, profileState.loading, summaryState.loading]);
+  }, [hasEligiblePlan, profile, profileState.loading, sessionNeedsAccountCreate, summaryState.loading]);
 
   useEffect(() => {
     if (needsBusinessSetup && !wizardDismissed) {
@@ -609,6 +615,21 @@ export default function DashboardPage() {
     if (trialCountdownLabel) hints.push(trialCountdownLabel);
     return hints.length > 0 ? hints.join(" • ") : undefined;
   }, [planDisplay?.hint, trialCountdownLabel]);
+
+  const supportAccountId = useMemo(() => {
+    const account = profile?.accountNumber?.trim();
+    if (account) return account;
+    const tenant = profile?.tenantId?.trim();
+    return tenant && tenant.length > 0 ? tenant : null;
+  }, [profile?.accountNumber, profile?.tenantId]);
+
+  const supportAccountDisplay = useMemo(() => {
+    if (!supportAccountId) return null;
+    if (profile?.accountNumber) {
+      return maskAccountNumber(supportAccountId) ?? supportAccountId;
+    }
+    return supportAccountId;
+  }, [profile?.accountNumber, supportAccountId]);
   const integrationStubs = useMemo(
     () => [
       {
@@ -674,7 +695,25 @@ export default function DashboardPage() {
             <CopyPageLinkButton label="Copy dashboard link" />
           </span>
         </div>
+        {sessionNeedsAccountCreate ? (
+          <div className="mt-3 flex flex-col gap-3 rounded-2xl border border-amber-400/40 bg-amber-400/10 px-4 py-4 text-sm text-amber-100 md:flex-row md:items-center md:justify-between">
+            <div>
+              <div className="font-medium text-white">Finish account setup</div>
+              <p className="text-white/70">Complete your account details to unlock billing, routing, and verification.</p>
+            </div>
+            <a href={accountCreatePath} className="btn btn-primary">Complete account</a>
+          </div>
+        ) : null}
         <PortingBanner />
+        {supportAccountId ? (
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-white/70">
+            <span className="font-medium text-white">Support ID</span>
+            <span className="font-mono rounded-full border border-white/15 bg-white/5 px-3 py-1 text-white/80">
+              {supportAccountDisplay}
+            </span>
+            <CopyOrgIdButton value={supportAccountId} label="Copy support ID" />
+          </div>
+        ) : null}
         <div className={`mt-4 rounded-2xl border px-5 py-4 shadow-[0_20px_60px_rgba(5,8,20,0.35)] backdrop-blur ${provisioningStatusCardClass}`}>
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-start gap-3">
@@ -848,7 +887,7 @@ export default function DashboardPage() {
             Billing
           </a>
           <CopyDiagnostics />
-          <CopyOrgIdButton />
+          <CopyOrgIdButton value={supportAccountId} />
           <a href="/changelog" className="btn btn-outline">
             Changelog
           </a>

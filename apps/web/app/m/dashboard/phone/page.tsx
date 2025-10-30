@@ -28,6 +28,7 @@ export default function MobilePhonePage() {
   const [routingPending, setRoutingPending] = useState(false);
   const [agentPending, setAgentPending] = useState(false);
   const pendingToggleRef = useRef<RoutingMode | boolean | null>(null);
+  const isVerified = Boolean(profile?.phoneVerifiedAt);
 
   const refreshProfile = useCallback(async () => {
     setLoading(true);
@@ -112,6 +113,12 @@ export default function MobilePhonePage() {
   const updateRouting = useCallback(
     async (mode: RoutingMode) => {
       if (profile?.routingMode === mode) return;
+      if (!profile?.phoneVerifiedAt) {
+        pendingToggleRef.current = mode;
+        setVerifySheetOpen(true);
+        toast("Verify your number to change routing", "error");
+        return;
+      }
       setRoutingPending(true);
       try {
         const res = await apiFetch("/phone/routing", {
@@ -119,18 +126,15 @@ export default function MobilePhonePage() {
           cache: "no-store",
           body: JSON.stringify({ mode }),
         });
-        if (res.status === 403) {
-          const payload = (await res.json().catch(() => ({}))) as { code?: string };
-          if ((payload.code || "") === "phone_unverified") {
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string; code?: string };
+          const code = payload.code || payload.error;
+          if ((res.status === 400 || res.status === 403) && code === "phone_not_verified") {
             pendingToggleRef.current = mode;
             setVerifySheetOpen(true);
             toast("Verify your number to change routing", "error");
             return;
           }
-          throw new Error("routing_forbidden");
-        }
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
           throw new Error(payload.error || payload.message || `routing_${res.status}`);
         }
         await refreshProfile();
@@ -147,6 +151,12 @@ export default function MobilePhonePage() {
   const updateAgent = useCallback(
     async (enabled: boolean) => {
       if (profile?.agentEnabled === enabled) return;
+      if (!profile?.phoneVerifiedAt) {
+        pendingToggleRef.current = enabled;
+        setVerifySheetOpen(true);
+        toast("Verify your number to toggle the agent", "error");
+        return;
+      }
       setAgentPending(true);
       try {
         const res = await apiFetch("/agent/toggle", {
@@ -154,18 +164,15 @@ export default function MobilePhonePage() {
           cache: "no-store",
           body: JSON.stringify({ enabled }),
         });
-        if (res.status === 403) {
-          const payload = (await res.json().catch(() => ({}))) as { code?: string };
-          if ((payload.code || "") === "phone_unverified") {
+        if (!res.ok) {
+          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string; code?: string };
+          const code = payload.code || payload.error;
+          if ((res.status === 400 || res.status === 403) && code === "phone_not_verified") {
             pendingToggleRef.current = enabled;
             setVerifySheetOpen(true);
             toast("Verify your number to toggle the agent", "error");
             return;
           }
-          throw new Error("agent_forbidden");
-        }
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
           throw new Error(payload.error || payload.message || `agent_${res.status}`);
         }
         await refreshProfile();
@@ -261,6 +268,11 @@ export default function MobilePhonePage() {
         <MobileCard>
           <MobileCardHeader title="Routing" subtitle="Choose where calls land" />
           <MobileCardContent>
+            {!isVerified ? (
+              <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-100">
+                Verify your business number to unlock routing changes. We&apos;ll automatically apply your choice after verification.
+              </p>
+            ) : null}
             <div className="flex gap-3">
               {(["agent", "passthrough"] as RoutingMode[]).map((mode) => {
                 const active = profile?.routingMode === mode;
@@ -285,26 +297,35 @@ export default function MobilePhonePage() {
         <MobileCard>
           <MobileCardHeader title="Agent" subtitle="Toggle the AI receptionist" />
           <MobileCardFooter>
-            <button
-              type="button"
-              onClick={() => void updateAgent(true)}
-              disabled={agentPending}
-              className={`inline-flex flex-1 items-center justify-center rounded-full border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
-                profile?.agentEnabled ? "border-white/20 bg-white/10 text-white" : "border-white/15 text-white/70"
-              }`}
-            >
-              On
-            </button>
-            <button
-              type="button"
-              onClick={() => void updateAgent(false)}
-              disabled={agentPending}
-              className={`inline-flex flex-1 items-center justify-center rounded-full border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
-                profile?.agentEnabled === false ? "border-white/20 bg-white/10 text-white" : "border-white/15 text-white/70"
-              }`}
-            >
-              Off
-            </button>
+            <div className="flex w-full flex-col gap-3">
+              {!isVerified ? (
+                <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-center text-xs text-amber-100">
+                  Verify your number to toggle the agent. We&apos;ll retry after verification.
+                </p>
+              ) : null}
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => void updateAgent(true)}
+                  disabled={agentPending}
+                  className={`inline-flex flex-1 items-center justify-center rounded-full border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
+                    profile?.agentEnabled ? "border-white/20 bg-white/10 text-white" : "border-white/15 text-white/70"
+                  }`}
+                >
+                  On
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void updateAgent(false)}
+                  disabled={agentPending}
+                  className={`inline-flex flex-1 items-center justify-center rounded-full border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30 ${
+                    profile?.agentEnabled === false ? "border-white/20 bg-white/10 text-white" : "border-white/15 text-white/70"
+                  }`}
+                >
+                  Off
+                </button>
+              </div>
+            </div>
           </MobileCardFooter>
         </MobileCard>
 

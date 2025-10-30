@@ -72,11 +72,12 @@ export default function PhoneAndAgentPage() {
 
   const [routingPending, setRoutingPending] = useState(false);
   const [agentPending, setAgentPending] = useState(false);
+  const isVerified = Boolean(profile.phoneVerifiedAt);
 
   const verifiedLabel = useMemo(() => {
-    if (!profile.phoneVerifiedAt) return "Not verified";
+    if (!isVerified) return "Not verified";
     return `Verified on ${formatDate(profile.phoneVerifiedAt)}`;
-  }, [profile.phoneVerifiedAt]);
+  }, [isVerified, profile.phoneVerifiedAt]);
 
   const statusRows = useMemo(() => {
     const rows: Array<{ label: string; value: string }> = [];
@@ -189,6 +190,13 @@ export default function PhoneAndAgentPage() {
     async (mode: RoutingMode, options?: { skipConfirm?: boolean }) => {
       const skipConfirm = options?.skipConfirm ?? false;
       if (!skipConfirm && profile.routingMode === mode) return;
+      if (!profile.phoneVerifiedAt) {
+        pendingToggleRef.current = { kind: "routing", mode };
+        setVerifyVisible(true);
+        toast("Verify your number to update routing", "error");
+        void refreshProfile();
+        return;
+      }
       if (!skipConfirm && !window.confirm(`Switch routing to ${mode === "agent" ? "AI Agent" : "Passthrough"}?`)) {
         return;
       }
@@ -198,19 +206,16 @@ export default function PhoneAndAgentPage() {
           method: "POST",
           body: JSON.stringify({ mode }),
         });
-        if (res.status === 403) {
+        if (!res.ok) {
           const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string; code?: string };
-          if ((payload?.code || payload?.error) === "phone_unverified") {
+          const errorCode = payload.code || payload.error;
+          if ((res.status === 400 || res.status === 403) && errorCode === "phone_not_verified") {
             pendingToggleRef.current = { kind: "routing", mode };
             setVerifyVisible(true);
             toast("Verify your number to update routing", "error");
             void refreshProfile();
             return;
           }
-          throw new Error(payload.error || payload.message || "routing_403");
-        }
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
           throw new Error(payload.error || payload.message || `routing_${res.status}`);
         }
         toast("Routing mode updated", "success");
@@ -221,13 +226,20 @@ export default function PhoneAndAgentPage() {
         setRoutingPending(false);
       }
     },
-    [profile.routingMode, refreshProfile],
+    [profile.phoneVerifiedAt, profile.routingMode, refreshProfile],
   );
 
   const updateAgent = useCallback(
     async (enabled: boolean, options?: { skipConfirm?: boolean }) => {
       const skipConfirm = options?.skipConfirm ?? false;
       if (!skipConfirm && profile.agentEnabled === enabled) return;
+      if (!profile.phoneVerifiedAt) {
+        pendingToggleRef.current = { kind: "agent", enabled };
+        setVerifyVisible(true);
+        toast("Verify your number to toggle the agent", "error");
+        void refreshProfile();
+        return;
+      }
       if (!skipConfirm && !window.confirm(`Turn ${enabled ? "on" : "off"} the AI Agent?`)) return;
       setAgentPending(true);
       try {
@@ -235,19 +247,16 @@ export default function PhoneAndAgentPage() {
           method: "POST",
           body: JSON.stringify({ enabled }),
         });
-        if (res.status === 403) {
+        if (!res.ok) {
           const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string; code?: string };
-          if ((payload?.code || payload?.error) === "phone_unverified") {
+          const errorCode = payload.code || payload.error;
+          if ((res.status === 400 || res.status === 403) && errorCode === "phone_not_verified") {
             pendingToggleRef.current = { kind: "agent", enabled };
             setVerifyVisible(true);
             toast("Verify your number to toggle the agent", "error");
             void refreshProfile();
             return;
           }
-          throw new Error(payload.error || payload.message || "agent_403");
-        }
-        if (!res.ok) {
-          const payload = (await res.json().catch(() => ({}))) as { error?: string; message?: string };
           throw new Error(payload.error || payload.message || `agent_${res.status}`);
         }
         toast(`Agent ${enabled ? "enabled" : "paused"}`, "success");
@@ -258,7 +267,7 @@ export default function PhoneAndAgentPage() {
         setAgentPending(false);
       }
     },
-    [profile.agentEnabled, refreshProfile],
+    [profile.agentEnabled, profile.phoneVerifiedAt, refreshProfile],
   );
 
   useEffect(() => {
@@ -390,6 +399,11 @@ export default function PhoneAndAgentPage() {
       </SectionCard>
 
       <SectionCard title="Routing &amp; Agent controls">
+        {!isVerified ? (
+          <div className="rounded-xl border border-amber-500/30 bg-amber-500/10 px-4 py-3 text-xs text-amber-100">
+            Verify your business number to enable routing and agent controls. We&apos;ll automatically reapply your selection once verification succeeds.
+          </div>
+        ) : null}
         <div className="flex flex-col gap-4">
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
             <div>
