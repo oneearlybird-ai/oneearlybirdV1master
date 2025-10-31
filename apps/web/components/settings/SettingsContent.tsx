@@ -98,7 +98,7 @@ export default function SettingsContent({ variant = "desktop" }: SettingsContent
           method: "POST",
           headers: {
             "content-type": "application/json",
-            "x-csrf-token": token,
+            ...(token ? { "x-csrf-token": token } : {}),
           },
           body: JSON.stringify(payload),
         });

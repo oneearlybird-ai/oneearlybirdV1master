@@ -16,13 +16,16 @@ export function isProdEnv(): boolean {
 }
 
 function resolveBase(): string {
+  if (API_BASE) {
+    return API_BASE.replace(/\/+$/, "");
+  }
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin.replace(/\/+$/, "");
   }
-  if (API_BASE) return API_BASE.replace(/\/+$/, "");
   const envBase = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (envBase) return envBase.replace(/\/+$/, "");
-  if (isProdEnv()) return API_BASE_PROD;
+  if (envBase) {
+    return envBase.replace(/\/+$/, "");
+  }
   return API_BASE_PROD;
 }
 

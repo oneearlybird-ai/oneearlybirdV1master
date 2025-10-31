@@ -280,7 +280,7 @@ const clearGooglePopupMonitor = useCallback(() => {
         method: "POST",
         headers: {
           "content-type": "application/json",
-          "x-csrf-token": token,
+          ...(token ? { "x-csrf-token": token } : {}),
         },
         body: JSON.stringify({
           email,

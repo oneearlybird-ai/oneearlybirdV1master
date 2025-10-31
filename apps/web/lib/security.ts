@@ -1,33 +1,50 @@
+import { API_BASE } from "@/lib/config";
 import { apiFetch } from "@/lib/http";
 
-let cachedToken: string | null = null;
-let pendingTokenPromise: Promise<string> | null = null;
+let cachedToken: string | null | undefined;
+let pendingTokenPromise: Promise<string | null> | null = null;
 
-export async function fetchCsrfToken(): Promise<string> {
-  if (cachedToken) return cachedToken;
-  if (pendingTokenPromise) return pendingTokenPromise;
-  pendingTokenPromise = (async () => {
-    const response = await apiFetch("/auth/csrf", { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error(`csrf_fetch_failed_${response.status}`);
-    }
-    const json = (await response.json()) as { token?: string };
-    if (!json?.token) {
-      throw new Error("csrf_missing_token");
-    }
-    cachedToken = json.token;
-    pendingTokenPromise = null;
+export async function fetchCsrfToken(): Promise<string | null> {
+  if (cachedToken !== undefined) {
     return cachedToken;
-  })();
-  try {
-    return await pendingTokenPromise;
-  } finally {
-    pendingTokenPromise = null;
   }
+  if (API_BASE) {
+    cachedToken = null;
+    return null;
+  }
+  if (pendingTokenPromise) {
+    return pendingTokenPromise;
+  }
+  pendingTokenPromise = (async () => {
+    try {
+      const response = await apiFetch("/auth/csrf", { cache: "no-store" });
+      if (!response.ok) {
+        if (response.status === 404) {
+          console.warn("csrf_endpoint_missing");
+          cachedToken = null;
+          return null;
+        }
+        throw new Error(`csrf_fetch_failed_${response.status}`);
+      }
+      const json = (await response.json()) as { token?: string };
+      if (!json?.token) {
+        throw new Error("csrf_missing_token");
+      }
+      cachedToken = json.token;
+      return cachedToken;
+    } catch (error) {
+      console.error("csrf_fetch_error", { message: (error as Error)?.message });
+      cachedToken = null;
+      return null;
+    } finally {
+      pendingTokenPromise = null;
+    }
+  })();
+  return pendingTokenPromise;
 }
 
 export function invalidateCsrfToken(): void {
-  cachedToken = null;
+  cachedToken = undefined;
 }
 
 export async function startOtp(channel: "sms" | "call" | "email"): Promise<void> {
@@ -36,7 +53,7 @@ export async function startOtp(channel: "sms" | "call" | "email"): Promise<void>
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-csrf-token": token,
+      ...(token ? { "x-csrf-token": token } : {}),
     },
     body: JSON.stringify({ channel }),
   });
@@ -56,7 +73,7 @@ export async function verifyOtp(payload: VerifyOtpPayload): Promise<{ stepUpOkUn
     method: "POST",
     headers: {
       "content-type": "application/json",
-      "x-csrf-token": token,
+      ...(token ? { "x-csrf-token": token } : {}),
     },
     body: JSON.stringify(payload),
   });
