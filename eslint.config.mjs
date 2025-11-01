@@ -1,6 +1,10 @@
 import js from '@eslint/js';
 import tseslint from 'typescript-eslint';
 import globals from 'globals';
+import nextPlugin from '@next/eslint-plugin-next';
+import { FlatCompat } from '@eslint/eslintrc';
+
+const compat = new FlatCompat({ baseDirectory: import.meta.dirname });
 
 export default [
   {
@@ -14,6 +18,8 @@ export default [
       'reference_snapshot/**'
     ]
   },
+  ...compat.config(nextPlugin.configs['recommended']),
+  ...compat.config(nextPlugin.configs['core-web-vitals']),
   js.configs.recommended,
   {
     files: ['**/*.ts', '**/*.tsx'],
@@ -22,7 +28,7 @@ export default [
       parserOptions: { sourceType: 'module' },
       globals: { ...globals.browser, ...globals.node }
     },
-    plugins: { '@typescript-eslint': tseslint.plugin },
+    plugins: { '@typescript-eslint': tseslint.plugin, '@next/next': nextPlugin },
     rules: {
       'no-undef': 'off',
       'no-unused-vars': 'off',
@@ -36,7 +42,10 @@ export default [
         allowTernary: true,
         allowTaggedTemplates: true,
         enforceForJSX: false
-      }]
+      }],
+      // TODO(frontend): re-enable once Link/Image migrations complete (see docs/frontend/lint-followups.md)
+      '@next/next/no-html-link-for-pages': 'off',
+      '@next/next/no-img-element': 'off'
     }
   },
   // Placeholder-heavy utilities

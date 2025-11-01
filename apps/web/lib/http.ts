@@ -22,7 +22,7 @@ function resolveBase(): string {
   if (typeof window !== "undefined" && window.location?.origin) {
     return window.location.origin.replace(/\/+$/, "");
   }
-  const envBase = process.env.NEXT_PUBLIC_API_BASE_URL;
+  const envBase = process.env.NEXT_PUBLIC_API_BASE;
   if (envBase) {
     return envBase.replace(/\/+$/, "");
   }

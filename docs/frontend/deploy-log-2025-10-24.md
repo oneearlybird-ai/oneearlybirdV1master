@@ -43,5 +43,5 @@
 - **Verification**:
   - Lint/build locally: ✅ (`npm run lint`, `npm run build`)
   - `npm run dev`: ❌ (root script fails — `pnpm` rejects `packageManager: "npm@10"`; tracked in `/tmp/fe-dev.log`)
-  - `npm --prefix apps/web run dev`: ✅ (`curl -i http://localhost:3000/api/dashboard/profile` → `500 upstream_unconfigured`, expected without local `API_UPSTREAM`)
+  - `npm --prefix apps/web run dev`: ✅ (`curl -i http://localhost:3000/api/dashboard/profile` → `500 upstream_unconfigured`, expected without local `NEXT_PUBLIC_API_BASE`)
   - Production follow-up: validate incognito OAuth flow hits `/account/create` 302 then `/dashboard`; capture screenshots for `docs/frontend/auth-session-ssr.md`
