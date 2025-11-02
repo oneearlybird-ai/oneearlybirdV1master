@@ -1,15 +1,33 @@
+import Image, { type StaticImageData } from 'next/image';
+
+import googleCalendarLogo from '@/public/logos/integrations/google-calendar.svg';
+import hubspotLogo from '@/public/logos/integrations/hubspot.svg';
+import microsoft365Logo from '@/public/logos/integrations/microsoft-365.svg';
+import salesforceLogo from '@/public/logos/integrations/salesforce.svg';
+import serviceTitanLogo from '@/public/logos/integrations/servicetitan.svg';
+import slackLogo from '@/public/logos/integrations/slack.svg';
+import zapierLogo from '@/public/logos/integrations/zapier.svg';
+import zohoLogo from '@/public/logos/integrations/zoho.svg';
+import twilioLogo from '@/public/logos/twilio.svg';
+
 import Particles from './particles';
 
-const logos: Array<{ label: string; className?: string }> = [
-  { label: 'Google Calendar', className: 'font-semibold tracking-tight' },
-  { label: 'Microsoft 365', className: 'font-semibold tracking-tight' },
-  { label: 'Slack', className: 'font-bold lowercase tracking-tight' },
-  { label: 'HubSpot', className: 'font-semibold tracking-tight' },
-  { label: 'Salesforce', className: 'font-semibold tracking-tight' },
-  { label: 'Zoho', className: 'font-black uppercase tracking-widest' },
-  { label: 'Zapier', className: 'font-semibold tracking-wide lowercase' },
-  { label: 'Twilio', className: 'font-semibold tracking-wide lowercase' },
-  { label: 'ServiceTitan', className: 'font-semibold tracking-tight' },
+type Logo = {
+  label: string;
+  className?: string;
+  image?: StaticImageData;
+};
+
+const logos: Logo[] = [
+  { label: 'Google Calendar', image: googleCalendarLogo },
+  { label: 'Microsoft 365', image: microsoft365Logo },
+  { label: 'Slack', image: slackLogo },
+  { label: 'HubSpot', image: hubspotLogo },
+  { label: 'Salesforce', image: salesforceLogo },
+  { label: 'Zoho', image: zohoLogo },
+  { label: 'Zapier', image: zapierLogo },
+  { label: 'Twilio', image: twilioLogo },
+  { label: 'ServiceTitan', image: serviceTitanLogo },
 ];
 
 export default function Clients() {
@@ -26,9 +44,19 @@ export default function Clients() {
               <ul className="flex animate-infinite-scroll items-center justify-center md:justify-start [&_li]:mx-8">
                 {logos.map((logo) => (
                   <li key={logo.label}>
-                    <span className={`text-lg text-slate-300/90 sm:text-xl ${logo.className ?? ''}`}>
-                      {logo.label}
-                    </span>
+                    {logo.image ? (
+                      <Image
+                        src={logo.image}
+                        alt={logo.label}
+                        width={120}
+                        height={28}
+                        className="h-6 w-auto object-contain sm:h-7"
+                      />
+                    ) : (
+                      <span className={`text-lg text-slate-300/90 sm:text-xl ${logo.className ?? ''}`}>
+                        {logo.label}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
@@ -38,9 +66,19 @@ export default function Clients() {
               >
                 {logos.map((logo) => (
                   <li key={`dup-${logo.label}`}>
-                    <span className={`text-lg text-slate-300/90 sm:text-xl ${logo.className ?? ''}`}>
-                      {logo.label}
-                    </span>
+                    {logo.image ? (
+                      <Image
+                        src={logo.image}
+                        alt={logo.label}
+                        width={120}
+                        height={28}
+                        className="h-6 w-auto object-contain sm:h-7"
+                      />
+                    ) : (
+                      <span className={`text-lg text-slate-300/90 sm:text-xl ${logo.className ?? ''}`}>
+                        {logo.label}
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>
